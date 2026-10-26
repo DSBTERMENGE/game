@@ -1,0 +1,192 @@
+-- Migração 001: estrutura inicial do Game / MSen.
+-- Compatível com PostgreSQL 12 ou superior.
+-- Pressupõe conexão prévia ao database correto.
+
+BEGIN;
+
+CREATE TABLE IF NOT EXISTS schema_migrations (
+    versao VARCHAR(20) PRIMARY KEY,
+    nome VARCHAR(200) NOT NULL,
+    checksum_sha256 CHAR(64) NOT NULL,
+    aplicada_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT ck_schema_migrations_versao_preenchida
+        CHECK (BTRIM(versao) <> ''),
+    CONSTRAINT ck_schema_migrations_nome_preenchido
+        CHECK (BTRIM(nome) <> ''),
+    CONSTRAINT ck_schema_migrations_checksum_sha256
+        CHECK (checksum_sha256 ~ '^[0-9a-f]{64}$')
+);
+
+COMMENT ON TABLE schema_migrations IS
+    'Controle das migrações PostgreSQL aplicadas pelo projeto.';
+COMMENT ON COLUMN schema_migrations.checksum_sha256 IS
+    'SHA-256 em hexadecimal minúsculo do arquivo de migração aplicado.';
+
+CREATE TABLE IF NOT EXISTS resultados (
+    id_resultado BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    data_resultado DATE NOT NULL,
+    numero_ap INTEGER NOT NULL,
+    res_01 SMALLINT NOT NULL,
+    res_02 SMALLINT NOT NULL,
+    res_03 SMALLINT NOT NULL,
+    res_04 SMALLINT NOT NULL,
+    res_05 SMALLINT NOT NULL,
+    res_06 SMALLINT NOT NULL,
+    soma_res SMALLINT NOT NULL,
+    media_aritmetica_res NUMERIC(10,6) NOT NULL,
+    mediana_res NUMERIC(4,1) NOT NULL,
+    desvio_padrao_media NUMERIC(10,6) NOT NULL,
+    media_coordenada_x NUMERIC(7,6) NOT NULL,
+    media_coordenada_y NUMERIC(7,6) NOT NULL,
+    versao_calculo SMALLINT NOT NULL DEFAULT 1,
+    criado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT uk_resultados_numero_ap UNIQUE (numero_ap),
+    CONSTRAINT ck_resultados_numero_ap_positivo CHECK (numero_ap > 0),
+    CONSTRAINT ck_resultados_res_01_intervalo CHECK (res_01 BETWEEN 1 AND 60),
+    CONSTRAINT ck_resultados_res_02_intervalo CHECK (res_02 BETWEEN 1 AND 60),
+    CONSTRAINT ck_resultados_res_03_intervalo CHECK (res_03 BETWEEN 1 AND 60),
+    CONSTRAINT ck_resultados_res_04_intervalo CHECK (res_04 BETWEEN 1 AND 60),
+    CONSTRAINT ck_resultados_res_05_intervalo CHECK (res_05 BETWEEN 1 AND 60),
+    CONSTRAINT ck_resultados_res_06_intervalo CHECK (res_06 BETWEEN 1 AND 60),
+    CONSTRAINT ck_resultados_distintos CHECK (
+        res_01 <> res_02
+        AND res_01 <> res_03
+        AND res_01 <> res_04
+        AND res_01 <> res_05
+        AND res_01 <> res_06
+        AND res_02 <> res_03
+        AND res_02 <> res_04
+        AND res_02 <> res_05
+        AND res_02 <> res_06
+        AND res_03 <> res_04
+        AND res_03 <> res_05
+        AND res_03 <> res_06
+        AND res_04 <> res_05
+        AND res_04 <> res_06
+        AND res_05 <> res_06
+    ),
+    CONSTRAINT ck_resultados_soma_res CHECK (soma_res BETWEEN 21 AND 345),
+    CONSTRAINT ck_resultados_media_aritmetica_res
+        CHECK (media_aritmetica_res BETWEEN 1 AND 60),
+    CONSTRAINT ck_resultados_mediana_res CHECK (mediana_res BETWEEN 1 AND 60),
+    CONSTRAINT ck_resultados_desvio_padrao_media
+        CHECK (desvio_padrao_media >= 0),
+    CONSTRAINT ck_resultados_media_coordenada_x
+        CHECK (media_coordenada_x BETWEEN 0 AND 9),
+    CONSTRAINT ck_resultados_media_coordenada_y
+        CHECK (media_coordenada_y BETWEEN 0 AND 5),
+    CONSTRAINT ck_resultados_versao_calculo CHECK (versao_calculo > 0)
+);
+
+CREATE INDEX IF NOT EXISTS idx_resultados_data_resultado
+    ON resultados (data_resultado);
+
+COMMENT ON TABLE resultados IS
+    'Resultados históricos e cálculos próprios de cada apresentação.';
+COMMENT ON COLUMN resultados.id_resultado IS
+    'Identificador interno automático, sem significado histórico.';
+COMMENT ON COLUMN resultados.numero_ap IS
+    'Número oficial e único da apresentação/concurso.';
+COMMENT ON COLUMN resultados.res_01 IS 'Primeiro resultado na ordem da fonte.';
+COMMENT ON COLUMN resultados.res_02 IS 'Segundo resultado na ordem da fonte.';
+COMMENT ON COLUMN resultados.res_03 IS 'Terceiro resultado na ordem da fonte.';
+COMMENT ON COLUMN resultados.res_04 IS 'Quarto resultado na ordem da fonte.';
+COMMENT ON COLUMN resultados.res_05 IS 'Quinto resultado na ordem da fonte.';
+COMMENT ON COLUMN resultados.res_06 IS 'Sexto resultado na ordem da fonte.';
+COMMENT ON COLUMN resultados.desvio_padrao_media IS
+    'Desvio-padrão populacional dos seis resultados.';
+COMMENT ON COLUMN resultados.media_coordenada_x IS
+    'Média horizontal no sistema lógico de coordenadas da matriz.';
+COMMENT ON COLUMN resultados.media_coordenada_y IS
+    'Média vertical no sistema lógico de coordenadas da matriz.';
+
+CREATE TABLE IF NOT EXISTS frequencia_de_resultado (
+    id_dezena SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    dezena SMALLINT NOT NULL,
+    prim_oco INTEGER,
+    ult_oco INTEGER,
+    num_oco INTEGER NOT NULL DEFAULT 0,
+    media_oco NUMERIC(12,6),
+    mediana_oco NUMERIC(12,6),
+    desv_padrao_oco NUMERIC(12,6),
+    versao_calculo SMALLINT NOT NULL DEFAULT 1,
+    atualizado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT uk_frequencia_de_resultado_dezena UNIQUE (dezena),
+    CONSTRAINT ck_frequencia_de_resultado_dezena
+        CHECK (dezena BETWEEN 1 AND 60),
+    CONSTRAINT ck_frequencia_de_resultado_num_oco CHECK (num_oco >= 0),
+    CONSTRAINT ck_frequencia_de_resultado_ordem_ocorrencias
+        CHECK (prim_oco IS NULL OR ult_oco IS NULL OR prim_oco <= ult_oco),
+    CONSTRAINT ck_frequencia_de_resultado_estado CHECK (
+        (
+            num_oco = 0
+            AND prim_oco IS NULL
+            AND ult_oco IS NULL
+            AND media_oco IS NULL
+            AND mediana_oco IS NULL
+            AND desv_padrao_oco IS NULL
+        )
+        OR
+        (
+            num_oco = 1
+            AND prim_oco IS NOT NULL
+            AND ult_oco = prim_oco
+            AND media_oco IS NULL
+            AND mediana_oco IS NULL
+            AND desv_padrao_oco IS NULL
+        )
+        OR
+        (
+            num_oco >= 2
+            AND prim_oco IS NOT NULL
+            AND ult_oco IS NOT NULL
+            AND media_oco IS NOT NULL
+            AND mediana_oco IS NOT NULL
+            AND desv_padrao_oco IS NOT NULL
+        )
+    ),
+    CONSTRAINT ck_frequencia_de_resultado_media_oco
+        CHECK (media_oco IS NULL OR media_oco >= 0),
+    CONSTRAINT ck_frequencia_de_resultado_mediana_oco
+        CHECK (mediana_oco IS NULL OR mediana_oco >= 0),
+    CONSTRAINT ck_frequencia_de_resultado_desv_padrao_oco
+        CHECK (desv_padrao_oco IS NULL OR desv_padrao_oco >= 0),
+    CONSTRAINT ck_frequencia_de_resultado_versao_calculo
+        CHECK (versao_calculo > 0),
+    CONSTRAINT fk_frequencia_de_resultado_prim_oco
+        FOREIGN KEY (prim_oco)
+        REFERENCES resultados (numero_ap)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT fk_frequencia_de_resultado_ult_oco
+        FOREIGN KEY (ult_oco)
+        REFERENCES resultados (numero_ap)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+COMMENT ON TABLE frequencia_de_resultado IS
+    'Resumo derivado de ocorrências e intervalos para cada dezena de 01 a 60.';
+COMMENT ON COLUMN frequencia_de_resultado.prim_oco IS
+    'Número da primeira apresentação em que a dezena ocorreu.';
+COMMENT ON COLUMN frequencia_de_resultado.ult_oco IS
+    'Número da última apresentação em que a dezena ocorreu.';
+COMMENT ON COLUMN frequencia_de_resultado.num_oco IS
+    'Quantidade total de ocorrências da dezena.';
+COMMENT ON COLUMN frequencia_de_resultado.media_oco IS
+    'Média dos intervalos entre ocorrências consecutivas.';
+COMMENT ON COLUMN frequencia_de_resultado.mediana_oco IS
+    'Mediana dos intervalos entre ocorrências consecutivas.';
+COMMENT ON COLUMN frequencia_de_resultado.desv_padrao_oco IS
+    'Desvio-padrão populacional dos intervalos entre ocorrências.';
+
+INSERT INTO frequencia_de_resultado (dezena)
+SELECT dezena
+FROM GENERATE_SERIES(1, 60) AS dezenas(dezena)
+ON CONFLICT (dezena) DO NOTHING;
+
+COMMIT;

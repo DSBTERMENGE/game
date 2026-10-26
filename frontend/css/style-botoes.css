@@ -1,0 +1,308 @@
+/* ========================================
+   ESTILOS PARA BOTÕES DE FORMULÁRIO
+   ======================================== */
+
+/* CORREÇÃO: Override para divRodape quando contém botões */
+#divRodape:has(#divBotoes) {
+  padding: 0.3rem 2vw !important;
+  min-height: 2rem !important;
+}
+
+/* Fallback para navegadores que não suportam :has() */
+#divRodape #divBotoes {
+  margin: -0.5vw 0 !important; /* Compensa o padding excessivo do divRodape */
+}
+
+/* Container principal dos botões - sempre alinhado à direita do footer */
+#divBotoes {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  min-height: 1.8rem;
+}
+
+/* Container dos botões - força layout horizontal */
+.botoes-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+/* Container para cada grupo de botões */
+.grupo-botoes {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.2rem;
+  border-radius: 3px;
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* Estilos base para todos os botões */
+.btn-formulario {
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  background-color: #f8f9fa;
+  color: #333;
+  font-size: 0.7rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  min-width: 45px;
+  height: 1.5rem;
+  padding: 0 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  position: relative;
+  outline: none;
+}
+
+/* Estados do botão - Padrão amarelo/verde no hover */
+.btn-formulario:hover {
+  background-color: #ffff00 !important;
+  color: #008000 !important;
+  border-color: #cccc00 !important;
+  transform: none;
+  box-shadow: 0 0 0 2px rgba(255, 255, 0, 0.3);
+}
+
+.btn-formulario:active {
+  background-color: #eeee00 !important;
+  color: #006600 !important;
+  transform: translateY(1px);
+  box-shadow: 0 0 0 2px rgba(255, 255, 0, 0.5);
+}
+
+.btn-formulario:disabled {
+  background-color: #e9ecef !important;
+  color: #6c757d !important;
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-formulario:disabled:hover {
+  background-color: #e9ecef !important;
+  color: #6c757d !important;
+  border-color: #ccc !important;
+  box-shadow: none;
+}
+
+/* Melhor contraste para acessibilidade */
+.btn-formulario:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+  background-color: #ffff00 !important;
+  color: #008000 !important;
+}
+
+/* Força reset do estado quando mouse sai */
+.btn-formulario:not(:hover):not(:focus):not(:active) {
+  background-color: #f8f9fa !important;
+  color: #333 !important;
+  border-color: #ccc !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.btn-formulario:active {
+  background-color: #dee2e6;
+  transform: translateY(1px);
+}
+
+.btn-formulario:disabled {
+  background-color: #e9ecef;
+  color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* ========================================
+   ESTILOS ESPECÍFICOS POR GRUPO
+   ======================================== */
+
+/* Grupo 1 - Encerrar */
+.grupo-btn01 .btn-formulario {
+  background-color: #dc3545;
+  color: white;
+  border-color: #dc3545;
+}
+
+.grupo-btn01 .btn-formulario:hover {
+  background-color: #ffff00 !important;
+  color: #008000 !important;
+  border-color: #cccc00 !important;
+}
+
+.grupo-btn01 .btn-formulario:focus {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+  background-color: #ffff00 !important;
+  color: #008000 !important;
+}
+
+.grupo-btn01 .btn-formulario:not(:hover):not(:focus):not(:active) {
+  background-color: #dc3545 !important;
+  color: white !important;
+  border-color: #dc3545 !important;
+}
+
+/* Grupo 2 - Navegação */
+.grupo-btn02 .btn-formulario {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+  min-width: 35px;
+}
+
+.grupo-btn02 .btn-formulario:hover {
+  background-color: #ffff00 !important;
+  color: #008000 !important;
+  border-color: #cccc00 !important;
+}
+
+.grupo-btn02 .btn-formulario:focus {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+  background-color: #ffff00 !important;
+  color: #008000 !important;
+}
+
+.grupo-btn02 .btn-formulario:not(:hover):not(:focus):not(:active) {
+  background-color: #007bff !important;
+  color: white !important;
+  border-color: #007bff !important;
+}
+
+/* Grupo 3 - CRUD */
+.grupo-btn03 .btn-formulario {
+  background-color: #28a745;
+  color: white;
+  border-color: #28a745;
+}
+
+.grupo-btn03 .btn-formulario:hover {
+  background-color: #ffff00 !important;
+  color: #008000 !important;
+  border-color: #cccc00 !important;
+}
+
+.grupo-btn03 .btn-formulario:focus {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+  background-color: #ffff00 !important;
+  color: #008000 !important;
+}
+
+.grupo-btn03 .btn-formulario:not(:hover):not(:focus):not(:active) {
+  background-color: #28a745 !important;
+  color: white !important;
+  border-color: #28a745 !important;
+}
+
+/* ========================================
+   RESPONSIVIDADE
+   ======================================== */
+
+@media (max-width: 800px) {
+  /* Mobile: padding apenas no container principal */
+  #divRodape:has(#divBotoes) {
+    padding: 0.2rem 2vw !important;
+    min-height: 1.8rem !important;
+  }
+
+  #divRodape #divBotoes {
+    margin: -1.5vw 0 !important;
+  }
+
+  #divBotoes {
+    gap: 0.3rem;
+    padding: 0.3rem 0.4rem;
+    flex-wrap: wrap;
+    min-height: 1.5rem;
+  }
+
+  .btn-formulario {
+    font-size: 0.65rem;
+    min-width: 38px;
+    height: 1.3rem;
+    padding: 0 0.4rem;
+  }
+
+  .grupo-btn02 .btn-formulario {
+    min-width: 32px;
+    padding: 0 0.3rem;
+  }
+}
+
+/* ================================================================
+   ESTILOS PARA BOTÕES DO MENU (BarraDeBotoes)
+   ================================================================ */
+
+.btn-menu {
+  /* Estilos base do botão */
+  background-color: #888 !important; /* COR_DE_FUNDO1 */
+  color: white !important; /* COR_DE_TEXTO1 */
+  border: 1px solid #666 !important;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease-in-out !important;
+  cursor: pointer !important;
+  outline: none;
+}
+
+/* Estado hover - amarelo com texto verde */
+.btn-menu:hover {
+  background-color: yellow !important; /* COR_DE_FUNDO2 */
+  color: green !important; /* COR_DE_TEXTO2 */
+  border-color: #cccc00 !important;
+  transform: none !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 0, 0.3) !important;
+}
+
+.btn-menu:active {
+  background-color: #eeee00 !important;
+  color: #006600 !important;
+  transform: translateY(1px) !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 0, 0.5) !important;
+}
+
+.btn-menu:focus {
+  outline: 2px solid #007bff !important;
+  outline-offset: 2px !important;
+  background-color: yellow !important;
+  color: green !important;
+}
+
+/* Força reset do estado quando mouse sai - ESSENCIAL para corrigir o bug */
+.btn-menu:not(:hover):not(:focus):not(:active) {
+  background-color: #888 !important; /* COR_DE_FUNDO1 */
+  color: white !important; /* COR_DE_TEXTO1 */
+  border-color: #666 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.btn-menu:disabled {
+  background-color: #e9ecef !important;
+  color: #6c757d !important;
+  cursor: not-allowed !important;
+  opacity: 0.6;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.btn-menu:disabled:hover {
+  background-color: #e9ecef !important;
+  color: #6c757d !important;
+  border-color: #ccc !important;
+  box-shadow: none !important;
+}

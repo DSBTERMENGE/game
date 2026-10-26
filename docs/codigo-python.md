@@ -1,0 +1,109 @@
+# Plano do código Python
+
+## Objetivo
+
+O código Python será responsável pela validação, regras de negócio, acesso ao
+PostgreSQL, importação dos dados, análises e API. A interface HTML/JavaScript não
+deverá conter regras essenciais nem acessar o banco diretamente.
+
+## Estrutura planejada
+
+```text
+MSen/src/msen/
+├── main.py
+├── config.py
+├── modelos/
+│   └── resultado.py
+├── calculos/
+│   ├── estatisticas_linha.py
+│   ├── coordenadas.py
+│   ├── frequencias.py
+│   └── resultado_calculado.py
+├── database/
+│   ├── connection.py
+│   ├── migrations.py
+│   └── repositories.py
+├── importacao/
+│   └── excel.py
+├── analises/
+│   ├── frequencia.py
+│   └── historico.py
+├── services/
+└── api/
+```
+
+A estrutura será criada gradualmente. Não devem existir módulos vazios apenas
+para imitar esta árvore.
+
+## Responsabilidades
+
+- `config`: ler e validar variáveis de ambiente;
+- `modelos`: representar e validar os dados do domínio sem acessar banco,
+  planilha ou interface;
+- `calculos`: executar funções matemáticas puras sobre modelos já validados;
+- `database`: conexões, transações, migrações e persistência;
+- `importacao`: interpretar a planilha e transformar linhas em dados válidos;
+- `analises`: cálculos puros, preferencialmente independentes da API;
+- `services`: coordenar casos de uso;
+- `api`: traduzir requisições HTTP e respostas, sem SQL;
+- `main`: iniciar o modo de execução escolhido.
+
+## Qualidade e testes
+
+- testes unitários para validação e cálculos;
+- testes de importação com arquivos pequenos controlados;
+- testes de integração em banco de teste separado;
+- nenhum teste deverá usar ou apagar o banco de produção;
+- mensagens de erro deverão informar a operação, sem revelar senha ou string de
+  conexão;
+- conexões e cursores deverão sempre ser fechados corretamente.
+
+## Decisões ainda pendentes
+
+- estratégia de pool de conexões para a futura API;
+- forma de autenticação, caso seja necessária;
+- origem oficial e processo de atualização de novos resultados.
+
+Essas escolhas devem ser registradas em `notas/decisoes.md` antes de orientar
+grandes alterações no código.
+
+## Leitura de Excel implementada
+
+O módulo `importacao/excel.py` abre exclusivamente arquivos `.xlsx` em modo
+somente leitura. Ele procura `Concurso`, `Data` e `bola 1` a `bola 6` em qualquer
+linha da primeira aba, aceita mudanças de ordem, caixa e espaços nos nomes e
+converte cada linha em `ResultadoEntrada`. Linhas totalmente vazias são
+ignoradas; estrutura incompleta ou conteúdo inválido gera `ErroLeituraExcel`
+com código, número da linha e campo, quando disponíveis.
+
+`calculos/resultado_calculado.py` compõe as funções puras da Etapa 2 e devolve
+todos os campos originais e derivados em um objeto imutável, identificado pela
+`versao_calculo`. `importacao/processamento.py` conecta essa composição ao
+leitor, sem acessar o banco de dados.
+
+`importacao/comparacao.py` recebe os resultados existentes e classifica cada
+linha lida como nova, igual, alterada ou inválida. A igualdade considera os
+campos originais do concurso; diferenças em campos calculados ou na versão do
+cálculo podem ser recalculadas futuramente sem serem confundidas com alteração
+da fonte. Uma divergência preserva lado a lado os valores importado e existente.
+
+## Persistência implementada
+
+`database/migrations.py` controla versões, checksum, transações e concorrência.
+`database/repositories.py` concentra todo o SQL da tabela `resultados`: inserção,
+busca por concurso, atualização e listagem paginada. A atualização aceita um
+`ResultadoEntrada`, executa novamente todas as funções matemáticas e somente
+então envia os campos originais e derivados ao PostgreSQL.
+
+`services/importacao_banco.py` coordena comparação, inserção das novidades,
+recálculo integral das 60 frequências e geração do relatório. Todas as gravações
+de uma importação pertencem à mesma transação; linhas iguais são ignoradas e
+divergências não são sobrescritas.
+
+## API Flask
+
+A API usa Flask 3.1 com fábrica de aplicação em `api/app.py`. A fábrica não abre
+conexão com o banco durante a importação do módulo, permitindo testes isolados e
+carregamento seguro pelo WSGI. `MSen/wsgi.py` expõe a variável `application`
+esperada pelo servidor de produção. `GET /api/saude` confirma somente que o
+processo HTTP está respondendo; ele não consulta o PostgreSQL.

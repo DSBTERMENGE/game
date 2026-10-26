@@ -1,0 +1,391 @@
+/* ============================= */
+/* FORMULÁRIO DE TABELAS         */
+/* ============================= */
+
+/* Oculta inicialmente o formulário de tabela */
+#divFormTabela.hidden {
+  display: none !important;
+}
+
+/* Container principal do formulário de tabela */
+#divFormTabela {
+  position: absolute;
+  box-sizing: border-box;
+  max-width: 95vw;
+  max-height: 90vh;
+  overflow: hidden;
+  z-index: 5;
+}
+
+/* Estilo geral do formulário de tabela */
+#divFormTabela .form-tabela {
+  position: absolute !important;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 0.4vw;
+  padding: 1vw;
+  z-index: 5;
+  box-shadow: 0 0 0.6vw rgba(0,0,0,0.2);
+  min-width: 30vw;
+  max-width: calc(95vw - 2vw) !important; /* Força override do cache */
+  max-height: calc(90vh - 4vw) !important; /* Altura mais conservadora */
+  display: flex;
+  flex-direction: column;
+  width: auto;
+  overflow: hidden !important; /* Previne overflow do formulário */
+  box-sizing: border-box; /* Inclui padding e bordas no cálculo */
+}
+
+/* Header do formulário de tabela */
+#divFormTabela #formTabela header {
+  display: block !important; /* Mudança: block ao invés de flex para permitir text-align funcionar */
+  margin: 0 !important; /* Remove margens que criam lacunas */
+  padding: 0.5vw !important;
+  border-bottom: 1px solid #e0e0e0;
+  background-color: #cce6ff !important; /* Mesmo fundo da tabela */
+  background: #cce6ff !important; /* Força background adicional */
+  border-radius: 0.3vw 0.3vw 0 0 !important; /* Bordas arredondadas no topo */
+  text-align: center !important; /* Centraliza o conteúdo do header */
+}
+
+/* Título principal (h2) no header */
+#divFormTabela #formTabela header h2 {
+  margin: 0 0.5vw 0 0 !important; /* Espaço à direita para separar do p */
+  display: inline !important; /* Mudança: inline ao invés de inline-block */
+  width: auto !important;
+  vertical-align: baseline !important; /* Alinha com a linha base do texto */
+}
+
+/* Descrição (p) no header */
+#divFormTabela #formTabela header p {
+  margin: 0 !important;
+  display: inline !important; /* Mudança: inline ao invés de inline-block */
+  width: auto !important;
+  vertical-align: baseline !important; /* Alinha com a linha base do texto */
+}
+
+#divFormTabela #formTabela header h2 {
+  font-size: 1.8vw !important;
+  font-weight: bold !important;
+  color: #000000 !important; /* Preto para contraste com fundo azul claro */
+  line-height: 1.1 !important;
+  margin: 0 0.5vw 0 0 !important; /* Margem direita para separar do p */
+  opacity: 1 !important;
+  filter: none !important;
+  display: inline !important; /* Mudança: inline ao invés de inline-block */
+  vertical-align: baseline !important; /* Alinha com a linha de base do p */
+}
+
+#divFormTabela #formTabela header p {
+  font-size: 1.2vw !important;
+  color: #333333 !important; /* Cinza escuro para contraste com fundo azul claro */
+  line-height: 1.1 !important; /* Mesma line-height do h2 para melhor alinhamento */
+  margin: 0 !important;
+  opacity: 1 !important;
+  filter: none !important;
+  display: inline !important; /* Mudança: inline ao invés de inline-block */
+  vertical-align: baseline !important; /* Alinha com a linha de base do h2 */
+}
+
+/* Área de controles (selects, filtros) no header */
+#divControlesTabela {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end; /* MUDANÇA: alinha à direita como os botões */
+  gap: 0.5rem; /* Usar rem para consistência */
+  flex-wrap: wrap;
+  margin-top: 0.5vw;
+  padding: 0.4rem 0.6rem; /* MUDANÇA: padding consistente com botões */
+  background: #f8f9fa;
+  border-radius: 0.3vw;
+  border: 1px solid #e9ecef;
+  box-sizing: border-box;
+  max-width: 100%;
+  overflow: hidden; /* Evita overflow horizontal */
+  text-align: initial !important; /* Anula herança do text-align: center do header */
+}
+
+/* Container dos selects gerado pelo ConstrutorDeSelects */
+#divControlesTabela .selects-container {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 0.75rem !important; /* Gap um pouco maior para melhor separação visual */
+  margin: 0 !important;
+  padding: 0 !important; /* MUDANÇA: sem padding - usa o do container pai */
+  width: auto !important; /* MUDANÇA: largura automática para alinhamento correto */
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  text-align: initial !important; /* Anula herança do text-align: center do header */
+}
+
+/* Grupos individuais de select - LARGURA AUTOMÁTICA baseada no conteúdo */
+#divControlesTabela .select-grupo {
+  display: inline-flex !important; /* Sobrescreve o flex do style-selects.css */
+  flex-direction: row !important; /* Sobrescreve o column do style-selects.css */
+  align-items: center !important;
+  margin: 0 !important; /* Sobrescreve margins do style-selects.css */
+  margin-bottom: 0 !important; /* Remove margin-bottom específica */
+  padding: 0 !important; /* MUDANÇA: sem padding - usa o do container pai */
+  box-sizing: border-box !important;
+  flex: 0 0 auto !important; /* Sobrescreve flex: 1 do style-selects.css */
+  min-width: auto !important; /* Sobrescreve min-width: 150px do style-selects.css */
+  background: rgba(200, 230, 255, 0.6) !important; /* Background mais visível - azul claro */
+  border: 1px solid rgba(150, 200, 255, 0.4) !important; /* Borda sutil para definir melhor */
+  border-radius: 0.3rem !important; /* Bordas um pouco mais arredondadas */
+  text-align: initial !important; /* Anula herança do text-align: center do header */
+  /* REMOVIDO: max-width calc() - deixa o grupo se ajustar ao conteúdo */
+}
+
+/* Remove margem do último grupo - NÃO NECESSÁRIO com gap */
+
+/* Labels dos selects - LARGURA AUTOMÁTICA baseada no texto */
+#divControlesTabela .select-label {
+  margin-right: 0.5rem !important; /* Espaço entre label e select */
+  margin-bottom: 0 !important; /* Sobrescreve margin-bottom do style-selects.css */
+  font-weight: bold !important;
+  color: #333 !important;
+  white-space: nowrap !important; /* Evita quebra de linha */
+  font-size: 0.85rem !important; /* Consistente com o inline */
+  line-height: 1.2 !important;
+  box-sizing: border-box !important;
+  flex-shrink: 0 !important; /* Label não encolhe */
+  display: inline !important; /* Sobrescreve display: block do style-selects.css */
+  /* REMOVIDO: largura fixa - deixa se ajustar ao texto */
+}
+
+/* Selects individuais - LARGURA DEFINIDA PELO JavaScript (rem/px) */
+#divFormTabela #formTabela #divControlesTabela .selects-container .select-grupo .select-elemento[style],
+#divControlesTabela .select-elemento {
+  /* REMOVIDO: width/max-width forçados - respeitará o valor vindo do JavaScript */
+  min-width: 6rem !important; /* Largura mínima para usabilidade */
+  min-height: 1.8rem !important; /* Sobrescreve min-height: 2.2rem do style-selects.css */
+  padding: 0.25rem 0.4rem !important; /* Sobrescreve padding: 0.5rem do style-selects.css */
+  border: 1px solid #ccc !important;
+  border-radius: 3px !important; /* Sobrescreve border-radius: 4px do style-selects.css */
+  font-size: 0.85rem !important; /* Sobrescreve font-size: 0.9rem do style-selects.css */
+  background: white !important;
+  cursor: pointer !important;
+  box-sizing: border-box !important;
+  height: auto !important;
+  line-height: 1.2 !important;
+  transition: none !important; /* Remove transição do style-selects.css se necessário */
+}
+
+/* Seletor mais específico para garantir que estilos JavaScript sejam respeitados */
+select[id^="select_"] {
+  min-width: 6rem !important; /* Apenas largura mínima */
+}
+
+#divFormTabela #formTabela #divControlesTabela .selects-container .select-grupo .select-elemento[style]:focus,
+select[id^="select_"]:focus {
+  outline: none !important;
+  border-color: #007bff !important;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25) !important; /* Usar px para consistência */
+}
+
+/* Estilos para selects e botões nos controles - REMOVIDOS (substituídos por estilos mais específicos acima) */
+
+#divControlesTabela button {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+#divControlesTabela button:hover {
+  background: #0056b3;
+  border-color: #0056b3;
+}
+
+/* Main do formulário (onde fica a tabela) */
+#divFormTabela #formTabela main {
+  flex: 1;
+  min-height: 0;
+  max-height: calc(80vh - 10vw) !important; /* Altura mais conservadora */
+  overflow: auto;
+  background-color: #cce6ff !important; /* Mesmo fundo da tabela */
+  margin: 0 !important; /* Remove margens que criam lacunas */
+  padding: 0 !important; /* Remove padding interno que pode criar lacunas */
+}
+
+/* Footer do formulário de tabela */
+#formTabela footer {
+  margin: 0 !important; /* Remove margens que criam lacunas */
+  padding: 0.5vw !important;
+  border-top: 1px solid #e0e0e0;
+  background-color: #cce6ff !important; /* Mesmo fundo da tabela */
+  display: flex;
+  justify-content: flex-end;
+  gap: 1vw;
+  border-radius: 0 0 0.3vw 0.3vw !important; /* Bordas arredondadas na base */
+}
+
+#formTabela footer button {
+  padding: 0.5vw 1.2vw;
+  border: 1px solid #ccc;
+  border-radius: 0.3vw;
+  font-size: 1vw;
+  cursor: pointer;
+  background: white;
+}
+
+#formTabela footer button:hover {
+  background: #f8f9fa;
+}
+
+/* ============================= */
+/* ESTILOS DE TABELAS            */
+/* (Migrados do style.css)       */
+/* ============================= */
+
+/* Container principal da tabela dentro do formulário */
+#mainTabela {
+  background-color: #cce6ff;
+  overflow-y: auto; /* Apenas vertical quando necessário */
+  overflow-x: hidden !important; /* Força remoção de scroll horizontal */
+  box-sizing: border-box;
+  width: auto; /* Permite que o conteúdo defina a largura */
+  position: relative; /* Para posicionamento correto do sticky */
+  padding: 0; /* Remove padding que pode causar overflow */
+  margin: 0; /* Remove margin que pode causar overflow */
+}
+
+/* Força remoção de overflow nos containers externos também */
+#divTabelaPlus,
+#divTabela {
+  overflow-x: hidden !important; /* Remove overflow horizontal forçadamente */
+  padding: 0 !important; /* Remove qualquer padding que cause overflow */
+  margin: 0 !important; /* Remove qualquer margin que cause overflow */
+  box-sizing: border-box !important;
+}
+
+/* Cabeçalho fixo da tabela */
+#mainTabela th {
+  position: sticky;
+  top: 0;
+  background: #f0f4fa;
+  z-index: 2;
+}
+
+/* Footer fixo da tabela (tfoot) */
+#mainTabela tfoot td {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+}
+
+/* Estilo de reticulado (zebra) para tabelas */
+#mainTabela table {
+  border-collapse: collapse;
+  width: auto; /* Permite que as colunas definam a largura da tabela */
+  table-layout: fixed; /* Mantém larguras fixas das colunas conforme especificado */
+  box-sizing: border-box; /* Inclui bordas no cálculo de largura */
+  overflow: hidden !important; /* Evita overflow da tabela */
+}
+
+#mainTabela th,
+#mainTabela td {
+  border: 1px solid #bbb;
+  padding: 4px 8px;
+  word-wrap: break-word; /* Quebra palavras longas */
+  overflow-wrap: break-word; /* Compatibilidade adicional */
+  box-sizing: border-box; /* Inclui padding e bordas no cálculo de largura */
+  overflow: hidden; /* Evita que conteúdo vaze da célula */
+  text-overflow: ellipsis; /* Adiciona "..." para texto longo */
+}
+
+#mainTabela tbody tr:nth-child(odd) {
+  background: #f6f6fa;
+}
+
+#mainTabela tbody tr:nth-child(even) {
+  background: #e9f3ff;
+}
+
+/* Estilo da linha de resultados (tfoot) */
+#mainTabela tfoot td {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  background-color: #b3d9ff !important;
+  font-weight: bold !important;
+  border-top: 2px solid #666 !important;
+  border-bottom: 2px solid #666 !important; /* Borda inferior para destacar */
+  color: #2c3e50 !important;
+  padding: 6px 8px !important;
+}
+
+#mainTabela tfoot tr {
+  background-color: #b3d9ff !important;
+}
+
+/* ============================= */
+/* CONTAINERS EXTERNOS           */
+/* (Previnem overflow horizontal)*/
+/* ============================= */
+
+/* Containers externos que podem causar overflow */
+#divTabelaPlus,
+#divTabela,
+#divDescTabela {
+  overflow-x: hidden !important; /* Remove overflow horizontal */
+  box-sizing: border-box !important;
+  padding: 0 !important; /* Remove padding que pode causar expansão */
+  margin: 0 !important; /* Remove margin que pode causar expansão */
+}
+
+/* ============================= */
+/* RESPONSIVIDADE               */
+/* ============================= */
+
+@media (max-width: 800px) {
+  #divFormTabela .form-tabela {
+    min-width: calc(98vw - 4vw) !important;
+    max-width: calc(98vw - 2vw) !important;
+    max-height: calc(90vh - 2vw) !important;
+    padding: 2vw;
+  }
+
+  #divFormTabela #formTabela main {
+    max-height: calc(70vh - 8vw) !important;
+  }
+
+  #formTabela header h2 {
+    font-size: 4vw;
+  }
+
+  #formTabela header p {
+    font-size: 2.5vw;
+  }
+
+  #divControlesTabela {
+    flex-direction: column;
+    gap: 0.5rem; /* MUDANÇA: gap menor para economizar espaço vertical */
+    padding: 0.3rem 0.4rem; /* MUDANÇA: padding mobile consistente com botões */
+  }
+
+  #divControlesTabela .select-grupo {
+    /* Em mobile, grupos mantêm largura natural do conteúdo */
+    margin-bottom: 0 !important; /* MUDANÇA: sem margin-bottom adicional */
+    padding: 0 !important; /* MUDANÇA: mantém sem padding */
+  }
+
+  #divControlesTabela .select-elemento {
+    /* Em mobile, selects mantêm largura definida pelo JavaScript */
+    min-width: 7rem !important; /* MUDANÇA: largura mínima menor para economizar espaço */
+    font-size: 0.9rem !important; /* MUDANÇA: fonte um pouco menor para compactar */
+    padding: 0.3rem 0.5rem !important; /* MUDANÇA: padding menor para economizar espaço */
+  }
+
+  #divControlesTabela .select-label {
+    font-size: 0.9rem !important; /* MUDANÇA: label menor para consistência */
+    margin-right: 0.5rem !important; /* MUDANÇA: margem menor para economizar espaço */
+  }
+
+  #formTabela footer button {
+    font-size: 2vw;
+    padding: 1vw 2vw;
+  }
+}

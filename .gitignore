@@ -45,6 +45,8 @@ env.bak/
 # Arquivos de configuração e credenciais
 *.env
 .env.*
+!.env.example
+!**/.env.example
 secrets.json
 
 # Build e distribuições
@@ -105,6 +107,30 @@ nbdist/
 # Banco de dados local
 *.sqlite
 *.sqlite3
+*.db
+
+# ========================================
+# PostgreSQL - Game / MSen
+# ========================================
+# Arquivos físicos de clusters locais ou descartáveis
+pgdata/
+postgres-data/
+**/.runtime_pg_*/
+
+# Dumps e backups são exclusivamente locais
+backups/
+*.dump
+*.backup
+*.sql.gz
+
+# Relatórios produzidos por importações locais
+/MSen/dados/relatorios/*.json
+
+# Workspace provisório referencia o FinCtl externo
+/Game.code-workspace
+
+# Proteção adicional caso uma cópia do FinCtl seja colocada dentro do Game
+/FinCtl/
 
 # Arquivos grandes ou binários não versionáveis
 *.zip

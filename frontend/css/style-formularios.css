@@ -1,0 +1,289 @@
+/* Visibilidade padrão para todos os formulários */
+.hidden {
+  display: none !important;
+}
+
+/* Estilo comum a formulários com sobreposição (login e modal) */
+.form-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Linha de formulário: cada linha de campos do form dinâmico */
+.linha-form {
+  box-sizing: border-box;
+  /* border: 0.4vw dashed red; */ /* Borda de depuração, descomente para visualizar as linhas */
+  padding: 0.3vh 0.7vw ;
+}
+
+/* Borda e fundo ao formulário de login */
+#formLogin {
+  background: #222;         /* Fundo escuro */
+  border: 2px solid #444;   /* Borda destacada */
+  border-radius: 0.5vw;
+  color: #fff;              /* Texto claro */
+  padding: 1vw;
+  min-width: 12vw;
+  width: 12vw; /* Largura mínima */
+  height: fit-content; /* Altura automática */
+  box-shadow: 0 0 1vw rgba(0,0,0,0.4);
+}
+
+/* Centralizando texto do formulário login */
+#formLogin h2 {
+  text-align: center;
+    margin: 0 0 1vw 0;
+}
+
+/* Estilo adicional para formulários do tipo modal (arrastável) */
+.form-modal form {
+  background-color: white;
+  border-radius: 0.5vw;
+  padding: 2vw;
+  box-shadow: 0 0 1vw rgba(0, 0, 0, 0.2);
+  min-width: 30vw;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: auto;
+  position: relative;
+  cursor: default;
+}
+
+/* Cabeçalho do modal que serve como alça para arrastar */
+#modalHeader {
+  cursor: move;
+  user-select: none;
+}
+
+/* Formulário CRUD com posicionamento absoluto */
+.form-comum {
+  position: absolute;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 0.4vw;
+  padding: 1vw;
+  z-index: 500;
+  box-shadow: 0 0 0.6vw rgba(0, 0, 0, 0.2);
+  min-width: 20vw;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  width:auto;
+  overflow-x: auto; /* Permite rolagem horizontal se necessário */
+}
+
+/* Estrutura interna comum a todos os formulários EXCETO FormComum */
+form header:not(#formCrud header) {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 1vw;
+  font-weight: bold;
+  margin-bottom: 1vw;
+}
+
+/* Header do FormComum - Layout inline como FormTabelas */
+#formCrud header {
+  font-weight: bold;
+  margin-bottom: 1vw;
+  text-align: center;
+}
+
+#formCrud header h2,
+#formCrud header p {
+  display: inline;
+  margin: 0 0.5vw 0 0;
+}
+
+/* Container de controles - Layout natural como FormTabelas */
+#divControlesFormulario {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.5vw;
+  padding: 0.4rem 0.6rem;
+  background: #f8f9fa;
+  border-radius: 0.3vw;
+  border: 1px solid #e9ecef;
+  box-sizing: border-box;
+  max-width: 100%;
+  overflow: hidden;
+  text-align: initial !important;
+}
+
+/* Container dos selects - CÓPIA EXATA do divControlesTabela */
+#divControlesFormulario .selects-container {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: auto !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  text-align: initial !important;
+}
+
+/* Grupos individuais de select - CÓPIA EXATA do divControlesTabela */
+#divControlesFormulario .select-grupo {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  margin: 0 !important;
+  margin-bottom: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  flex: 0 0 auto !important;
+  min-width: auto !important;
+  background: rgba(200, 230, 255, 0.6) !important;
+  border: 1px solid rgba(150, 200, 255, 0.4) !important;
+  border-radius: 0.3rem !important;
+  text-align: initial !important;
+}
+
+/* Labels dos selects - CÓPIA EXATA do divControlesTabela */
+#divControlesFormulario .select-label {
+  margin-right: 0.5rem !important;
+  margin-bottom: 0 !important;
+  font-weight: bold !important;
+  color: #333 !important;
+  white-space: nowrap !important;
+  font-size: 0.85rem !important;
+  line-height: 1.2 !important;
+  box-sizing: border-box !important;
+  flex-shrink: 0 !important;
+  display: inline !important;
+}
+
+/* Selects individuais - CÓPIA EXATA do divControlesTabela */
+#divFormCrud #formCrud #divControlesFormulario .selects-container .select-grupo .select-elemento[style],
+#divControlesFormulario .select-elemento {
+  min-width: 6rem !important;
+  min-height: 1.8rem !important;
+  padding: 0.25rem 0.4rem !important;
+  border: 1px solid #ccc !important;
+  border-radius: 3px !important;
+  font-size: 0.85rem !important;
+  background: white !important;
+  cursor: pointer !important;
+  box-sizing: border-box !important;
+  height: auto !important;
+  line-height: 1.2 !important;
+  transition: none !important;
+}
+
+/* Focus nos selects - CÓPIA EXATA do divControlesTabela */
+#divFormCrud #formCrud #divControlesFormulario .selects-container .select-grupo .select-elemento[style]:focus,
+#divControlesFormulario select[id^="select_"]:focus {
+  outline: none !important;
+  border-color: #007bff !important;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25) !important;
+}
+
+/* CSS UNIFICADO para títulos de formulários */
+form header h2,
+#formCrud header h2,
+#formTabela header h2 {
+  font-size: 1.8vw;
+  font-weight: bold;
+  color: #000000;
+  margin: 0 0.5vw 0 0;
+  line-height: 1.1;
+  margin-top: 0;
+}
+
+/* CSS UNIFICADO para descrições de formulários */
+form header p,
+#formCrud header p,
+#formTabela header p {
+  font-size: 1.2vw;
+  margin: 0;
+  line-height: 1.1;
+  margin-top: 0;
+}
+
+form main {
+  display: flex;
+  flex-direction: column;
+  gap: 1vw;
+}
+
+form footer {
+  margin-top: 1vw;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1vw;
+}
+
+/* ============================= */
+/* FORMULÁRIO MESTRE-DETALHE    */
+/* ============================= */
+
+/* Oculta inicialmente o formulário mestre-detalhe */
+#formMestreDetalhe.hidden {
+  display: none !important;
+}
+
+/* Estilo geral do formulário mestre-detalhe */
+#formMestreDetalhe {
+  position: absolute;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 0.4vw;
+  padding: 1vw;
+  z-index: 501;
+  box-shadow: 0 0 0.6vw rgba(0,0,0,0.2);
+  min-width: 40vw;
+  max-width: 95vw;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Blocos internos */
+#formMestre, #formDetalhe {
+  margin-bottom: 2vw;
+  padding: 1vw;
+  border: 1px solid #ccc;
+  border-radius: 0.6vw;
+  background: #fcfcfc;
+}
+
+/* Detalhe com leve destaque visual */
+#formDetalhe {
+  background: #f3f9ff;
+  border-color: #a8c7e0;
+}
+
+/* Estrutura interna como nos demais formulários */
+#formMestreDetalhe header {
+  font-size: 1.4vw;
+  font-weight: bold;
+  margin-bottom: 1vw;
+}
+
+#formMestreDetalhe main {
+  display: flex;
+  flex-direction: column;
+  gap: 1vw;
+}
+
+#formMestreDetalhe footer {
+  margin-top: 1vw;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1vw;
+}

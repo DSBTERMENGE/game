@@ -1,0 +1,243 @@
+# Continuidade entre sessões da IA
+
+## Como usar este arquivo
+
+Este é o primeiro arquivo que uma nova sessão deve ler, seguido de
+`PLANO_DO_PROJETO.md`, `notas/decisoes.md` e do documento específico da etapa.
+Ao terminar uma sessão relevante, atualizar as seções “Último trabalho” e
+“Próxima ação”. Não registrar senhas, tokens ou outras credenciais aqui.
+
+## Identidade e objetivo
+
+- Projeto: Game / MSen.
+- Repositório: `C:\Applications_DSB\Game`.
+- Aplicação: organização e análise do histórico da Mega-Sena.
+- Banco planejado: PostgreSQL, database `games`.
+- Ambientes previstos: desenvolvimento local e PythonAnywhere.
+- Ordem dos ambientes: concluir e aprovar todo o desenvolvimento local antes de
+  iniciar qualquer preparação ou publicação no PythonAnywhere.
+- Ordem dos ambientes: concluir e aprovar todo o desenvolvimento local antes de
+  iniciar qualquer preparação ou publicação no PythonAnywhere.
+
+## Regras permanentes
+
+1. O FinCtl, em `C:\Applications_DSB\FinCtl`, é somente referência externa.
+   Nunca incluí-lo no Git do Game nem copiar seus dados ou credenciais.
+2. O repositório Git termina na pasta `Game`.
+3. O banco físico, dumps, backups, relatórios locais e credenciais não são
+   versionados. Somente o modelo reproduzível (`schema_postgresql.sql`) e as
+   migrações SQL pertencem ao Git.
+4. Não executar comandos no banco local ou remoto sem conferir banco, usuário,
+   ambiente e efeito da operação.
+5. Não publicar, criar commit ou alterar o PythonAnywhere sem pedido explícito.
+6. Preservar a planilha original em `MSen/dados/fontes`.
+7. Ideias de `notas/ideias.md` não estão automaticamente aprovadas.
+8. Registrar decisões arquiteturais em `notas/decisoes.md`.
+9. Seguir `PLANO_ETAPAS_E_TESTES.md`: executar somente o item autorizado, testar,
+   relatar a conclusão e pedir autorização antes do item seguinte.
+
+## Estado atual em 2026-10-25
+
+- Existe um pacote Python mínimo em `MSen/src/msen`.
+- Existe apenas um teste simples para o ponto de entrada.
+- O DDL da tabela `resultados` está em `database`, mas ainda não foi executado
+  em nenhum servidor PostgreSQL por este projeto. Ele ainda representa o modelo
+  anterior e deverá ser revisado antes da execução para incluir identificador,
+  número da apresentação e os campos calculados recém-definidos.
+- Nenhuma dependência de banco foi adicionada ao `pyproject.toml`.
+- A planilha disponível contém concurso, data e seis bolas; o cabeçalho está na
+  linha 7 e os dados começam na linha 8. Ela está em `MSen/dados/fontes`.
+- A interface está organizada em `frontend/index.html`, `frontend/css` e
+  `frontend/js`, ainda sem integração com Python.
+- O FinCtl foi adicionado ao workspace apenas para consulta.
+- `Game.code-workspace` referencia `../FinCtl` e não deve ser incluído no commit
+  enquanto essa referência temporária permanecer.
+- O backend compartilhado já menciona o app `game`, mas contém configuração de
+  senha inadequada e uma variável incorreta (`INVCTL_PG_PASSWORD` no bloco do
+  Game). Não copiar esse padrão inseguro.
+
+## Último trabalho realizado
+
+- Inspeção somente leitura da organização do Game, FinCtl e backend
+  compartilhado.
+- Criação do plano geral, plano do banco, plano do Python e deste documento.
+- Ampliação dos arquivos de funcionalidades e ideias.
+- Organização dos arquivos da interface na pasta `frontend`, com atualização
+  dos caminhos usados pelo HTML.
+- Nenhum código Python, DDL, banco ou ambiente remoto foi alterado.
+- A tentativa de executar os testes em 2026-10-25 não iniciou porque `pytest`
+  não está instalado no ambiente Python atual.
+- Foram criados `database/schema_postgresql.sql` e a migração inicial, depois
+  substituída por `001_criar_estrutura_inicial.sql` no Item 1.4. O cliente
+  `psql` 16.11 existe fora do `PATH`; o servidor local exige senha e não foi
+  alterado.
+- As regras iniciais de cálculos, frequências, intervalos e gráficos foram
+  registradas em `docs/funcionamento.md` e `notas/funcionalidades.md`.
+- A grade foi definida no sistema lógico `(0; 0)` a `(9; 5)`. A média espacial
+  aceita decimais e será convertida em pixels a partir dos centros reais das
+  células. Foram definidos os modos animação de 0,5 segundo e mancha acumulada.
+- Foi criado `docs/PLANO_FUNCIONALIDADES.txt`, consolidando banco, módulos
+  Python, matemática, gráficos e importação incremental de planilhas Excel.
+- O frontend agora possui painel de comandos, navegação, tempo configurável,
+  voo dos pássaros e mancha. A seleção do Excel chama as rotas planejadas
+  `POST /api/resultados/importar` e `GET /api/resultados`, ainda inexistentes.
+- Em 2026-10-26, a fonte Excel foi movida para `MSen/dados/fontes` sem alteração:
+  tamanho de 129646 bytes e SHA-256
+  `027726F33A89738AD9DC95FAC9A7ECCD390609F5C63CACBB2F00B3873724CE67`.
+- Foi criado `PLANO_ETAPAS_E_TESTES.md`, que passa a controlar a execução item a
+  item, sempre com teste e nova autorização antes de avançar.
+
+## Próxima ação recomendada
+
+O Item 2.1 foi concluído em 2026-10-26. O código Python está separado em
+`MSen/src/msen/modelos/resultado.py`, com modelo imutável, normalização de data,
+validações e erros identificados por código. Os 15 testes de
+`MSen/tests/test_resultado.py` passaram com `unittest`.
+
+O Item 2.2 foi concluído em 2026-10-26. As funções puras `calcular_soma`,
+`calcular_media_aritmetica` e `calcular_mediana` estão em
+`MSen/src/msen/calculos/estatisticas_linha.py`. Seis testes específicos e 21
+testes acumulados passaram.
+
+O Item 2.3 foi concluído em 2026-10-26. O desvio-padrão populacional usa
+`Decimal`, precisão interna de 50 algarismos e `ROUND_HALF_UP` somente no final.
+Nove testes específicos e 30 testes acumulados passaram.
+
+O Item 2.4 foi concluído em 2026-10-26. Coordenadas e média espacial estão em
+`MSen/src/msen/calculos/coordenadas.py`. O exemplo decimal
+`(2,000000; 4,333333)` foi confirmado. Dez testes específicos e 40 testes
+acumulados passaram.
+
+O Item 2.5 foi concluído em 2026-10-26. A análise histórica está em
+`MSen/src/msen/calculos/frequencias.py` e devolve 60 resumos com ocorrências,
+intervalos, média, mediana e desvio-padrão. Treze testes específicos e 53 testes
+acumulados passaram.
+
+O Item 2.6 foi concluído em 2026-10-26. Quatro testes integrados, 57 testes
+acumulados, comparação independente com `statistics` e compilação em memória de
+15 arquivos passaram. A Etapa 2 está concluída.
+
+O Item 3.1 foi concluído em 2026-10-26. `openpyxl>=3.1.5,<4` e
+`defusedxml>=0.7.1,<1` foram registrados em `MSen/pyproject.toml`. Seis arquivos
+controlados estão em `MSen/tests/fixtures`; todos abriram em modo somente
+leitura, e a fonte original manteve o SHA-256 documentado.
+
+O Item 3.2 foi concluído em 2026-10-26. O leitor em
+`MSen/src/msen/importacao/excel.py` abre `.xlsx` em modo somente leitura,
+localiza as oito colunas sem depender da linha 7 e entrega objetos
+`ResultadoEntrada`. A fonte real produziu 3.069 registros e manteve seu hash.
+Sete testes específicos e 64 acumulados passaram.
+
+O Item 3.3 foi concluído em 2026-10-26. `calcular_resultado` concentra todos os
+cálculos aprovados em um `ResultadoCalculado`, e
+`ler_resultados_calculados_excel` aplica a mesma composição a todas as linhas
+importadas. A equivalência com a entrada manual foi confirmada. Seis testes
+específicos e 70 acumulados passaram.
+
+O Item 3.4 foi concluído em 2026-10-26. A comparação incremental está em
+`MSen/src/msen/importacao/comparacao.py` e classifica linhas como `NOVA`,
+`IGUAL`, `ALTERADA` ou `INVALIDA`, sem modificar origem ou existentes. Dados
+originais definem igualdade; mudança isolada da versão de cálculo não representa
+divergência da fonte. Oito testes específicos e 78 acumulados passaram.
+
+O Item 3.5 foi concluído em 2026-10-26. A fonte real foi lida integralmente em
+modo somente leitura: 3.069 linhas válidas, zero inválidas, concursos únicos de
+1 a 3069, primeiro concurso 3069 na linha 8 e último concurso 1 na linha 3076.
+Tamanho e SHA-256 permaneceram iguais. Cinco testes específicos e 83 acumulados
+passaram. A Etapa 3 está concluída.
+
+O Item 4.1 foi concluído em 2026-10-26. `MSen/src/msen/config.py` valida as
+variáveis `GAME_DB_*`, e `MSen/src/msen/database/connection.py` abre e verifica
+conexões usando Psycopg 3.3.6 sem incluir a senha em mensagens. Nove testes
+específicos e 92 acumulados passaram. A conexão válida e o banco inexistente
+foram testados num cluster PostgreSQL 16.11 temporário, depois parado e removido.
+Os serviços persistentes não foram alterados.
+
+O Item 4.2 foi concluído em 2026-10-26. O executor em
+`MSen/src/msen/database/migrations.py` descobre e ordena arquivos, valida
+checksum, aplica SQL e registro atomicamente e usa `pg_advisory_lock` contra
+concorrência. Oito testes específicos e 100 acumulados passaram; banco vazio,
+banco atualizado, rollback, checksum divergente e duas execuções concorrentes
+foram aprovados em PostgreSQL 16.11 temporário. O cluster foi removido.
+
+O Item 4.3 foi concluído em 2026-10-26. O repositório em
+`MSen/src/msen/database/repositories.py` insere, busca, atualiza e lista
+resultados. A atualização recebe `ResultadoEntrada` e recalcula todos os campos
+derivados. Seis testes específicos e 106 acumulados passaram; integração real
+confirmou leitura, duplicidade, rollback, recálculo, listagem e ausência em
+PostgreSQL 16.11 temporário. O cluster foi removido. Aguardar autorização para o
+Item 4.4; não importar a planilha no banco persistente antes de confirmação e
+backup.
+
+O Item 4.4 foi concluído em 2026-10-26. A referência do FinCtl confirmou que
+PostgreSQL 16.11 usa `127.0.0.1:5432` e usuário `postgres`; o Game recebeu o
+database separado `games`. A migração `001`, 3.069 resultados e 60 frequências
+foram persistidos. A soma de ocorrências é 18.414 e a reimportação inseriu zero
+linhas. Como `games` não existia, não havia backup anterior aplicável. O backup
+pós-importação `games_pos_importacao_20261026.dump` foi validado e possui
+SHA-256 `96814C5A3D92D15EB9309697F6EF2DFD68526EBDCDE85112181FBEED7B73BA1F`.
+O `.env`, os relatórios JSON e o dump estão ignorados pelo Git. A Etapa 4 está
+concluída. Aguardar autorização para o Item 5.1.
+
+O Item 5.1 foi concluído em 2026-10-26. Flask 3.1.3 foi escolhido por ser WSGI,
+síncrono como a camada Psycopg atual, simples para a API prevista e diretamente
+compatível com PythonAnywhere. A fábrica está em `MSen/src/msen/api/app.py`, e
+`MSen/wsgi.py` expõe `application` sem iniciar servidor. O endpoint
+`GET /api/saude` existe apenas para verificação técnica. Sete testes específicos
+e 116 acumulados passaram. Aguardar autorização para o Item 5.2; a rota
+`GET /api/resultados` ainda não foi implementada.
+
+O Item 5.2 foi concluído em 2026-10-26. `GET /api/resultados` está em
+`MSen/src/msen/api/resultados.py`, usa o repositório PostgreSQL e devolve o
+contrato do frontend em ordem crescente. Datas usam ISO e decimais são textos.
+Seis testes específicos e 121 acumulados passaram. Teste HTTP local real
+retornou 3.069 resultados, do concurso 1 ao 3069, sem alterar a contagem do
+banco. O servidor de desenvolvimento foi encerrado. Conforme decisão do usuário,
+o primeiro commit completo será preparado somente após fechar a API. O item
+seguinte, 5.3, foi posteriormente autorizado e concluído conforme abaixo.
+
+O Item 5.3 foi concluído em 2026-10-26. `POST /api/resultados/importar` recebe
+o Excel pelo campo multipart `arquivo`, valida extensão e tamanho, usa arquivo
+temporário e chama a importação incremental transacional existente. Sete testes
+específicos e 128 acumulados passaram. A reimportação real manteve os 3.069
+resultados e uma falha controlada confirmou o rollback. O primeiro commit ficou
+adiado até o fechamento da API; o Item 5.4 foi depois autorizado e concluído.
+
+O Item 5.4 foi concluído em 2026-10-26. As rotas de inclusão e edição
+individual recalculam todos os derivados e as frequências na mesma transação.
+Nove testes específicos e 137 acumulados passaram. A homologação local do
+concurso temporário 3070 confirmou inclusão, edição e rollback integral; o
+banco voltou a 3.069 resultados. A API planejada está fechada. Conforme decisão
+do usuário, o próximo trabalho deverá preparar o primeiro versionamento antes
+de iniciar a Etapa 6, mas somente após nova autorização.
+
+A definição de intervalo foi confirmada: é a diferença entre os números das
+apresentações. Exemplo: ocorrências da dezena 02 nas apresentações 35 e 50
+produzem intervalo 15.
+
+## Pendências conhecidas
+
+- Criar o controle de migrações antes da automatização pelo Python.
+- Confirmar se o desvio-padrão será populacional ou amostral.
+- Definir o comportamento da mancha quando os círculos excederem a área do
+  retângulo de um número.
+- Escolher framework da API e driver PostgreSQL.
+- Definir a origem confiável para atualizações futuras dos concursos.
+- Decidir se `Game.code-workspace` será ignorado ou limpo antes do primeiro
+  commit do projeto.
+- Confirmar a estratégia para o backend compartilhado.
+- Preparar o ambiente virtual e instalar as dependências de desenvolvimento
+  antes de executar os testes.
+
+## Modelo para encerrar futuras sessões
+
+```text
+Data:
+Objetivo da sessão:
+Arquivos alterados:
+Testes executados e resultados:
+Banco/ambiente afetado:
+Decisões tomadas:
+Pendências:
+Próxima ação exata:
+```

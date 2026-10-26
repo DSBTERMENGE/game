@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Visualização gráfica e análise de resultados da Mega-Sena.">
+    <title>Game Analysis</title>
+    <link rel="stylesheet" href="css/style.css">
+  </head>
+  <body>
+    <header class="barra-titulo">
+      <div class="marca" aria-hidden="true">GA</div>
+      <h1>Game Analysis</h1>
+    </header>
+
+    <main class="area-trabalho">
+      <section class="comandos" aria-labelledby="titulo-comandos">
+        <h2 id="titulo-comandos">Comandos</h2>
+
+        <div class="grupo-comandos">
+          <input id="arquivo-excel" type="file" accept=".xlsx,.xls" hidden>
+          <button id="botao-selecionar-excel" type="button">Selecionar Excel</button>
+          <button id="botao-importar-excel" type="button" disabled>
+            Importar, calcular e armazenar
+          </button>
+          <span id="nome-arquivo" class="texto-apoio">Nenhum arquivo selecionado</span>
+        </div>
+
+        <div class="grupo-comandos">
+          <label for="seletor-resultado">Resultado</label>
+          <select id="seletor-resultado" disabled>
+            <option value="">Nenhum resultado carregado</option>
+          </select>
+          <button id="botao-anterior" type="button" disabled>Anterior</button>
+          <button id="botao-proximo" type="button" disabled>Próximo</button>
+        </div>
+
+        <div class="grupo-comandos">
+          <label for="tempo-voo">Tempo por resultado</label>
+          <input id="tempo-voo" type="number" min="0.1" max="30" step="0.1" value="0.5">
+          <span>s</span>
+          <button id="botao-voo" type="button" disabled>Iniciar voo dos pássaros</button>
+          <button id="botao-mancha" type="button" disabled>Desenhar mancha</button>
+          <button id="botao-limpar" type="button">Limpar gráfico</button>
+        </div>
+
+        <p id="mensagem-sistema" class="mensagem-sistema" role="status" aria-live="polite">
+          Aguardando dados.
+        </p>
+      </section>
+
+      <section class="painel" aria-labelledby="titulo-jogo">
+        <div class="cabecalho-resultado">
+          <h2 id="titulo-jogo">Resultado Nº: <span id="jogo-numero">—</span></h2>
+          <output id="coordenada-media">Média espacial: —</output>
+        </div>
+
+        <div class="mapa-scroll">
+          <div class="mapa" id="mapa-dezenas">
+            <svg
+              class="mapa__marcas"
+              id="camada-marcas"
+              aria-hidden="true"
+              preserveAspectRatio="none"
+            ></svg>
+            <div class="mapa__grade" id="grade-dezenas" aria-label="Dezenas de 01 a 60"></div>
+          </div>
+        </div>
+
+      </section>
+    </main>
+
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>

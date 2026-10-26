@@ -1,0 +1,134 @@
+/* Esconde o container de selects/filtros/botões quando está vazio */
+#divControlesTabela:empty,
+#divControlesFormulario:empty {
+  display: none;
+}
+/* Estilos para o GerenciadorSelects */
+
+/* Container principal */
+.select-cascata-container {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin: 1rem 0;
+}
+
+.select-cascata-container.layout-vertical {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.select-cascata-container.layout-horizontal {
+  flex-direction: row;
+  align-items: flex-end;
+}
+
+/* Grupo individual (label + select) */
+.select-grupo {
+  display: flex;
+  flex-direction: column;
+  min-width: 150px;
+  flex: 1;
+}
+
+.layout-vertical .select-grupo {
+  margin-bottom: 0.5rem;
+}
+
+/* Labels */
+.select-label {
+  font-weight: bold;
+  color: #333;
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+/* Selects */
+.select-elemento {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  background-color: white;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 2.2rem;
+}
+
+.select-elemento:hover:not(:disabled) {
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+}
+
+.select-elemento:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+}
+
+.select-elemento:disabled {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  cursor: not-allowed;
+  border-color: #e9ecef;
+}
+
+/* Opção placeholder */
+.select-elemento option[value=""] {
+  color: #6c757d;
+  font-style: italic;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .select-cascata-container.layout-horizontal {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .select-grupo {
+    min-width: auto;
+    margin-bottom: 0.75rem;
+  }
+}
+
+/* Estados de carregamento (para usar quando implementar loading) */
+.select-elemento.loading {
+  background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSIxMCIgY3k9IjEwIiByPSIzIiBmaWxsPSJub25lIiBzdHJva2U9IiM5OTkiIHN0cm9rZS13aWR0aD0iMiI+CiAgICA8YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJyIiBmcm9tPSIzIiB0bz0iOCIgZHVyPSIxcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KICA8L2NpcmNsZT4KPC9zdmc+');
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px 16px;
+  padding-right: 35px;
+}
+
+/* Variações de cores para diferentes tipos */
+.select-cascata-container.tipo-filtro .select-elemento {
+  border-color: #28a745;
+}
+
+.select-cascata-container.tipo-filtro .select-elemento:hover:not(:disabled) {
+  border-color: #28a745;
+  box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.1);
+}
+
+.select-cascata-container.tipo-filtro .select-elemento:focus {
+  border-color: #28a745;
+  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.2);
+}
+
+.select-cascata-container.tipo-busca .select-elemento {
+  border-color: #ffc107;
+}
+
+.select-cascata-container.tipo-busca .select-elemento:hover:not(:disabled) {
+  border-color: #ffc107;
+  box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.1);
+}
+
+.select-cascata-container.tipo-busca .select-elemento:focus {
+  border-color: #ffc107;
+  box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.2);
+}

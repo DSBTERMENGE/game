@@ -1,0 +1,152 @@
+# Decisões do projeto
+
+## 2026-10-24 — Estrutura inicial
+
+- O código Python ficará em `MSen/src/msen`.
+- Os dados específicos da aplicação ficarão em `MSen/dados`.
+- Testes automatizados ficarão em `MSen/tests`.
+- Documentação estável ficará em `docs`.
+- Ideias e planejamento em andamento ficarão em `notas`.
+- Os arquivos HTML e CSS existentes permanecerão na raiz até que sua relação
+  com a aplicação Python seja definida.
+
+## 2026-10-25 — Estrutura inicial dos resultados
+
+- A tabela principal se chamará `resultados`.
+- Ela começará somente com os campos conhecidos: `numero_concurso`,
+  `data_sorteio` e `bola_1` a `bola_6`.
+- Não serão criados campos genéricos `C8` a `C50`.
+- Campos futuros serão adicionados por novas migrações depois que nome, tipo e
+  regras estiverem definidos.
+- As bolas devem estar entre 1 e 60 e não podem se repetir no mesmo concurso.
+- Os arquivos da interface foram movidos da raiz para `frontend`.
+
+## 2026-10-25 — Coordenadas e visualização
+
+- A grade de 01 a 60 possui coordenadas de `(0; 0)` a `(9; 5)`.
+- O eixo horizontal cresce para a direita e o vertical cresce para baixo.
+- A média espacial será calculada pela média independente das coordenadas X e Y
+  dos seis resultados.
+- Coordenadas decimais não serão arredondadas para uma dezena.
+- A animação exibirá um resultado a cada 0,5 segundo e apagará o anterior.
+- O modo mancha conservará as marcações anteriores.
+
+## 2026-10-26 — Execução controlada e fonte de dados
+
+- A planilha original fica em `MSen/dados/fontes` e será tratada como somente
+  leitura pela aplicação.
+- `PLANO_ETAPAS_E_TESTES.md` é o roteiro operacional vigente.
+- Somente um item autorizado será executado por vez.
+- Cada item deve terminar com seus testes e um pedido de autorização para o
+  item seguinte.
+
+## 2026-10-26 — Dicionário da tabela `resultados`
+
+- `numero_ap` representa o número da coluna `Concurso`.
+- O desvio-padrão da linha será populacional, com divisor 6.
+- Médias, coordenadas e desvio-padrão serão armazenados com seis casas decimais
+  e inicialmente exibidos com duas.
+- A tabela terá os campos técnicos `versao_calculo`, `criado_em` e
+  `atualizado_em`.
+- `id_resultado` será uma identidade interna automática e `numero_ap` será a
+  identificação funcional única.
+- O dicionário aprovado está em `docs/DICIONARIO_DADOS_RESULTADOS.md`.
+
+## 2026-10-26 — Contrato dos cálculos
+
+- Os cálculos decimais usarão `Decimal` e `ROUND_HALF_UP`.
+- Somente o resultado final de cada campo será arredondado; valores
+  intermediários manterão a precisão de cálculo.
+- Análises históricas serão ordenadas por `numero_ap` crescente, com a data como
+  conferência.
+- Intervalo é a diferença entre os números das apresentações: ocorrências nas
+  apresentações 35 e 50 produzem intervalo 15.
+- Ausência de intervalo será representada por `NULL`.
+- Com exatamente um intervalo observado, seu desvio-padrão será zero.
+- O contrato aprovado está em `docs/CONTRATO_RESULTADOS_E_CALCULOS.md`.
+- Uma linha de resultado nunca aceita dezenas repetidas. Valores iguais somente
+  podem aparecer em sequências derivadas, como os intervalos entre ocorrências.
+
+## 2026-10-26 — Modelo PostgreSQL
+
+- O banco terá as tabelas `resultados`, `frequencia_de_resultado` e
+  `schema_migrations`.
+- O nome correto será `id_dezena`.
+- `media_oco` e `mediana_oco` serão campos separados.
+- Média, mediana e desvio de ocorrências serão calculados sobre os intervalos.
+- `frequencia_de_resultado` manterá uma linha para cada dezena de 01 a 60.
+- As 60 linhas serão recalculadas na mesma transação de alterações em
+  `resultados`.
+- A tabela de frequência terá `versao_calculo` e `atualizado_em`.
+- `schema_migrations` registrará o checksum SHA-256 de cada migração.
+- O modelo aprovado está em `docs/MODELO_POSTGRESQL.md`.
+
+## 2026-10-26 — DDL inicial validado
+
+- A migração inicial se chama `001_criar_estrutura_inicial.sql`.
+- O esquema completo e a migração possuem conteúdo equivalente.
+- O DDL foi validado em PostgreSQL 16.11 temporário e isolado.
+- Os testes não autorizam execução no banco persistente ou no PythonAnywhere.
+- As evidências estão em `database/TESTE_DDL_ITEM_1_4.md`.
+
+## 2026-10-26 — Conexão PostgreSQL pelo Python
+
+- O driver será Psycopg 3 com distribuição binária e faixa de versão
+  `>=3.3.6,<4`.
+- A configuração usará exclusivamente variáveis `GAME_DB_*`.
+- Host, database, usuário e senha não terão valores implícitos.
+- Arquivos `.env` continuarão ignorados; `.env.example` conterá apenas exemplos.
+- Mensagens de conexão não reproduzirão mensagens brutas que possam conter
+  credenciais.
+- O Item 4.1 não cria databases, tabelas ou dados.
+
+## 2026-10-26 — Executor de migrações
+
+- Migrações seguem o padrão `NNN_nome.sql` e são ordenadas numericamente.
+- O SHA-256 é calculado sobre os bytes originais do arquivo.
+- Alterar uma migração registrada interrompe a inicialização.
+- Cada migração e seu registro são confirmados ou revertidos juntos.
+- Uma trava consultiva PostgreSQL serializa execuções simultâneas.
+- `BEGIN` e `COMMIT` externos são removidos somente em memória para que o Python
+  controle a atomicidade; o arquivo SQL permanece inalterado.
+
+## 2026-10-26 — Repositório de resultados
+
+- O SQL de `resultados` fica restrito à camada `database`.
+- Inserção exige `ResultadoCalculado`; atualização exige `ResultadoEntrada` e
+  recalcula todos os campos derivados.
+- Cada método usa uma transação e participa de uma transação externa quando ela
+  existir, permitindo rollback de operações compostas.
+- A listagem inicial usa `numero_ap` crescente e paginação por limite e
+  deslocamento.
+- Divergências de importação não são atualizadas automaticamente.
+
+## 2026-10-26 — Framework da API
+
+- O framework será Flask 3.1, inicialmente fixado em `>=3.1.3,<4`.
+- A aplicação usa o padrão de fábrica para permitir configurações e instâncias
+  independentes em testes.
+- Flask foi preferido porque a API é pequena, a persistência atual é síncrona e
+  o PythonAnywhere fornece integração WSGI direta.
+- FastAPI exigiria uma camada ASGI ou adaptação adicional no ambiente planejado;
+  Django acrescentaria componentes que o escopo atual não necessita.
+- O servidor de desenvolvimento nunca será iniciado durante a importação WSGI.
+
+## 2026-10-26 — Desenvolvimento local antes da publicação
+
+- Todas as funcionalidades serão desenvolvidas, integradas e testadas primeiro
+  no computador local.
+- O PostgreSQL local `games` será o ambiente de desenvolvimento atual.
+- O PythonAnywhere não receberá código, DDL, migração ou dados durante as etapas
+  locais.
+- A publicação será uma fase posterior, iniciada somente após conclusão, testes,
+  backup e autorização explícita do usuário.
+
+## 2026-10-26 — Banco fora do versionamento Git
+
+- Arquivos físicos do PostgreSQL, dumps, backups e relatórios locais não entram
+  no Git.
+- `.env` e qualquer credencial permanecem somente no ambiente local.
+- `schema_postgresql.sql` e `database/migrations/*.sql` entram no Git porque são
+  código reprodutível da estrutura, não o database nem seus dados.
+- `Game.code-workspace` fica ignorado porque referencia provisoriamente o FinCtl.

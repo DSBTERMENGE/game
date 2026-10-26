@@ -1,0 +1,303 @@
+PLANO DE FUNCIONALIDADES E FUNCIONAMENTO — GAME / MSEN
+======================================================
+
+Data da consolidação: 25/10/2026
+Estado: planejamento funcional; ainda não representa código concluído.
+
+
+1. OBJETIVO DO PROGRAMA
+-----------------------
+
+O programa importará, armazenará, analisará e representará graficamente séries
+de resultados compostos por seis números entre 01 e 60.
+
+Cada resultado pode ser entendido como uma observação de seis pontos. Para o
+estudo de padrões, os números podem ser imaginados como temperaturas medidas em
+seis pontos de um corpo. O objetivo é identificar comportamentos, distribuições,
+deslocamentos e padrões visuais ao longo do histórico.
+
+
+2. FORMAS DE ENTRADA DOS DADOS
+------------------------------
+
+2.1. Importação inicial pelo Excel
+
+A primeira carga será feita pela planilha Excel existente, pois o histórico tem
+mais de 3.000 linhas e não deve ser digitado manualmente.
+
+O arquivo atual possui:
+
+- cabeçalho na linha 7;
+- dados a partir da linha 8;
+- colunas Concurso, Data e bola 1 até bola 6.
+
+O programa não dependerá permanentemente do número da linha. Ele deverá localizar
+e validar os nomes das colunas para evitar a leitura silenciosa de um formato
+incorreto.
+
+2.2. Atualização por uma nova planilha
+
+O usuário poderá substituir o arquivo por uma versão mais recente. O importador
+comparará cada linha com o banco utilizando o número da apresentação/concurso
+como identificador funcional.
+
+Para cada linha, o sistema deverá classificá-la como:
+
+- NOVA: não existe no banco; calcular e inserir;
+- IGUAL: já existe com os mesmos dados; ignorar sem duplicar;
+- ALTERADA: existe, mas data ou resultados diferem; registrar no relatório e
+  somente atualizar conforme a política de confirmação definida;
+- INVÁLIDA: possui campo ausente, data inválida, número fora do intervalo ou
+  resultado repetido; não gravar.
+
+Ao final, o sistema mostrará a quantidade de linhas novas, iguais, alteradas,
+inválidas e gravadas. Uma falha não poderá deixar uma linha parcialmente salva.
+
+2.3. Inclusão e edição manual
+
+Posteriormente haverá formulário para incluir ou editar uma linha. Ao clicar em
+Salvar, o sistema validará os seis resultados, recalculará todos os campos
+derivados daquela linha e gravará tudo na mesma transação.
+
+As mesmas funções de validação e cálculo serão usadas pelo Excel e pelo
+formulário. Não haverá duas versões das fórmulas.
+
+
+3. BANCO DE DADOS PLANEJADO
+---------------------------
+
+Database PostgreSQL planejado: games
+Tabela principal: resultados
+
+Campos funcionais atualmente definidos:
+
+- id_resultado: identificador interno automático;
+- data_resultado: data do resultado;
+- numero_ap: número da apresentação/concurso, único;
+- res_01;
+- res_02;
+- res_03;
+- res_04;
+- res_05;
+- res_06;
+- soma_res;
+- media_aritmetica_res;
+- mediana_res;
+- desvio_padrao_media;
+- media_coordenada_x;
+- media_coordenada_y.
+
+Também poderão existir campos técnicos, como data de criação e atualização,
+desde que sejam aprovados antes do DDL definitivo.
+
+Regras mínimas:
+
+- numero_ap não pode se repetir;
+- cada resultado deve estar entre 01 e 60;
+- os seis resultados de uma linha devem ser diferentes;
+- campos calculados nunca serão aceitos diretamente da planilha ou interface;
+- valores originais e calculados serão gravados na mesma transação;
+- alterações futuras serão feitas por novas migrações SQL;
+- não serão criados campos genéricos C8 até C50.
+
+O DDL existente ainda deverá ser revisado antes de qualquer execução, pois foi
+criado antes da definição dos novos campos.
+
+
+4. FUNÇÕES PYTHON PLANEJADAS
+----------------------------
+
+Os nomes abaixo são indicativos e poderão ser refinados durante a implementação.
+
+4.1. Leitura e importação
+
+- localizar_colunas_excel: localizar e conferir o cabeçalho;
+- ler_resultados_excel: percorrer as linhas úteis sem modificar o arquivo;
+- normalizar_linha_excel: converter data e números para os tipos internos;
+- comparar_resultado_existente: identificar linha nova, igual ou alterada;
+- importar_resultados_excel: coordenar validação, cálculo e persistência;
+- gerar_relatorio_importacao: resumir inclusões, repetições, alterações e erros.
+
+4.2. Validação
+
+- validar_numero_ap;
+- validar_data_resultado;
+- validar_seis_resultados;
+- validar_intervalo_01_60;
+- validar_resultados_distintos;
+- validar_resultado_completo.
+
+4.3. Cálculos da linha
+
+- calcular_soma;
+- calcular_media_aritmetica;
+- calcular_mediana;
+- calcular_desvio_padrao_media;
+- converter_numero_em_coordenada;
+- calcular_media_coordenadas;
+- calcular_estatisticas_da_linha.
+
+calcular_estatisticas_da_linha será a porta única para todos os cálculos de uma
+linha. Ela receberá os seis valores originais e devolverá os campos calculados.
+
+4.4. Persistência
+
+- buscar_resultado_por_numero_ap;
+- inserir_resultado;
+- atualizar_resultado;
+- salvar_resultado;
+- listar_resultados_em_ordem;
+
+4.5. Análises históricas
+
+- calcular_frequencias_01_60;
+- localizar_ocorrencias_de_um_numero;
+- calcular_intervalos_entre_ocorrencias;
+- calcular_intervalo_medio;
+- calcular_desvio_padrao_dos_intervalos;
+- calcular_media_movel;
+- preparar_serie_para_grafico.
+
+As análises históricas serão inicialmente calculadas quando solicitadas. Elas só
+serão armazenadas se testes posteriores demonstrarem necessidade e se houver uma
+regra segura para recalcular dados afetados por edições antigas.
+
+
+5. CÁLCULOS MATEMÁTICOS
+-----------------------
+
+Para os seis resultados de uma linha, o programa calculará e armazenará:
+
+- soma;
+- média aritmética;
+- mediana;
+- desvio-padrão em relação à média;
+- média da coordenada horizontal;
+- média da coordenada vertical.
+
+A fórmula do desvio-padrão ainda deverá ser confirmada como populacional ou
+amostral antes da implementação definitiva.
+
+Para cada número de 01 a 60, considerando uma série histórica, calculará:
+
+- quantidade de ocorrências;
+- posições ou datas das ocorrências;
+- intervalos entre ocorrências sucessivas;
+- intervalo médio;
+- desvio-padrão dos intervalos.
+
+
+6. SISTEMA DE COORDENADAS
+-------------------------
+
+A matriz contém 10 colunas e 6 linhas. O centro de 01 é a origem. O eixo X cresce
+para a direita e o eixo Y cresce para baixo.
+
+01 = (0; 0)     10 = (9; 0)
+11 = (0; 1)     20 = (9; 1)
+21 = (0; 2)     30 = (9; 2)
+31 = (0; 3)     40 = (9; 3)
+41 = (0; 4)     50 = (9; 4)
+51 = (0; 5)     60 = (9; 5)
+
+Para um número n:
+
+x = (n - 1) módulo 10
+y = parte inteira de ((n - 1) / 10)
+
+Para os seis números:
+
+media_x = (x1 + x2 + x3 + x4 + x5 + x6) / 6
+media_y = (y1 + y2 + y3 + y4 + y5 + y6) / 6
+
+As coordenadas poderão ser decimais, por exemplo (2; 4,33). Elas não serão
+arredondadas para o centro de uma dezena.
+
+
+7. FUNÇÕES GRÁFICAS PLANEJADAS
+------------------------------
+
+A interface será responsável pelo desenho. O Python fornecerá resultados e
+estatísticas; o JavaScript converterá as coordenadas lógicas em pixels.
+
+Funções visuais previstas:
+
+- obter_centro_da_dezena;
+- converter_coordenada_em_pixel;
+- desenhar_marca_de_resultado;
+- desenhar_media_espacial;
+- limpar_marcas_do_resultado;
+- animar_resultados;
+- interromper_animacao;
+- desenhar_mancha_de_resultados;
+- desenhar_mancha_das_medias.
+
+Conversão para a tela:
+
+pixel_x = centro_01_x + media_x * passo_horizontal
+pixel_y = centro_01_y + media_y * passo_vertical
+
+Os passos horizontal e vertical serão medidos entre os centros reais das células.
+Assim, o desenho continuará correto quando o CSS mudar tamanhos ou espaçamentos.
+
+
+8. MODOS DE REPRESENTAÇÃO
+-------------------------
+
+8.1. Resultado individual
+
+- desenhar círculo inicialmente verde-claro sobre cada um dos seis números;
+- conservar o número legível sob a marca;
+- desenhar a média espacial na coordenada decimal exata.
+
+8.2. Navegação animada
+
+- exibir um resultado e sua média;
+- aguardar 0,5 segundo;
+- apagar as marcas;
+- avançar para o próximo resultado;
+- permitir interromper e reiniciar a animação.
+
+8.3. Mancha acumulada
+
+- avançar pelos resultados sem apagar as marcas anteriores;
+- adicionar pequenos círculos, inicialmente com cerca de 3 mm de diâmetro;
+- preencher o retângulo do número lado a lado e continuar na linha seguinte;
+- formar uma mancha visual proporcional à frequência;
+- produzir representação equivalente para as médias espaciais.
+
+Ainda deverá ser definida a regra para quando as marcas excederem a área de uma
+célula: redução progressiva, agrupamento ou intensidade de cor.
+
+
+9. ORDEM INICIAL DE IMPLEMENTAÇÃO
+---------------------------------
+
+1. confirmar os nomes e tipos definitivos dos campos;
+2. confirmar a fórmula do desvio-padrão;
+3. revisar o DDL e a migração da tabela resultados;
+4. criar modelos e validações Python;
+5. implementar e testar os cálculos puros;
+6. implementar a leitura do Excel;
+7. implementar comparação e importação incremental;
+8. configurar e testar o PostgreSQL local;
+9. criar consultas e funções históricas;
+10. integrar a API com a interface;
+11. implementar resultado individual e média espacial;
+12. implementar animação de 0,5 segundo;
+13. implementar a mancha acumulada;
+14. validar todos os fluxos antes de preparar o PythonAnywhere.
+
+
+10. CUIDADOS OBRIGATÓRIOS
+-------------------------
+
+- nunca modificar automaticamente a planilha original;
+- nunca duplicar uma apresentação/concurso existente;
+- nunca atualizar uma linha divergente sem política de confirmação;
+- nunca aceitar campos calculados fornecidos pelo usuário como verdadeiros;
+- nunca deixar cálculos antigos depois de editar os seis resultados;
+- nunca armazenar senha no código ou no Git;
+- nunca executar uma migração sem confirmar o database de destino;
+- manter importação, matemática, banco e desenhos em módulos separados;
+- criar testes para todas as fórmulas e casos de importação.
