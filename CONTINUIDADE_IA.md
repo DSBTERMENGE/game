@@ -217,6 +217,36 @@ validam o painel, mensagens, seleção e navegação circular; os 137 testes Pyt
 também passaram. Com um único resultado, Anterior, Próximo e Voo ficam
 desabilitados. Aguardar autorização para o Item 6.2.
 
+O Item 6.2 foi concluído em 2026-10-26. Cinco testes geométricos adicionais
+confirmaram as marcas em 01, 10, 51 e 60, média em centro inteiro, o ponto
+decimal `(2; 4,33)`, legibilidade e redimensionamento. A implementação existente
+não precisou de correção. Dez testes de frontend e 137 testes Python passaram.
+Aguardar autorização para o Item 6.3.
+
+O Item 6.3 foi concluído em 2026-10-26. Cinco testes com relógio controlado
+confirmaram intervalo padrão, avanço ordenado, pausa limpa, alteração do tempo,
+limites de 0,1 a 30 segundos e redimensionamento durante o voo. Quinze testes de
+frontend e 137 testes Python passaram. O PythonAnywhere permanece fora do
+escopo até todo o desenvolvimento local e as novas funcionalidades ainda a
+serem apresentadas pelo usuário estarem concluídos. Aguardar autorização para o
+Item 6.4.
+
+O Item 6.5 foi concluído em 2026-10-26. Playwright 1.64.1 executou três fluxos
+no Google Chrome real: carregar/navegar/desenhar, iniciar/pausar o voo e
+selecionar Excel/importar com API simulada/desenhar mancha/limpar. Todos
+passaram, assim como os dezenove testes unitários de frontend e 137 testes
+Python. A Etapa 6 está concluída e este é o ponto de versionamento combinado. O
+PythonAnywhere continua fora do escopo; ainda há funcionalidades futuras a
+serem fornecidas pelo usuário. Aguardar autorização para versionar a Etapa 6 e,
+depois, para o Item 7.1.
+
+O Item 6.4 foi concluído em 2026-10-26. Quatro testes específicos confirmaram a
+mancha pequena, reinício das posições quando uma célula lota, desenho de 3.000
+resultados dentro dos limites locais e limpeza completa. Dezenove testes de
+frontend e 137 testes Python passaram. As alterações dos Itens 6.2 a 6.4 seguem
+sem commit por decisão do usuário; o próximo ponto de versionamento será ao
+fechar a Etapa 6. Aguardar autorização para o Item 6.5.
+
 A definição de intervalo foi confirmada: é a diferença entre os números das
 apresentações. Exemplo: ocorrências da dezena 02 nas apresentações 35 e 50
 produzem intervalo 15.

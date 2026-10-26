@@ -509,6 +509,12 @@ Testes visuais e geométricos:
 - média em ponto decimal conhecido;
 - redimensionamento da janela.
 
+Estado: concluído em 2026-10-26. Cinco testes geométricos adicionais, dez de
+frontend acumulados, confirmaram seis marcas por resultado, centros de 01, 10,
+51 e 60, média inteira, ponto decimal `(2; 4,33)`, legibilidade e recálculo de
+posições após redimensionamento. Os 137 testes Python permaneceram aprovados.
+Evidências em `MSen/tests/TESTE_ITEM_6_2.md`.
+
 ### Item 6.3 — Voo dos pássaros
 
 Validar iniciar, pausar, reiniciar e alterar intervalo de 0,1 a 30 segundos.
@@ -520,6 +526,12 @@ Testes com relógio controlado:
 - pausa sem temporizador órfão;
 - alteração de tempo;
 - redimensionamento durante o voo.
+
+Estado: concluído em 2026-10-26. Cinco testes com relógio controlado, quinze de
+frontend acumulados, confirmaram intervalo padrão de 0,5 segundo, ordem,
+navegação circular, pausa sem temporizador órfão, mudança de tempo, rejeição
+fora de 0,1 a 30 segundos e redimensionamento durante o voo. Evidências em
+`MSen/tests/TESTE_ITEM_6_3.md`.
 
 ### Item 6.4 — Mancha de resultados e médias
 
@@ -533,10 +545,25 @@ Testes:
 - tempo de desenho e consumo de memória aceitáveis;
 - limpeza completa da camada.
 
+Estado: concluído em 2026-10-26. Quatro testes específicos, dezenove de
+frontend acumulados, confirmaram posições previsíveis, uma marca de média por
+resultado, reinício da ocupação ao exceder a capacidade da célula, 3.000
+resultados abaixo dos limites de 2 segundos e 128 MiB adicionais e limpeza
+integral. Evidências em `MSen/tests/TESTE_ITEM_6_4.md`.
+
 ### Item 6.5 — Testes de interface automatizados
 
 Escolher ferramenta somente com autorização e cobrir os principais fluxos no
 navegador.
+
+Estado: concluído em 2026-10-26. Playwright 1.64.1 reutiliza o Google Chrome
+instalado e executa em modo invisível. Três fluxos reais de navegador cobrem
+carregamento/navegação, voo e seleção de Excel/importação simulada/mancha/
+limpeza. A API é simulada para impedir alterações no banco nessa camada. Os três
+testes de navegador, dezenove testes unitários de frontend e 137 testes Python
+passaram. Evidências em `MSen/tests/TESTE_ITEM_6_5.md`.
+
+Estado da Etapa 6: concluída.
 
 ---
 
@@ -586,6 +613,6 @@ resultado e preservar evidências sem credenciais.
 
 ## Próximo item proposto
 
-Item 6.2 — validar o desenho do resultado individual e da média espacial.
+Item 7.1 — validar localmente o fluxo completo do Excel até o PostgreSQL.
 
 Este item não deve ser iniciado sem autorização expressa do usuário.

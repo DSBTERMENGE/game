@@ -71,6 +71,8 @@ build/
 dist/
 coverage/
 .nyc_output/
+test-results/
+playwright-report/
 
 # ========================================
 # IDEs e Editores

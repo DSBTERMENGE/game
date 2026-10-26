@@ -360,7 +360,7 @@ botaoLimpar.addEventListener("click", () => {
 });
 window.addEventListener("resize", () => {
   ajustarCamada();
-  if (estado.indiceAtual >= 0 && !estado.vooAtivo) {
+  if (estado.indiceAtual >= 0) {
     desenharResultado(estado.resultados[estado.indiceAtual]);
   }
 });

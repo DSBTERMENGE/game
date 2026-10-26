@@ -48,14 +48,14 @@ aprovação e priorização antes da implementação.
   os centros das células.
 - [ ] Animar os resultados individualmente em intervalos de 0,5 segundo,
   limpando as marcas antes de desenhar o próximo.
-- [ ] Plotar todos os resultados como pequenos círculos, inicialmente com cerca
+- [x] Plotar todos os resultados como pequenos círculos, inicialmente com cerca
   de 3 mm de diâmetro, dentro do retângulo correspondente a cada número.
-- [ ] Organizar os pequenos círculos lado a lado e, ao atingir o limite do
+- [x] Organizar os pequenos círculos lado a lado e, ao atingir o limite do
   retângulo, retornar ao início da linha seguinte.
-- [ ] Formar uma mancha visual cuja densidade represente a quantidade de
+- [x] Formar uma mancha visual cuja densidade represente a quantidade de
   ocorrências de cada número.
-- [ ] No modo mancha, preservar as marcas anteriores ao avançar pelos resultados.
-- [ ] Criar uma representação equivalente para a distribuição das médias.
+- [x] No modo mancha, preservar as marcas anteriores ao avançar pelos resultados.
+- [x] Criar uma representação equivalente para a distribuição das médias.
 
 ## Interface e operação
 

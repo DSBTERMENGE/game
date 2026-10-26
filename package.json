@@ -1,0 +1,11 @@
+{
+  "name": "game-msen",
+  "private": true,
+  "scripts": {
+    "test:frontend": "node --test frontend/tests/painel_navegacao.test.mjs",
+    "test:browser": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1"
+  }
+}

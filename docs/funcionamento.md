@@ -161,12 +161,23 @@ pixel_y = centro_01_y + media_y * passo_vertical
 Assim, a posição continuará correta se o tamanho das células ou o espaço entre
 elas mudar no CSS.
 
+Essa geometria foi validada automaticamente para os quatro cantos da matriz,
+uma média inteira e o ponto decimal `(2; 4,33)`. Ao redimensionar a janela, a
+camada SVG e todas as marcas do resultado selecionado são recalculadas a partir
+dos novos centros. A marca verde usa transparência e não captura eventos do
+mouse, mantendo os números legíveis e os controles acessíveis.
+
 ### Modos de apresentação
 
 - `animação`: mostrar as seis dezenas e a média espacial de um resultado,
   aguardar 0,5 segundo, limpar as marcas e avançar para o próximo;
 - `mancha`: avançar pelos resultados sem apagar as marcas anteriores, formando
   uma composição acumulada.
+
+No voo, o intervalo pode variar entre 0,1 e 30 segundos e uma alteração passa a
+valer no passo seguinte. A pausa cancela o único temporizador ativo. O avanço é
+circular e, se a janela for redimensionada durante a animação, o resultado atual
+é redesenhado imediatamente sem interromper nem duplicar o temporizador.
 
 ## Gráfico acumulado de todos os resultados
 
@@ -180,9 +191,12 @@ Para representar o histórico completo:
 - o conjunto deverá formar uma mancha visual cuja densidade indique frequência;
 - a mesma abordagem será aplicada às médias.
 
-O comportamento quando a quantidade de círculos ultrapassar a área disponível
-ainda deverá ser definido. Entre as possibilidades estão reduzir os círculos,
-agrupar ocorrências ou representar densidade por intensidade de cor.
+Quando a quantidade de círculos ultrapassa a capacidade da célula, o
+preenchimento retorna ao primeiro ponto e continua sobrepondo novos ciclos. A
+opacidade faz a sobreposição aumentar a densidade visual sem alterar o tamanho
+da grade. Cada resultado também produz uma pequena marca em sua coordenada média.
+O fluxo foi validado com 3.000 resultados, 18.000 marcas de dezenas e 3.000
+marcas de média.
 
 ## Organização das funções Python
 

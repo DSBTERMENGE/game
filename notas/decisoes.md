@@ -159,3 +159,12 @@
 - Com dois ou mais resultados, Anterior e Próximo usam navegação circular: o
   anterior ao primeiro é o último, e o próximo ao último é o primeiro.
 - O seletor de fonte aceita somente `.xlsx`, em conformidade com a API.
+
+## 2026-10-26 — Testes reais de navegador
+
+- Playwright 1.64.1 é a ferramenta de testes funcionais do frontend.
+- Os testes locais reutilizam o Google Chrome instalado e não baixam outro
+  navegador.
+- A camada de interface simula as respostas HTTP para testar o navegador sem
+  modificar o PostgreSQL; a integração com o banco pertence à Etapa 7.
+- `node_modules`, `test-results` e `playwright-report` não são versionados.
