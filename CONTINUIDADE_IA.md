@@ -211,6 +211,12 @@ banco voltou a 3.069 resultados. A API planejada está fechada. Conforme decisã
 do usuário, o próximo trabalho deverá preparar o primeiro versionamento antes
 de iniciar a Etapa 6, mas somente após nova autorização.
 
+O primeiro versionamento foi criado no commit `f8e75c2` e enviado para
+`origin/developer`. O Item 6.1 foi concluído em 2026-10-26: cinco testes Node.js
+validam o painel, mensagens, seleção e navegação circular; os 137 testes Python
+também passaram. Com um único resultado, Anterior, Próximo e Voo ficam
+desabilitados. Aguardar autorização para o Item 6.2.
+
 A definição de intervalo foi confirmada: é a diferença entre os números das
 apresentações. Exemplo: ocorrências da dezena 02 nas apresentações 35 e 50
 produzem intervalo 15.

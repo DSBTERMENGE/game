@@ -58,6 +58,12 @@ A interface possui controles para:
 - desenhar a mancha acumulada;
 - limpar o gráfico.
 
+A navegação individual é circular quando existem dois ou mais resultados.
+Com apenas um, os botões Anterior, Próximo e Voo permanecem desabilitados; com
+zero, também ficam desabilitados o seletor e a mancha. O painel informa de forma
+explícita quando nenhum resultado foi carregado e a quantidade carregada nos
+demais casos.
+
 O frontend usa `POST /api/resultados/importar` para enviar o Excel e
 `GET /api/resultados` para carregar a série. As duas rotas estão implementadas.
 A importação aceita somente `.xlsx`, limita o envio a 10 MiB, usa arquivo

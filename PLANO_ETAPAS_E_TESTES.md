@@ -491,6 +491,13 @@ Testes:
 - primeiro e último resultados;
 - navegação circular ou limite conforme decisão aprovada.
 
+Estado: concluído em 2026-10-26. A navegação foi definida como circular para
+dois ou mais resultados. Com um resultado, Anterior, Próximo e Voo ficam
+desabilitados; com zero, todos os controles dependentes de dados ficam
+desabilitados. Cinco testes Node.js validam HTML, mensagens, seleção direta,
+primeiro, último e estados dos botões. Os 137 testes Python continuaram
+aprovados. Evidências em `MSen/tests/TESTE_ITEM_6_1.md`.
+
 ### Item 6.2 — Resultado individual e média espacial
 
 Validar círculos, legibilidade e posição decimal da média.
@@ -579,9 +586,6 @@ resultado e preservar evidências sem credenciais.
 
 ## Próximo item proposto
 
-Preparar e conferir o primeiro versionamento completo do projeto, agora que a
-API foi fechada, sem incluir credenciais, banco, backups, relatórios locais,
-workspace temporário nem a pasta externa do FinCtl. Depois, Item 6.1 — testar o
-painel e a navegação existentes.
+Item 6.2 — validar o desenho do resultado individual e da média espacial.
 
 Este item não deve ser iniciado sem autorização expressa do usuário.

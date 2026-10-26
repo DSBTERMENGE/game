@@ -150,3 +150,12 @@
 - `schema_postgresql.sql` e `database/migrations/*.sql` entram no Git porque são
   código reprodutível da estrutura, não o database nem seus dados.
 - `Game.code-workspace` fica ignorado porque referencia provisoriamente o FinCtl.
+
+## 2026-10-26 — Navegação do painel
+
+- Sem resultados, seleção, navegação, voo e mancha ficam desabilitados.
+- Com um resultado, seleção e mancha ficam disponíveis; Anterior, Próximo e
+  Voo ficam desabilitados porque não existe outro item para apresentar.
+- Com dois ou mais resultados, Anterior e Próximo usam navegação circular: o
+  anterior ao primeiro é o último, e o próximo ao último é o primeiro.
+- O seletor de fonte aceita somente `.xlsx`, em conformidade com a API.

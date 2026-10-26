@@ -208,10 +208,11 @@ function desenharMancha(resultados = estado.resultados) {
 
 function atualizarControles() {
   const possuiResultados = estado.resultados.length > 0;
+  const possuiNavegacao = estado.resultados.length > 1;
   seletorResultado.disabled = !possuiResultados;
-  botaoAnterior.disabled = !possuiResultados;
-  botaoProximo.disabled = !possuiResultados;
-  botaoVoo.disabled = !possuiResultados;
+  botaoAnterior.disabled = !possuiNavegacao;
+  botaoProximo.disabled = !possuiNavegacao;
+  botaoVoo.disabled = !possuiNavegacao;
   botaoMancha.disabled = !possuiResultados;
 }
 
@@ -243,7 +244,11 @@ function definirResultados(resultados) {
       seletorResultado.append(new Option(`${numero}${data ? ` — ${data}` : ""}`, String(indice)));
     });
     selecionarIndice(0);
-    informar(`${estado.resultados.length} resultados carregados.`, "sucesso");
+    const quantidade = estado.resultados.length;
+    informar(
+      `${quantidade} ${quantidade === 1 ? "resultado carregado" : "resultados carregados"}.`,
+      "sucesso",
+    );
   }
 
   atualizarControles();
