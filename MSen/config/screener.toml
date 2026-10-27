@@ -1,0 +1,21 @@
+versao = 1
+
+[execucao]
+modo = "amostra"
+semente = 20261027
+limite_combinacoes = 5000
+confirmacao_processamento_integral = false
+
+[funil]
+ordem = ["padroes_historicos", "medidas_estatisticas", "medidas_geometricas"]
+
+[criterios.padroes_historicos]
+habilitado = false
+tolerancia_ocorrencia_percentual = 3.0
+
+[criterios.medidas_estatisticas]
+habilitado = false
+tolerancia_media_percentual = 20.0
+
+[criterios.medidas_geometricas]
+habilitado = false

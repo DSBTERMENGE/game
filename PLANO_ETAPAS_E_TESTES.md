@@ -1265,11 +1265,21 @@ Definir a ordem dos filtros, tolerâncias, semente aleatória, limite de teste e
 modo de execução. Criar configuração padrão versionada e configuração local
 ignorada pelo Git. O limite inicial obrigatório será 5.000 combinações.
 
+Estado: concluído em 2026-10-27. O contrato, o TOML padrão, a substituição
+local ignorada e as travas de validação foram criados. Todos os critérios
+continuam inativos e nenhum gerador foi executado. Passaram 260 testes Python.
+Evidência em `MSen/tests/TESTE_ITEM_14_1.md`.
+
 ### Item 14.2 — Gerador amostral repetível
 
 Gerar 5.000 combinações aleatórias distintas, sempre ordenadas, usando uma
 semente registrada. Impedir duplicidades e provar por teste que a mesma semente
 reproduz a mesma amostra.
+
+Estado: concluído em 2026-10-27. O gerador isolado produz exatamente 5.000
+combinações distintas, ordenadas e válidas; a mesma semente reproduz a mesma
+lista. Ele rejeita modo integral e não altera o estado aleatório global.
+Passaram 267 testes Python. Evidência em `MSen/tests/TESTE_ITEM_14_2.md`.
 
 ### Item 14.3 — Gerador integral protegido
 
@@ -1278,11 +1288,22 @@ No modo de teste, interromper o laço quando `processadas >= 5000`. O modo
 integral deverá exigir configuração e confirmação explícitas; retirar o limite
 somente quando todo o fluxo estiver validado e houver autorização específica.
 
+Estado: concluído em 2026-10-27. O iterador lexicográfico usa
+`itertools.combinations`; no modo amostral, `islice` o encerra em 5.000. O modo
+integral possui duas confirmações independentes e continua sem ser executado.
+Passaram 274 testes Python. Evidência em `MSen/tests/TESTE_ITEM_14_3.md`.
+
 ### Item 14.4 — Estrutura do funil e contadores
 
 Criar o encadeamento configurável de critérios. Quando uma combinação for
 reprovada, contabilizar o filtro responsável e avançar imediatamente para a
 próxima. Nenhum critério real será ativado antes de sua regra ser aprovada.
+
+Estado: concluído em 2026-10-27. O funil executa critérios em ordem, atribui a
+exclusão apenas ao primeiro que reprovar e salta imediatamente para a próxima
+combinação. O relatório consolida entradas, avaliações, exclusões, saldos e
+aprovadas. Nenhum critério real foi ativado. Passaram 279 testes Python.
+Evidência em `MSen/tests/TESTE_ITEM_14_4.md`.
 
 ### Item 14.5 — Adaptadores dos critérios
 
@@ -1290,11 +1311,23 @@ Preparar interfaces separadas para padrões históricos, medidas estatísticas e
 medidas geométricas. Cada decisão deverá informar aprovação/reprovação, código
 do critério e valores que justificaram a decisão.
 
+Estado: concluído em 2026-10-27. Foram criados adaptadores separados para
+padrões históricos, estatísticas e geometria. Todos produzem a decisão comum
+com código e valores justificadores; desabilitados, não chamam funções. Nenhuma
+regra real foi ativada. Passaram 284 testes Python. Evidência em
+`MSen/tests/TESTE_ITEM_14_5.md`.
+
 ### Item 14.6 — Quadro de avaliação
 
 Mostrar total recebido, exclusões por critério, saldo após cada filtro, tempo e
 ordem de execução. Registrar também a configuração e a semente do ensaio para
 que os resultados possam ser reproduzidos.
+
+Estado: concluído em 2026-10-27. O quadro registra configuração, semente,
+tempo, totais e, por filtro, ordem, avaliações, exclusões e saldo. A saída pode
+ser serializada para JSON e futura tela. Um ensaio sem filtros recebeu e aprovou
+as 5.000 combinações. Passaram 289 testes Python. Evidência em
+`MSen/tests/TESTE_ITEM_14_6.md`.
 
 ### Item 14.7 — Ensaio integrado de 5.000 combinações
 
@@ -1302,17 +1335,29 @@ Executar o fluxo completo sem filtros e depois com critérios aprovados,
 conferindo que a contabilidade fecha. Comparar ordens de filtros sem interpretar
 a amostra como prova estatística do universo completo.
 
+Estado: concluído em 2026-10-27 dentro das regras atualmente aprovadas. O fluxo
+configuração/geração/funil/quadro recebeu e aprovou 5.000 sem filtros. Como não
+há regra real de exclusão aprovada, a execução filtrada e a comparação de ordens
+foram classificadas como não aplicáveis e permanecem bloqueadas. Passaram 294
+testes Python. Evidência em `MSen/tests/TESTE_ITEM_14_7.md`.
+
 ### Item 14.8 — Revisão antes do processamento integral
 
 Medir desempenho, estimar tempo e armazenamento para 50.063.860 combinações e
 decidir se o processamento integral será sequencial, paralelo ou particionado.
 Somente após esta revisão poderá ser proposta a retirada do limite de 5.000.
 
+Estado: concluído em 2026-10-27. A geometria das 5.000 levou 2,8978 s e sua
+extrapolação linear ficou em aproximadamente 8,1 h para o universo, sem outros
+filtros ou I/O. Materializar as combinações como tuplas Python projetou 4,81 GB.
+Foi escolhido processamento sequencial, particionado e em fluxo; paralelismo
+somente após medir regras reais. O limite de 5.000 permanece. Passaram 297
+testes Python. Evidência em `MSen/tests/TESTE_ITEM_14_8.md`. Etapa 14 concluída.
+
 ---
 
 ## Próximo item proposto
 
-Item 13.10 — distribuições históricas e fechamento. Não iniciar sem
-autorização expressa. Antes de um próximo commit, também deverão ser incluídos
-os ajustes visuais ainda pendentes nas grades de grupos e padrões. A Etapa
+Commit de segurança da Etapa 14, somente mediante autorização expressa. Antes
+de ativar filtros, suas regras reais deverão ser analisadas e aprovadas. A Etapa
 8/PythonAnywhere permanece adiada.

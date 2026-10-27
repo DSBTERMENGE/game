@@ -128,6 +128,9 @@ backups/
 # Relatórios produzidos por importações locais
 /MSen/dados/relatorios/*.json
 
+# Ajustes locais do screener; o padrão versionado permanece em config/
+/MSen/config/screener.local.toml
+
 # Workspace provisório referencia o FinCtl externo
 /Game.code-workspace
 

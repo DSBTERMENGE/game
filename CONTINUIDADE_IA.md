@@ -606,6 +606,79 @@ PythonAnywhere continua intocado. Próxima ação: aguardar autorização para o
 commit de segurança da Etapa 13; depois, iniciar o Item 14.1 somente mediante
 nova autorização.
 
+O Item 14.1 foi concluído em 2026-10-27. O contrato do screener e o arquivo
+versionado `MSen/config/screener.toml` definem modo amostral, semente, limite
+obrigatório de 5.000 e a ordem padrões/estatísticas/geometria. O arquivo
+`screener.local.toml` existe localmente e está ignorado pelo Git. Os exemplos
+de tolerância de 3% e 20% foram registrados, mas todos os filtros permanecem
+inativos até aprovação das regras. O leitor rejeita limite alterado, ordem
+inválida e ativação prematura. Passaram 260 testes Python. Nenhum gerador foi
+executado e nenhum banco foi alterado. Próxima ação: aguardar autorização para
+o Item 14.2, gerador amostral repetível.
+
+O Item 14.2 foi concluído em 2026-10-27. `msen.screener.gerar_amostra` usa um
+`Random` isolado com a semente configurada e retorna exatamente 5.000 tuplas
+únicas, cada uma com seis dezenas distintas, crescentes e entre 01 e 60. A
+mesma semente reproduz a lista e sua ordem; modo integral e objeto não validado
+são rejeitados. Passaram 7 testes específicos e 267 na regressão Python. Nada
+foi gravado e nenhum filtro ou banco foi acionado. Próxima ação: aguardar
+autorização para o Item 14.3, gerador integral protegido.
+
+O Item 14.3 foi concluído em 2026-10-27. O iterador definitivo usa
+`itertools.combinations(range(1, 61), 6)` e confirma o universo de 50.063.860.
+Em modo amostral, `islice` encerra em 5.000. O modo integral exige tanto a
+confirmação booleana da configuração quanto a frase explícita
+`PROCESSAR_50063860_COMBINACOES`; o iterador continua preguiçoso. Passaram 7
+testes específicos e 274 na regressão. O teste integral leu somente dois itens;
+nenhum processamento integral ou banco foi acionado. Próxima ação: aguardar
+autorização para o Item 14.4, estrutura do funil e contadores.
+
+O Item 14.4 foi concluído em 2026-10-27. `executar_funil` recebe critérios
+ordenados e, na primeira reprovação, contabiliza o critério e salta para a
+próxima combinação. `RelatorioFunil` guarda total recebido/aprovado, avaliações,
+exclusões, saldo após cada filtro e aprovadas. Códigos duplicados ou divergentes
+são rejeitados. Sem critérios, as 5.000 amostras passam integralmente. Passaram
+5 testes específicos e 279 na regressão. Apenas critérios artificiais de teste
+foram usados; banco e filtros reais permaneceram intocados. Próxima ação:
+aguardar autorização para o Item 14.5, adaptadores dos critérios.
+
+O Item 14.5 foi concluído em 2026-10-27. Há adaptadores separados para padrões
+históricos, medidas estatísticas e medidas geométricas. Eles repassam as
+tolerâncias e devolvem ao funil aprovação/reprovação, código e valores
+justificadores. Quando desabilitados, aprovam de forma neutra sem chamar a
+função; quando habilitados, exigem avaliador com retorno validado. Passaram 5
+testes específicos e 284 na regressão, usando somente avaliadores artificiais.
+Nenhuma regra real ou banco foi acionado. Próxima ação: aguardar autorização
+para o Item 14.6, quadro de avaliação.
+
+O Item 14.6 foi concluído em 2026-10-27. `executar_ensaio` mede o funil e gera
+um quadro com versão, modo, semente, limite, configuração dos critérios, tempo,
+totais e linhas contendo ordem/avaliações/exclusões/saldo. A serialização é
+compatível com JSON. Uma execução real em memória, sem filtros, recebeu e
+aprovou as 5.000 combinações; todos os critérios ficaram inativos. Passaram 5
+testes específicos e 289 na regressão. Nada foi persistido. Próxima ação:
+aguardar autorização para o Item 14.7, ensaio integrado de 5.000 combinações.
+
+O Item 14.7 foi concluído em 2026-10-27 no escopo autorizado. O fluxo integrado
+carrega a configuração, gera a amostra reproduzível, executa o funil vazio e
+serializa o quadro. A execução manual recebeu/aprovou 5.000, sem linhas de
+exclusão, com cerca de 0,0003 s no funil. Categorias ativas são bloqueadas:
+como nenhuma regra real de exclusão foi aprovada, o ensaio filtrado e a
+comparação de ordens foram corretamente considerados não aplicáveis. Passaram
+5 testes específicos e 294 na regressão. Nada foi persistido. Próxima ação:
+aguardar autorização para o Item 14.8, revisão antes do processamento integral.
+
+O Item 14.8 e a Etapa 14 foram concluídos em 2026-10-27. Em 5.000 combinações,
+a geometria levou 2,8978 s; a projeção linear do universo foi de cerca de 8,1 h
+em um processo, sem filtros adicionais ou I/O. Armazenar tuplas Python projetou
+4,81 GB; CSV compacto, 901 MB; seis bytes binários, 300 MB, todos sem resultados
+ou metadados. A decisão é processar futuramente de modo sequencial, particionado
+e em fluxo, com retomada; paralelismo somente após medir filtros reais. O limite
+de 5.000 permanece e nenhuma execução integral ocorreu. Passaram 3 testes
+específicos e 297 na regressão. Próxima ação: aguardar autorização para o
+commit de segurança da Etapa 14; depois, definir e aprovar regras reais antes de
+qualquer ativação. PythonAnywhere continua adiado.
+
 Em 2026-10-26 foi planejada a Etapa 9, destinada ao cadastro e à análise de
 padrões. O plano divide o trabalho em contrato, migração PostgreSQL, módulo
 Python documentado, detectores e estatísticas, persistência, API CRUD, grade com
