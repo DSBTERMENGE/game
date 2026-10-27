@@ -32,7 +32,12 @@ def executar_ensaio_amostral(
 
     if not isinstance(configuracao, ConfiguracaoScreener):
         raise TypeError("configuracao deve ser uma ConfiguracaoScreener validada")
-    if any(item.habilitado for item in configuracao.criterios.values()):
+    if (
+        any(item.habilitado for item in configuracao.criterios.values())
+        or configuracao.regras
+        or configuracao.regras_estatisticas
+        or configuracao.regras_geometricas
+    ):
         raise ErroEnsaioIntegrado(
             "CRITERIO_REAL_NAO_AUTORIZADO",
             "O ensaio integrado ainda não autoriza critérios reais.",

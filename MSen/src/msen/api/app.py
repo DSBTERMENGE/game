@@ -29,6 +29,8 @@ from .grupos_padroes import (
     grupos_padroes_api,
     listar_grupos_padroes_do_banco,
 )
+from .screener import screener_api
+from msen.screener import gerar_quadro_screener
 
 
 def criar_app(configuracao: Mapping[str, Any] | None = None) -> Flask:
@@ -57,6 +59,7 @@ def criar_app(configuracao: Mapping[str, Any] | None = None) -> Flask:
         EDITAR_GRUPO_PADRAO=editar_grupo_padrao_no_banco,
         EXCLUIR_GRUPO_PADRAO=excluir_grupo_padrao_no_banco,
         LISTAR_GRUPOS_PADROES=listar_grupos_padroes_do_banco,
+        GERAR_QUADRO_SCREENER=gerar_quadro_screener,
     )
     if configuracao is not None:
         app.config.update(configuracao)
@@ -79,5 +82,6 @@ def criar_app(configuracao: Mapping[str, Any] | None = None) -> Flask:
     app.register_blueprint(resultados_api)
     app.register_blueprint(padroes_api)
     app.register_blueprint(grupos_padroes_api)
+    app.register_blueprint(screener_api)
 
     return app

@@ -19,3 +19,63 @@ tolerancia_media_percentual = 20.0
 
 [criterios.medidas_geometricas]
 habilitado = false
+
+[regras.PD_003]
+categoria = "padroes_historicos"
+modo = "ativo"
+tolerancia_percentual = 3.0
+num_ocorrencias = 5
+total_resultados = 3069
+reconciliacao = "PD_003:3069:2026-10-27"
+
+[regras.PD_002]
+categoria = "padroes_historicos"
+modo = "ativo"
+tolerancia_percentual = 3.0
+num_ocorrencias = 92
+total_resultados = 3069
+reconciliacao = "PD_002:3069:2026-10-27"
+
+[regras.PD_006]
+categoria = "padroes_historicos"
+modo = "ativo"
+tolerancia_percentual = 3.0
+num_ocorrencias = 4
+total_resultados = 3069
+reconciliacao = "PD_006:3069:2026-10-27"
+
+[regras.PD_005]
+categoria = "padroes_historicos"
+modo = "ativo"
+tolerancia_percentual = 3.0
+num_ocorrencias = 66
+total_resultados = 3069
+reconciliacao = "PD_005:3069:2026-10-27"
+
+[regras_estatisticas.EST_MEDIA_P01_P99]
+medida = "media_aritmetica"
+modo = "ativo"
+limite_inferior = 15.0
+limite_superior = 45.886666
+referencia = "P01_P99:3069:2026-10-27"
+
+[regras_estatisticas.EST_DESVIO_P01_P99]
+medida = "desvio_padrao_populacional"
+modo = "ativo"
+limite_inferior = 7.145546
+limite_superior = 22.774694
+referencia = "P01_P99:3069:2026-10-27"
+
+[regras_estatisticas.EST_MEDIANA_P01_P99]
+medida = "mediana"
+modo = "ativo"
+limite_inferior = 10.5
+limite_superior = 50.5
+referencia = "P01_P99:3069:2026-10-27"
+
+[regras_geometricas.GEO_EXTENSAO_P01_P99]
+medida = "extensao_aberta"
+modo = "ativo"
+limite_inferior = 8.650282
+limite_superior = 32.300058
+referencia = "P01_P99:3069:2026-10-27"

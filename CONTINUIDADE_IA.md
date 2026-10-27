@@ -679,6 +679,110 @@ específicos e 297 na regressão. Próxima ação: aguardar autorização para o
 commit de segurança da Etapa 14; depois, definir e aprovar regras reais antes de
 qualquer ativação. PythonAnywhere continua adiado.
 
+Em 2026-10-27 foi planejada a Etapa 15 com 16 subetapas curtas. Ela separa
+detecção, política de exclusão, modo sombra e ativação. O primeiro critério será
+escolhido somente depois do inventário; detector, operador e tolerância exigem
+aprovação própria. Padrões históricos precedem critérios estatísticos e
+geométricos; comparar ordens exige ao menos dois aprovados. A etapa termina com
+quadro visual e regressão, mantendo o universo integral travado. Nenhum código
+ou filtro foi alterado neste planejamento. Próxima ação: aguardar autorização
+para o Item 15.1, inventário somente leitura.
+
+O Item 15.1 foi concluído em 2026-10-27 somente com leitura. O PostgreSQL tem
+3.069 resultados, 3 grupos e 9 padrões; o catálogo tem os 9 detectores
+correspondentes, sem órfãos. O inventário com funções, ocorrências, percentuais,
+intervalos e desvios está em `MSen/tests/TESTE_ITEM_15_1.md`. Foram observadas,
+mas não corrigidas, a docstring do catálogo que ainda cita somente PD_001 a
+PD_006 e a duplicidade de espaço no nome de PD_008. Nenhuma estatística foi
+recalculada e nenhum critério foi ativado. Próxima ação: aguardar autorização
+para o Item 15.2, contrato de detecção e exclusão.
+
+O Item 15.2 foi concluído em 2026-10-27 apenas como contrato. Detector booleano,
+política e modo foram separados. O percentual usa todos os resultados válidos
+avaliados pela mesma versão, compara a razão exata e exibe seis casas com
+`ROUND_HALF_UP`. A semântica proposta é inclusiva (`<=`), mas nenhum valor foi
+aprovado. Dados ausentes, inconsistentes ou não reconciliados nunca excluem.
+Modos seguem inativo -> sombra -> ativo, sempre com autorização. Intervalos e
+desvios exigem política própria. Nenhum código, configuração ou banco mudou.
+Próxima ação: aguardar autorização para o Item 15.3, escolha do piloto.
+
+O Item 15.3 foi iniciado em 2026-10-27. A análise recomendou PD_003 (mais de
+três dezenas sequenciais): 5 ocorrências, 0,162920%, regra simples/exclusiva e
+testes existentes. PD_006, com 4 ocorrências, é a alternativa, mas exige maior
+cuidado com coluna e linhas subjacentes. PD_002 e PD_009 foram evitados como
+primeiro piloto por estarem quase exatamente na fronteira exemplificativa de
+3%, ainda não aprovada. Nenhum piloto foi selecionado, pois falta a aprovação
+explícita do usuário.
+
+Ainda em 2026-10-27, o usuário aprovou PD_003 como piloto de teste e o Item 15.3
+foi concluído. A escolha autoriza somente os casos e a validação do detector;
+não autoriza tolerância, sombra, exclusão ou ativação. Próxima ação: aguardar
+autorização para o Item 15.4, casos de aceitação do PD_003.
+
+O Item 15.4 foi iniciado em 2026-10-27. Foram preparados 8 casos positivos, 6
+negativos e 6 entradas inválidas para PD_003. Os pontos de decisão são:
+sequência numérica atravessa 10/11; 60/01 não é circular; blocos separados não
+são somados; bloco de quatro ou mais pertence exclusivamente a PD_003. Nenhum
+código foi alterado. Próxima ação: obter aprovação ou correção dos casos em
+`docs/CASOS_ACEITACAO_PD003.md` antes de concluir o Item 15.4.
+
+Ainda em 2026-10-27, o usuário aprovou os casos e o Item 15.4 foi concluído. A
+classificação usa o maior bloco consecutivo; atravessa 10/11, mas não 60/01;
+blocos separados não são somados; quatro ou mais pertence exclusivamente a
+PD_003. Assim, `58,59,60,01,02,03` não é PD_003 e `01,02,03,04,20,40` é
+somente PD_003. Isso não aprova exclusão. Próxima ação: aguardar autorização
+para o Item 15.5, validação/implementação isolada do detector.
+
+O Item 15.5 foi concluído em 2026-10-27. O detector existente de PD_003 passou
+nos 20 casos aprovados (8 positivos, 6 negativos e 6 erros) e os positivos não
+foram classificados por PD_001/PD_002. Não houve mudança no detector. O script
+`validar_detector_pd003.py` gera saída com esperado, obtido, motivo e
+conformidade; o Item 15.15 agora exige uma saída visual equivalente para
+validação humana antes de filtros reais. Passaram 2 testes específicos e 299 na
+regressão. Próxima ação: aguardar autorização para o Item 15.6, reconciliação
+histórica de PD_003.
+
+O Item 15.6 foi concluído em 2026-10-27 com leitura dos 3.069 resultados. PD_003
+ocorreu nos concursos 186, 509, 2052, 2789 e 2908; todos possuem bloco máximo de
+quatro. Intervalos: 323, 1543, 737 e 119. Quantidade 5, média 680,500000 e
+desvio populacional 545,478460 coincidiram exatamente com o banco. A menção
+anterior de mediana foi corrigida: mediana dos resultados pertence aos critérios
+estatísticos, não à tabela de padrões. PD_003 está reconciliado e nada foi
+escrito. Próxima ação: aguardar
+autorização para o Item 15.7, política piloto em modo sombra.
+
+O Item 15.7 foi concluído em 2026-10-27. `PoliticaPadraoSombra` usa comparação
+exata e devolve marca hipotética, mas sempre aprova a combinação. Para PD_003,
+5/3069 = 0,162920% seria marcado sob a hipótese ainda não aprovada de 3%; com
+0,1% não seria. Evidência não reconciliada produz `nao_avaliavel` sem exclusão.
+A decisão registra todos os valores e motivo. O funil de teste recebeu/aprovou
+2 e excluiu 0. A configuração real continua desabilitada. Passaram 6 testes
+específicos e 305 na regressão. Próxima ação: aguardar autorização para o Item
+15.8, simulação sombra de 5.000 combinações.
+
+O Item 15.8 foi concluído em 2026-10-27. Sob a hipótese não aprovada de 3%, a
+semente 20261027 marcou 11/5000 (0,22%, saldo hipotético 4989) e a semente 42
+marcou 5/5000 (0,10%, saldo 4995). O histórico é 0,162920%; a variação demonstra
+sensibilidade da amostra para evento raro, não a proporção do universo. As
+10.000 foram aprovadas de fato e zero excluídas. A configuração continua
+inativa. Passaram 4 testes da simulação e 309 na regressão. Próxima ação:
+aguardar autorização para o Item 15.9, decisão humana sobre detector, operador,
+tolerância e dado ausente de PD_003.
+
+O Item 15.9 foi iniciado em 2026-10-27. A proposta recomenda: detector já
+validado; operador inclusivo `percentual_historico <= tolerancia`; tolerância
+inicial de 3%; e falha conservadora que aprova quando falta evidência. Foi
+esclarecido que 3% qualifica o padrão, não determina 3% de exclusões; nas
+amostras PD_003 marcou 0,22% e 0,10%. Nenhuma ativação foi feita. Próxima ação:
+obter aprovação ou correção explícita dos quatro pontos.
+
+Ainda em 2026-10-27, o usuário autorizou a regra e o Item 15.9 foi concluído.
+Foram aprovados: detector PD_003; operador inclusivo `<=`; tolerância de 3%; e
+falha conservadora `nao_avaliavel` que não exclui. A autorização vale somente
+para a futura execução protegida de 5.000. Nenhuma ativação ocorreu ainda; o
+universo integral e outros padrões continuam bloqueados. Próxima ação: aguardar
+autorização para o Item 15.10, ativação controlada de PD_003.
+
 Em 2026-10-26 foi planejada a Etapa 9, destinada ao cadastro e à análise de
 padrões. O plano divide o trabalho em contrato, migração PostgreSQL, módulo
 Python documentado, detectores e estatísticas, persistência, API CRUD, grade com
@@ -776,3 +880,246 @@ Decisões tomadas:
 Pendências:
 Próxima ação exata:
 ```
+## Atualização — 2026-10-27 — subetapa 15.10
+
+- PD_003 foi ativado exclusivamente na amostra protegida de 5.000 combinações.
+- Regra: detector de mais de três consecutivas, operador `<=`, tolerância 3% e
+  evidência reconciliada de 5 ocorrências em 3.069 resultados.
+- Semente 20261027: 5.000 recebidas, 11 excluídas e 4.989 aprovadas.
+- O modo integral continua bloqueado e sua confirmação permanece falsa.
+- Passaram 316 testes Python; nenhuma escrita foi feita no banco.
+- Próxima subetapa proposta: 15.11, escolhendo e validando um novo padrão antes
+  de qualquer outra ativação.
+## Atualização — 2026-10-27 — subetapa 15.11 (PD_002)
+
+- Próximo padrão preparado: PD_002, maior bloco com exatamente três dezenas.
+- Histórico reconciliado: 92/3.069 (`2,997719%`), intervalo médio `33,527473`
+  e desvio-padrão `33,637806`.
+- Sombra: 162/5.000 marcadas na semente 20261027 e 142/5.000 na semente 42;
+  nenhuma exclusão real.
+- Casos e classificação exclusiva foram testados; PD_002 ainda não está ativo.
+- Próxima decisão: usuário aprovar ou rejeitar detector, operador `<=`,
+  tolerância 3% e falha conservadora para a ativação amostral de PD_002.
+
+## Atualização — 2026-10-27 — ativação de PD_002
+
+- O usuário aprovou os quatro critérios de PD_002.
+- Funil amostral: PD_003 excluiu 11; PD_002 excluiu 162; 4.827 foram aprovadas.
+- Contabilidade: `5.000 = 11 + 162 + 4.827`.
+- PD_003 avaliou 5.000 e PD_002 avaliou o saldo de 4.989, respeitando a saída na
+  primeira exclusão.
+- Passaram 323 testes; modo integral continua bloqueado; banco não foi escrito.
+- Próximo trabalho: selecionar o próximo padrão do Item 15.11, sem ativá-lo
+  antes de nova autorização específica.
+
+## Atualização — 2026-10-27 — preparação de PD_006
+
+- Regra validada: maior sequência de quatro, cinco ou seis dezenas na mesma
+  coluna e em linhas imediatamente subsequentes.
+- Histórico: 4/3.069 (`0,130336%`), concursos 363, 844, 2066 e 2453; estatísticas
+  coincidiram exatamente com o banco.
+- Sombra: 5/5.000 marcações na semente 20261027 e 0/5.000 na semente 42.
+- PD_006 ainda não está ativo; PD_003 e PD_002 continuam como únicas regras.
+- Próxima decisão: aprovar ou rejeitar detector, operador `<=`, tolerância 3% e
+  falha conservadora para a ativação amostral de PD_006.
+
+## Atualização — 2026-10-27 — ativação de PD_006
+
+- O usuário aprovou os quatro critérios de PD_006.
+- Funil: PD_003 excluiu 11, PD_002 excluiu 162 e PD_006 excluiu 5; saldo 4.822.
+- Contabilidade: `5.000 = 11 + 162 + 5 + 4.822`.
+- Avaliações: PD_003 5.000, PD_002 4.989 e PD_006 4.827, respeitando a saída na
+  primeira exclusão.
+- Passaram 327 testes; modo integral continua bloqueado; banco não foi escrito.
+- Próximo trabalho: selecionar o próximo padrão histórico sem ativá-lo antes
+  de nova autorização específica.
+
+## Atualização — 2026-10-27 — preparação de PD_005
+
+- Regra validada: maior sequência de exatamente três dezenas na mesma coluna e
+  em linhas imediatamente subsequentes.
+- Histórico: 66/3.069 (`2,150538%`), intervalo médio `45,969231` e desvio-padrão
+  `42,006948`, todos reconciliados.
+- Sombra: 113/5.000 marcações na semente 20261027 e 97/5.000 na semente 42.
+- PD_005 ainda não está ativo; as regras ativas continuam PD_003, PD_002 e
+  PD_006.
+- Próxima decisão: aprovar ou rejeitar detector, operador `<=`, tolerância 3% e
+  falha conservadora para a ativação amostral de PD_005.
+
+## Atualização — 2026-10-27 — ativação de PD_005
+
+- O usuário aprovou os quatro critérios de PD_005.
+- PD_005 avaliou o saldo de 4.822 e excluiu 110; três de suas 113 marcações
+  sombra já haviam sido excluídas por filtros anteriores.
+- Funil completo: 11 por PD_003, 162 por PD_002, 5 por PD_006, 110 por PD_005 e
+  saldo final 4.712.
+- Contabilidade: `5.000 = 11 + 162 + 5 + 110 + 4.712`.
+- Passaram 331 testes; modo integral continua bloqueado; banco não foi escrito.
+- Próximo trabalho: selecionar outro padrão histórico, sem ativação antes de
+  nova autorização específica.
+
+## Atualização — 2026-10-27 — avaliação de PD_009
+
+- Histórico reconciliado: 93/3.069 (`3,030303%`), intervalo médio `33,141304`
+  e desvio-padrão `35,099728`.
+- O detector encontrou 177 combinações na semente 20261027 e 154 na semente 42.
+- A política marcou zero nas duas porque `3,030303% > 3%`.
+- PD_009 não foi ativado e não deve excluir sob a tolerância atual.
+- Próximo trabalho proposto: revisar os padrões restantes, todos acima de 3%,
+  sem ativá-los.
+
+## Atualização — 2026-10-27 — fechamento dos padrões históricos
+
+- PD_001, PD_004, PD_007 e PD_008 foram recalculados e reconciliados.
+- Os detectores encontraram muitas combinações nas duas amostras, mas a política
+  marcou zero porque todos possuem percentual histórico acima de 3%.
+- Etapa 15.11 fechada para os nove padrões cadastrados.
+- Ativos somente na amostra: PD_003, PD_002, PD_006 e PD_005.
+- Não ativos: PD_009, PD_001, PD_004, PD_007 e PD_008.
+- Próximo item planejado: 15.12, critérios estatísticos, começando pela escolha
+  de um piloto e sem exclusão antes de validação e autorização.
+
+## Atualização — 2026-10-27 — início do Item 15.12
+
+- Média aritmética escolhida como primeiro piloto estatístico.
+- Histórico: média das médias `30,515749`, mediana `30,666667` e desvio
+  populacional `6,659667`.
+- A margem exemplificativa de ±20% atingiria 1.151/3.069 resultados e não foi
+  recomendada.
+- Candidato para discussão: faixa P01/P99 de `15,000000` a `45,886666`, com
+  comparação `< inferior` ou `> superior`; 59 históricos (`1,922450%`) e
+  108/5.000 amostrais ficariam fora.
+- Nenhuma política estatística foi implementada ou ativada.
+- Próxima decisão depende do usuário aprovar ou ajustar essa faixa.
+
+## Atualização — 2026-10-27 — média em modo sombra
+
+- Usuário aprovou a faixa P01/P99 para teste experimental.
+- Regra: média `< 15,000000` ou `> 45,886666`; limites exatos são aceitos.
+- Sombra: 108/5.000 marcações na semente 20261027 e 96/5.000 na semente 42.
+- Todas as combinações foram realmente aprovadas; política não está no funil
+  ativo.
+- Próxima decisão: manter em sombra, ajustar a faixa ou autorizar ativação
+  amostral específica.
+
+## Atualização — 2026-10-27 — ativação experimental da média
+
+- Usuário autorizou a opção 3, somente na amostra protegida.
+- A média foi adicionada como quinto filtro e recebeu o saldo de 4.712.
+- Excluiu 89 combinações; 19 das 108 marcações sombra já haviam sido excluídas
+  pelos padrões históricos.
+- Saldo final 4.623; contabilidade:
+  `5.000 = 11 + 162 + 5 + 110 + 89 + 4.623`.
+- Passaram 346 testes; modo integral continua bloqueado; banco não foi escrito.
+- Próxima decisão: escolher mediana ou desvio-padrão como próximo piloto
+  estatístico.
+
+## Atualização — 2026-10-27 — inventário do desvio-padrão
+
+- Histórico: média dos desvios `15,556645`; margem ±20% seria agressiva e
+  atingiria 1.197/3.069 resultados.
+- Faixa candidata P01/P99: `7,145546` a `22,774694`, comparação estrita.
+- Fora historicamente: 62 (`2,020202%`); na amostra: 132/5.000.
+- Nenhuma política foi criada ou ativada.
+- Próxima decisão: usuário aprovar, ajustar ou rejeitar a faixa experimental.
+
+## Atualização — 2026-10-27 — mediana em sombra
+
+- Faixa aprovada para teste: `10,5` a `50,5`, comparação estrita.
+- Sombra: 92/5.000 marcações na semente 20261027 e 91/5.000 na semente 42.
+- Todas foram realmente aprovadas; política não integra o funil ativo.
+- Próxima decisão: autorizar ou não a ativação apenas para teste da engrenagem.
+
+## Atualização — 2026-10-27 — ativação experimental da mediana
+
+- Mediana adicionada como sétimo filtro somente na amostra protegida.
+- Recebeu 4.528, excluiu 44 e deixou saldo 4.484.
+- Das 92 marcações sombra, 48 já tinham sido excluídas anteriormente.
+- Contabilidade:
+  `5.000 = 11 + 162 + 5 + 110 + 89 + 95 + 44 + 4.484`.
+- Passaram 362 testes; limites experimentais; integral bloqueado; banco não
+  escrito.
+- Os três pilotos estatísticos previstos — média, desvio e mediana — já foram
+  testados. Próximo item: 15.13, critérios geométricos.
+
+## Atualização — 2026-10-27 — inventário da extensão aberta
+
+- Primeiro piloto geométrico: soma dos cinco segmentos do caminho crescente.
+- Histórico: média `18,398295`; ±20% atingiria 1.523/3.069 e foi descartado.
+- Faixa P01/P99 aprovada: `8,650282` a `32,300058`, comparação estrita.
+- Com os limites arredondados realmente usados: 64 históricos (`2,085370%`) e
+  106/5.000 na amostra principal; isso corrige a estimativa bruta 61/102.
+- Sombra: 106/5.000 na semente 20261027 e 115/5.000 na semente 42.
+- Política ainda não integra o funil ativo.
+- Próxima decisão: autorizar ou não ativação apenas para teste da engrenagem.
+
+## Atualização — 2026-10-27 — desvio-padrão em sombra
+
+- Faixa aprovada para teste: `7,145546` a `22,774694`, comparação estrita.
+- Sombra: 132/5.000 marcações na semente 20261027 e 122/5.000 na semente 42.
+- Todas foram realmente aprovadas; política não integra o funil ativo.
+- Próxima decisão: manter em sombra, ajustar ou autorizar ativação amostral.
+
+## Atualização — 2026-10-27 — ativação experimental do desvio
+
+- Usuário autorizou somente para testar a engrenagem; limites não são
+  definitivos.
+- Sexto filtro recebeu 4.623, excluiu 95 e deixou saldo 4.528.
+- Das 132 marcações sombra, 37 já tinham sido excluídas anteriormente.
+- Contabilidade: `5.000 = 11 + 162 + 5 + 110 + 89 + 95 + 4.528`.
+- Passaram 353 testes; integral bloqueado; banco não escrito.
+- Próximo piloto proposto: mediana das seis dezenas.
+
+## Atualização — 2026-10-27 — inventário da mediana
+
+- Histórico: média das medianas `30,677908`; ±20% atingiria 1.678/3.069 e foi
+  considerado agressivo.
+- Faixa candidata P01/P99: `10,5` a `50,5`, comparação estrita.
+- Fora historicamente: 57 (`1,857283%`); na amostra: 92/5.000.
+- Passaram 355 testes; nenhuma política foi criada ou ativada.
+- Próxima decisão: usuário aprovar, ajustar ou rejeitar a faixa experimental.
+
+## Atualização — 2026-10-27 — ativação experimental da extensão
+
+- Extensão aberta adicionada como oitavo filtro somente na amostra protegida.
+- Recebeu 4.484, excluiu 75 e deixou saldo 4.409.
+- Das 106 marcações sombra, 31 já tinham sido excluídas anteriormente.
+- Contabilidade:
+  `5.000 = 11 + 162 + 5 + 110 + 89 + 95 + 44 + 75 + 4.409`.
+- Passaram 369 testes; limites experimentais; integral bloqueado; banco não
+  escrito.
+- Próximo item proposto: 15.14, comparar a eficiência de ordens diferentes.
+
+## Atualização — 2026-10-27 — comparação das ordens
+
+- Foram comparadas três ordens sobre a mesma amostra e as mesmas regras.
+- Todas preservaram exatamente as mesmas 4.409 combinações aprovadas.
+- Avaliações: atual 37.985; históricos frequentes 37.569; geometria e
+  estatísticas primeiro 37.315.
+- Medianas locais de três tempos: 0,670447 s; 0,629925 s; 0,638000 s.
+- A ordem padrão não foi alterada porque quantidade de avaliações e custo por
+  função são diferentes.
+- Passaram 372 testes; integral bloqueado; banco não escrito.
+- Próximo item: 15.15, quadro visual e saída de validação.
+
+## Atualização — 2026-10-27 — quadro visual do screener
+
+- Criada a API `GET /api/screener/quadro`, sem dependência do banco.
+- Criada `/screener.html`, com CSS e JavaScript separados e link na barra.
+- Quadro mostra os oito estágios, avaliações, exclusões, percentual e saldo.
+- Saída traz 30 combinações; o usuário informa o esperado e a tela mostra
+  conformidade ou divergência sem persistência.
+- Na seleção atual: 27 aprovadas e 3 excluídas.
+- Passaram 379 testes Python e 24 testes JavaScript; integral bloqueado; banco
+  não escrito.
+- Próximo item: 15.16, regressão, Chrome local e fechamento.
+
+## Atualização — 2026-10-27 — fechamento da Etapa 15
+
+- Passaram 379 testes Python, 24 JavaScript e 11 fluxos no Google Chrome.
+- O Chrome usou a API Flask real e confirmou 5.000 recebidas, 591 excluídas,
+  4.409 aprovadas, oito estágios e 30 casos para validação humana.
+- Conformidade manual, layout compacto e rolagens foram verificados.
+- Nenhuma porta de teste permaneceu aberta; banco não acessado; integral
+  bloqueado; PythonAnywhere adiado.
+- Etapa 15 concluída. Próxima ação: commit de segurança somente se autorizado.

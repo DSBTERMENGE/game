@@ -1356,8 +1356,317 @@ testes Python. Evidência em `MSen/tests/TESTE_ITEM_14_8.md`. Etapa 14 concluíd
 
 ---
 
+## ETAPA 15 — Critérios reais e ativação controlada
+
+Objetivo: transformar informações históricas em critérios auditáveis, um de
+cada vez, sem confundir detecção de padrão com autorização para excluir uma
+combinação. Nenhum critério será ativado automaticamente.
+
+As subetapas devem produzir uma entrega verificável e aguardar autorização para
+a seguinte. Varreduras históricas não serão agrupadas com implementação ou
+alteração de configuração, mantendo ciclos de trabalho pequenos.
+
+### Item 15.1 — Inventário dos critérios disponíveis
+
+Ler grupos, padrões cadastrados, funções Python e estatísticas atuais. Apresentar
+código, nome, grupo, função, ocorrências, percentual e estado de implementação.
+Apenas leitura; não corrigir nem ativar nada.
+
+Estado: concluído em 2026-10-27. Foram encontrados 3 grupos, 9 padrões e 9
+detectores, sem cadastro ou função órfã. Os percentuais foram calculados sobre
+3.069 resultados. Duas divergências textuais foram apenas registradas, sem
+correção. Evidência em `MSen/tests/TESTE_ITEM_15_1.md`.
+
+### Item 15.2 — Contrato de detecção e exclusão
+
+Separar formalmente a função que detecta o padrão da política que decide se ele
+pode excluir. Fixar denominador histórico, arredondamento, significado de `menor
+ou igual`, dados insuficientes e comportamento quando a estatística estiver
+ausente.
+
+Estado: concluído em 2026-10-27. Detector, política e modo foram separados; o
+denominador, precisão, operador inclusivo, modos e falha conservadora foram
+definidos. Nenhuma tolerância ou exclusão foi aprovada. Evidência em
+`MSen/tests/TESTE_ITEM_15_2.md` e contrato em
+`docs/CONTRATO_DETECCAO_EXCLUSAO.md`.
+
+### Item 15.3 — Escolha do critério piloto
+
+Apresentar candidatos do inventário e escolher somente um com autorização do
+usuário. Registrar código, explicação, função e motivo. O exemplo de 3% não
+constitui aprovação automática.
+
+Estado: concluído em 2026-10-27. O usuário aprovou PD_003 como piloto de teste,
+por combinar baixa ocorrência, regra simples, exclusividade e testes existentes.
+A escolha não aprova tolerância nem exclusão. Análise em
+`docs/SELECAO_CRITERIO_PILOTO.md` e evidência em
+`MSen/tests/TESTE_ITEM_15_3.md`.
+
+### Item 15.4 — Casos de aceitação do piloto
+
+Montar tabela curta com combinações que detectam, não detectam e representam
+limites ou ambiguidades. Obter aprovação antes de alterar código.
+
+Estado: concluído em 2026-10-27. O usuário aprovou 8 casos positivos, 6
+negativos e 6 entradas inválidas. A classificação usa o maior bloco consecutivo,
+não une 60/01, não soma blocos separados e é exclusiva. Documento em
+`docs/CASOS_ACEITACAO_PD003.md` e evidência em
+`MSen/tests/TESTE_ITEM_15_4.md`.
+
+### Item 15.5 — Implementação isolada do detector piloto
+
+Reutilizar a função existente se corresponder ao contrato; caso contrário,
+corrigi-la com docstring em português. Criar testes dos casos aprovados. O
+detector continuará desconectado do funil.
+
+Estado: concluído em 2026-10-27. O detector existente passou nos 20 casos
+aprovados, sem divergências, e os positivos foram exclusivos de PD_003. Não foi
+necessário alterar o código de produção. Foi criada saída auditável por caso e
+registrado o requisito de validação visual final. Passaram 299 testes Python.
+Evidência em `MSen/tests/TESTE_ITEM_15_5.md`.
+
+### Item 15.6 — Reconciliação com o histórico
+
+Executar o detector nos 3.069 resultados e comparar ocorrências, intervalos,
+intervalo médio e desvio-padrão dos intervalos com o banco. Mediana dos
+resultados pertence aos critérios estatísticos, não aos padrões. Investigar
+divergências sem atualizar estatísticas silenciosamente.
+
+Estado: concluído em 2026-10-27. O detector encontrou os concursos 186, 509,
+2052, 2789 e 2908. Quantidade 5, média 680,500000 e desvio populacional
+545,478460 coincidiram exatamente com o banco. Mediana foi corretamente mantida
+fora desta categoria. Nenhuma escrita foi feita.
+Evidência em `MSen/tests/TESTE_ITEM_15_6.md`.
+
+### Item 15.7 — Política piloto em modo sombra
+
+Conectar o detector ao adaptador apenas para informar o que seria excluído, sem
+remover combinações. Registrar ocorrência histórica, tolerância proposta, valor
+observado e justificativa.
+
+Estado: concluído em 2026-10-27. A política sombra de PD_003 registra detector,
+histórico, percentual, operador, hipótese e motivo, mas sempre aprova no funil.
+Com a hipótese não aprovada de 3%, PD_003 é apenas marcado; evidência inválida
+falha sem excluir. Passaram 305 testes Python. Evidência em
+`MSen/tests/TESTE_ITEM_15_7.md`.
+
+### Item 15.8 — Simulação sombra com 5.000 combinações
+
+Apresentar quantidade e percentual marcados, saldo hipotético e tempo. Repetir
+com segunda semente apenas para verificar sensibilidade, sem tratar a amostra
+como prova do universo.
+
+Estado: concluído em 2026-10-27. Com a hipótese não aprovada de 3%, a semente
+20261027 marcou 11/5.000 (0,22%) e a semente 42 marcou 5/5.000 (0,10%). Todas as
+10.000 combinações foram realmente aprovadas e nenhuma foi excluída. A variação
+foi registrada como sensibilidade amostral, não conclusão sobre o universo.
+Passaram 309 testes Python. Evidência em `MSen/tests/TESTE_ITEM_15_8.md`.
+
+### Item 15.9 — Autorização da regra de exclusão
+
+Apresentar histórico e simulação. O usuário deverá aprovar explicitamente
+detector, operador, tolerância e comportamento quando o dado estiver ausente.
+Sem isso, o critério permanecerá em modo sombra.
+
+Estado: concluído em 2026-10-27. O usuário aprovou detector PD_003, operador
+inclusivo `<=`, tolerância de 3% e falha conservadora que não exclui com dado
+ausente ou inconsistente. A autorização vale somente para a ativação protegida
+de 5.000 no Item 15.10. Documento em `docs/DECISAO_REGRA_PD003.md` e evidência
+em `MSen/tests/TESTE_ITEM_15_9.md`.
+
+### Item 15.10 — Ativação controlada do piloto
+
+Após o Item 15.9, permitir o critério na configuração, executar as mesmas 5.000
+e comprovar que recebido = excluído + aprovado. A trava integral permanece.
+
+Estado: concluído em 2026-10-27. Somente PD_003 foi ativado na amostra com
+semente 20261027. Foram recebidas e avaliadas 5.000 combinações, 11 foram
+excluídas e 4.989 aprovadas, fechando `5.000 = 11 + 4.989`. O processamento
+integral permanece bloqueado e passaram 316 testes Python. Evidência em
+`MSen/tests/TESTE_ITEM_15_10.md`.
+
+### Item 15.11 — Ciclo dos demais padrões históricos
+
+Repetir os Itens 15.3 a 15.10 para cada padrão, um por vez. Padrões relacionados
+aparecerão agrupados no relatório, mas manterão códigos e contadores separados.
+Cada ativação exigirá autorização própria.
+
+Estado parcial em 2026-10-27: PD_002 foi selecionado e preparado como próximo
+padrão. Seus casos exclusivos passaram, e o histórico reconciliou 92 ocorrências
+em 3.069 resultados (`2,997719%`), intervalo médio `33,527473` e desvio-padrão
+`33,637806`. Em sombra, marcou 162/5.000 na semente principal e 142/5.000 na
+alternativa. O usuário aprovou os quatro critérios e a ativação amostral passou
+a excluir 11 combinações por PD_003 e 162 por PD_002, aprovando 4.827. O
+fechamento é `5.000 = 11 + 162 + 4.827`; passaram 323 testes e a trava integral
+permanece. Evidência em `MSen/tests/TESTE_ITEM_15_11.md`.
+
+Segundo ciclo concluído em 2026-10-27: PD_006 reconciliou 4 ocorrências em
+3.069 resultados (`0,130336%`), nos concursos 363, 844, 2066 e 2453. Em sombra,
+marcou 5/5.000 na semente principal e 0/5.000 na alternativa, sem exclusões
+reais. Após autorização dos quatro critérios, PD_006 foi ativado como terceiro
+filtro e excluiu as 5 marcações, deixando saldo 4.822. O fechamento passou a
+ser `5.000 = 11 + 162 + 5 + 4.822`; 327 testes passaram e a trava integral
+permanece. Evidência em `MSen/tests/TESTE_ITEM_15_11_PD006.md`.
+
+Terceiro ciclo concluído em 2026-10-27: PD_005 reconciliou 66 ocorrências em
+3.069 resultados (`2,150538%`), intervalo médio `45,969231` e desvio-padrão
+`42,006948`. Em sombra, marcou 113/5.000 na semente principal e 97/5.000 na
+alternativa. Após autorização, foi ativado como quarto filtro: três marcações
+já tinham sido excluídas antes, portanto PD_005 registrou 110 exclusões líquidas
+e saldo 4.712. O fechamento é `5.000 = 11 + 162 + 5 + 110 + 4.712`; passaram
+331 testes e a trava integral permanece. Evidência em
+`MSen/tests/TESTE_ITEM_15_11_PD005.md`.
+
+Quarto ciclo avaliado em 2026-10-27: PD_009 reconciliou 93 ocorrências em 3.069
+resultados (`3,030303%`), intervalo médio `33,141304` e desvio-padrão
+`35,099728`. O detector encontrou 177 e 154 combinações nas duas amostras, mas
+a política marcou zero porque o percentual histórico é maior que a tolerância
+de 3%. PD_009 não foi ativado. Evidência em
+`MSen/tests/TESTE_ITEM_15_11_PD009.md`.
+
+Fechamento em 2026-10-27: PD_001, PD_004, PD_007 e PD_008 foram recalculados e
+coincidiram exatamente com o banco. Embora os detectores tenham encontrado
+entre 1.361 e 3.393 combinações nas amostras, a política marcou zero porque os
+quatro percentuais históricos excedem 3%. Com isso, os nove padrões concluíram
+o ciclo: PD_003, PD_002, PD_006 e PD_005 ativos somente na amostra; os outros
+cinco avaliados e não ativos. Evidência em
+`MSen/tests/TESTE_ITEM_15_11_RESTANTES.md`.
+
+### Item 15.12 — Critérios estatísticos
+
+Tratar separadamente média, mediana, desvio-padrão e medidas futuras, repetindo
+contrato, casos, histórico, sombra, simulação e autorização. A margem de 20%
+continua apenas exemplificativa.
+
+Estado parcial em 2026-10-27: média aritmética escolhida como primeiro piloto.
+O histórico possui média das médias `30,515749` e desvio `6,659667`. A margem
+exemplificativa de ±20% colocaria 1.151/3.069 resultados fora da faixa e foi
+considerada agressiva demais. Como candidato ainda não aprovado, a faixa
+histórica P01/P99 (`15,000000` a `45,886666`) deixaria 59 resultados históricos
+fora (`1,922450%`) e marcaria 108/5.000 na amostra. Nenhuma política foi criada
+ou ativada. Evidência em `MSen/tests/TESTE_ITEM_15_12_INVENTARIO_MEDIA.md`.
+
+Após aprovação experimental, a faixa P01/P99 foi implementada somente em modo
+sombra, com comparação estrita. Marcou 108/5.000 (`2,16%`) na semente principal
+e 96/5.000 (`1,92%`) na alternativa, mantendo todas realmente aprovadas. Os
+limites e suas vizinhanças foram testados. Evidência em
+`MSen/tests/TESTE_ITEM_15_12_MEDIA_SOMBRA.md`.
+
+O usuário autorizou a opção 3, ativação somente na amostra protegida. Como
+quinto filtro, a média avaliou 4.712 combinações e excluiu 89; 19 das 108
+marcações sombra já tinham sido removidas pelos padrões. O saldo final passou
+a 4.623 e a contabilidade fechou em
+`5.000 = 11 + 162 + 5 + 110 + 89 + 4.623`. Passaram 346 testes e a trava
+integral permanece.
+
+Segundo piloto iniciado em 2026-10-27: desvio-padrão populacional das seis
+dezenas. O histórico tem média `15,556645`; ±20% atingiria 1.197/3.069 e não é
+recomendado. A faixa candidata P01/P99 é `7,145546` a `22,774694`, deixando 62
+históricos fora (`2,020202%`) e marcando 132/5.000 na amostra. Nenhuma política
+foi criada. Evidência em `MSen/tests/TESTE_ITEM_15_12_INVENTARIO_DESVIO.md`.
+
+Após aprovação experimental, a faixa do desvio foi implementada somente em
+sombra. Marcou 132/5.000 (`2,64%`) na semente principal e 122/5.000 (`2,44%`)
+na alternativa, sem exclusões reais. Fronteiras e cálculo populacional foram
+testados. Evidência em `MSen/tests/TESTE_ITEM_15_12_DESVIO_SOMBRA.md`.
+
+O usuário autorizou a ativação apenas para testar a engrenagem. Como sexto
+filtro, o desvio recebeu 4.623 combinações e excluiu 95; 37 das 132 marcações
+sombra já haviam sido removidas antes. O saldo final passou a 4.528 e a
+contabilidade fechou em
+`5.000 = 11 + 162 + 5 + 110 + 89 + 95 + 4.528`. Passaram 353 testes. Os limites
+continuam experimentais e o processamento integral permanece bloqueado.
+
+Terceiro piloto estatístico iniciado em 2026-10-27: mediana das seis dezenas.
+O histórico possui média das medianas `30,677908`; ±20% atingiria 1.678/3.069 e
+foi descartado como agressivo. A faixa candidata P01/P99 é `10,5` a `50,5`,
+deixando 57 históricos fora (`1,857283%`) e marcando 92/5.000 na amostra.
+Nenhuma política foi criada. Evidência em
+`MSen/tests/TESTE_ITEM_15_12_INVENTARIO_MEDIANA.md`.
+
+Após aprovação experimental, a mediana foi implementada somente em sombra.
+Marcou 92/5.000 (`1,84%`) na semente principal e 91/5.000 (`1,82%`) na
+alternativa, sem exclusões reais. Fronteiras e cálculo foram testados.
+Evidência em `MSen/tests/TESTE_ITEM_15_12_MEDIANA_SOMBRA.md`.
+
+O usuário autorizou a ativação apenas para teste. Como sétimo filtro, a mediana
+recebeu 4.528 combinações e excluiu 44; 48 das 92 marcações sombra já tinham
+sido removidas antes. O saldo final passou a 4.484 e a contabilidade fechou em
+`5.000 = 11 + 162 + 5 + 110 + 89 + 95 + 44 + 4.484`. Passaram 362 testes; os
+limites permanecem experimentais e a trava integral continua.
+
+### Item 15.13 — Critérios geométricos
+
+Propor faixas para extensão, perímetro, área, regiões e centro de gravidade com
+base nas distribuições históricas. Validar desenho e cálculo antes da sombra;
+cada medida seguirá autorização individual.
+
+Estado parcial em 2026-10-27: extensão aberta escolhida como primeiro piloto.
+O histórico tem média `18,398295`; ±20% atingiria 1.523/3.069 e foi considerado
+agressivo. A faixa candidata P01/P99 é `8,650282` a `32,300058`. Reaplicando os
+limites efetivamente aprovados, arredondados a seis casas, ficam 64 históricos
+fora (`2,085370%`) e 106/5.000 na amostra. A correção substitui a estimativa
+bruta anterior de 61/102. Evidência em
+`MSen/tests/TESTE_ITEM_15_13_INVENTARIO_EXTENSAO.md`.
+
+Após aprovação, a extensão foi implementada somente em sombra. Marcou
+106/5.000 (`2,12%`) na semente principal e 115/5.000 (`2,30%`) na alternativa,
+sem exclusões reais. Evidência em
+`MSen/tests/TESTE_ITEM_15_13_EXTENSAO_SOMBRA.md`.
+
+Depois de autorização específica, a extensão foi ativada como oitavo filtro
+somente na amostra protegida. Recebeu 4.484 combinações, excluiu 75 e deixou
+4.409 aprovadas; 31 das 106 marcações sombra já haviam sido removidas pelos
+sete filtros anteriores. A contabilidade fechou em
+`5.000 = 11 + 162 + 5 + 110 + 89 + 95 + 44 + 75 + 4.409`. Passaram 369 testes;
+o modo integral continua bloqueado e o banco não foi escrito. Evidência em
+`MSen/tests/TESTE_ITEM_15_13_EXTENSAO_ATIVA.md`.
+
+### Item 15.14 — Comparação da ordem dos filtros
+
+Quando houver pelo menos dois critérios aprovados, usar a mesma amostra e
+semente em ordens diferentes. Comparar exclusões atribuídas, avaliações evitadas
+e tempo, contando cada combinação no primeiro critério que a excluir.
+
+Concluído em 2026-10-27 com três ordens. Todas preservaram exatamente as mesmas
+4.409 combinações aprovadas. A ordem atual realizou 37.985 avaliações; a de
+históricos frequentes primeiro, 37.569; e a de geometria/estatísticas primeiro,
+37.315. Como o custo das funções difere, a menor contagem não foi sempre a mais
+rápida. A ordem padrão foi mantida. Evidência em
+`MSen/tests/TESTE_ITEM_15_14_COMPARACAO_ORDENS.md`.
+
+### Item 15.15 — Quadro visual do ensaio
+
+Expor o quadro por API e criar página compacta com total inicial, uma linha por
+critério, exclusões, saldo, percentual e tempo. Usar rolagem interna e evitar
+consumo vertical permanente no menu.
+
+Incluir uma saída de validação das funções, mostrando por caso a combinação,
+resultado esperado, resultado obtido, motivo e conformidade. O usuário deverá
+conseguir conferir aprovações e reprovações antes de autorizar filtros reais.
+
+Concluído em 2026-10-27. A página compacta `/screener.html` apresenta o funil
+de oito filtros e 30 casos reproduzíveis para validação humana. A escolha do
+resultado esperado calcula conformidade ou divergência somente no navegador,
+sem persistir ou alterar regras. HTML, CSS e JavaScript estão separados; as
+tabelas usam rolagem interna. Evidência em
+`MSen/tests/TESTE_ITEM_15_15_QUADRO_VISUAL.md`.
+
+### Item 15.16 — Regressão e fechamento
+
+Executar testes Python, API, frontend, Chrome e PostgreSQL proporcionais ao que
+foi ativado. Confirmar a trava integral, documentar aprovados e pendentes e
+preparar commit somente mediante autorização.
+
+Concluído em 2026-10-27: 379 testes Python, 24 JavaScript e 11 fluxos no Google
+Chrome passaram. O fluxo Chrome real confirmou 5.000 recebidas, 591 excluídas,
+4.409 aprovadas, oito filtros e 30 casos de validação. Não houve acesso ao
+banco; o processamento integral permanece bloqueado e nenhum servidor ficou
+aberto. Evidência em `MSen/tests/TESTE_ITEM_15_16_FECHAMENTO.md`.
+
+---
+
 ## Próximo item proposto
 
-Commit de segurança da Etapa 14, somente mediante autorização expressa. Antes
-de ativar filtros, suas regras reais deverão ser analisadas e aprovadas. A Etapa
-8/PythonAnywhere permanece adiada.
+Commit de segurança da Etapa 15, somente após autorização. Depois, definir com
+o usuário a próxima etapa funcional. A Etapa 8/PythonAnywhere permanece adiada.

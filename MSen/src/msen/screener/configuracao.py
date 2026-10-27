@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 import tomllib
@@ -33,6 +33,43 @@ class ConfiguracaoCriterio:
 
 
 @dataclass(frozen=True, slots=True)
+class RegraConfigurada:
+    """Registra uma regra individual explicitamente aprovada para o screener."""
+
+    codigo: str
+    categoria: str
+    modo: str
+    tolerancia_percentual: float
+    num_ocorrencias: int
+    total_resultados: int
+    reconciliacao: str
+
+
+@dataclass(frozen=True, slots=True)
+class RegraEstatisticaConfigurada:
+    """Registra uma medida estatística aprovada e seus limites."""
+
+    codigo: str
+    medida: str
+    modo: str
+    limite_inferior: float
+    limite_superior: float
+    referencia: str
+
+
+@dataclass(frozen=True, slots=True)
+class RegraGeometricaConfigurada:
+    """Registra uma medida geométrica aprovada e seus limites."""
+
+    codigo: str
+    medida: str
+    modo: str
+    limite_inferior: float
+    limite_superior: float
+    referencia: str
+
+
+@dataclass(frozen=True, slots=True)
 class ConfiguracaoScreener:
     """Contrato validado e imutável de um ensaio do screener."""
 
@@ -43,6 +80,13 @@ class ConfiguracaoScreener:
     confirmacao_processamento_integral: bool
     ordem_filtros: tuple[str, ...]
     criterios: dict[str, ConfiguracaoCriterio]
+    regras: dict[str, RegraConfigurada] = field(default_factory=dict)
+    regras_estatisticas: dict[str, RegraEstatisticaConfigurada] = field(
+        default_factory=dict
+    )
+    regras_geometricas: dict[str, RegraGeometricaConfigurada] = field(
+        default_factory=dict
+    )
 
 
 def _ler_toml(caminho: Path, *, obrigatorio: bool) -> dict[str, Any]:
@@ -128,6 +172,11 @@ def _validar(dados: dict[str, Any]) -> ConfiguracaoScreener:
             raise ErroConfiguracaoScreener(
                 "CRITERIO_INVALIDO", f"O critério {nome} deve declarar habilitado."
             )
+        if habilitado:
+            raise ErroConfiguracaoScreener(
+                "CRITERIO_NAO_AUTORIZADO",
+                "Categorias inteiras não podem ser habilitadas; autorize regras individuais.",
+            )
         tolerancias = {
             chave: _validar_percentual(chave, valor)
             for chave, valor in bruto.items()
@@ -135,12 +184,124 @@ def _validar(dados: dict[str, Any]) -> ConfiguracaoScreener:
         }
         criterios[nome] = ConfiguracaoCriterio(habilitado, tolerancias)
 
-    if any(criterio.habilitado for criterio in criterios.values()):
-        raise ErroConfiguracaoScreener(
-            "CRITERIO_NAO_AUTORIZADO",
-            "Os critérios permanecem desabilitados até suas regras serem aprovadas.",
+    regras: dict[str, RegraConfigurada] = {}
+    for codigo, bruto in dados.get("regras", {}).items():
+        if codigo not in {"PD_002", "PD_003", "PD_005", "PD_006"}:
+            raise ErroConfiguracaoScreener(
+                "REGRA_NAO_AUTORIZADA", f"A regra {codigo} ainda não foi autorizada."
+            )
+        categoria = bruto.get("categoria")
+        modo_regra = bruto.get("modo")
+        tolerancia = _validar_percentual(
+            "tolerancia_percentual", bruto.get("tolerancia_percentual")
         )
-    return ConfiguracaoScreener(1, modo, semente, limite, confirmacao, ordem, criterios)
+        ocorrencias = bruto.get("num_ocorrencias")
+        total_resultados = bruto.get("total_resultados")
+        reconciliacao = bruto.get("reconciliacao")
+        if categoria != "padroes_historicos" or modo_regra != "ativo":
+            raise ErroConfiguracaoScreener(
+                "REGRA_INVALIDA", f"{codigo} deve usar categoria histórica e modo ativo."
+            )
+        if (
+            isinstance(ocorrencias, bool)
+            or not isinstance(ocorrencias, int)
+            or isinstance(total_resultados, bool)
+            or not isinstance(total_resultados, int)
+            or not 0 <= ocorrencias <= total_resultados
+            or total_resultados == 0
+            or not isinstance(reconciliacao, str)
+            or not reconciliacao.strip()
+        ):
+            raise ErroConfiguracaoScreener(
+                "EVIDENCIA_REGRA_INVALIDA",
+                f"A evidência configurada de {codigo} é inválida.",
+            )
+        regras[codigo] = RegraConfigurada(
+            codigo, categoria, modo_regra, tolerancia, ocorrencias,
+            total_resultados, reconciliacao,
+        )
+    regras_estatisticas: dict[str, RegraEstatisticaConfigurada] = {}
+    for codigo, bruto in dados.get("regras_estatisticas", {}).items():
+        medidas_autorizadas = {
+            "EST_MEDIA_P01_P99": "media_aritmetica",
+            "EST_DESVIO_P01_P99": "desvio_padrao_populacional",
+            "EST_MEDIANA_P01_P99": "mediana",
+        }
+        if codigo not in medidas_autorizadas:
+            raise ErroConfiguracaoScreener(
+                "REGRA_ESTATISTICA_NAO_AUTORIZADA",
+                f"A regra estatística {codigo} ainda não foi autorizada.",
+            )
+        medida = bruto.get("medida")
+        modo_regra = bruto.get("modo")
+        inferior = bruto.get("limite_inferior")
+        superior = bruto.get("limite_superior")
+        referencia = bruto.get("referencia")
+        if (
+            medida != medidas_autorizadas[codigo]
+            or modo_regra != "ativo"
+            or isinstance(inferior, bool)
+            or not isinstance(inferior, (int, float))
+            or isinstance(superior, bool)
+            or not isinstance(superior, (int, float))
+            or float(inferior) > float(superior)
+            or not isinstance(referencia, str)
+            or not referencia.strip()
+        ):
+            raise ErroConfiguracaoScreener(
+                "REGRA_ESTATISTICA_INVALIDA",
+                f"A regra experimental {codigo} possui configuração inválida.",
+            )
+        regras_estatisticas[codigo] = RegraEstatisticaConfigurada(
+            codigo,
+            medida,
+            modo_regra,
+            float(inferior),
+            float(superior),
+            referencia,
+        )
+    regras_geometricas: dict[str, RegraGeometricaConfigurada] = {}
+    for codigo, bruto in dados.get("regras_geometricas", {}).items():
+        if codigo != "GEO_EXTENSAO_P01_P99":
+            raise ErroConfiguracaoScreener(
+                "REGRA_GEOMETRICA_NAO_AUTORIZADA",
+                f"A regra geométrica {codigo} ainda não foi autorizada.",
+            )
+        medida = bruto.get("medida")
+        modo_regra = bruto.get("modo")
+        inferior = bruto.get("limite_inferior")
+        superior = bruto.get("limite_superior")
+        referencia = bruto.get("referencia")
+        if (
+            medida != "extensao_aberta"
+            or modo_regra != "ativo"
+            or isinstance(inferior, bool)
+            or not isinstance(inferior, (int, float))
+            or isinstance(superior, bool)
+            or not isinstance(superior, (int, float))
+            or float(inferior) > float(superior)
+            or not isinstance(referencia, str)
+            or not referencia.strip()
+        ):
+            raise ErroConfiguracaoScreener(
+                "REGRA_GEOMETRICA_INVALIDA",
+                f"A regra experimental {codigo} possui configuração inválida.",
+            )
+        regras_geometricas[codigo] = RegraGeometricaConfigurada(
+            codigo, medida, modo_regra, float(inferior), float(superior), referencia
+        )
+    return ConfiguracaoScreener(
+        1,
+        modo,
+        semente,
+        limite,
+        confirmacao,
+        ordem,
+        criterios,
+        regras,
+        regras_estatisticas,
+        regras_geometricas,
+    )
 
 
 def carregar_configuracao_screener(

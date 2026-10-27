@@ -23,7 +23,13 @@ class RelogioArtificial:
 class EnsaioIntegradoScreenerTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.configuracao = carregar_configuracao_screener(PADRAO)
+        cls.configuracao_ativa = carregar_configuracao_screener(PADRAO)
+        cls.configuracao = replace(
+            cls.configuracao_ativa,
+            regras={},
+            regras_estatisticas={},
+            regras_geometricas={},
+        )
 
     def test_fluxo_integrado_recebe_e_aprova_cinco_mil(self):
         quadro = executar_ensaio_amostral(
@@ -60,6 +66,11 @@ class EnsaioIntegradoScreenerTestCase(unittest.TestCase):
         configuracao = replace(self.configuracao, criterios=criterios)
         with self.assertRaises(ErroEnsaioIntegrado) as contexto:
             executar_ensaio_amostral(configuracao)
+        self.assertEqual("CRITERIO_REAL_NAO_AUTORIZADO", contexto.exception.codigo)
+
+    def test_orquestrador_antigo_nao_ignora_regra_individual_ativa(self):
+        with self.assertRaises(ErroEnsaioIntegrado) as contexto:
+            executar_ensaio_amostral(self.configuracao_ativa)
         self.assertEqual("CRITERIO_REAL_NAO_AUTORIZADO", contexto.exception.codigo)
 
     def test_modo_integral_permanece_bloqueado_pelo_gerador_amostral(self):
