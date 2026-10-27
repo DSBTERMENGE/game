@@ -2,6 +2,7 @@ import unittest
 from datetime import datetime, timezone
 
 from msen.api import criar_app
+from msen.api.resultados import _analise_geometrica_json
 from msen.calculos import calcular_resultado
 from msen.database import ErroConexaoBanco, ResultadoPersistido
 from msen.modelos import ResultadoEntrada
@@ -17,9 +18,13 @@ def persistido(id_resultado, numero_ap, data, dezenas):
 
 class ApiResultadosTestCase(unittest.TestCase):
     def _cliente(self, resultados=()):
+        itens = tuple(resultados)
         return criar_app({
             "TESTING": True,
-            "LISTAR_RESULTADOS": lambda: tuple(resultados),
+            "LISTAR_RESULTADOS": lambda: itens,
+            "BUSCAR_RESULTADO": lambda numero: next(
+                (item for item in itens if item.numero_ap == numero), None
+            ),
         }).test_client()
 
     def test_lista_vazia(self):
@@ -48,6 +53,55 @@ class ApiResultadosTestCase(unittest.TestCase):
         self.assertEqual("18.217818", resultado["desvio_padrao_media"])
         self.assertEqual("4.666667", resultado["media_coordenada_x"])
         self.assertEqual("2.666667", resultado["media_coordenada_y"])
+
+    def test_fornece_geometria_exata_para_o_desenho(self):
+        item = persistido(1, 1, "01/01/2026", [1, 2, 3, 10, 11, 20])
+
+        analise = self._cliente([item]).get("/api/resultados").get_json()["resultados"][0][
+            "analise_geometrica"
+        ]
+
+        self.assertEqual(2, analise["quantidade_regioes"])
+        self.assertEqual("4.500000000000", analise["area_total"])
+        self.assertEqual(
+            {"x": "4.500000000000", "y": "0.500000000000"},
+            analise["centro_gravidade"],
+        )
+        self.assertEqual(6, len(analise["vertices"]))
+        self.assertEqual(2, len(analise["regioes"]))
+
+    def test_reutiliza_geometria_da_mesma_combinacao(self):
+        _analise_geometrica_json.cache_clear()
+        dezenas = (1, 2, 3, 10, 11, 20)
+
+        primeira = _analise_geometrica_json(dezenas)
+        segunda = _analise_geometrica_json(dezenas)
+
+        self.assertIs(primeira, segunda)
+        self.assertEqual(1, _analise_geometrica_json.cache_info().hits)
+
+    def test_lista_pode_omitir_geometria_para_carga_inicial(self):
+        item = persistido(1, 1, "01/01/2026", [1, 2, 3, 10, 11, 20])
+
+        resultado = self._cliente([item]).get(
+            "/api/resultados?incluir_geometria=0"
+        ).get_json()["resultados"][0]
+
+        self.assertNotIn("analise_geometrica", resultado)
+
+    def test_geometria_sob_demanda(self):
+        item = persistido(1, 1, "01/01/2026", [1, 2, 3, 10, 11, 20])
+
+        resposta = self._cliente([item]).get("/api/resultados/1/geometria")
+
+        self.assertEqual(200, resposta.status_code)
+        self.assertEqual("4.500000000000", resposta.get_json()["analise_geometrica"]["area_total"])
+
+    def test_geometria_sob_demanda_informa_resultado_ausente(self):
+        resposta = self._cliente().get("/api/resultados/999/geometria")
+
+        self.assertEqual(404, resposta.status_code)
+        self.assertEqual("RESULTADO_NAO_ENCONTRADO", resposta.get_json()["erro"]["codigo"])
 
     def test_ordena_por_numero_ap_crescente(self):
         itens = [

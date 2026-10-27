@@ -90,8 +90,8 @@
 }
 
 #tabela-padroes th:nth-child(1) { width: 5rem; }
-#tabela-padroes th:nth-child(2) { width: 13rem; }
-#tabela-padroes th:nth-child(3) { width: 17rem; }
+#tabela-padroes th:nth-child(2) { width: 20rem; }
+#tabela-padroes th:nth-child(3) { width: 22rem; }
 #tabela-padroes th:nth-child(4) { width: 24rem; }
 #tabela-padroes th:nth-child(5) { width: 5.5rem; }
 #tabela-padroes th:nth-child(6),
@@ -110,7 +110,11 @@
   font: inherit;
 }
 
-#tabela-padroes textarea { resize: vertical; }
+#tabela-padroes textarea {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  resize: vertical;
+}
 
 .padrao-calculado {
   background: #f1f5f9;

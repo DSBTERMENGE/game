@@ -41,11 +41,11 @@ function preencherSelecao(selecao, incluirTodos = false) {
   if ([...selecao.options].some((opcao) => opcao.value === valorAtual)) selecao.value = valorAtual;
 }
 
-function criarCampo(tag, valor, rotulo) {
+function criarCampo(tag, valor, rotulo, limite = 4000) {
   const campo = document.createElement(tag);
   campo.value = valor;
   campo.setAttribute("aria-label", rotulo);
-  campo.maxLength = tag === "input" ? 200 : 4000;
+  campo.maxLength = limite;
   if (tag === "textarea") campo.rows = 3;
   return campo;
 }
@@ -57,6 +57,11 @@ function criarSelecaoGrupo(valor, rotulo) {
     (grupo) => new Option(`${grupo.grupo_cod} — ${grupo.grupo_nome}`, grupo.grupo_cod),
   ));
   selecao.value = valor;
+  const atualizarTitulo = () => {
+    selecao.title = selecao.options[selecao.selectedIndex]?.text ?? "";
+  };
+  selecao.addEventListener("change", atualizarTitulo);
+  atualizarTitulo();
   return selecao;
 }
 
@@ -88,7 +93,7 @@ function criarLinha(padrao) {
   grupo.append(criarSelecaoGrupo(padrao.grupo_cod, `Grupo de ${padrao.padrao_cod}`));
   linha.append(grupo);
   const nome = document.createElement("td");
-  nome.append(criarCampo("input", padrao.padrao_nome, `Nome de ${padrao.padrao_cod}`));
+  nome.append(criarCampo("textarea", padrao.padrao_nome, `Nome de ${padrao.padrao_cod}`, 200));
   linha.append(nome);
   const descricao = document.createElement("td");
   descricao.append(criarCampo("textarea", padrao.padrao_descr, `Descrição de ${padrao.padrao_cod}`));

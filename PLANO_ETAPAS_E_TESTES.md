@@ -1118,12 +1118,201 @@ livres `PG_004`, `PD_010` e `PD_011`. O banco `games` foi auditado na versão
 implementados e nenhum database temporário remanescente. Evidência em
 `MSen/tests/TESTE_ITEM_12_7.md`.
 
-Estado da Etapa 12: concluída em 2026-10-27. As alterações ainda não foram
-commitadas. PythonAnywhere permanece adiado.
+Estado da Etapa 12: concluída em 2026-10-27 e publicada em `origin/developer`
+no commit `a299404`. PythonAnywhere permanece adiado.
+
+---
+
+## ETAPA 13 — Análise geométrica dos resultados
+
+Objetivo: desenhar e medir a figura determinada pelas seis dezenas em ordem
+crescente, validar os cálculos contra o histórico e somente depois estudar
+critérios de exclusão. Nesta etapa nenhuma combinação será excluída.
+
+### Item 13.1 — Contrato geométrico e exemplos de referência
+
+Formalizar coordenadas, ordenação crescente, linha aberta, fechamento, regras
+de interseção, soma das regiões fechadas, centro de gravidade único e casos
+degenerados. Preparar exemplos manuais com resultados esperados antes do código.
+
+Estado: concluído em 2026-10-27. O contrato definiu a rede planar formada pelo
+percurso crescente, área total sem cancelamentos, centro de gravidade ponderado,
+coordenadas exatas para a topologia e quatro exemplos numéricos de referência.
+Nenhum código de cálculo ou banco foi alterado. Contrato em
+`docs/CONTRATO_ANALISE_GEOMETRICA.md` e evidência em
+`MSen/tests/TESTE_ITEM_13_1.md`.
+
+### Item 13.2 — Caminho aberto e medidas básicas
+
+Criar funções Python puras e documentadas para converter dezenas em pontos,
+ordenar os vértices, montar segmentos e calcular a extensão da linha aberta e o
+perímetro fechado. Executar somente testes unitários.
+
+Estado: concluído em 2026-10-27. O novo pacote `msen.geometria` usa pontos
+exatos, ordena as dezenas sem alterar a entrada e calcula extensão e perímetro
+em `Decimal`. Passaram 11 testes direcionados e 227 testes Python no total.
+Nenhum banco foi acessado. Evidência em `MSen/tests/TESTE_ITEM_13_2.md`.
+
+### Item 13.3 — Interseções e regiões fechadas
+
+Detectar cruzamentos, dividir os segmentos nos pontos de interseção e identificar
+todas as regiões fechadas. Testar separadamente figuras sem cruzamento, com um
+cruzamento, com vários cruzamentos e casos degenerados.
+
+Estado: concluído em 2026-10-27. A rede planar usa aritmética exata, normaliza
+sobreposições e identifica apenas faces limitadas. Passaram 12 testes
+direcionados, uma varredura de estabilidade com 5.000 combinações e 239 testes
+Python acumulados. Nenhum banco foi acessado. Evidência em
+`MSen/tests/TESTE_ITEM_13_3.md`.
+
+### Item 13.4 — Área total e centro de gravidade
+
+Calcular a área de cada região, somá-las numa única área e obter um único centro
+de gravidade pela ponderação das áreas. Comparar os cálculos com exemplos
+manuais e garantir que a ordem original do sorteio não afete o resultado.
+
+Estado: concluído em 2026-10-27. Áreas, centroides e centro de gravidade global
+são calculados exatamente, sem cancelamento entre regiões. Os três exemplos do
+contrato, orientação, concavidade e ponderação foram confirmados. Passaram 10
+testes direcionados, uma varredura de 5.000 combinações e 249 testes Python
+acumulados. Nenhum banco foi acessado. Evidência em
+`MSen/tests/TESTE_ITEM_13_4.md`.
+
+### Item 13.5 — Persistência e migração temporária
+
+Definir uma tabela de análise geométrica relacionada individualmente a cada
+resultado, contendo extensão aberta, perímetro, área total, coordenadas do
+centro de gravidade e versão do cálculo. Criar migração e validar em PostgreSQL
+temporário, sem alterar o `games`.
+
+Estado: concluído em 2026-10-27. A migração `007`, o esquema canônico e o
+repositório foram validados em PostgreSQL temporário, incluindo idempotência,
+restrições e cascata. O database efêmero foi removido, passaram 249 testes
+Python e o `games` permaneceu inalterado. Evidência em
+`MSen/tests/TESTE_ITEM_13_5.md`.
+
+### Item 13.6 — Serviço de cálculo histórico
+
+Integrar o cálculo ao cadastro, edição e importação de resultados. Recalcular
+uma amostra controlada em banco temporário, validar idempotência e conferir que
+os 3.069 resultados existentes permanecem inalterados.
+
+Estado: concluído em 2026-10-27. Inclusão, edição e importação passaram a
+persistir a geometria na mesma transação. Um PostgreSQL temporário confirmou
+áreas 36, 4,5 e zero, relação individual e recálculo idempotente. Passaram 249
+testes Python, o temporário foi removido e o `games` não foi conectado nem
+alterado. Evidência em `MSen/tests/TESTE_ITEM_13_6.md`.
+
+### Item 13.7 — Desenho no painel
+
+Desenhar círculos de cerca de 2 mm nos seis centros, linha aberta, fechamento,
+ponto da média e centro de gravidade. Exibir extensão, perímetro e área. Manter
+HTML, CSS e JavaScript separados e testar redimensionamento e legibilidade.
+
+Estado: concluído em 2026-10-27. A API fornece a geometria exata e o painel
+desenha regiões, percurso, fechamento, vértices, média e CG, além de um resumo
+compacto. Passaram 250 testes Python, 23 testes de frontend e 8 fluxos Chrome.
+O `games` não recebeu a migração `007`. Evidência em
+`MSen/tests/TESTE_ITEM_13_7.md`.
+
+### Item 13.8 — Configuração visual persistente
+
+Criar painel compacto para cores, espessuras, tamanhos, transparência e
+visibilidade das entidades gráficas. Persistir as preferências e validar sua
+restauração após reiniciar a página.
+
+Estado: concluído em 2026-10-27. O diálogo `Aparência` configura sete cores,
+medidas, transparência e visibilidade sem ocupar altura permanente. As escolhas
+validadas persistem no navegador e podem ser restauradas. Passaram 250 testes
+Python, 24 de frontend e 9 fluxos Chrome. Nenhum banco foi alterado. Evidência
+em `MSen/tests/TESTE_ITEM_13_8.md`.
+
+### Item 13.9 — Aplicação controlada no histórico local
+
+Criar backup, aplicar a migração no `games`, calcular as medidas dos 3.069
+resultados e validar visualmente uma amostra no Chrome. Ainda não criar limites
+de aprovação ou exclusão.
+
+Estado: concluído em 2026-10-27. Um backup custom validado foi criado, somente a
+migração `007` foi aplicada e 3.069 análises foram associadas aos 3.069
+resultados. O servidor foi reiniciado no PID 37548 e o Chrome real confirmou
+desenho e medidas. A carga integral da API levou cerca de 8,1 segundos e será
+revista no fechamento. Evidência em `MSen/tests/TESTE_ITEM_13_9.md`.
+
+### Item 13.10 — Distribuições históricas e fechamento
+
+Apresentar mínimo, máximo, média, mediana, desvio-padrão e distribuição das
+medidas geométricas. Executar regressão completa, documentar os resultados e
+preparar um commit de segurança mediante autorização.
+
+Estado: concluído em 2026-10-27. Foram apuradas as distribuições das cinco
+medidas e da quantidade de regiões. O carregamento inicial foi reduzido em
+aproximadamente 71,3% com geometria sob demanda. Passaram 254 testes Python,
+24 JavaScript, 9 fluxos Chrome, 3 integrações Chrome/PostgreSQL e a validação
+visual real. Evidência em `MSen/tests/TESTE_ITEM_13_10.md`. Etapa 13 concluída;
+aguardar autorização para o commit de segurança.
+
+---
+
+## ETAPA 14 — Gerador de combinações e screener experimental
+
+Objetivo: fazer o fluxo completo funcionar com uma amostra repetível, sem
+autorizar ainda a execução das 50.063.860 combinações possíveis.
+
+### Item 14.1 — Contrato e arquivo de configuração
+
+Definir a ordem dos filtros, tolerâncias, semente aleatória, limite de teste e
+modo de execução. Criar configuração padrão versionada e configuração local
+ignorada pelo Git. O limite inicial obrigatório será 5.000 combinações.
+
+### Item 14.2 — Gerador amostral repetível
+
+Gerar 5.000 combinações aleatórias distintas, sempre ordenadas, usando uma
+semente registrada. Impedir duplicidades e provar por teste que a mesma semente
+reproduz a mesma amostra.
+
+### Item 14.3 — Gerador integral protegido
+
+Preparar o iterador definitivo com `itertools.combinations(range(1, 61), 6)`.
+No modo de teste, interromper o laço quando `processadas >= 5000`. O modo
+integral deverá exigir configuração e confirmação explícitas; retirar o limite
+somente quando todo o fluxo estiver validado e houver autorização específica.
+
+### Item 14.4 — Estrutura do funil e contadores
+
+Criar o encadeamento configurável de critérios. Quando uma combinação for
+reprovada, contabilizar o filtro responsável e avançar imediatamente para a
+próxima. Nenhum critério real será ativado antes de sua regra ser aprovada.
+
+### Item 14.5 — Adaptadores dos critérios
+
+Preparar interfaces separadas para padrões históricos, medidas estatísticas e
+medidas geométricas. Cada decisão deverá informar aprovação/reprovação, código
+do critério e valores que justificaram a decisão.
+
+### Item 14.6 — Quadro de avaliação
+
+Mostrar total recebido, exclusões por critério, saldo após cada filtro, tempo e
+ordem de execução. Registrar também a configuração e a semente do ensaio para
+que os resultados possam ser reproduzidos.
+
+### Item 14.7 — Ensaio integrado de 5.000 combinações
+
+Executar o fluxo completo sem filtros e depois com critérios aprovados,
+conferindo que a contabilidade fecha. Comparar ordens de filtros sem interpretar
+a amostra como prova estatística do universo completo.
+
+### Item 14.8 — Revisão antes do processamento integral
+
+Medir desempenho, estimar tempo e armazenamento para 50.063.860 combinações e
+decidir se o processamento integral será sequencial, paralelo ou particionado.
+Somente após esta revisão poderá ser proposta a retirada do limite de 5.000.
 
 ---
 
 ## Próximo item proposto
 
-Commit de segurança da Etapa 12. Não executar sem autorização expressa. O push
-será solicitado separadamente. A Etapa 8/PythonAnywhere permanece adiada.
+Item 13.10 — distribuições históricas e fechamento. Não iniciar sem
+autorização expressa. Antes de um próximo commit, também deverão ser incluídos
+os ajustes visuais ainda pendentes nas grades de grupos e padrões. A Etapa
+8/PythonAnywhere permanece adiada.

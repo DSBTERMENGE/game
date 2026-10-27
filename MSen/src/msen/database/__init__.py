@@ -25,6 +25,10 @@ from .repositories import (
     RepositorioResultados,
     ResultadoPersistido,
 )
+from .analise_geometrica_repository import (
+    AnaliseGeometricaPersistida,
+    RepositorioAnaliseGeometrica,
+)
 
 __all__ = [
     "ErroConexaoBanco", "InformacaoConexao", "abrir_conexao", "verificar_conexao",
@@ -35,4 +39,5 @@ __all__ = [
     "ErroRepositorioResultado", "RepositorioFrequencias", "RepositorioResultados",
     "ResultadoPersistido",
     "ErroRepositorioPadrao", "PadraoPersistido", "RepositorioPadroes",
+    "AnaliseGeometricaPersistida", "RepositorioAnaliseGeometrica",
 ]

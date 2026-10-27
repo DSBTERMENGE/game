@@ -504,6 +504,108 @@ local permanece no PID 12888; PythonAnywhere não foi alterado. As mudanças da
 Etapa 12 estão sem commit. Próxima ação exata: aguardar autorização para criar
 o commit de segurança da Etapa 12; solicitar o push separadamente.
 
+A Etapa 12 foi publicada em `origin/developer` no commit `a299404`. Depois do
+commit, ficaram pendentes apenas ajustes visuais não versionados nas grades:
+nomes de grupo e padrão multilinha e colunas de grupo/nome ampliadas; os 22
+testes de frontend passaram.
+
+Em 2026-10-27 foram planejadas as Etapas 13 e 14. A Etapa 13 construirá a
+análise geométrica com dezenas sempre em ordem crescente: caminho aberto,
+fechamento, interseções, soma das áreas das regiões e um centro de gravidade
+ponderado único. Primeiro serão analisados os 3.069 resultados históricos, sem
+qualquer exclusão. A Etapa 14 criará gerador e screener experimental. O ensaio
+usará 5.000 combinações aleatórias distintas com semente reproduzível; o gerador
+integral com `itertools.combinations` permanecerá protegido. O universo completo
+tem 50.063.860 combinações e não será executado sem revisão de desempenho e
+autorização expressa. Próxima ação: aguardar autorização para o Item 13.1.
+
+O Item 13.1 foi concluído em 2026-10-27. O contrato geométrico determina ordem
+crescente, coordenadas lógicas, extensão aberta, perímetro, decomposição do
+percurso cruzado em regiões, soma positiva das áreas e um centro de gravidade
+ponderado. Interseções deverão usar coordenadas exatas e figuras sem área terão
+CG nulo. Quatro exemplos numéricos foram fixados antes do código. Nenhum banco
+foi acessado. Próxima ação: aguardar autorização para o Item 13.2, funções puras
+do caminho aberto e medidas básicas.
+
+O Item 13.2 foi concluído em 2026-10-27. O pacote `msen.geometria` contém pontos
+e segmentos exatos, constrói o percurso crescente sem modificar a entrada e
+calcula extensão aberta e perímetro fechado com `Decimal`. Os exemplos simples,
+cruzado e colinear foram reproduzidos. Passaram 11 testes específicos e 227
+testes Python acumulados. Interseções, regiões e áreas ainda não foram
+implementadas; nenhum banco foi acessado. Próxima ação: aguardar autorização
+para o Item 13.3.
+
+O Item 13.3 foi concluído em 2026-10-27. O módulo de regiões encontra
+cruzamentos, contatos e sobreposições com `Fraction`, divide os segmentos,
+remove arestas duplicadas e percorre a rede planar para obter somente as faces
+limitadas. Foram validadas figuras com zero, uma, duas e três regiões e casos
+degenerados. Passaram 12 testes específicos, uma varredura de estabilidade de
+5.000 combinações e 239 testes Python acumulados. Nenhum banco foi acessado.
+Próxima ação: aguardar autorização para o Item 13.4, área total e centro de
+gravidade.
+
+O Item 13.4 foi concluído em 2026-10-27. O módulo de medidas calcula exatamente
+a área e o centroide de cada face, soma as áreas e produz um único centro de
+gravidade ponderado. Os exemplos do contrato resultaram em área 36/CG
+`(4,125; 2,5)`, área 4,5/CG `(4,5; 0,5)` e área zero/CG nulo. Passaram 10 testes
+específicos, uma varredura coerente de 5.000 combinações e 249 testes Python
+acumulados. Nenhum banco foi acessado. Próxima ação: aguardar autorização para
+o Item 13.5, desenho da persistência e validação em PostgreSQL temporário.
+
+O Item 13.5 foi concluído em 2026-10-27. A migração `007` cria a tabela
+individual `analise_geometrica_resultado`; o repositório persiste extensão,
+perímetro, regiões, área, CG e versão com doze casas. PostgreSQL temporário
+confirmou migrações `001–007`, área 36/CG `(4,125; 2,5)`, área nula,
+idempotência, restrições, cascata e esquema canônico. O temporário foi removido,
+249 testes Python passaram e o `games` não foi alterado. Próxima ação: aguardar
+autorização para o Item 13.6, serviço de cálculo histórico.
+
+O Item 13.6 foi concluído em 2026-10-27. O novo serviço persiste uma análise ou
+recalcula o histórico; inclusão, edição e importação o executam dentro de suas
+transações. PostgreSQL temporário confirmou inclusão com área 36, importação com
+área 4,5, edição com área zero, relação um para um e idempotência. Passaram 249
+testes Python e o temporário foi removido. O `games` não foi conectado e ainda
+não recebeu a migração `007`. Próxima ação: aguardar autorização para o Item
+13.7, desenho geométrico no painel.
+
+O Item 13.7 foi concluído em 2026-10-27. A API calcula e entrega vértices,
+regiões, extensão, perímetro, área e CG sem depender da tabela ainda vazia. O
+painel desenha percurso verde, fechamento tracejado, regiões transparentes,
+pontos de 2 mm, média e CG, com resumo compacto e redimensionamento. Passaram
+250 testes Python, 23 testes de frontend e 8 fluxos Chrome. Seletores Chrome
+antigos das caixas multilinha também foram corrigidos. O servidor local não foi
+reiniciado e o `games` segue sem a migração `007`. Próxima ação: aguardar
+autorização para o Item 13.8, configuração visual persistente.
+
+O Item 13.8 foi concluído em 2026-10-27. O botão compacto `Aparência` abre um
+diálogo para sete cores, espessura, tamanho, transparência e visibilidade. As
+preferências são validadas, salvas no `localStorage`, reaplicadas após recarregar
+e restauráveis. Passaram 250 testes Python, 24 de frontend e 9 fluxos Chrome.
+Nenhum banco foi acessado e o servidor não foi reiniciado. Próxima ação:
+aguardar autorização para o Item 13.9, backup, migração `007`, recálculo dos
+3.069 resultados e validação visual local.
+
+O Item 13.9 foi concluído em 2026-10-27. O backup ignorado pelo Git
+`games_pre_geometria_20261027_132845.dump` tem 118.150 bytes, catálogo válido e
+SHA-256 `4A39BE414502479081F53048FF4F7AA88309BDAD192629140821212C90AFA8FC`.
+A migração `007` foi aplicada e 3.069 análises foram gravadas sem alterar os
+3.069 resultados. Áreas: mínima 1,5, máxima 29,5 e média 9,5777839879303392;
+regiões de 1 a 4; nenhum CG nulo. O servidor atualizado está saudável no PID
+37548. O Chrome real confirmou os desenhos, medidas e diálogo. A carga completa
+da API levou cerca de 8,1 segundos e merece revisão no Item 13.10. Próxima ação:
+aguardar autorização para o Item 13.10, distribuições, regressão e fechamento.
+
+O Item 13.10 e a Etapa 13 foram concluídos em 2026-10-27. As distribuições
+geométricas dos 3.069 resultados foram registradas. A API do painel passou a
+carregar a lista sem geometria e buscar a análise do concurso selecionado sob
+demanda, reduzindo o corpo inicial de 3.807.101 para 1.093.806 bytes (71,3%) e
+medindo cerca de 0,5 s localmente. Passaram 254 testes Python, 24 JavaScript,
+9 fluxos Chrome, 3 integrações Chrome/PostgreSQL e a validação visual real.
+Não restaram bancos temporários. O servidor local está no PID 35448 e o
+PythonAnywhere continua intocado. Próxima ação: aguardar autorização para o
+commit de segurança da Etapa 13; depois, iniciar o Item 14.1 somente mediante
+nova autorização.
+
 Em 2026-10-26 foi planejada a Etapa 9, destinada ao cadastro e à análise de
 padrões. O plano divide o trabalho em contrato, migração PostgreSQL, módulo
 Python documentado, detectores e estatísticas, persistência, API CRUD, grade com

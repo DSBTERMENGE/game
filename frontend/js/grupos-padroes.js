@@ -25,11 +25,11 @@ async function requisitar(url, opcoes = {}) {
   return corpo;
 }
 
-function criarCampo(tag, valor, rotulo) {
+function criarCampo(tag, valor, rotulo, limite = 4000) {
   const campo = document.createElement(tag);
   campo.value = valor;
   campo.setAttribute("aria-label", rotulo);
-  campo.maxLength = tag === "input" ? 200 : 4000;
+  campo.maxLength = limite;
   if (tag === "textarea") campo.rows = 2;
   return campo;
 }
@@ -52,7 +52,7 @@ function criarLinha(grupo) {
   linha.append(codigo);
 
   const nome = document.createElement("td");
-  nome.append(criarCampo("input", grupo.grupo_nome, `Nome de ${grupo.grupo_cod}`));
+  nome.append(criarCampo("textarea", grupo.grupo_nome, `Nome de ${grupo.grupo_cod}`, 200));
   linha.append(nome);
 
   const descricao = document.createElement("td");

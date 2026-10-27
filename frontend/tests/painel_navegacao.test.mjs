@@ -18,6 +18,9 @@ class ElementoFalso {
     this.value = "";
     this.disabled = false;
     this.files = [];
+    this.checked = false;
+    this.open = false;
+    this.style = { valores: {}, setProperty: (nome, valor) => { this.style.valores[nome] = valor; } };
     this.clientWidth = tag === "mapa" ? 400 : 40;
     this.clientHeight = tag === "mapa" ? 240 : 40;
   }
@@ -43,12 +46,16 @@ class ElementoFalso {
   }
 
   disparar(tipo) {
-    if (!this.disabled) this.listeners[tipo]?.({ target: this });
+    if (!this.disabled) this.listeners[tipo]?.({ target: this, preventDefault() {} });
   }
 
   click() {
     this.disparar("click");
   }
+
+  showModal() { this.open = true; }
+
+  close() { this.open = false; }
 
   getBoundingClientRect() {
     if (this.id?.startsWith("dezena-")) {
@@ -83,10 +90,15 @@ function localizar(raizes, seletor) {
 
 const ids = [
   "grade-dezenas", "mapa-dezenas", "camada-marcas", "jogo-numero",
-  "coordenada-media", "mensagem-sistema", "arquivo-excel", "nome-arquivo",
+  "coordenada-media", "resumo-geometrico", "mensagem-sistema", "arquivo-excel", "nome-arquivo",
   "botao-selecionar-excel", "botao-importar-excel", "seletor-resultado",
   "botao-anterior", "botao-proximo", "tempo-voo", "botao-voo",
-  "botao-mancha", "botao-limpar",
+  "botao-mancha", "botao-aparencia", "botao-limpar", "dialogo-aparencia",
+  "form-aparencia", "botao-fechar-aparencia", "botao-restaurar-aparencia",
+  "cor-linha", "cor-fechamento", "cor-vertices", "cor-resultado", "cor-media",
+  "cor-centro-gravidade", "cor-regioes", "espessura-linhas", "diametro-vertices",
+  "opacidade-regioes", "mostrar-linha", "mostrar-fechamento", "mostrar-vertices",
+  "mostrar-resultado", "mostrar-media", "mostrar-centro-gravidade", "mostrar-regioes",
 ];
 const elementos = Object.fromEntries(ids.map((id) => {
   const tag = id === "mapa-dezenas" ? "mapa" : "div";
@@ -123,6 +135,12 @@ globalThis.window = {
     return id;
   },
 };
+const armazenamento = new Map();
+globalThis.localStorage = {
+  getItem: (chave) => armazenamento.get(chave) ?? null,
+  setItem: (chave, valor) => armazenamento.set(chave, valor),
+  clear: () => armazenamento.clear(),
+};
 globalThis.fetch = async () => ({
   ok: true,
   json: async () => ({ resultados: [] }),
@@ -135,6 +153,9 @@ const resultado = (numero) => ({
 });
 
 const circulos = (classe) => elementos["camada-marcas"].children.filter(
+  (elemento) => elemento.attributes.class === classe,
+);
+const marcas = (classe) => elementos["camada-marcas"].children.filter(
   (elemento) => elemento.attributes.class === classe,
 );
 const coordenadas = (elemento) => ({
@@ -234,9 +255,11 @@ test("cadastro de padrões usa grupo obrigatório e grade compacta", async () =>
   assert.match(css, /\.pagina-padroes\s*\{[^}]*grid-template-rows:\s*auto auto minmax\(0, 1fr\)/s);
   assert.match(css, /\.padroes-grade\s*\{[^}]*overflow:\s*auto/s);
   assert.match(css, /#tabela-padroes th\s*\{[^}]*position:\s*sticky/s);
-  assert.match(css, /#tabela-padroes th:nth-child\(3\)\s*\{\s*width:\s*17rem/);
   assert.match(css, /#tabela-padroes th:nth-child\(5\)\s*\{\s*width:\s*5\.5rem/);
   assert.match(css, /#tabela-padroes input,[^{]+\{[^}]*height:\s*4\.75rem/s);
+  assert.match(css, /#tabela-padroes th:nth-child\(2\)\s*\{\s*width:\s*20rem/);
+  assert.match(css, /#tabela-padroes th:nth-child\(3\)\s*\{\s*width:\s*22rem/);
+  assert.match(javascript, /criarCampo\("textarea", padrao\.padrao_nome/);
   assert.match(javascript, /grupo_cod:\s*grupoNovo\.value/);
   assert.match(javascript, /grupo_cod:\s*grupo\.value/);
   assert.match(javascript, /encodeURIComponent\(filtroGrupo\.value\)/);
@@ -316,6 +339,56 @@ test("posiciona uma média inteira exatamente no centro correspondente", () => {
   assert.equal(circulos("marca-media").length, 1);
   assert.deepEqual(coordenadas(circulos("marca-media")[0]), { x: 60, y: 60 });
   assert.equal(elementos["coordenada-media"].textContent, "Média espacial: (1.00; 1.00)");
+});
+
+test("desenha percurso, fechamento, regiões e centro de gravidade", () => {
+  window.gameAnalysis.desenharResultado({
+    numero_ap: 1,
+    dezenas: [1, 2, 3, 10, 11, 20],
+    analise_geometrica: {
+      vertices: [
+        { x: "0", y: "0" }, { x: "1", y: "0" }, { x: "2", y: "0" },
+        { x: "9", y: "0" }, { x: "0", y: "1" }, { x: "9", y: "1" },
+      ],
+      regioes: [
+        [{ x: "0", y: "0" }, { x: "9", y: "0" }, { x: "4.5", y: "0.5" }],
+        [{ x: "0", y: "1" }, { x: "4.5", y: "0.5" }, { x: "9", y: "1" }],
+      ],
+      quantidade_regioes: 2,
+      extensao_aberta: "27.055385",
+      perimetro_fechado: "36.110770",
+      area_total: "4.5",
+      centro_gravidade: { x: "4.5", y: "0.5" },
+    },
+  });
+
+  assert.equal(marcas("linha-geometrica").length, 1);
+  assert.equal(marcas("fechamento-geometrico").length, 1);
+  assert.equal(marcas("regiao-geometrica").length, 2);
+  assert.equal(marcas("vertice-geometrico").length, 6);
+  assert.deepEqual(coordenadas(marcas("centro-gravidade")[0]), { x: 200, y: 40 });
+  assert.match(elementos["resumo-geometrico"].textContent, /Área: 4,500 \| Regiões: 2/);
+});
+
+test("salva configuração visual, reaplica e restaura os padrões", () => {
+  elementos["botao-aparencia"].click();
+  assert.equal(elementos["dialogo-aparencia"].open, true);
+  elementos["cor-linha"].value = "#123456";
+  elementos["espessura-linhas"].value = "1.5";
+  elementos["mostrar-linha"].checked = false;
+  elementos["form-aparencia"].disparar("submit");
+
+  assert.equal(elementos["dialogo-aparencia"].open, false);
+  assert.equal(elementos["mapa-dezenas"].style.valores["--cor-linha-geometrica"], "#123456");
+  assert.equal(elementos["mapa-dezenas"].style.valores["--espessura-linhas"], "1.5mm");
+  assert.match(localStorage.getItem("msen.configuracaoVisual.v1"), /"mostrarLinha":false/);
+  window.gameAnalysis.desenharResultado(resultado(1));
+  assert.equal(marcas("linha-geometrica").length, 0);
+
+  elementos["botao-aparencia"].click();
+  elementos["botao-restaurar-aparencia"].click();
+  elementos["form-aparencia"].disparar("submit");
+  assert.equal(elementos["mapa-dezenas"].style.valores["--cor-linha-geometrica"], "#25834f");
 });
 
 test("preserva a posição decimal conhecida 2 por 4,33", () => {

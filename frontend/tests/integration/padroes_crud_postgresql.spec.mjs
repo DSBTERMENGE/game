@@ -121,13 +121,13 @@ test("histórico, estatísticas, PostgreSQL, API e grade CRUD funcionam em conju
   await expect(pd001.locator("td").nth(4)).toHaveText("2");
   await expect(pd001.locator("td").nth(5)).toHaveText("15,000000");
 
-  await pd001.locator("input").fill("Duas sequenciais — texto revisto");
+  await pd001.locator("textarea").first().fill("Duas sequenciais — texto revisto");
   await pd001.locator('button[data-acao="salvar"]').click();
   await expect(page.locator("#mensagem-padroes")).toHaveText("PD_001 atualizado.");
 
   await incluirResultado(page, 90, "2020-03-30", [1, 3, 5, 7, 9, 11]);
   await page.reload();
-  await expect(pd001.locator("input")).toHaveValue("Duas sequenciais — texto revisto");
+  await expect(pd001.locator("textarea").first()).toHaveValue("Duas sequenciais — texto revisto");
 
   await page.locator("#novo-padrao-grupo").selectOption("PG_004");
   await page.locator("#novo-padrao-nome").fill("Padrão ainda sem função");
@@ -139,7 +139,7 @@ test("histórico, estatísticas, PostgreSQL, API e grade CRUD funcionam em conju
   await expect(pd010.locator("select")).toHaveValue("PG_004");
 
   await pd010.locator("select").selectOption("PG_001");
-  await pd010.locator("textarea").fill("Descrição revista antes da exclusão.");
+  await pd010.locator("textarea").nth(1).fill("Descrição revista antes da exclusão.");
   await pd010.locator('button[data-acao="salvar"]').click();
   await expect(page.locator("#mensagem-padroes")).toHaveText("PD_010 atualizado.");
   await expect(pd010.locator("select")).toHaveValue("PG_001");

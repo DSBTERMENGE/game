@@ -1,5 +1,11 @@
+import {
+  aplicarConfiguracaoVisual,
+  carregarConfiguracaoVisual,
+  vincularPainelConfiguracao,
+} from "./configuracao-visual.js";
+
 const SVG_NS = "http://www.w3.org/2000/svg";
-const API_RESULTADOS = "/api/resultados";
+const API_RESULTADOS = "/api/resultados?incluir_geometria=0";
 const API_IMPORTAR = "/api/resultados/importar";
 
 const grade = document.querySelector("#grade-dezenas");
@@ -7,6 +13,7 @@ const mapa = document.querySelector("#mapa-dezenas");
 const camadaMarcas = document.querySelector("#camada-marcas");
 const jogoNumero = document.querySelector("#jogo-numero");
 const coordenadaMediaSaida = document.querySelector("#coordenada-media");
+const resumoGeometricoSaida = document.querySelector("#resumo-geometrico");
 const mensagemSistema = document.querySelector("#mensagem-sistema");
 const arquivoExcel = document.querySelector("#arquivo-excel");
 const nomeArquivo = document.querySelector("#nome-arquivo");
@@ -25,6 +32,7 @@ const estado = {
   indiceAtual: -1,
   vooAtivo: false,
   temporizadorVoo: null,
+  configuracaoVisual: carregarConfiguracaoVisual(),
 };
 
 const formatarDezena = (numero) => String(numero).padStart(2, "0");
@@ -53,6 +61,7 @@ function limparGrafico() {
   camadaMarcas.replaceChildren();
   jogoNumero.textContent = "—";
   coordenadaMediaSaida.textContent = "Média espacial: —";
+  resumoGeometricoSaida.textContent = "Geometria: —";
 }
 
 function centroDaDezena(numero) {
@@ -113,6 +122,68 @@ function adicionarCirculo({ x, y }, raio, classe, destino = camadaMarcas) {
   destino.append(circulo);
 }
 
+function adicionarTrajeto(pontos, classe, fechado = false) {
+  const elemento = criarElementoSvg(fechado ? "polygon" : "polyline");
+  elemento.setAttribute(
+    "points",
+    pontos.map((ponto) => `${ponto.x},${ponto.y}`).join(" "),
+  );
+  elemento.setAttribute("class", classe);
+  camadaMarcas.append(elemento);
+}
+
+function pontoNumerico(ponto) {
+  const convertido = { x: Number(ponto?.x), y: Number(ponto?.y) };
+  if (!Number.isFinite(convertido.x) || !Number.isFinite(convertido.y)) {
+    throw new TypeError("A API forneceu uma coordenada geométrica inválida.");
+  }
+  return convertido;
+}
+
+function desenharAnaliseGeometrica(resultado, dezenas) {
+  const analise = resultado.analise_geometrica;
+  const verticesLogicos = analise?.vertices?.map(pontoNumerico)
+    ?? [...dezenas].sort((a, b) => a - b).map(coordenadaLogica);
+  const vertices = verticesLogicos.map(coordenadaParaPixel);
+
+  if (estado.configuracaoVisual.mostrarRegioes) (analise?.regioes ?? []).forEach((regiao) => {
+    adicionarTrajeto(regiao.map(pontoNumerico).map(coordenadaParaPixel), "regiao-geometrica", true);
+  });
+  if (estado.configuracaoVisual.mostrarLinha) adicionarTrajeto(vertices, "linha-geometrica");
+
+  if (estado.configuracaoVisual.mostrarFechamento) {
+    const fechamento = criarElementoSvg("line");
+    fechamento.setAttribute("x1", String(vertices.at(-1).x));
+    fechamento.setAttribute("y1", String(vertices.at(-1).y));
+    fechamento.setAttribute("x2", String(vertices[0].x));
+    fechamento.setAttribute("y2", String(vertices[0].y));
+    fechamento.setAttribute("class", "fechamento-geometrico");
+    camadaMarcas.append(fechamento);
+  }
+
+  const raioVertices = (estado.configuracaoVisual.diametroVertices / 2 / 25.4) * 96;
+  if (estado.configuracaoVisual.mostrarVertices) vertices.forEach((vertice) => adicionarCirculo(
+    vertice, raioVertices, "vertice-geometrico",
+  ));
+
+  if (estado.configuracaoVisual.mostrarCentroGravidade && analise?.centro_gravidade) {
+    adicionarCirculo(
+      coordenadaParaPixel(pontoNumerico(analise.centro_gravidade)),
+      raioVertices * 1.35,
+      "centro-gravidade",
+    );
+  }
+
+  if (analise) {
+    const extensao = Number(analise.extensao_aberta).toFixed(3).replace(".", ",");
+    const perimetro = Number(analise.perimetro_fechado).toFixed(3).replace(".", ",");
+    const area = Number(analise.area_total).toFixed(3).replace(".", ",");
+    resumoGeometricoSaida.textContent = `Extensão: ${extensao} | Perímetro: ${perimetro} | Área: ${area} | Regiões: ${analise.quantidade_regioes}`;
+  } else {
+    resumoGeometricoSaida.textContent = "Geometria: medidas ainda não fornecidas";
+  }
+}
+
 function extrairDezenas(resultado) {
   const fonte = resultado.dezenas ?? [
     resultado.res_01,
@@ -148,11 +219,14 @@ function desenharResultado(resultado, { acumular = false } = {}) {
   }
 
   ajustarCamada();
+  desenharAnaliseGeometrica(resultado, dezenas);
   const raioResultado = document.querySelector(".dezena").clientWidth * 0.34;
-  dezenas.forEach((numero) => {
+  if (estado.configuracaoVisual.mostrarResultado) dezenas.forEach((numero) => {
     adicionarCirculo(centroDaDezena(numero), raioResultado, "marca-resultado");
   });
-  adicionarCirculo(coordenadaParaPixel(media), Math.max(7, raioResultado * 0.34), "marca-media");
+  if (estado.configuracaoVisual.mostrarMedia) adicionarCirculo(
+    coordenadaParaPixel(media), Math.max(7, raioResultado * 0.34), "marca-media",
+  );
 
   jogoNumero.textContent = numeroDoResultado(resultado);
   coordenadaMediaSaida.textContent = `Média espacial: (${media.x.toFixed(2)}; ${media.y.toFixed(2)})`;
@@ -223,7 +297,21 @@ function selecionarIndice(indice) {
 
   estado.indiceAtual = (indice + estado.resultados.length) % estado.resultados.length;
   seletorResultado.value = String(estado.indiceAtual);
-  desenharResultado(estado.resultados[estado.indiceAtual]);
+  const resultado = estado.resultados[estado.indiceAtual];
+  desenharResultado(resultado);
+  if (!resultado.analise_geometrica) {
+    const numero = numeroDoResultado(resultado);
+    fetch(`/api/resultados/${numero}/geometria`, { headers: { Accept: "application/json" } })
+      .then((resposta) => {
+        if (!resposta.ok) throw new Error(`A API respondeu com status ${resposta.status}.`);
+        return resposta.json();
+      })
+      .then((corpo) => {
+        resultado.analise_geometrica = corpo.analise_geometrica;
+        if (estado.resultados[estado.indiceAtual] === resultado) desenharResultado(resultado);
+      })
+      .catch((erro) => informar(`Geometria indisponível: ${erro.message}`, "erro"));
+  }
 }
 
 function definirResultados(resultados) {
@@ -370,6 +458,11 @@ window.addEventListener("resize", () => {
 });
 
 ajustarCamada();
+aplicarConfiguracaoVisual(mapa, estado.configuracaoVisual);
+vincularPainelConfiguracao(estado.configuracaoVisual, (configuracao) => {
+  estado.configuracaoVisual = aplicarConfiguracaoVisual(mapa, configuracao);
+  if (estado.indiceAtual >= 0) desenharResultado(estado.resultados[estado.indiceAtual]);
+});
 atualizarControles();
 carregarResultadosDaApi();
 
@@ -381,6 +474,7 @@ window.gameAnalysis = {
   coordenadaParaPixel,
   definirResultados,
   desenharMancha,
+  desenharAnaliseGeometrica,
   desenharResultado,
   interromperVoo,
   limparGrafico,

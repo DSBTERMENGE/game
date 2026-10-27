@@ -111,8 +111,18 @@ def testar_schema_canonico(nome_database: str) -> dict[str, int]:
                 grupos = cursor.fetchone()[0]
                 cursor.execute("SELECT count(*) FROM padroes_subgrupo")
                 padroes = cursor.fetchone()[0]
+                cursor.execute(
+                    "SELECT count(*) FROM information_schema.tables "
+                    "WHERE table_schema = 'public' "
+                    "AND table_name = 'analise_geometrica_resultado'"
+                )
+                tabelas_geometricas = cursor.fetchone()[0]
             conexao.commit()
-        return {"grupos": grupos, "padroes": padroes}
+        return {
+            "grupos": grupos,
+            "padroes": padroes,
+            "tabelas_geometricas": tabelas_geometricas,
+        }
     finally:
         remover(configuracao_base, nome)
 
@@ -138,7 +148,7 @@ def validar_estrutura(nome_database: str) -> dict[str, object]:
                 "SELECT versao FROM schema_migrations ORDER BY versao"
             )
             versoes = tuple(linha[0] for linha in cursor.fetchall())
-            if versoes != ("001", "002", "003", "004", "005", "006"):
+            if versoes != ("001", "002", "003", "004", "005", "006", "007"):
                 raise AssertionError(f"Migrações inesperadas: {versoes!r}")
 
             cursor.execute(

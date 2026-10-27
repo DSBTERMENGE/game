@@ -211,15 +211,47 @@ h2 {
   pointer-events: none;
 }
 
+.regiao-geometrica {
+  fill: var(--cor-regioes, #6fcf97);
+  fill-opacity: var(--opacidade-regioes, 0.12);
+  stroke: none;
+}
+
+.linha-geometrica,
+.fechamento-geometrico {
+  fill: none;
+  stroke: var(--cor-linha-geometrica, #25834f);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: var(--espessura-linhas, 1mm);
+}
+
+.fechamento-geometrico {
+  stroke: var(--cor-fechamento-geometrico, #17663b);
+  stroke-dasharray: 6 4;
+}
+
+.vertice-geometrico {
+  fill: var(--cor-vertices-geometricos, #e8fff0);
+  stroke: #17663b;
+  stroke-width: 1.2;
+}
+
+.centro-gravidade {
+  fill: var(--cor-centro-gravidade, #7566d9);
+  stroke: #312783;
+  stroke-width: 1.5;
+}
+
 .marca-resultado {
-  fill: #80d8a0;
+  fill: var(--cor-resultado, #80d8a0);
   fill-opacity: 0.5;
   stroke: #287a47;
   stroke-width: 1.5;
 }
 
 .marca-media {
-  fill: #ff9f43;
+  fill: var(--cor-media, #ff9f43);
   fill-opacity: 0.7;
   stroke: #9a4e00;
   stroke-width: 2;
@@ -234,6 +266,53 @@ h2 {
   fill: #e67e22;
   fill-opacity: 0.28;
 }
+
+.dialogo-aparencia {
+  width: min(48rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  padding: 0;
+  overflow: auto;
+  border: 1px solid #94a3b8;
+  border-radius: 0.5rem;
+  box-shadow: 0 1rem 3rem rgb(15 23 42 / 0.25);
+}
+
+.dialogo-aparencia::backdrop { background: rgb(15 23 42 / 0.38); }
+
+.dialogo-aparencia form { padding: 0.8rem; }
+
+.dialogo-aparencia header,
+.dialogo-aparencia footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.dialogo-aparencia header h2 { margin: 0; }
+.dialogo-aparencia header button { min-width: 2rem; }
+.dialogo-aparencia footer { justify-content: flex-end; }
+
+.dialogo-aparencia fieldset {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.45rem 0.8rem;
+  margin: 0.65rem 0;
+  padding: 0.6rem;
+  border: 1px solid #cbd5e1;
+}
+
+.dialogo-aparencia label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-width: 0;
+  font-size: 0.82rem;
+}
+
+.dialogo-aparencia input[type="number"] { width: 5rem; }
+.dialogo-aparencia input[type="color"] { width: 3rem; height: 2rem; padding: 0.1rem; }
 
 @media (max-width: 44rem) {
   .barra-titulo {

@@ -92,3 +92,11 @@ código excluído não será reutilizado e o recálculo não recriará o cadastr
 - `404 GRUPO_NAO_ENCONTRADO`;
 - `409 PADRAO_DUPLICADO`;
 - `503 BANCO_INDISPONIVEL`, sem detalhes internos ou credenciais.
+
+# Geometria em resultados
+
+Cada item retornado por `GET /api/resultados` inclui `analise_geometrica`, com
+vértices, regiões, extensão aberta, perímetro fechado, área total, quantidade de
+regiões e centro de gravidade. Os valores são calculados em memória a partir das
+dezenas e enviados como textos decimais para preservar precisão. Essa consulta
+não depende de a migração geométrica já estar preenchida.

@@ -164,3 +164,20 @@ nove padrões, e o primeiro código livre torna-se `PD_010`.
 
 Após backup e aplicação local da migração `006`, os 3.069 resultados produziram
 2.053 ocorrências de `PD_007`, 863 de `PD_008` e 93 de `PD_009`.
+
+# Análise geométrica por resultado
+
+A migração `007` cria `analise_geometrica_resultado`, em relação um para um com
+`resultados`. A tabela guarda extensão aberta, perímetro fechado, quantidade de
+regiões, área total, centro de gravidade e versão do algoritmo. A chave
+estrangeira usa exclusão em cascata, evitando medidas órfãs quando um resultado
+é removido.
+
+As medidas usam doze casas decimais na persistência. A área zero exige zero
+regiões e centro de gravidade nulo; uma área positiva exige pelo menos uma
+região e as duas coordenadas do centro.
+
+Em 2026-10-27, após backup validado, a migração `007` foi aplicada ao `games` e
+foram gravadas 3.069 análises para os 3.069 resultados. A área histórica ficou
+entre 1,5 e 29,5; os resultados formaram de uma a quatro regiões e nenhum teve
+área zero.

@@ -154,3 +154,15 @@ conexão com o banco durante a importação do módulo, permitindo testes isolad
 carregamento seguro pelo WSGI. `MSen/wsgi.py` expõe a variável `application`
 esperada pelo servidor de produção. `GET /api/saude` confirma somente que o
 processo HTTP está respondendo; ele não consulta o PostgreSQL.
+
+# Geometria dos resultados
+
+O pacote `msen.geometria` mantém separados caminho, regiões e medidas. A
+topologia e as áreas trabalham com `fractions.Fraction`; extensão e perímetro
+usam `Decimal`. O arredondamento para doze casas acontece apenas no
+`RepositorioAnaliseGeometrica`, no momento de persistir.
+
+O repositório grava uma única análise por resultado com operação idempotente.
+O serviço `analise_geometrica.py` coordena o cálculo individual e o recálculo
+do histórico. Inclusão, edição e importação chamam esse serviço dentro de suas
+transações, mantendo resultado e medidas derivados consistentes.

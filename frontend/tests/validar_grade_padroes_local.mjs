@@ -24,7 +24,7 @@ try {
   for (const [codigo, { fragmento, estatisticas }] of esperado) {
     const linha = page.locator(`tr[data-codigo="${codigo}"]`);
     const celulas = await linha.locator("td").allTextContents();
-    const nome = await linha.locator("input").inputValue();
+    const nome = await linha.getByLabel(`Nome de ${codigo}`).inputValue();
     const nomeNormalizado = nome.replace(/\s+/g, " ");
     if (!nomeNormalizado.includes(fragmento)) {
       throw new Error(`${codigo} não exibe o nome esperado.`);

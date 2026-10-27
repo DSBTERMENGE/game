@@ -9,6 +9,7 @@ from msen.database import RepositorioFrequencias, RepositorioResultados, Resulta
 from msen.modelos import ResultadoEntrada
 
 from .padroes import recalcular_padroes_iniciais
+from .analise_geometrica import calcular_e_persistir_analise_geometrica
 
 
 def _como_entrada(resultado: ResultadoCalculado) -> ResultadoEntrada:
@@ -37,11 +38,12 @@ def _atualizar_frequencias(
 def incluir_resultado(
     conexao: psycopg.Connection, entrada: ResultadoEntrada
 ) -> ResultadoPersistido:
-    """Calcula, insere e atualiza frequências e padrões na mesma transação."""
+    """Calcula, insere e atualiza derivados na mesma transação."""
 
     repositorio = RepositorioResultados(conexao)
     with conexao.transaction():
         persistido = repositorio.inserir(calcular_resultado(entrada))
+        calcular_e_persistir_analise_geometrica(conexao, persistido)
         _atualizar_frequencias(conexao, repositorio)
         recalcular_padroes_iniciais(conexao)
     return persistido
@@ -50,11 +52,12 @@ def incluir_resultado(
 def editar_resultado(
     conexao: psycopg.Connection, entrada: ResultadoEntrada
 ) -> ResultadoPersistido:
-    """Recalcula, atualiza e refaz frequências e padrões na mesma transação."""
+    """Recalcula, atualiza e refaz todos os derivados na mesma transação."""
 
     repositorio = RepositorioResultados(conexao)
     with conexao.transaction():
         persistido = repositorio.atualizar(entrada)
+        calcular_e_persistir_analise_geometrica(conexao, persistido)
         _atualizar_frequencias(conexao, repositorio)
         recalcular_padroes_iniciais(conexao)
     return persistido

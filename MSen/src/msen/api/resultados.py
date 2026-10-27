@@ -2,6 +2,8 @@
 
 from dataclasses import asdict, replace
 from decimal import Decimal
+from fractions import Fraction
+from functools import lru_cache
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Callable
@@ -18,6 +20,12 @@ from msen.database import (
     abrir_conexao,
 )
 from msen.importacao import ErroLeituraExcel
+from msen.geometria import (
+    calcular_area_e_centro_gravidade,
+    calcular_extensao_aberta,
+    calcular_perimetro_fechado,
+    construir_vertices,
+)
 from msen.modelos import ErroValidacaoResultado, ResultadoEntrada
 from msen.services import (
     RelatorioImportacaoBanco,
@@ -36,6 +44,14 @@ def listar_resultados_do_banco() -> tuple[ResultadoPersistido, ...]:
     configuracao = carregar_configuracao_banco()
     with abrir_conexao(configuracao) as conexao:
         return RepositorioResultados(conexao).listar(limite=10_000)
+
+
+def buscar_resultado_do_banco(numero_ap: int) -> ResultadoPersistido | None:
+    """Busca um concurso para calcular sua geometria somente quando solicitada."""
+
+    configuracao = carregar_configuracao_banco()
+    with abrir_conexao(configuracao) as conexao:
+        return RepositorioResultados(conexao).buscar_por_numero_ap(numero_ap)
 
 
 def importar_resultados_no_banco(caminho: str | Path) -> RelatorioImportacaoBanco:
@@ -62,9 +78,42 @@ def _decimal_texto(valor: Decimal) -> str:
     return format(valor, "f")
 
 
-def serializar_resultado(persistido: ResultadoPersistido) -> dict[str, object]:
-    resultado = persistido.resultado
+def _fracao_texto(valor: Fraction) -> str:
+    return format(Decimal(valor.numerator) / Decimal(valor.denominator), ".12f")
+
+
+def _ponto_json(ponto) -> dict[str, str]:
+    return {"x": _fracao_texto(ponto.x), "y": _fracao_texto(ponto.y)}
+
+
+@lru_cache(maxsize=10_000)
+def _analise_geometrica_json(dezenas: tuple[int, ...]) -> dict[str, object]:
+    """Calcula uma geometria determinística e a reutiliza nas próximas consultas."""
+
+    geometria = calcular_area_e_centro_gravidade(dezenas)
     return {
+        "vertices": [_ponto_json(ponto) for ponto in construir_vertices(dezenas)],
+        "regioes": [
+            [_ponto_json(ponto) for ponto in regiao.vertices]
+            for regiao in geometria.regioes
+        ],
+        "quantidade_regioes": len(geometria.regioes),
+        "extensao_aberta": _decimal_texto(calcular_extensao_aberta(dezenas)),
+        "perimetro_fechado": _decimal_texto(calcular_perimetro_fechado(dezenas)),
+        "area_total": _fracao_texto(geometria.area_total),
+        "centro_gravidade": (
+            None
+            if geometria.centro_gravidade is None
+            else _ponto_json(geometria.centro_gravidade)
+        ),
+    }
+
+
+def serializar_resultado(
+    persistido: ResultadoPersistido, *, incluir_geometria: bool = True
+) -> dict[str, object]:
+    resultado = persistido.resultado
+    serializado = {
         "id_resultado": persistido.id_resultado,
         "data_resultado": resultado.data_resultado.isoformat(),
         "numero_ap": resultado.numero_ap,
@@ -83,6 +132,11 @@ def serializar_resultado(persistido: ResultadoPersistido) -> dict[str, object]:
         "media_coordenada_y": _decimal_texto(resultado.media_coordenada_y),
         "versao_calculo": resultado.versao_calculo,
     }
+    if incluir_geometria:
+        serializado["analise_geometrica"] = _analise_geometrica_json(
+            resultado.resultados
+        )
+    return serializado
 
 
 @resultados_api.get("/api/resultados")
@@ -105,8 +159,40 @@ def listar_resultados():
             }
         ), 503
 
-    resultados = [serializar_resultado(item) for item in persistidos]
+    incluir_geometria = request.args.get("incluir_geometria", "1") != "0"
+    resultados = [
+        serializar_resultado(item, incluir_geometria=incluir_geometria)
+        for item in persistidos
+    ]
     return jsonify(resultados=resultados, total=len(resultados))
+
+
+@resultados_api.get("/api/resultados/<int:numero_ap>/geometria")
+def consultar_geometria(numero_ap: int):
+    """Calcula sob demanda a geometria de um concurso existente."""
+
+    servico: Callable[[int], ResultadoPersistido | None] = current_app.config[
+        "BUSCAR_RESULTADO"
+    ]
+    try:
+        persistido = servico(numero_ap)
+    except (
+        ErroConfiguracaoBanco,
+        ErroConexaoBanco,
+        ErroRepositorioResultado,
+        psycopg.Error,
+    ):
+        return _erro(
+            "BANCO_INDISPONIVEL", "Não foi possível consultar o resultado.", 503
+        )
+    if persistido is None:
+        return _erro("RESULTADO_NAO_ENCONTRADO", "O resultado não foi encontrado.", 404)
+    return jsonify(
+        numero_ap=persistido.numero_ap,
+        analise_geometrica=_analise_geometrica_json(
+            persistido.resultado.resultados
+        ),
+    )
 
 
 def _erro(codigo: str, mensagem: str, status: int):

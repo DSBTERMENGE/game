@@ -10,7 +10,22 @@ const resultados = [
     id_resultado: 1,
     numero_ap: 1,
     data_resultado: "1996-03-11",
-    dezenas: [4, 5, 30, 33, 41, 52],
+    dezenas: [1, 2, 3, 10, 11, 20],
+    analise_geometrica: {
+      vertices: [
+        { x: "0", y: "0" }, { x: "1", y: "0" }, { x: "2", y: "0" },
+        { x: "9", y: "0" }, { x: "0", y: "1" }, { x: "9", y: "1" },
+      ],
+      regioes: [
+        [{ x: "0", y: "0" }, { x: "9", y: "0" }, { x: "4.5", y: "0.5" }],
+        [{ x: "0", y: "1" }, { x: "4.5", y: "0.5" }, { x: "9", y: "1" }],
+      ],
+      quantidade_regioes: 2,
+      extensao_aberta: "27.055385",
+      perimetro_fechado: "36.110770",
+      area_total: "4.5",
+      centro_gravidade: { x: "4.5", y: "0.5" },
+    },
   },
   {
     id_resultado: 2,
@@ -58,6 +73,7 @@ test.beforeAll(async () => {
       "/css/grupos-padroes.css": ["css/grupos-padroes.css", "text/css; charset=utf-8"],
       "/css/padroes.css": ["css/padroes.css", "text/css; charset=utf-8"],
       "/js/main.js": ["js/main.js", "text/javascript; charset=utf-8"],
+      "/js/configuracao-visual.js": ["js/configuracao-visual.js", "text/javascript; charset=utf-8"],
       "/js/navegacao.js": ["js/navegacao.js", "text/javascript; charset=utf-8"],
       "/js/grupos-padroes.js": ["js/grupos-padroes.js", "text/javascript; charset=utf-8"],
       "/js/padroes.js": ["js/padroes.js", "text/javascript; charset=utf-8"],
@@ -87,8 +103,16 @@ test.afterAll(async () => {
 async function simularApi(page) {
   let importacoes = 0;
   let padroes = structuredClone(padroesIniciais);
-  await page.route("**/api/resultados", async (rota) => {
+  await page.route(/\/api\/resultados(?:\?.*)?$/, async (rota) => {
     await rota.fulfill({ json: { resultados, total: resultados.length } });
+  });
+  await page.route(/\/api\/resultados\/\d+\/geometria$/, async (rota) => {
+    await rota.fulfill({
+      json: {
+        numero_ap: 2,
+        analise_geometrica: resultados[0].analise_geometrica,
+      },
+    });
   });
   await page.route("**/api/resultados/importar", async (rota) => {
     importacoes += 1;
@@ -231,6 +255,11 @@ test("carrega, desenha, seleciona e navega circularmente", async ({ page }) => {
   await expect(page.locator("#jogo-numero")).toHaveText("1");
   await expect(page.locator("circle.marca-resultado")).toHaveCount(6);
   await expect(page.locator("circle.marca-media")).toHaveCount(1);
+  await expect(page.locator("polyline.linha-geometrica")).toHaveCount(1);
+  await expect(page.locator("line.fechamento-geometrico")).toHaveCount(1);
+  await expect(page.locator("polygon.regiao-geometrica")).toHaveCount(2);
+  await expect(page.locator("circle.centro-gravidade")).toHaveCount(1);
+  await expect(page.locator("#resumo-geometrico")).toContainText("Área: 4,500");
 
   await page.locator("#botao-anterior").click();
   await expect(page.locator("#jogo-numero")).toHaveText("2");
@@ -238,6 +267,29 @@ test("carrega, desenha, seleciona e navega circularmente", async ({ page }) => {
   await expect(page.locator("#jogo-numero")).toHaveText("1");
   await page.locator("#seletor-resultado").selectOption("1");
   await expect(page.locator("#jogo-numero")).toHaveText("2");
+});
+
+
+test("configuração visual persiste após recarregar a página", async ({ page }) => {
+  await simularApi(page);
+  await page.goto("/");
+  await page.locator("#botao-aparencia").click();
+  await expect(page.locator("#dialogo-aparencia")).toBeVisible();
+  await page.locator("#cor-linha").fill("#123456");
+  await page.locator("#espessura-linhas").fill("1.5");
+  await page.locator("#mostrar-regioes").uncheck();
+  await page.locator('#form-aparencia button[type="submit"]').click();
+  await expect(page.locator("#dialogo-aparencia")).not.toBeVisible();
+
+  await page.reload();
+  await page.locator("#botao-aparencia").click();
+  await expect(page.locator("#cor-linha")).toHaveValue("#123456");
+  await expect(page.locator("#espessura-linhas")).toHaveValue("1.5");
+  await expect(page.locator("#mostrar-regioes")).not.toBeChecked();
+  const corAplicada = await page.locator("#mapa-dezenas").evaluate(
+    (elemento) => elemento.style.getPropertyValue("--cor-linha-geometrica"),
+  );
+  expect(corAplicada).toBe("#123456");
 });
 
 
@@ -314,10 +366,10 @@ test("grade de grupos permite incluir, editar e excluir", async ({ page }) => {
 
   const novo = page.locator('#corpo-tabela-grupos tr[data-codigo="PG_002"]');
   await expect(novo).toHaveCount(1);
-  await novo.locator("input").fill("Mesma coluna da matriz");
+  await novo.getByLabel("Nome de PG_002").fill("Mesma coluna da matriz");
   await novo.locator('button[data-acao="salvar"]').click();
   await expect(page.locator("#mensagem-grupos")).toHaveText("PG_002 atualizado.");
-  await expect(novo.locator("input")).toHaveValue("Mesma coluna da matriz");
+  await expect(novo.getByLabel("Nome de PG_002")).toHaveValue("Mesma coluna da matriz");
 
   page.once("dialog", (dialogo) => dialogo.accept());
   await novo.locator('button[data-acao="excluir"]').click();
@@ -355,7 +407,7 @@ test("grade de padrões filtra, inclui, transfere e protege estatísticas", asyn
   await expect(novo.locator("td").nth(4)).toHaveText("—");
 
   await novo.locator("select").selectOption("PG_001");
-  await novo.locator("input").fill("Padrão transferido");
+  await novo.getByLabel("Nome de PD_004").fill("Padrão transferido");
   await novo.locator('button[data-acao="salvar"]').click();
   await expect(page.locator("#mensagem-padroes")).toHaveText("PD_004 atualizado.");
   await expect(novo.locator("select")).toHaveValue("PG_001");

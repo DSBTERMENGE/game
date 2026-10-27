@@ -264,3 +264,29 @@ No histórico local de 3.069 resultados, foram apuradas respectivamente 2.053,
 863 e 93 ocorrências. Cada detector está associado ao cadastro de seu padrão;
 nome e descrição podem ser revisados pelo usuário sem alterar a função Python
 nem as estatísticas calculadas.
+
+## Desenho geométrico do resultado
+
+Ao selecionar um resultado, as dezenas são ordenadas crescentemente e seus
+centros são unidos por uma linha verde. Um segmento tracejado fecha a figura.
+Cada centro recebe um ponto de aproximadamente 2 mm, e as regiões delimitadas
+por cruzamentos são preenchidas com transparência. Média espacial e centro de
+gravidade usam marcas diferentes.
+
+O cabeçalho informa extensão aberta, perímetro fechado, área total e quantidade
+de regiões. Todos os elementos usam coordenadas lógicas da matriz e são
+reposicionados quando o tamanho da janela muda. Cores e demais preferências
+visuais são configuráveis pelo botão `Aparência`. O diálogo sobreposto permite
+alterar cores, espessura, diâmetro, transparência e visibilidade sem consumir
+espaço permanente do painel. As escolhas ficam memorizadas no navegador e
+podem ser restauradas aos padrões.
+
+Para não transportar a geometria de todos os 3.069 concursos a cada abertura,
+o painel carrega inicialmente apenas os dados numéricos. A geometria detalhada
+do concurso selecionado é solicitada sob demanda e guardada na sessão do
+navegador. A mancha continua usando a lista completa de resultados numéricos.
+
+No histórico atual, a área média é 9,577784 e a mediana 8,722222. Foram
+encontrados 729 resultados com uma região, 1.221 com duas, 872 com três e 247
+com quatro. Esses valores são descritivos; ainda não constituem regras de
+exclusão do futuro screener.

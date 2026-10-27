@@ -16,6 +16,7 @@ from msen.importacao import StatusImportacao, comparar_importacao_excel
 from msen.modelos import ResultadoEntrada
 
 from .padroes import recalcular_padroes_iniciais
+from .analise_geometrica import recalcular_analises_geometricas
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,6 +75,7 @@ def importar_planilha_no_banco(
         frequencias = calcular_frequencias(_como_entrada(item.resultado) for item in todos)
         RepositorioFrequencias(conexao).atualizar_todas(frequencias)
         recalcular_padroes_iniciais(conexao)
+        recalcular_analises_geometricas(conexao)
 
     depois = repositorio.contar()
     fim = datetime.now(timezone.utc)

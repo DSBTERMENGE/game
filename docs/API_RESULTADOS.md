@@ -40,6 +40,11 @@ desenhá-los.
 
 Banco vazio retorna HTTP 200 com `total: 0` e lista vazia.
 
+O parâmetro opcional `incluir_geometria=0` omite `analise_geometrica` da
+lista. O painel usa essa forma leve e consulta a geometria apenas do resultado
+selecionado em `GET /api/resultados/<numero_ap>/geometria`. Essa rota retorna
+`numero_ap` e `analise_geometrica`, ou HTTP 404 quando o concurso não existe.
+
 ## Falha de acesso ao banco
 
 HTTP 503 com código `BANCO_INDISPONIVEL` e mensagem genérica. A resposta não

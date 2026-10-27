@@ -8,6 +8,7 @@ from flask import Flask, jsonify
 from werkzeug.exceptions import RequestEntityTooLarge
 
 from .resultados import (
+    buscar_resultado_do_banco,
     editar_resultado_no_banco,
     importar_resultados_no_banco,
     incluir_resultado_no_banco,
@@ -47,6 +48,7 @@ def criar_app(configuracao: Mapping[str, Any] | None = None) -> Flask:
         IMPORTAR_RESULTADOS=importar_resultados_no_banco,
         INCLUIR_RESULTADO=incluir_resultado_no_banco,
         LISTAR_RESULTADOS=listar_resultados_do_banco,
+        BUSCAR_RESULTADO=buscar_resultado_do_banco,
         CRIAR_PADRAO=criar_padrao_no_banco,
         EDITAR_PADRAO=editar_padrao_no_banco,
         EXCLUIR_PADRAO=excluir_padrao_no_banco,

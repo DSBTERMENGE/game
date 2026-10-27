@@ -52,6 +52,7 @@
           <span>s</span>
           <button id="botao-voo" type="button" disabled>Iniciar voo dos pássaros</button>
           <button id="botao-mancha" type="button" disabled>Desenhar mancha</button>
+          <button id="botao-aparencia" type="button">Aparência</button>
           <button id="botao-limpar" type="button">Limpar gráfico</button>
         </div>
 
@@ -64,6 +65,7 @@
         <div class="cabecalho-resultado">
           <h2 id="titulo-jogo">Resultado Nº: <span id="jogo-numero">—</span></h2>
           <output id="coordenada-media">Média espacial: —</output>
+          <output id="resumo-geometrico">Geometria: —</output>
         </div>
 
         <div class="mapa-scroll">
@@ -80,6 +82,45 @@
 
       </section>
     </main>
+
+    <dialog id="dialogo-aparencia" class="dialogo-aparencia">
+      <form id="form-aparencia">
+        <header>
+          <h2>Configuração visual</h2>
+          <button id="botao-fechar-aparencia" type="button" aria-label="Fechar">×</button>
+        </header>
+        <fieldset class="aparencia-cores">
+          <legend>Cores</legend>
+          <label>Linha <input id="cor-linha" type="color"></label>
+          <label>Fechamento <input id="cor-fechamento" type="color"></label>
+          <label>Vértices <input id="cor-vertices" type="color"></label>
+          <label>Resultado <input id="cor-resultado" type="color"></label>
+          <label>Média <input id="cor-media" type="color"></label>
+          <label>Centro de gravidade <input id="cor-centro-gravidade" type="color"></label>
+          <label>Regiões <input id="cor-regioes" type="color"></label>
+        </fieldset>
+        <fieldset class="aparencia-medidas">
+          <legend>Medidas</legend>
+          <label>Espessura (mm) <input id="espessura-linhas" type="number" min="0.1" max="3" step="0.1"></label>
+          <label>Diâmetro dos vértices (mm) <input id="diametro-vertices" type="number" min="1" max="10" step="0.5"></label>
+          <label>Transparência das regiões <input id="opacidade-regioes" type="number" min="0" max="1" step="0.01"></label>
+        </fieldset>
+        <fieldset class="aparencia-visibilidade">
+          <legend>Elementos visíveis</legend>
+          <label><input id="mostrar-linha" type="checkbox"> Linha</label>
+          <label><input id="mostrar-fechamento" type="checkbox"> Fechamento</label>
+          <label><input id="mostrar-vertices" type="checkbox"> Vértices</label>
+          <label><input id="mostrar-resultado" type="checkbox"> Resultado</label>
+          <label><input id="mostrar-media" type="checkbox"> Média</label>
+          <label><input id="mostrar-centro-gravidade" type="checkbox"> Centro de gravidade</label>
+          <label><input id="mostrar-regioes" type="checkbox"> Regiões</label>
+        </fieldset>
+        <footer>
+          <button id="botao-restaurar-aparencia" type="button">Restaurar padrão</button>
+          <button type="submit">Salvar</button>
+        </footer>
+      </form>
+    </dialog>
 
     <script type="module" src="js/main.js"></script>
     <script type="module" src="js/navegacao.js"></script>
