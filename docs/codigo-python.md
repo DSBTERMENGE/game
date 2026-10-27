@@ -121,12 +121,20 @@ histórico e calcula concursos correspondentes, intervalos, média e desvio-padr
 populacional. `padroes/iniciais.py` registra os três códigos sem manter estado
 global mutável.
 
+Os detectores de `padroes/mesma_coluna.py` usam a maior sequência vertical em
+linhas imediatamente subjacentes: exatamente duas, exatamente três ou mais de
+três dezenas. Estar na mesma coluna sem continuidade vertical não é suficiente.
+Eles são funções públicas puras e testadas. `padroes/colunas.py` associa os
+códigos `PD_004`–`PD_006` e calcula em memória as ocorrências, intervalos,
+média e desvio-padrão dos três padrões.
+
 `database/padroes_repository.py` preserva o cadastro e permite que somente um
 objeto `EstatisticaPadrao` atualize os campos calculados. O serviço
-`services/padroes.py` cadastra os três códigos iniciais e recalcula as
-estatísticas dentro de uma única transação, sem sobrescrever nome ou descrição
+`services/padroes.py` recalcula os seis códigos aprovados dentro de uma única
+transação, sem recriar cadastros excluídos nem sobrescrever nome ou descrição
 editados pelo usuário. Importação, inclusão e edição de resultados chamam esse
-serviço na mesma transação que atualiza as frequências.
+serviço na mesma transação que atualiza as frequências. O catálogo unificado em
+`padroes/catalogo.py` também permite que a API identifique os seis detectores.
 
 `api/padroes.py` expõe o CRUD HTTP. A API aceita do usuário somente
 `padrao_nome` e `padrao_descr`; código, identificador e estatísticas são

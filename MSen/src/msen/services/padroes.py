@@ -9,8 +9,8 @@ from msen.database import RepositorioPadroes, RepositorioResultados
 from msen.database.padroes_repository import PadraoPersistido
 from msen.modelos import ResultadoEntrada
 from msen.padroes import (
+    calcular_estatisticas_mesma_coluna,
     calcular_estatisticas_sequenciais,
-    criar_registro_detectores_iniciais,
 )
 
 
@@ -44,7 +44,7 @@ def recalcular_padroes_iniciais(
         conexao: Conexão Psycopg aberta para o database confirmado.
 
     Retorno:
-        Quantidade de resultados analisados e as três linhas atualizadas.
+        Quantidade de resultados analisados e todas as linhas cadastradas.
 
     Regra:
         Cadastros ausentes não são recriados, respeitando exclusões do usuário.
@@ -61,17 +61,16 @@ def recalcular_padroes_iniciais(
     with conexao.transaction():
         resultados = repositorio_resultados.listar(limite=10_000)
         serie = tuple(_como_entrada(item.resultado) for item in resultados)
-        estatisticas = {
-            item.padrao_cod: item
-            for item in calcular_estatisticas_sequenciais(serie)
-        }
-        registro = criar_registro_detectores_iniciais()
+        calculadas = (
+            *calcular_estatisticas_sequenciais(serie),
+            *calcular_estatisticas_mesma_coluna(serie),
+        )
+        estatisticas = {item.padrao_cod: item for item in calculadas}
         cadastrados = repositorio_padroes.listar()
         for padrao in cadastrados:
-            if registro.contem(padrao.padrao_cod):
-                repositorio_padroes.atualizar_estatistica(
-                    estatisticas[padrao.padrao_cod]
-                )
+            estatistica = estatisticas.get(padrao.padrao_cod)
+            if estatistica is not None:
+                repositorio_padroes.atualizar_estatistica(estatistica)
         atualizados = repositorio_padroes.listar()
 
     return RelatorioRecalculoPadroes(

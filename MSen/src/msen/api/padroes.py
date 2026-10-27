@@ -15,7 +15,7 @@ from msen.database import (
     RepositorioPadroes,
     abrir_conexao,
 )
-from msen.padroes import criar_registro_detectores_iniciais
+from msen.padroes import criar_registro_detectores_aprovados
 
 
 padroes_api = Blueprint("padroes_api", __name__)
@@ -88,7 +88,7 @@ def _decimal_texto(valor: Decimal | None) -> str | None:
 def serializar_padrao(padrao: PadraoPersistido) -> dict[str, object]:
     """Converte uma linha persistida no contrato JSON do frontend."""
 
-    registro = criar_registro_detectores_iniciais()
+    registro = criar_registro_detectores_aprovados()
     return {
         "id_padrao": padrao.id_padrao,
         "id_grupo": padrao.id_grupo,

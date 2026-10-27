@@ -1,6 +1,14 @@
 """Contratos e infraestrutura para os detectores de padrões do MSen."""
 
+from .catalogo import criar_registro_detectores_aprovados
 from .contratos import DetectorPadrao
+from .colunas import (
+    CODIGO_DUAS_NA_MESMA_COLUNA,
+    CODIGO_MAIS_DE_TRES_NA_MESMA_COLUNA,
+    CODIGO_TRES_NA_MESMA_COLUNA,
+    calcular_estatisticas_mesma_coluna,
+    criar_registro_detectores_mesma_coluna,
+)
 from .estatisticas import (
     ErroAnalisePadrao,
     EstatisticaPadrao,
@@ -12,6 +20,11 @@ from .iniciais import (
     CODIGO_TRES_SEQUENCIAIS,
     calcular_estatisticas_sequenciais,
     criar_registro_detectores_iniciais,
+)
+from .mesma_coluna import (
+    detectar_duas_dezenas_na_mesma_coluna,
+    detectar_mais_de_tres_dezenas_na_mesma_coluna,
+    detectar_tres_dezenas_na_mesma_coluna,
 )
 from .registro import (
     CodigoPadraoInvalido,
@@ -36,10 +49,19 @@ __all__ = [
     "CODIGO_DUAS_SEQUENCIAIS",
     "CODIGO_TRES_SEQUENCIAIS",
     "CODIGO_MAIS_DE_TRES_SEQUENCIAIS",
+    "CODIGO_DUAS_NA_MESMA_COLUNA",
+    "CODIGO_TRES_NA_MESMA_COLUNA",
+    "CODIGO_MAIS_DE_TRES_NA_MESMA_COLUNA",
     "calcular_estatistica_padrao",
     "calcular_estatisticas_sequenciais",
+    "calcular_estatisticas_mesma_coluna",
     "criar_registro_detectores_iniciais",
+    "criar_registro_detectores_mesma_coluna",
+    "criar_registro_detectores_aprovados",
     "detectar_duas_dezenas_sequenciais",
     "detectar_tres_dezenas_sequenciais",
     "detectar_mais_de_tres_dezenas_sequenciais",
+    "detectar_duas_dezenas_na_mesma_coluna",
+    "detectar_tres_dezenas_na_mesma_coluna",
+    "detectar_mais_de_tres_dezenas_na_mesma_coluna",
 ]

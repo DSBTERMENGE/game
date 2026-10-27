@@ -77,7 +77,7 @@ class ApiPadroesTestCase(unittest.TestCase):
         self.assertTrue(corpo["padroes"][0]["detector_implementado"])
         self.assertEqual("PG_001", corpo["padroes"][0]["grupo_cod"])
         self.assertEqual("Dezenas sequenciais", corpo["padroes"][0]["grupo_nome"])
-        self.assertFalse(corpo["padroes"][1]["detector_implementado"])
+        self.assertTrue(corpo["padroes"][1]["detector_implementado"])
         self.assertIsNone(corpo["padroes"][1]["num_oco"])
 
     def test_filtra_listagem_por_grupo(self):
@@ -122,7 +122,7 @@ class ApiPadroesTestCase(unittest.TestCase):
         self.assertEqual(201, resposta.status_code)
         self.assertEqual([("Novo padrão", "Regra", "PG_001")], recebidos)
         self.assertEqual("PD_004", resposta.get_json()["padrao"]["padrao_cod"])
-        self.assertFalse(resposta.get_json()["padrao"]["detector_implementado"])
+        self.assertTrue(resposta.get_json()["padrao"]["detector_implementado"])
 
     def test_edita_somente_nome_e_descricao(self):
         recebidos = []

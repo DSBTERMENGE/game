@@ -138,7 +138,7 @@ def validar_estrutura(nome_database: str) -> dict[str, object]:
                 "SELECT versao FROM schema_migrations ORDER BY versao"
             )
             versoes = tuple(linha[0] for linha in cursor.fetchall())
-            if versoes != ("001", "002", "003", "004"):
+            if versoes != ("001", "002", "003", "004", "005"):
                 raise AssertionError(f"Migrações inesperadas: {versoes!r}")
 
             cursor.execute(

@@ -94,11 +94,14 @@ test("histórico, estatísticas, PostgreSQL, API e grade CRUD funcionam em conju
 
   const respostaPadroes = await page.request.get(`${origem}/api/padroes`);
   expect(await respostaPadroes.json()).toMatchObject({
-    total: 3,
+    total: 6,
     padroes: [
       { padrao_cod: "PD_001", num_oco: 2, intervalo_medio: "15.000000", desv_padrao: "0.000000" },
       { padrao_cod: "PD_002", num_oco: 1, intervalo_medio: null, desv_padrao: null },
       { padrao_cod: "PD_003", num_oco: 2, intervalo_medio: "20.000000", desv_padrao: "0.000000" },
+      { padrao_cod: "PD_004", num_oco: 1, intervalo_medio: null, desv_padrao: null },
+      { padrao_cod: "PD_005", num_oco: 0, intervalo_medio: null, desv_padrao: null },
+      { padrao_cod: "PD_006", num_oco: 0, intervalo_medio: null, desv_padrao: null },
     ],
   });
 
@@ -110,7 +113,7 @@ test("histórico, estatísticas, PostgreSQL, API e grade CRUD funcionam em conju
   await expect(page.locator('#corpo-tabela-grupos tr[data-codigo="PG_003"]')).toHaveCount(1);
 
   await page.goto(`${origem}/padroes.html`);
-  await expect(page.locator("#corpo-tabela-padroes tr")).toHaveCount(3);
+  await expect(page.locator("#corpo-tabela-padroes tr")).toHaveCount(6);
   const pd001 = page.locator('#corpo-tabela-padroes tr[data-codigo="PD_001"]');
   await expect(pd001.locator("td").nth(4)).toHaveText("2");
   await expect(pd001.locator("td").nth(5)).toHaveText("15,000000");
@@ -127,24 +130,24 @@ test("histórico, estatísticas, PostgreSQL, API e grade CRUD funcionam em conju
   await page.locator("#novo-padrao-nome").fill("Padrão ainda sem função");
   await page.locator("#novo-padrao-descr").fill("Será implementado futuramente.");
   await page.locator("#botao-adicionar-padrao").click();
-  const pd004 = page.locator('#corpo-tabela-padroes tr[data-codigo="PD_004"]');
-  await expect(pd004.locator("td").nth(7)).toHaveText("Pendente");
-  await expect(pd004.locator("td").nth(4)).toHaveText("—");
-  await expect(pd004.locator("select")).toHaveValue("PG_003");
+  const pd007 = page.locator('#corpo-tabela-padroes tr[data-codigo="PD_007"]');
+  await expect(pd007.locator("td").nth(7)).toHaveText("Pendente");
+  await expect(pd007.locator("td").nth(4)).toHaveText("—");
+  await expect(pd007.locator("select")).toHaveValue("PG_003");
 
-  await pd004.locator("select").selectOption("PG_001");
-  await pd004.locator("textarea").fill("Descrição revista antes da exclusão.");
-  await pd004.locator('button[data-acao="salvar"]').click();
-  await expect(page.locator("#mensagem-padroes")).toHaveText("PD_004 atualizado.");
-  await expect(pd004.locator("select")).toHaveValue("PG_001");
+  await pd007.locator("select").selectOption("PG_001");
+  await pd007.locator("textarea").fill("Descrição revista antes da exclusão.");
+  await pd007.locator('button[data-acao="salvar"]').click();
+  await expect(page.locator("#mensagem-padroes")).toHaveText("PD_007 atualizado.");
+  await expect(pd007.locator("select")).toHaveValue("PG_001");
   page.once("dialog", (dialogo) => dialogo.accept());
-  await pd004.locator('button[data-acao="excluir"]').click();
-  await expect(pd004).toHaveCount(0);
+  await pd007.locator('button[data-acao="excluir"]').click();
+  await expect(pd007).toHaveCount(0);
 
   await page.locator("#novo-padrao-nome").fill("Código seguinte");
-  await page.locator("#novo-padrao-descr").fill("Não pode reutilizar PD_004.");
+  await page.locator("#novo-padrao-descr").fill("Não pode reutilizar PD_007.");
   await page.locator("#botao-adicionar-padrao").click();
-  await expect(page.locator('#corpo-tabela-padroes tr[data-codigo="PD_005"]')).toHaveCount(1);
+  await expect(page.locator('#corpo-tabela-padroes tr[data-codigo="PD_008"]')).toHaveCount(1);
 
   const pd003 = page.locator('#corpo-tabela-padroes tr[data-codigo="PD_003"]');
   page.once("dialog", (dialogo) => dialogo.accept());
@@ -154,7 +157,9 @@ test("histórico, estatísticas, PostgreSQL, API e grade CRUD funcionam em conju
   await expect(pd003).toHaveCount(0);
 
   const final = await (await page.request.get(`${origem}/api/padroes`)).json();
-  expect(final.padroes.map((item) => item.padrao_cod)).toEqual(["PD_001", "PD_002", "PD_005"]);
+  expect(final.padroes.map((item) => item.padrao_cod)).toEqual([
+    "PD_001", "PD_002", "PD_004", "PD_005", "PD_006", "PD_008",
+  ]);
   expect(final.padroes.at(-1)).toMatchObject({
     detector_implementado: false,
     num_oco: null,

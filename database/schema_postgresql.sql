@@ -343,14 +343,38 @@ CROSS JOIN (
 WHERE grupo.grupo_cod = 'PG_001'
 ON CONFLICT (padrao_cod) DO NOTHING;
 
+INSERT INTO padroes_subgrupo (id_grupo, padrao_cod, padrao_nome, padrao_descr)
+SELECT grupo.id_grupo, dados.padrao_cod, dados.padrao_nome, dados.padrao_descr
+FROM padroes_grupo AS grupo
+CROSS JOIN (
+    VALUES
+    (
+        'PD_004',
+        'Duas dezenas em linhas subjacentes na mesma coluna',
+        'O maior grupo vertical possui exatamente duas dezenas na mesma coluna e em linhas imediatamente consecutivas.'
+    ),
+    (
+        'PD_005',
+        'Três dezenas em linhas subjacentes na mesma coluna',
+        'O maior grupo vertical possui exatamente três dezenas na mesma coluna e em linhas imediatamente consecutivas.'
+    ),
+    (
+        'PD_006',
+        'Mais de três dezenas em linhas subjacentes na mesma coluna',
+        'O maior grupo vertical possui quatro, cinco ou seis dezenas na mesma coluna e em linhas imediatamente consecutivas.'
+    )
+) AS dados(padrao_cod, padrao_nome, padrao_descr)
+WHERE grupo.grupo_cod = 'PG_002'
+ON CONFLICT (padrao_cod) DO NOTHING;
+
 CREATE SEQUENCE IF NOT EXISTS padroes_subgrupo_codigo_seq
-    AS BIGINT MINVALUE 1 START WITH 4;
+    AS BIGINT MINVALUE 1 START WITH 7;
 
 SELECT SETVAL(
     'padroes_subgrupo_codigo_seq',
     GREATEST(
-        3,
-        COALESCE(MAX(SUBSTRING(padrao_cod FROM 4)::BIGINT), 3)
+        6,
+        COALESCE(MAX(SUBSTRING(padrao_cod FROM 4)::BIGINT), 6)
     ),
     TRUE
 )

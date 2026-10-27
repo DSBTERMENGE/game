@@ -949,13 +949,98 @@ padrão não classificado e na criação do esquema canônico do zero. O databas
 `games` permaneceu íntegro e o servidor local saudável. Evidências em
 `MSen/tests/TESTE_ITEM_10_13.md`.
 
-Estado da Etapa 10: concluída em 2026-10-27. Alterações ainda não commitadas.
-PythonAnywhere permanece adiado.
+Estado da Etapa 10: concluída em 2026-10-27 e publicada em `origin/developer`
+no commit `022331c`. PythonAnywhere permanece adiado.
+
+---
+
+## ETAPA 11 — Padrões de dezenas na mesma coluna
+
+### Item 11.1 — Contrato e casos de teste
+
+Formalizar a matriz, a identificação das colunas, a classificação exclusiva de
+`PD_004`–`PD_006` e os casos obrigatórios para os testes.
+
+Estado: concluído em 2026-10-27 e corrigido no Item 11.6 após esclarecimento do
+usuário. A classificação usa a maior sequência vertical em linhas subjacentes:
+exatamente duas, exatamente três ou mais de três dezenas. Cada resultado conta
+no máximo uma ocorrência e pertence a apenas um dos três padrões. Contrato em
+`docs/CONTRATO_PADROES_MESMA_COLUNA.md` e evidência em
+`MSen/tests/TESTE_ITEM_11_1.md`.
+
+### Item 11.2 — Detectores Python
+
+Implementar e testar os três detectores puros, com docstrings em português,
+sem persistência ou alteração do PostgreSQL.
+
+Estado: concluído em 2026-10-27 e corrigido no Item 11.6. Os detectores usam a
+maior sequência vertical subjacente, validam a entrada e estão documentados em
+português. Nenhum banco foi acessado neste item. Evidência em
+`MSen/tests/TESTE_ITEM_11_2.md`.
+
+### Item 11.3 — Registro e estatísticas históricas
+
+Associar os detectores a `PD_004`–`PD_006`, reutilizar o cálculo estatístico e
+testar ocorrências e intervalos conhecidos, ainda sem gravar no PostgreSQL.
+
+Estado: concluído em 2026-10-27. Um registro independente associa os três
+códigos aos detectores, e o cálculo conjunto em memória reutiliza a estatística
+aprovada. Passaram 29 testes direcionados, incluindo ocorrências, intervalos,
+média, desvio, históricos insuficientes, iterador e regressões. Nenhum banco foi
+acessado. Evidência em `MSen/tests/TESTE_ITEM_11_3.md`.
+
+### Item 11.4 — Integração do serviço e persistência
+
+Integrar os seis padrões ao recálculo transacional, persistir as estatísticas de
+`PD_004`–`PD_006` e validar tudo primeiro em PostgreSQL temporário.
+
+Estado: concluído em 2026-10-27. Serviço e API usam o catálogo dos seis
+detectores. Passaram 204 testes Python. Um PostgreSQL temporário confirmou duas
+execuções idempotentes e os intervalos esperados de `PD_004`–`PD_006`; ele foi
+removido e o `games` não foi acessado. Evidência em
+`MSen/tests/TESTE_ITEM_11_4.md`.
+
+### Item 11.5 — Aplicação controlada no banco local
+
+Criar backup de segurança, recalcular os seis padrões no `games` e conferir os
+valores persistidos por leitura, sem alterar esquema ou PythonAnywhere.
+
+Estado: concluído em 2026-10-27. Um backup custom validado foi criado antes da
+transação. O primeiro recálculo foi posteriormente invalidado pelo esclarecimento
+da regra no Item 11.6; seu backup e sua evidência foram preservados para
+rastreabilidade. Evidência em `MSen/tests/TESTE_ITEM_11_5.md`.
+
+### Item 11.6 — Revisão textual e integração visual
+
+Após confirmação do usuário, alinhar nomes e descrições de `PD_004`–`PD_006` ao
+contrato aprovado, reiniciar o servidor e validar API e grade no Chrome.
+
+Estado: concluído em 2026-10-27. O usuário esclareceu a exigência de linhas
+imediatamente subjacentes. Contrato, detectores e testes foram corrigidos; o
+PostgreSQL temporário passou e foi removido. Após novo backup, o `games` foi
+recalculado com `PD_004=1037`, `PD_005=66` e `PD_006=4`. Passaram 205 testes
+Python, 22 de frontend, 8 fluxos Chrome e uma validação Chrome real da grade.
+Servidor reiniciado no PID 8556. Evidência em `MSen/tests/TESTE_ITEM_11_6.md`.
+
+### Item 11.7 — Regressão integrada e fechamento
+
+Executar os fluxos Chrome/PostgreSQL completos, auditar o banco local por
+leitura, finalizar a documentação e preparar a Etapa 11 para versionamento.
+
+Estado: concluído em 2026-10-27. A regressão revelou que instalações novas não
+reservavam `PD_004`–`PD_006`; a migração `005` e o esquema canônico corrigiram
+o problema, deixando `PD_007` como primeiro código livre. Passaram 205 testes
+Python, 22 de frontend, 8 fluxos Chrome e 3 fluxos Chrome/PostgreSQL. Migrações,
+esquema do zero, banco local, API e grade real foram auditados. Evidência em
+`MSen/tests/TESTE_ITEM_11_7.md`.
+
+Estado da Etapa 11: concluída localmente em 2026-10-27. Alterações ainda não
+commitadas. PythonAnywhere permanece adiado.
 
 ---
 
 ## Próximo item proposto
 
-Criar um commit de segurança da Etapa 10 e, depois, enviá-lo ao GitHub. Cada
+Criar um commit de segurança da Etapa 11 e, depois, enviá-lo ao GitHub. Cada
 ação depende de autorização expressa separada. A Etapa 8/PythonAnywhere
 permanece adiada.

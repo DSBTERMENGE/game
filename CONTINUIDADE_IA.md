@@ -377,10 +377,73 @@ Python, 22 de frontend, 8 fluxos Chrome e 3 fluxos Chrome/PostgreSQL. A migraç�
 004 passou no caminho normal, rejeitou e reverteu integralmente um padrão legado
 sem classificação e o esquema canônico foi validado do zero. O `games`
 permaneceu com 3.069 resultados, 60 frequências, 2 grupos e 6 padrões; o servidor
-local na porta 5050 permaneceu saudável. As alterações da Etapa 10 ainda não
-foram commitadas. Próxima ação exata: aguardar autorização para o commit de
-segurança da Etapa 10. O push dependerá de autorização posterior e o
-PythonAnywhere continua adiado.
+local na porta 5050 permaneceu saudável. A Etapa 10 foi commitada e publicada
+em `origin/developer` como `022331c`. PythonAnywhere continua adiado.
+
+O Item 11.1 foi concluído em 2026-10-27 e corrigido no Item 11.6. O contrato
+define a matriz 6 × 10, a coluna pela fórmula `((dezena - 1) % 10) + 1` e a
+classificação exclusiva pela maior sequência em linhas subjacentes: `PD_004`
+para exatamente duas, `PD_005` para exatamente três e `PD_006` para mais de três. Mesmo com
+mais de uma coluna empatada, o resultado conta uma única ocorrência. Foram
+registrados casos normais, limites e entradas inválidas; nenhum código ou dado
+foi alterado. Próxima ação: aguardar autorização para o Item 11.2, destinado
+aos detectores Python puros. PythonAnywhere permanece adiado.
+
+O Item 11.2 foi concluído em 2026-10-27. O módulo puro
+`msen/padroes/mesma_coluna.py` implementa os três detectores exclusivos pela
+maior sequência vertical subjacente, com validação e docstrings em português. Passaram 18
+testes direcionados: 6 novos e 12 de regressão dos padrões sequenciais. As
+funções foram exportadas, mas ainda não foram registradas em `PD_004`–`PD_006`;
+nenhum banco foi acessado. Próxima ação: aguardar autorização para o Item 11.3,
+registro e estatísticas históricas em memória. PythonAnywhere permanece adiado.
+
+O Item 11.3 foi concluído em 2026-10-27. `padroes/colunas.py` associa
+`PD_004`–`PD_006` aos três detectores e calcula em memória ocorrências,
+intervalos, média e desvio-padrão populacional. Passaram 29 testes direcionados,
+incluindo históricos insuficientes, iterador e regressões; nenhum banco foi
+acessado. Próxima ação: aguardar autorização para o Item 11.4, que fará a
+integração transacional e a persistência, primeiro em PostgreSQL temporário.
+PythonAnywhere permanece adiado.
+
+O Item 11.4 foi concluído em 2026-10-27. O catálogo unificado expõe os seis
+detectores; serviço e API agora reconhecem `PD_001`–`PD_006`. Passaram 204
+testes Python. O database temporário `games_test_7_1_1114` confirmou duas
+execuções idempotentes e as estatísticas esperadas de `PD_004`–`PD_006`, sendo
+removido ao final; o `games` não foi acessado. Próxima ação: aguardar autorização
+para o Item 11.5, que criará backup e recalculará o database local. PythonAnywhere
+permanece adiado.
+
+O Item 11.5 foi concluído em 2026-10-27. Antes do recálculo foi criado e
+validado o backup ignorado pelo Git
+`games_pre_recalculo_colunas_20261027_090452.dump`, com 117.894 bytes e SHA-256
+`4FF31B6CFF1EEA32B916147CE469AABEC724E114F349AB2A1F78C200CB3C1C62`.
+O primeiro recálculo foi invalidado após o esclarecimento da regra no Item 11.6;
+o backup e os valores provisórios foram preservados apenas para rastreabilidade.
+
+O Item 11.6 foi concluído em 2026-10-27. O usuário esclareceu que as dezenas
+devem ocupar a mesma coluna em linhas imediatamente subjacentes, equivalendo a
+uma sequência vertical com diferença dez. Contrato, detectores, testes, nomes e
+descrições foram corrigidos. Um segundo backup foi criado com 117.935 bytes e
+SHA-256 `688DC50925E583007A205566F29D2038992A8E34CD7E372D1FE423286D636D4F`.
+O `games` preservou 3.069 resultados e passou a registrar `PD_004=1037`,
+`PD_005=66` e `PD_006=4`. Passaram 205 testes Python, 22 de frontend, 8 fluxos
+Chrome e a validação real da grade. O servidor foi reiniciado no PID 8556 e os
+seis detectores aparecem como implementados. Próxima ação: aguardar autorização
+para o Item 11.7, regressão integrada e fechamento da Etapa 11. PythonAnywhere
+permanece adiado.
+
+O Item 11.7 e a Etapa 11 foram concluídos localmente em 2026-10-27. A primeira
+regressão integrada revelou que instalações novas deixavam `PD_004` livre. Foi
+criada a migração `005`, que inicializa `PD_004`–`PD_006` em `PG_002`, reserva
+esses códigos e deixa `PD_007` como primeiro cadastro futuro; o esquema canônico
+também foi atualizado. Passaram 205 testes Python, 22 de frontend, 8 fluxos
+Chrome e 3 fluxos Chrome/PostgreSQL. Migrações `001`–`005`, esquema criado do
+zero, API, grade real e `games` foram auditados; nenhum database temporário
+permaneceu. O `games` está na versão `005`, com 3.069 resultados e estatísticas
+verticais `PD_004=1037`, `PD_005=66` e `PD_006=4`. As alterações ainda não foram
+commitadas. Próxima ação exata: aguardar autorização para o commit de segurança
+da Etapa 11; o push exigirá autorização separada. PythonAnywhere permanece
+adiado.
 
 Em 2026-10-26 foi planejada a Etapa 9, destinada ao cadastro e à análise de
 padrões. O plano divide o trabalho em contrato, migração PostgreSQL, módulo

@@ -149,3 +149,11 @@ A migração `004` organiza o catálogo em:
 reúne `PD_004`–`PD_006`, relativos a dezenas na mesma coluna. Um padrão legado
 sem classificação conhecida interrompe a migração para impedir associação
 incorreta. Exclusão de grupo ocupado é protegida por chave estrangeira.
+
+Em 2026-10-27, após backup local e aplicação da regra de linhas subjacentes, os
+3.069 resultados produziram 1.037 ocorrências de `PD_004`, 66 de `PD_005` e 4
+de `PD_006`. O recálculo atualiza somente os campos estatísticos.
+
+A migração `005` reserva e inicializa `PD_004`–`PD_006` em instalações novas,
+recalibrando a sequência para que o primeiro padrão livre seja `PD_007`. Se um
+desses códigos já pertencer a outro grupo, a migração é interrompida.
