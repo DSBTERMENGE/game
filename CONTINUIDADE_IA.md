@@ -285,6 +285,79 @@ produzem intervalo 15.
 
 ## Pendências conhecidas
 
+Em 2026-10-26 foi planejada a Etapa 9, destinada ao cadastro e à análise de
+padrões. O plano divide o trabalho em contrato, migração PostgreSQL, módulo
+Python documentado, detectores e estatísticas, persistência, API CRUD, grade com
+rolagem e integração local. Toda função pública do novo módulo deverá ter
+docstring em português explicando finalidade, parâmetros, retorno e regra. O
+screener em funil foi registrado como funcionalidade posterior e não integra a
+Etapa 9. A Etapa 8/PythonAnywhere continua adiada. Aguardar autorização expressa
+para o Item 9.1.
+
+O Item 9.1 foi concluído em 2026-10-26 e documentado em
+`docs/CONTRATO_PADROES.md`. Foram definidos `id_padrao`, `padrao_cod`,
+`padrao_nome`, `padrao_descr`, `num_oco`, `intervalo_medio` e `desv_padrao`.
+Código, identificador e estatísticas são somente leitura; nome e descrição são
+editáveis. `padrao_cod` vinculará o registro ao detector Python, e uma ideia sem
+detector não poderá produzir estatística nem participar do screener. Aguardar
+autorização expressa para o Item 9.2; nenhuma tabela foi criada ainda.
+
+O Item 9.2 foi concluído em 2026-10-26. A migração `002` criou `padroes` com as
+sete colunas e restrições do contrato. O teste temporário confirmou estrutura,
+estados estatísticos e rejeições, e o database de teste foi removido. A migração
+foi aplicada ao `games` local: 3.069 resultados e 60 frequências foram
+preservados, `padroes` ficou vazia e `schema_migrations` contém `001` e `002`.
+Passaram 140 testes Python e 2 fluxos Chrome/PostgreSQL. Aguardar autorização
+para o Item 9.3; nenhuma alteração foi feita no PythonAnywhere.
+
+O Item 9.3 foi concluído em 2026-10-26. O novo pacote `msen.padroes` contém o
+contrato chamável e o registro que vinculará `padrao_cod` às funções. Ele começa
+sem detectores, rejeita códigos inválidos e substituições, e diferencia função
+pendente de resultado falso. Todas as APIs públicas têm docstrings em português;
+7 testes específicos e 147 testes Python acumulados passaram. Aguardar
+autorização para o Item 9.4, que deverá começar pela aprovação das regras exatas
+de sobreposição das sequências.
+
+O Item 9.4 foi concluído em 2026-10-26. O usuário aprovou classificação
+exclusiva pelo maior bloco: exatamente dois (`PD_001`), exatamente três
+(`PD_002`) ou mais de três (`PD_003`). Foram criados detectores puros e cálculo
+de estatísticas históricas, todos documentados. Passaram 19 testes específicos e
+159 testes Python acumulados. Em leitura dos 3.069 resultados, foram encontradas
+1.192, 92 e 5 ocorrências respectivamente; `PD_003` apareceu nos concursos 186,
+509, 2052, 2789 e 2908. Nada foi persistido. Aguardar autorização para o Item
+9.5.
+
+O Item 9.5 foi concluído em 2026-10-26. Repositório e serviço agora cadastram os
+três padrões e atualizam somente suas estatísticas, preservando textos editados.
+Importação, inclusão e edição de resultados recalculam padrões e frequências na
+mesma transação. O `games` contém `PD_001=1192`, `PD_002=92` e `PD_003=5`, com
+suas médias e desvios. O teste temporário confirmou idempotência e preservação
+do nome; passaram 164 testes Python e 2 fluxos Chrome/PostgreSQL. Aguardar
+autorização para o Item 9.6.
+
+O Item 9.6 foi concluído em 2026-10-26. A API CRUD de padrões aceita somente
+nome e descrição; código, identificador e estatísticas são protegidos. A
+migração `003` cadastrou os padrões iniciais e criou sequência que não reutiliza
+códigos excluídos. O recálculo respeita exclusões e ignora estatisticamente
+cadastros sem detector. Passaram 10 testes específicos, 174 testes Python e 2
+fluxos Chrome/PostgreSQL. Aguardar autorização para o Item 9.7.
+
+O Item 9.7 foi concluído em 2026-10-26. O frontend possui grade CRUD de padrões
+com cabeçalho fixo, rolagem, inclusão, edição de nome/descrição, estatísticas
+somente para leitura e exclusão confirmada. HTML, CSS e JavaScript estão em
+arquivos separados. Passaram 20 testes de frontend, 4 fluxos Chrome simulados,
+174 testes Python e 2 fluxos Chrome/PostgreSQL. A integração com `games` apenas
+leu os três padrões. Aguardar autorização para o Item 9.8.
+
+O Item 9.8 e a Etapa 9 foram concluídos em 2026-10-26. O fluxo integrado real
+em database temporário cobriu histórico, cálculo, persistência, API, grade CRUD,
+códigos não reutilizados e exclusão respeitada. O backup anterior foi restaurado,
+migrado por `002/003` e reproduziu as três estatísticas. Passaram 174 testes
+Python, 20 de frontend, 4 fluxos Chrome isolados e 3 fluxos
+Chrome/PostgreSQL. O `games` permaneceu com 3.069 resultados e três padrões. As
+alterações de 9.1 a 9.8 ainda não foram commitadas. Aguardar autorização para o
+commit de segurança; PythonAnywhere continua adiado.
+
 - Criar o controle de migrações antes da automatização pelo Python.
 - Confirmar se o desvio-padrão será populacional ou amostral.
 - Definir o comportamento da mancha quando os círculos excederem a área do

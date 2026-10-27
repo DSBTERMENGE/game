@@ -19,6 +19,23 @@ const resultados = [
     dezenas: [9, 37, 39, 41, 43, 49],
   },
 ];
+const padroesIniciais = [
+  {
+    id_padrao: 1, padrao_cod: "PD_001", padrao_nome: "Duas dezenas sequenciais",
+    padrao_descr: "Maior grupo com duas dezenas.", num_oco: 1192,
+    intervalo_medio: "2.575147", desv_padrao: "1.995592", detector_implementado: true,
+  },
+  {
+    id_padrao: 2, padrao_cod: "PD_002", padrao_nome: "Três dezenas sequenciais",
+    padrao_descr: "Maior grupo com três dezenas.", num_oco: 92,
+    intervalo_medio: "33.527473", desv_padrao: "33.637806", detector_implementado: true,
+  },
+  {
+    id_padrao: 3, padrao_cod: "PD_003", padrao_nome: "Mais de três dezenas sequenciais",
+    padrao_descr: "Maior grupo com mais de três dezenas.", num_oco: 5,
+    intervalo_medio: "680.500000", desv_padrao: "545.478460", detector_implementado: true,
+  },
+];
 const raizFrontend = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../..",
@@ -31,7 +48,9 @@ test.beforeAll(async () => {
     const caminhos = {
       "/": ["index.html", "text/html; charset=utf-8"],
       "/css/style.css": ["css/style.css", "text/css; charset=utf-8"],
+      "/css/padroes.css": ["css/padroes.css", "text/css; charset=utf-8"],
       "/js/main.js": ["js/main.js", "text/javascript; charset=utf-8"],
+      "/js/padroes.js": ["js/padroes.js", "text/javascript; charset=utf-8"],
     };
     const recurso = caminhos[requisicao.url];
     if (!recurso) {
@@ -57,6 +76,7 @@ test.afterAll(async () => {
 
 async function simularApi(page) {
   let importacoes = 0;
+  let padroes = structuredClone(padroesIniciais);
   await page.route("**/api/resultados", async (rota) => {
     await rota.fulfill({ json: { resultados, total: resultados.length } });
   });
@@ -68,6 +88,39 @@ async function simularApi(page) {
         relatorio: { inseridas: 0, iguais: 2, alteradas: 0, invalidas: 0 },
       },
     });
+  });
+  await page.route("**/api/padroes**", async (rota) => {
+    const requisicao = rota.request();
+    const metodo = requisicao.method();
+    const caminho = new URL(requisicao.url()).pathname;
+    const codigo = caminho.split("/").at(-1);
+    if (metodo === "GET") {
+      await rota.fulfill({ json: { padroes, total: padroes.length } });
+      return;
+    }
+    if (metodo === "POST") {
+      const dados = requisicao.postDataJSON();
+      const criado = {
+        id_padrao: 4, padrao_cod: "PD_004", ...dados,
+        num_oco: null, intervalo_medio: null, desv_padrao: null,
+        detector_implementado: false,
+      };
+      padroes.push(criado);
+      await rota.fulfill({ status: 201, json: { padrao: criado } });
+      return;
+    }
+    if (metodo === "PUT") {
+      const dados = requisicao.postDataJSON();
+      const indice = padroes.findIndex((item) => item.padrao_cod === codigo);
+      padroes[indice] = { ...padroes[indice], ...dados };
+      await rota.fulfill({ json: { padrao: padroes[indice] } });
+      return;
+    }
+    if (metodo === "DELETE") {
+      const excluido = padroes.find((item) => item.padrao_cod === codigo);
+      padroes = padroes.filter((item) => item.padrao_cod !== codigo);
+      await rota.fulfill({ json: { padrao: excluido, mensagem: "Padrão excluído." } });
+    }
   });
   return () => importacoes;
 }
@@ -128,4 +181,42 @@ test("seleciona Excel, importa, desenha mancha e limpa", async ({ page }) => {
   await page.locator("#botao-limpar").click();
   await expect(page.locator("#camada-marcas circle")).toHaveCount(0);
   await expect(page.locator("#mensagem-sistema")).toHaveText("Gráfico limpo.");
+});
+
+
+test("grade de padrões permite incluir, editar e excluir sem editar estatísticas", async ({ page }) => {
+  await simularApi(page);
+  await page.goto("/");
+
+  await expect(page.locator("#painel-padroes")).toBeHidden();
+  await page.locator("#botao-cadastro-padroes").click();
+  await expect(page.locator("#painel-padroes")).toBeVisible();
+  await expect(page.locator("#corpo-tabela-padroes tr")).toHaveCount(3);
+  await expect(page.locator("#mensagem-padroes")).toHaveText("3 padrão(ões) carregado(s).");
+
+  const primeira = page.locator('#corpo-tabela-padroes tr[data-codigo="PD_001"]');
+  await expect(primeira.locator("input, textarea")).toHaveCount(2);
+  await expect(primeira.locator("td").nth(3)).toHaveText("1192");
+  await expect(primeira.locator("td").nth(4)).toHaveText("2,575147");
+
+  await page.locator("#novo-padrao-nome").fill("Padrão futuro");
+  await page.locator("#novo-padrao-descr").fill("Descrição para função futura.");
+  await page.locator("#botao-adicionar-padrao").click();
+  const nova = page.locator('#corpo-tabela-padroes tr[data-codigo="PD_004"]');
+  await expect(nova).toHaveCount(1);
+  await expect(nova.locator("td").nth(3)).toHaveText("—");
+  await expect(nova.locator("td").nth(6)).toHaveText("Pendente");
+
+  await nova.locator("input").fill("Padrão futuro revisto");
+  await nova.locator('button[data-acao="salvar"]').click();
+  await expect(page.locator("#mensagem-padroes")).toHaveText("PD_004 atualizado.");
+  await expect(nova.locator("input")).toHaveValue("Padrão futuro revisto");
+
+  page.once("dialog", (dialogo) => dialogo.accept());
+  await nova.locator('button[data-acao="excluir"]').click();
+  await expect(nova).toHaveCount(0);
+  await expect(page.locator("#mensagem-padroes")).toHaveText("PD_004 excluído.");
+
+  await page.locator("#botao-fechar-padroes").click();
+  await expect(page.locator("#painel-padroes")).toBeHidden();
 });

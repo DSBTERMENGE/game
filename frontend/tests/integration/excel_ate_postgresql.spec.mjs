@@ -97,6 +97,11 @@ test("Excel percorre API, cálculos, PostgreSQL e relatório sem duplicar", asyn
 
   const resumoInicial = JSON.parse(banco("resumo"));
   expect(resumoInicial).toEqual({ resultados: 2, frequencias: 60, ocorrencias: 12 });
+  expect(JSON.parse(banco("resumo_padroes"))).toEqual([
+    { padrao_cod: "PD_001", num_oco: 0, intervalo_medio: null, desv_padrao: null },
+    { padrao_cod: "PD_002", num_oco: 0, intervalo_medio: null, desv_padrao: null },
+    { padrao_cod: "PD_003", num_oco: 0, intervalo_medio: null, desv_padrao: null },
+  ]);
 
   await page.locator("#botao-importar-excel").click();
   await expect(page.locator("#mensagem-sistema")).toHaveText(

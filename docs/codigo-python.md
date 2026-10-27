@@ -41,6 +41,8 @@ para imitar esta árvore.
 - `modelos`: representar e validar os dados do domínio sem acessar banco,
   planilha ou interface;
 - `calculos`: executar funções matemáticas puras sobre modelos já validados;
+- `padroes`: contratos, registro e futuras funções puras de detecção e análise
+  de padrões;
 - `database`: conexões, transações, migrações e persistência;
 - `importacao`: interpretar a planilha e transformar linhas em dados válidos;
 - `analises`: cálculos puros, preferencialmente independentes da API;
@@ -99,6 +101,37 @@ então envia os campos originais e derivados ao PostgreSQL.
 recálculo integral das 60 frequências e geração do relatório. Todas as gravações
 de uma importação pertencem à mesma transação; linhas iguais são ignoradas e
 divergências não são sobrescritas.
+
+## Infraestrutura de padrões
+
+O pacote `padroes` associa cada `padrao_cod` a uma função detectora por meio de
+`RegistroDetectores`. Códigos fora do formato `PD_001`, substituições silenciosas
+e consultas a detectores ainda não implementados produzem erros diferentes e
+explícitos. O registro começa vazio: os detectores iniciais somente serão
+adicionados depois que suas regras forem aprovadas.
+
+Todo elemento público exportado pelo pacote possui docstring em português. Os
+testes também verificam essa documentação, além do registro, recuperação e
+tratamento de funções pendentes.
+
+Os detectores sequenciais classificam cada resultado exclusivamente pelo maior
+bloco consecutivo: exatamente dois (`PD_001`), exatamente três (`PD_002`) ou
+mais de três (`PD_003`). `padroes/estatisticas.py` aplica qualquer detector ao
+histórico e calcula concursos correspondentes, intervalos, média e desvio-padrão
+populacional. `padroes/iniciais.py` registra os três códigos sem manter estado
+global mutável.
+
+`database/padroes_repository.py` preserva o cadastro e permite que somente um
+objeto `EstatisticaPadrao` atualize os campos calculados. O serviço
+`services/padroes.py` cadastra os três códigos iniciais e recalcula as
+estatísticas dentro de uma única transação, sem sobrescrever nome ou descrição
+editados pelo usuário. Importação, inclusão e edição de resultados chamam esse
+serviço na mesma transação que atualiza as frequências.
+
+`api/padroes.py` expõe o CRUD HTTP. A API aceita do usuário somente
+`padrao_nome` e `padrao_descr`; código, identificador e estatísticas são
+protegidos no servidor. O retorno informa ainda `detector_implementado`, valor
+calculado pelo registro Python e não armazenado como coluna.
 
 ## API Flask
 

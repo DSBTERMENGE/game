@@ -9,6 +9,11 @@ from .migrations import (
     descobrir_migracoes,
     executar_migracoes,
 )
+from .padroes_repository import (
+    ErroRepositorioPadrao,
+    PadraoPersistido,
+    RepositorioPadroes,
+)
 from .repositories import (
     ErroRepositorioResultado,
     RepositorioFrequencias,
@@ -22,4 +27,5 @@ __all__ = [
     "descobrir_migracoes", "executar_migracoes",
     "ErroRepositorioResultado", "RepositorioFrequencias", "RepositorioResultados",
     "ResultadoPersistido",
+    "ErroRepositorioPadrao", "PadraoPersistido", "RepositorioPadroes",
 ]

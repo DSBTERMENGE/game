@@ -106,6 +106,21 @@ várias linhas. Inicialmente, serão produzidos quando a consulta ou o gráfico 
 solicitado. Se futuramente forem armazenados, qualquer inclusão ou alteração
 antiga deverá recalcular todas as posições históricas afetadas.
 
+As estatísticas dos padrões são derivadas do histórico e já ficam armazenadas.
+Após importação, inclusão ou edição de resultados, o sistema recalcula
+`num_oco`, `intervalo_medio` e `desv_padrao` dos padrões implementados dentro da
+mesma transação. Nome e descrição editados pelo usuário não são sobrescritos
+pelo recálculo.
+
+## Cadastro visual de padrões
+
+O botão **Cadastro de Padrões** abre uma grade sobre a tela principal. A grade
+possui cabeçalho fixo, rolagem vertical e horizontal e mantém vários registros
+visíveis para comparação. Nome e descrição são editáveis diretamente na linha;
+código, ocorrências, intervalo médio, desvio-padrão e situação da função Python
+são somente para leitura. Inclusão usa o formulário acima da grade e exclusão
+exige confirmação.
+
 ## Gráfico de um resultado
 
 A interface possui uma grade de números de 01 a 60. Para apresentar um único

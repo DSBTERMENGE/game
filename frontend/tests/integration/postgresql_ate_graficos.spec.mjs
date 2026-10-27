@@ -78,6 +78,14 @@ test("PostgreSQL real alimenta navegação, voo e mancha no Chrome", async ({ pa
   await expect(page.locator("#jogo-numero")).toHaveText("2", { timeout: 1_000 });
   await page.locator("#botao-voo").click();
 
+  await page.locator("#botao-cadastro-padroes").click();
+  await expect(page.locator("#corpo-tabela-padroes tr")).toHaveCount(3);
+  const padraoDuas = page.locator('#corpo-tabela-padroes tr[data-codigo="PD_001"]');
+  await expect(padraoDuas.locator("td").nth(3)).toHaveText("1192");
+  await expect(padraoDuas.locator("td").nth(4)).toHaveText("2,575147");
+  await expect(padraoDuas.locator("td").nth(6)).toHaveText("Implementada");
+  await page.locator("#botao-fechar-padroes").click();
+
   const inicioMancha = Date.now();
   await page.locator("#botao-mancha").click();
   await expect(page.locator("circle.marca-mancha-resultado")).toHaveCount(18_414);

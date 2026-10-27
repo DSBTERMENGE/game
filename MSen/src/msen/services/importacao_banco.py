@@ -15,6 +15,8 @@ from msen.database import RepositorioFrequencias, RepositorioResultados
 from msen.importacao import StatusImportacao, comparar_importacao_excel
 from msen.modelos import ResultadoEntrada
 
+from .padroes import recalcular_padroes_iniciais
+
 
 @dataclass(frozen=True, slots=True)
 class RelatorioImportacaoBanco:
@@ -71,6 +73,7 @@ def importar_planilha_no_banco(
         todos = repositorio.listar(limite=10_000)
         frequencias = calcular_frequencias(_como_entrada(item.resultado) for item in todos)
         RepositorioFrequencias(conexao).atualizar_todas(frequencias)
+        recalcular_padroes_iniciais(conexao)
 
     depois = repositorio.contar()
     fim = datetime.now(timezone.utc)

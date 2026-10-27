@@ -615,6 +615,9 @@ implementado. Evidências em `MSen/tests/TESTE_ITEM_7_3.md`.
 
 ## ETAPA 8 — Preparação do PythonAnywhere
 
+Estado: adiada por decisão do usuário até todo o desenvolvimento local estar
+concluído, testado e aprovado.
+
 ### Item 8.1 — Inventário somente leitura
 
 Conferir versões, banco, usuário, WSGI, caminhos e limitações sem alterar o
@@ -635,9 +638,175 @@ resultado e preservar evidências sem credenciais.
 
 ---
 
+## ETAPA 9 — Cadastro e análise de padrões
+
+Esta etapa será desenvolvida inteiramente no ambiente local. Cada item exige
+autorização expressa e será testado antes do seguinte.
+
+### Item 9.1 — Contrato dos padrões
+
+Definir e documentar antes da migração:
+
+- significado exato de padrão, ocorrência e intervalo;
+- campos e tipos definitivos da tabela `padroes`;
+- vínculo estável entre cada registro e sua função Python detectora;
+- regra para inclusão e exclusão de registros cujo detector ainda não exista;
+- ordem de aplicação dos padrões no funil;
+- distinção entre detecção binária de uma combinação e análise estatística do
+  histórico.
+
+Teste: exemplos escritos e casos-limite aprovados pelo usuário, sem alterar o
+banco.
+
+Estado: concluído em 2026-10-26. O contrato separa detecção binária de uma
+combinação e análise estatística do histórico; define código estável, nome,
+descrição e campos calculados; protege as estatísticas no frontend e na API; e
+torna obrigatórias docstrings em português no futuro módulo Python. A semântica
+matemática de cada detector será aprovada antes do Item 9.4. Documento em
+`docs/CONTRATO_PADROES.md`.
+
+### Item 9.2 — Migração PostgreSQL da tabela `padroes`
+
+Criar uma migração incremental, sem alterar ou recriar as tabelas existentes.
+Incluir chave primária, descrição e os campos estatísticos aprovados no Item
+9.1.
+
+Teste: aplicar a migração em database temporário, conferir estrutura,
+restrições e compatibilidade com database vazio e já preenchido.
+
+Estado: concluído em 2026-10-26. A migração `002` criou as sete colunas e
+restrições contratadas. Foi validada em database temporário e aplicada ao
+`games` local preenchido, preservando 3.069 resultados e 60 frequências. A nova
+tabela ficou vazia, as migrações `001` e `002` estão registradas, 140 testes
+Python e 2 fluxos integrados Chrome/PostgreSQL passaram. Evidências em
+`MSen/tests/TESTE_ITEM_9_2.md`.
+
+### Item 9.3 — Módulo Python de padrões
+
+Criar um pacote separado em `MSen/src/msen/padroes/`, destinado aos detectores
+e cálculos estatísticos dos padrões. Toda função pública deverá possuir uma
+docstring em português explicando:
+
+- o que a função faz;
+- parâmetros recebidos;
+- valor retornado;
+- regra aplicada e casos relevantes.
+
+Os nomes deverão indicar claramente a finalidade. Funções diferentes não
+deverão misturar detecção, estatística, persistência ou execução do funil.
+
+Teste: verificar importação do módulo, documentação obrigatória e contratos
+básicos sem implementar antecipadamente padrões ainda não aprovados.
+
+Estado: concluído em 2026-10-26. Foi criado o pacote `msen.padroes` com contrato
+de detector e registro explícito por `padrao_cod`. Códigos inválidos,
+substituição e detector pendente possuem erros próprios. O pacote começa vazio,
+sem antecipar funções do Item 9.4. Sete testes específicos exigem inclusive a
+documentação dos elementos públicos; os 147 testes Python passaram. Evidências
+em `MSen/tests/TESTE_ITEM_9_3.md`.
+
+### Item 9.4 — Detectores e estatísticas iniciais
+
+Implementar, somente após aprovação individual das definições, as funções para
+duas dezenas sequenciais, três dezenas sequenciais e mais de três dezenas
+sequenciais. Reutilizar a detecção binária para analisar os resultados
+históricos e calcular quantidade de resultados, intervalos, intervalo médio e
+desvio-padrão.
+
+Teste: cobrir ocorrências, não ocorrências, limites 01/60, resultados com mais
+de um grupo e histórico insuficiente para calcular intervalos.
+
+Estado: concluído em 2026-10-26. Por aprovação do usuário, cada resultado é
+classificado exclusivamente pelo maior bloco: dois, três ou mais de três. Foram
+implementados detectores puros, registro dos três códigos e estatística
+reutilizável. Passaram 19 testes específicos e 159 testes Python acumulados. A
+leitura dos 3.069 resultados encontrou 1.192 ocorrências de `PD_001`, 92 de
+`PD_002` e 5 de `PD_003`; nada foi gravado no banco. Evidências em
+`MSen/tests/TESTE_ITEM_9_4.md`.
+
+### Item 9.5 — Persistência e recálculo dos padrões
+
+Criar repositório e serviço para consultar o cadastro, salvar alterações
+permitidas e recalcular estatísticas a partir de `resultados` sem aceitar
+estatísticas digitadas como valores confiáveis.
+
+Teste: CRUD e recálculo em database temporário, preservando resultados e demais
+tabelas.
+
+Estado: concluído em 2026-10-26. Foram criados repositório e serviço transacional
+para cadastrar e recalcular os três padrões, preservando textos editáveis. O
+recálculo foi integrado a importação, inclusão e edição de resultados. O teste
+temporário confirmou valores, idempotência e preservação do nome. No `games`,
+foram persistidas as estatísticas de 3.069 resultados. Passaram 164 testes Python
+e 2 fluxos Chrome/PostgreSQL. Evidências em `MSen/tests/TESTE_ITEM_9_5.md`.
+
+### Item 9.6 — API CRUD de padrões
+
+Criar endpoints locais para listar, inserir, editar e excluir padrões conforme
+as regras aprovadas no contrato. Validar todas as entradas e não expor detalhes
+do banco em respostas de erro.
+
+Teste: respostas válidas, dados inválidos, duplicidades, registros ausentes e
+falhas simuladas do banco.
+
+Estado: concluído em 2026-10-26. A API oferece listagem, criação, edição dos
+textos e exclusão, protegendo código, identificador e estatísticas. A migração
+`003` inicializa os três padrões e garante códigos não reutilizáveis. O teste
+temporário confirmou CRUD, exclusão respeitada e detector pendente; a consulta
+real ao `games` retornou os três padrões. Passaram 10 testes específicos, 174
+testes Python e 2 fluxos Chrome/PostgreSQL. Evidências em
+`MSen/tests/TESTE_ITEM_9_6.md`.
+
+### Item 9.7 — Grade de Cadastro de Padrões
+
+Criar no `frontend` uma tela em formato de tabela, com cabeçalho fixo, rolagem
+vertical e rolagem horizontal quando necessária. Permitir as operações CRUD
+aprovadas e exibir os campos estatísticos calculados como somente leitura.
+Manter HTML, CSS e JavaScript em suas pastas separadas.
+
+Teste: operações na grade, rolagem, validações, mensagens de erro e visualização
+no Google Chrome.
+
+Estado: concluído em 2026-10-26. Foi criada uma grade com cabeçalho fixo,
+rolagem, inclusão, edição direta dos textos, campos calculados somente para
+leitura e exclusão confirmada. HTML, CSS e JavaScript permanecem separados. A
+interface passou em 20 testes de frontend, 4 fluxos Chrome simulados, 174 testes
+Python e 2 fluxos Chrome/PostgreSQL; a integração real foi somente leitura.
+Evidências em `MSen/tests/TESTE_ITEM_9_7.md`.
+
+### Item 9.8 — Integração e regressão local
+
+Validar o fluxo completo cadastro → função Python → histórico → estatísticas →
+PostgreSQL → grade. Confirmar que nenhuma regressão foi introduzida nas funções
+existentes.
+
+Teste: todas as suítes Python, API, PostgreSQL, frontend e Chrome aprovadas,
+com evidência registrada antes de qualquer commit ou publicação.
+
+Estado: concluído em 2026-10-26. Um fluxo real em database temporário percorreu
+histórico, detectores, estatísticas, PostgreSQL, API e grade CRUD, incluindo
+edição preservada, código não reutilizado e exclusão respeitada. O backup antigo
+foi restaurado, recebeu as migrações `002/003` e reproduziu as estatísticas. A
+regressão aprovou 174 testes Python, 20 de frontend, 4 fluxos Chrome isolados e
+3 fluxos Chrome/PostgreSQL. Evidências em `MSen/tests/TESTE_ITEM_9_8.md`.
+
+Estado da Etapa 9: concluída localmente.
+
+### Funcionalidade futura — funil do screener
+
+O screener será planejado em etapa própria depois que os padrões iniciais
+estiverem definidos e validados. Ele gerará as 50.063.860 combinações de forma
+progressiva. Ao primeiro padrão correspondente, contabilizará a exclusão e
+saltará imediatamente para a próxima combinação. O relatório mostrará entradas,
+exclusões e saldo em cada nível do funil. Nenhum código do screener faz parte da
+Etapa 9.
+
+---
+
 ## Próximo item proposto
 
-Definir e planejar com o usuário as próximas funcionalidades locais. A Etapa 8
-permanece adiada até o sistema estar completo, testado e aprovado localmente.
+Criar um commit de segurança das subetapas 9.1 a 9.8, somente após autorização
+expressa do usuário. Depois, definir as próximas funcionalidades locais; a
+Etapa 8/PythonAnywhere permanece adiada.
 
 Este item não deve ser iniciado sem autorização expressa do usuário.

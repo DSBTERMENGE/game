@@ -14,6 +14,13 @@ from .resultados import (
     listar_resultados_do_banco,
     resultados_api,
 )
+from .padroes import (
+    criar_padrao_no_banco,
+    editar_padrao_no_banco,
+    excluir_padrao_no_banco,
+    listar_padroes_do_banco,
+    padroes_api,
+)
 
 
 def criar_app(configuracao: Mapping[str, Any] | None = None) -> Flask:
@@ -33,6 +40,10 @@ def criar_app(configuracao: Mapping[str, Any] | None = None) -> Flask:
         IMPORTAR_RESULTADOS=importar_resultados_no_banco,
         INCLUIR_RESULTADO=incluir_resultado_no_banco,
         LISTAR_RESULTADOS=listar_resultados_do_banco,
+        CRIAR_PADRAO=criar_padrao_no_banco,
+        EDITAR_PADRAO=editar_padrao_no_banco,
+        EXCLUIR_PADRAO=excluir_padrao_no_banco,
+        LISTAR_PADROES=listar_padroes_do_banco,
     )
     if configuracao is not None:
         app.config.update(configuracao)
@@ -53,5 +64,6 @@ def criar_app(configuracao: Mapping[str, Any] | None = None) -> Flask:
         }), 413
 
     app.register_blueprint(resultados_api)
+    app.register_blueprint(padroes_api)
 
     return app

@@ -301,3 +301,39 @@ célula: redução progressiva, agrupamento ou intensidade de cor.
 - nunca executar uma migração sem confirmar o database de destino;
 - manter importação, matemática, banco e desenhos em módulos separados;
 - criar testes para todas as fórmulas e casos de importação.
+
+
+11. CADASTRO E ANÁLISE DE PADRÕES — PLANEJADO
+------------------------------------------------
+
+Um padrão será uma regra implementada por uma função Python documentada. A
+função terá dois usos distintos:
+
+- combinação candidata: responder somente se ela corresponde ao padrão;
+- resultado histórico: identificar os concursos correspondentes para produzir
+  quantidade de resultados, intervalos, intervalo médio, desvio-padrão e outros
+  estudos que forem aprovados.
+
+O cadastro será apresentado como grade com rolagem. A finalidade é permitir
+consultar os padrões, melhorar seus textos e executar as operações CRUD que
+forem consideradas seguras no contrato. Os valores estatísticos serão
+calculados pelo programa, não informados manualmente como fonte confiável.
+
+O módulo Python ficará separado em `MSen/src/msen/padroes/`. Toda função pública
+deverá ter uma descrição em português que informe finalidade, parâmetros,
+retorno e regra aplicada. Detectores, estatísticas, persistência e screener não
+deverão ser misturados na mesma função.
+
+Padrões sequenciais iniciais em estudo:
+
+- duas dezenas sequenciais: maior bloco exatamente igual a dois;
+- três dezenas sequenciais: maior bloco exatamente igual a três;
+- mais de três dezenas sequenciais: maior bloco igual a quatro, cinco ou seis.
+
+As categorias são exclusivas. Um bloco de três dezenas não é contado novamente
+como duas dezenas sequenciais.
+
+O screener será uma funcionalidade posterior. Ele funcionará como funil: ao
+detectar o primeiro padrão, contará a exclusão e passará imediatamente à próxima
+combinação. A análise mostrará total inicial, exclusões por padrão e saldo após
+cada nível. A ordem dos padrões deverá ser definida antes dessa implementação.

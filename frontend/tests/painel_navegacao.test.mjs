@@ -179,6 +179,27 @@ test("HTML possui controles necessários e aceita somente XLSX", async () => {
   assert.match(html, /id="arquivo-excel"[^>]+accept="\.xlsx"/);
 });
 
+test("cadastro de padrões mantém HTML, CSS e JavaScript separados", async () => {
+  const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
+  const css = await readFile(new URL("../css/padroes.css", import.meta.url), "utf8");
+  const javascript = await readFile(new URL("../js/padroes.js", import.meta.url), "utf8");
+
+  for (const id of [
+    "botao-cadastro-padroes", "painel-padroes", "form-novo-padrao",
+    "tabela-padroes", "corpo-tabela-padroes", "mensagem-padroes",
+  ]) {
+    assert.match(html, new RegExp(`id=["']${id}["']`));
+  }
+  assert.match(html, /css\/padroes\.css/);
+  assert.match(html, /js\/padroes\.js/);
+  assert.match(css, /\.cadastro-padroes__grade\s*\{[^}]*overflow:\s*auto/s);
+  assert.match(css, /#tabela-padroes th\s*\{[^}]*position:\s*sticky/s);
+  assert.match(javascript, /window\.confirm/);
+  assert.match(javascript, /method:\s*"POST"/);
+  assert.match(javascript, /method:\s*"PUT"/);
+  assert.match(javascript, /method:\s*"DELETE"/);
+});
+
 test("nenhum resultado mantém navegação desabilitada e informa o estado", () => {
   window.gameAnalysis.definirResultados([]);
 

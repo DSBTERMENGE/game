@@ -259,3 +259,27 @@ Item 1.3.
 As oito decisões foram aprovadas pelo usuário em 2026-10-26. O Item 1.3 está
 concluído. A alteração efetiva do DDL continua dependendo de autorização
 separada para o Item 1.4.
+
+## 7. Extensão aprovada no Item 9.2 — tabela `padroes`
+
+A migração `002_criar_tabela_padroes.sql` acrescenta o cadastro sem alterar as
+tabelas existentes.
+
+| Campo | Tipo PostgreSQL | Regra |
+|---|---|---|
+| `id_padrao` | `BIGINT IDENTITY` | chave primária |
+| `padrao_cod` | `VARCHAR(20)` | obrigatório, único, formato `PD_001` |
+| `padrao_nome` | `VARCHAR(200)` | obrigatório, preenchido e único |
+| `padrao_descr` | `TEXT` | obrigatório e preenchido |
+| `num_oco` | `INTEGER` | nulo antes do cálculo ou maior/igual a zero |
+| `intervalo_medio` | `NUMERIC(12,6)` | calculado, nulo com menos de duas ocorrências |
+| `desv_padrao` | `NUMERIC(12,6)` | calculado, nulo com menos de duas ocorrências |
+
+O estado totalmente nulo significa que a estatística ainda não foi calculada;
+`num_oco = 0` significa que o histórico foi analisado e o padrão nunca ocorreu.
+Com duas ou mais ocorrências, média e desvio deverão estar preenchidos. Essa
+distinção é protegida por restrição do PostgreSQL.
+
+A migração `003` insere os três cadastros iniciais sem sobrescrever registros
+existentes e cria `padroes_codigo_seq`. A sequência fornece `PD_004` em diante e
+não reutiliza códigos de linhas excluídas.

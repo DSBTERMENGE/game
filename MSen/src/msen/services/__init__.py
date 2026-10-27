@@ -6,6 +6,7 @@ from .importacao_banco import (
     salvar_relatorio_importacao,
 )
 from .manutencao_resultados import editar_resultado, incluir_resultado
+from .padroes import RelatorioRecalculoPadroes, recalcular_padroes_iniciais
 
 __all__ = [
     "RelatorioImportacaoBanco",
@@ -13,4 +14,6 @@ __all__ = [
     "salvar_relatorio_importacao",
     "editar_resultado",
     "incluir_resultado",
+    "RelatorioRecalculoPadroes",
+    "recalcular_padroes_iniciais",
 ]
