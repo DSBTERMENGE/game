@@ -573,9 +573,26 @@ Estado da Etapa 6: concluída.
 
 Selecionar arquivo, importar, calcular, armazenar e apresentar relatório.
 
+Estado: concluído em 2026-10-26. Um teste Playwright no Google Chrome criou um
+database PostgreSQL efêmero e migrado, selecionou uma planilha controlada,
+enviou-a pela API, inseriu dois resultados com campos calculados, atualizou 60
+frequências com 12 ocorrências e exibiu o relatório na interface. A reimportação
+inseriu zero duplicidades. O database e os servidores temporários foram removidos
+ao final. Os dois testes integrados 7.1/7.2 passaram em 8,1 segundos, além de 19
+testes de frontend, 3 testes Chrome isolados e 140 testes Python. Evidências em
+`MSen/tests/TESTE_ITEM_7_1.md`.
+
 ### Item 7.2 — Fluxo PostgreSQL até gráficos
 
 Carregar dados, navegar, animar e desenhar mancha.
+
+Estado: concluído em 2026-10-26. O Flask passou a servir frontend e API na
+mesma origem. Um teste Playwright no Google Chrome carregou os 3.069 resultados
+reais do PostgreSQL, navegou entre primeiro e último, executou o voo, desenhou
+18.414 marcas de dezenas e 3.069 marcas de média e limpou a camada. A contagem
+permaneceu em 3.069 antes e depois. O teste integrado passou em 4,3 segundos;
+19 testes de frontend, 3 testes de navegador isolados e 138 testes Python também
+passaram. Evidências em `MSen/tests/TESTE_ITEM_7_2.md`.
 
 ### Item 7.3 — Teste de regressão
 
@@ -586,6 +603,13 @@ Critério para avançar:
 - todos os testes aprovados;
 - backup e restauração local ensaiados;
 - nenhuma pendência crítica conhecida.
+
+Estado: concluído em 2026-10-26. Passaram 140 testes Python, 19 testes
+unitários de frontend, 3 fluxos isolados no Google Chrome e 2 fluxos integrados
+Chrome/PostgreSQL. O backup local foi restaurado em database efêmero e conferiu
+3.069 resultados, 60 registros de frequência e 18.414 ocorrências. O database
+temporário foi removido e nenhuma pendência crítica foi encontrada no escopo
+implementado. Evidências em `MSen/tests/TESTE_ITEM_7_3.md`.
 
 ---
 
@@ -613,6 +637,7 @@ resultado e preservar evidências sem credenciais.
 
 ## Próximo item proposto
 
-Item 7.1 — validar localmente o fluxo completo do Excel até o PostgreSQL.
+Definir e planejar com o usuário as próximas funcionalidades locais. A Etapa 8
+permanece adiada até o sistema estar completo, testado e aprovado localmente.
 
 Este item não deve ser iniciado sem autorização expressa do usuário.

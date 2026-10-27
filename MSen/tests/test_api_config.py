@@ -30,6 +30,22 @@ class ConfiguracaoApiTestCase(unittest.TestCase):
         app = criar_app({"TESTING": True})
         self.assertTrue(any(regra.rule == "/api/resultados" for regra in app.url_map.iter_rules()))
 
+    def test_aplicacao_serve_frontend_e_arquivos_estaticos(self):
+        cliente = criar_app({"TESTING": True}).test_client()
+        pagina = cliente.get("/")
+        javascript = cliente.get("/js/main.js")
+        css = cliente.get("/css/style.css")
+
+        self.assertEqual(200, pagina.status_code)
+        self.assertIn(b'<main class="area-trabalho">', pagina.data)
+        self.assertEqual(200, javascript.status_code)
+        self.assertIn("javascript", javascript.content_type)
+        self.assertEqual(200, css.status_code)
+        self.assertIn("text/css", css.content_type)
+        pagina.close()
+        javascript.close()
+        css.close()
+
     def test_entrada_wsgi_expoe_aplicacao_sem_iniciar_servidor(self):
         from wsgi import application
 

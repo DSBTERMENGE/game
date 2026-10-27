@@ -116,7 +116,9 @@ test("seleciona Excel, importa, desenha mancha e limpa", async ({ page }) => {
   await expect(page.locator("#botao-importar-excel")).toBeEnabled();
   await page.locator("#botao-importar-excel").click();
   await expect.poll(totalImportacoes).toBe(1);
-  await expect(page.locator("#mensagem-sistema")).toHaveText("2 resultados carregados.");
+  await expect(page.locator("#mensagem-sistema")).toHaveText(
+    "Importação concluída: 0 inseridos, 2 iguais, 0 alterados e 0 inválidos.",
+  );
 
   await page.locator("#botao-mancha").click();
   await expect(page.locator("circle.marca-mancha-resultado")).toHaveCount(12);

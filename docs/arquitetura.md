@@ -13,5 +13,10 @@ que não fariam parte de uma instalação real.
 - `frontend/css`: folhas de estilo;
 - `frontend/js`: comportamento JavaScript da interface.
 
+A fábrica Flask serve a API e o diretório `frontend` na mesma origem. A rota
+`/` entrega o HTML, `/css` e `/js` entregam os recursos estáticos e `/api`
+concentra as operações de dados. Isso evita configuração CORS e reproduz no
+teste local o fluxo que será usado por uma aplicação WSGI.
+
 Novos módulos devem ser criados por responsabilidade, por exemplo `leitura`,
 `modelos`, `analises` e `relatorios`, quando essas necessidades surgirem.

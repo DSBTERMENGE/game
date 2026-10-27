@@ -1,6 +1,7 @@
 """Configuração central da aplicação Flask."""
 
 from collections.abc import Mapping
+from pathlib import Path
 from typing import Any
 
 from flask import Flask, jsonify
@@ -18,7 +19,12 @@ from .resultados import (
 def criar_app(configuracao: Mapping[str, Any] | None = None) -> Flask:
     """Cria uma instância isolada da API, adequada a testes e WSGI."""
 
-    app = Flask(__name__, static_folder=None)
+    frontend = Path(__file__).resolve().parents[4] / "frontend"
+    app = Flask(
+        __name__,
+        static_folder=str(frontend),
+        static_url_path="",
+    )
     app.config.from_mapping(
         TESTING=False,
         PROPAGATE_EXCEPTIONS=False,
@@ -34,6 +40,10 @@ def criar_app(configuracao: Mapping[str, Any] | None = None) -> Flask:
     @app.get("/api/saude")
     def saude():
         return jsonify(aplicacao="MSen", status="ok")
+
+    @app.get("/")
+    def pagina_inicial():
+        return app.send_static_file("index.html")
 
     @app.errorhandler(RequestEntityTooLarge)
     def arquivo_muito_grande(_erro):

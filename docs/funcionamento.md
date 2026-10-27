@@ -68,6 +68,10 @@ O frontend usa `POST /api/resultados/importar` para enviar o Excel e
 `GET /api/resultados` para carregar a série. As duas rotas estão implementadas.
 A importação aceita somente `.xlsx`, limita o envio a 10 MiB, usa arquivo
 temporário descartável e devolve o relatório incremental em JSON.
+Depois de recarregar os resultados, a interface preserva o resumo com as
+quantidades inseridas, iguais, alteradas e inválidas. O fluxo completo foi
+validado num database PostgreSQL efêmero: uma segunda importação da mesma fonte
+não criou duplicidades.
 
 ## Funções de cálculo por linha
 

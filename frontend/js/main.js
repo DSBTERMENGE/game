@@ -332,8 +332,12 @@ async function importarExcel() {
       const detalhe = typeof corpo.erro === "object" ? corpo.erro.mensagem : corpo.erro;
       throw new Error(detalhe ?? `A API respondeu com status ${resposta.status}.`);
     }
-    informar(corpo.mensagem ?? "Importação concluída.", "sucesso");
     await carregarResultadosDaApi();
+    const relatorio = corpo.relatorio;
+    const mensagem = relatorio
+      ? `Importação concluída: ${relatorio.inseridas} inseridos, ${relatorio.iguais} iguais, ${relatorio.alteradas} alterados e ${relatorio.invalidas} inválidos.`
+      : (corpo.mensagem ?? "Importação concluída.");
+    informar(mensagem, "sucesso");
   } catch (erro) {
     informar(`Não foi possível importar: ${erro.message}`, "erro");
   } finally {

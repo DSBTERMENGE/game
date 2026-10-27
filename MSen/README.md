@@ -41,7 +41,7 @@ Também é possível executar diretamente pelo módulo:
 python -m msen.main
 ```
 
-Para iniciar somente o servidor de desenvolvimento da API:
+Para iniciar o servidor local com a interface e a API no mesmo endereço:
 
 ```powershell
 flask --app "msen.api:criar_app()" run
@@ -58,8 +58,21 @@ flask --app "msen.api:criar_app()" run
 Esse servidor é apenas para desenvolvimento. Em produção, inclusive no
 PythonAnywhere, deve ser usada a entrada WSGI disponível em `wsgi.py`.
 
+Depois de iniciar, abra `http://127.0.0.1:5000/` no Google Chrome.
+
 ## Testes
 
 ```powershell
 pytest
 ```
+
+Na raiz `Game`, os testes de frontend usam:
+
+```powershell
+npm run test:frontend
+npm run test:browser
+npm run test:integration:browser
+```
+
+O último comando exige o PostgreSQL local configurado em `MSen/.env` e executa
+somente leituras do banco durante o fluxo PostgreSQL até os gráficos.

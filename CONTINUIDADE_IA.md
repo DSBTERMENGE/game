@@ -240,6 +240,38 @@ PythonAnywhere continua fora do escopo; ainda há funcionalidades futuras a
 serem fornecidas pelo usuário. Aguardar autorização para versionar a Etapa 6 e,
 depois, para o Item 7.1.
 
+Por solicitação do usuário, o Item 7.2 foi executado antes do 7.1 e concluído
+em 2026-10-26. O Flask agora entrega frontend e API na mesma origem. O Chrome
+carregou os 3.069 resultados reais do PostgreSQL, navegou, executou o voo,
+desenhou 18.414 marcas de dezenas e 3.069 médias e limpou a camada. O banco
+permaneceu com 3.069 linhas. O Item 7.1 continua pendente e é o próximo passo;
+o PythonAnywhere permanece fora do escopo.
+
+O Item 7.1 foi concluído em 2026-10-26 usando database PostgreSQL temporário.
+O Chrome selecionou a planilha, a API inseriu dois resultados calculados,
+atualizou 60 frequências/12 ocorrências, apresentou o relatório e reimportou sem
+duplicar. O database temporário foi removido e `games` permaneceu intacto. Os
+dois testes integrados passaram em 8,1 segundos; 19 testes de frontend, 3 testes
+Chrome isolados e 140 testes Python também passaram. Aguardar autorização para
+o Item 7.3; o PythonAnywhere continua fora do escopo.
+
+O Item 7.3 foi concluído em 2026-10-26. A regressão aprovou 140 testes Python,
+19 testes unitários de frontend, 3 fluxos isolados no Google Chrome e 2 fluxos
+integrados Chrome/PostgreSQL. O backup local foi restaurado com sucesso em um
+database efêmero, contendo 3.069 resultados, 60 frequências e 18.414
+ocorrências; o database temporário foi removido. A Etapa 7 está concluída e não
+há pendência crítica conhecida no escopo implementado. As alterações da Etapa
+7 ainda não foram commitadas. Aguardar autorização para o commit e, depois,
+orientação do usuário sobre as próximas funcionalidades. O PythonAnywhere
+permanece adiado até a conclusão e aprovação de todo o desenvolvimento local.
+
+Por solicitação do usuário, o Item 7.2 foi executado antes do 7.1 e concluído
+em 2026-10-26. O Flask agora entrega frontend e API na mesma origem. O Chrome
+carregou os 3.069 resultados reais do PostgreSQL, navegou, executou o voo,
+desenhou 18.414 marcas de dezenas e 3.069 médias e limpou a camada. O banco
+permaneceu com 3.069 linhas. O Item 7.1 continua pendente e é o próximo passo;
+o PythonAnywhere permanece fora do escopo.
+
 O Item 6.4 foi concluído em 2026-10-26. Quatro testes específicos confirmaram a
 mancha pequena, reinício das posições quando uma célula lota, desenho de 3.000
 resultados dentro dos limites locais e limpeza completa. Dezenove testes de
