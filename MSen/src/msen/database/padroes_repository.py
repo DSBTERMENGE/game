@@ -7,12 +7,14 @@ from typing import Any
 
 import psycopg
 
+from msen.database.grupos_padroes_repository import _validar_codigo_grupo
 from msen.padroes import EstatisticaPadrao
 
 
 COLUNAS_PADRAO = """
-id_padrao, padrao_cod, padrao_nome, padrao_descr,
-num_oco, intervalo_medio, desv_padrao
+p.id_padrao, p.padrao_cod, p.padrao_nome, p.padrao_descr,
+p.num_oco, p.intervalo_medio, p.desv_padrao,
+p.id_grupo, g.grupo_cod, g.grupo_nome
 """
 FORMATO_CODIGO = re.compile(r"PD_[0-9]{3,}")
 
@@ -30,7 +32,7 @@ class ErroRepositorioPadrao(RuntimeError):
 
 @dataclass(frozen=True, slots=True)
 class PadraoPersistido:
-    """Representa uma linha validada e recuperada da tabela `padroes`."""
+    """Representa um padrão persistido e seu grupo conceitual obrigatório."""
 
     id_padrao: int
     padrao_cod: str
@@ -39,21 +41,30 @@ class PadraoPersistido:
     num_oco: int | None
     intervalo_medio: Decimal | None
     desv_padrao: Decimal | None
+    id_grupo: int | None = None
+    grupo_cod: str | None = None
+    grupo_nome: str | None = None
 
 
 def _linha_para_padrao(linha: tuple[Any, ...]) -> PadraoPersistido:
-    if len(linha) != 7:
-        raise ValueError("A consulta de padrão deve retornar exatamente 7 colunas.")
+    """Converte as dez colunas esperadas em um padrão persistido."""
+
+    if len(linha) != 10:
+        raise ValueError("A consulta de padrão deve retornar exatamente 10 colunas.")
     return PadraoPersistido(*linha)
 
 
 def _validar_codigo(codigo: str) -> str:
+    """Valida e devolve um código de padrão no formato PD_001."""
+
     if not isinstance(codigo, str) or FORMATO_CODIGO.fullmatch(codigo) is None:
         raise ValueError("O código deve seguir o formato PD_001.")
     return codigo
 
 
 def _validar_texto(nome: str, valor: str) -> str:
+    """Remove espaços externos e rejeita um texto obrigatório vazio."""
+
     if not isinstance(valor, str) or not valor.strip():
         raise ValueError(f"{nome} deve ser um texto preenchido.")
     return valor.strip()
@@ -69,15 +80,52 @@ class RepositorioPadroes:
             raise TypeError("O repositório exige uma conexão Psycopg válida.")
         self._conexao = conexao
 
-    def listar(self) -> tuple[PadraoPersistido, ...]:
-        """Lista os padrões em ordem crescente do código estável."""
+    @staticmethod
+    def _selecionar_por_codigo(cursor, padrao_cod: str):
+        """Seleciona um padrão e os dados de seu grupo usando o cursor ativo."""
+
+        cursor.execute(
+            f"SELECT {COLUNAS_PADRAO} FROM padroes_subgrupo p "
+            "JOIN padroes_grupo g USING (id_grupo) WHERE p.padrao_cod = %s",
+            (padrao_cod,),
+        )
+        return cursor.fetchone()
+
+    @staticmethod
+    def _obter_id_grupo(cursor, grupo_cod: str) -> int:
+        """Obtém o identificador do grupo ou informa que ele não existe."""
+
+        codigo = _validar_codigo_grupo(grupo_cod)
+        cursor.execute(
+            "SELECT id_grupo FROM padroes_grupo WHERE grupo_cod = %s", (codigo,)
+        )
+        linha = cursor.fetchone()
+        if linha is None:
+            raise ErroRepositorioPadrao(
+                "GRUPO_NAO_ENCONTRADO", "O grupo de padrões não foi encontrado."
+            )
+        return linha[0]
+
+    def listar(self, grupo_cod: str | None = None) -> tuple[PadraoPersistido, ...]:
+        """Lista os padrões, opcionalmente limitados a um grupo válido."""
+
+        codigo_grupo = (
+            None if grupo_cod is None else _validar_codigo_grupo(grupo_cod)
+        )
 
         try:
             with self._conexao.transaction():
                 with self._conexao.cursor() as cursor:
-                    cursor.execute(
-                        f"SELECT {COLUNAS_PADRAO} FROM padroes ORDER BY padrao_cod"
+                    consulta = (
+                        f"SELECT {COLUNAS_PADRAO} FROM padroes_subgrupo p "
+                        "JOIN padroes_grupo g USING (id_grupo)"
                     )
+                    parametros: tuple[str, ...] = ()
+                    if codigo_grupo is not None:
+                        consulta += " WHERE g.grupo_cod = %s"
+                        parametros = (codigo_grupo,)
+                    consulta += " ORDER BY p.padrao_cod"
+                    cursor.execute(consulta, parametros)
                     return tuple(
                         _linha_para_padrao(linha) for linha in cursor.fetchall()
                     )
@@ -86,12 +134,15 @@ class RepositorioPadroes:
                 "FALHA_LISTAGEM", "Não foi possível listar os padrões."
             ) from None
 
-    def criar(self, padrao_nome: str, padrao_descr: str) -> PadraoPersistido:
+    def criar(
+        self, padrao_nome: str, padrao_descr: str, grupo_cod: str
+    ) -> PadraoPersistido:
         """Cria um cadastro com código automático que nunca será reutilizado.
 
         Parâmetros:
             padrao_nome: Nome curto preenchido pelo usuário.
             padrao_descr: Explicação detalhada preenchida pelo usuário.
+            grupo_cod: Código do grupo conceitual obrigatório.
 
         Retorno:
             Linha criada com estatísticas nulas e código estável.
@@ -103,20 +154,25 @@ class RepositorioPadroes:
 
         nome = _validar_texto("padrao_nome", padrao_nome)
         descricao = _validar_texto("padrao_descr", padrao_descr)
+        codigo_grupo = _validar_codigo_grupo(grupo_cod)
         try:
             with self._conexao.transaction():
                 with self._conexao.cursor() as cursor:
-                    cursor.execute("SELECT NEXTVAL('padroes_codigo_seq')")
+                    id_grupo = self._obter_id_grupo(cursor, codigo_grupo)
+                    cursor.execute("SELECT NEXTVAL('padroes_subgrupo_codigo_seq')")
                     numero = cursor.fetchone()[0]
                     codigo = f"PD_{numero:03d}"
                     cursor.execute(
-                        "INSERT INTO padroes "
-                        "(padrao_cod, padrao_nome, padrao_descr) "
-                        "VALUES (%s, %s, %s) "
-                        f"RETURNING {COLUNAS_PADRAO}",
-                        (codigo, nome, descricao),
+                        "INSERT INTO padroes_subgrupo "
+                        "(id_grupo, padrao_cod, padrao_nome, padrao_descr) "
+                        "VALUES (%s, %s, %s, %s)",
+                        (id_grupo, codigo, nome, descricao),
                     )
-                    return _linha_para_padrao(cursor.fetchone())
+                    return _linha_para_padrao(
+                        self._selecionar_por_codigo(cursor, codigo)
+                    )
+        except ErroRepositorioPadrao:
+            raise
         except psycopg.errors.UniqueViolation:
             raise ErroRepositorioPadrao(
                 "PADRAO_DUPLICADO", "Já existe um padrão com o nome informado."
@@ -127,9 +183,13 @@ class RepositorioPadroes:
             ) from None
 
     def atualizar_textos(
-        self, padrao_cod: str, padrao_nome: str, padrao_descr: str
+        self,
+        padrao_cod: str,
+        padrao_nome: str,
+        padrao_descr: str,
+        grupo_cod: str,
     ) -> PadraoPersistido:
-        """Altera somente o nome e a descrição de um padrão.
+        """Altera grupo, nome e descrição sem modificar código ou estatísticas.
 
         Código e estatísticas não são parâmetros desta operação e permanecem
         inalterados. Código inexistente produz erro funcional explícito.
@@ -138,14 +198,17 @@ class RepositorioPadroes:
         codigo = _validar_codigo(padrao_cod)
         nome = _validar_texto("padrao_nome", padrao_nome)
         descricao = _validar_texto("padrao_descr", padrao_descr)
+        codigo_grupo = _validar_codigo_grupo(grupo_cod)
         try:
             with self._conexao.transaction():
                 with self._conexao.cursor() as cursor:
+                    id_grupo = self._obter_id_grupo(cursor, codigo_grupo)
                     cursor.execute(
-                        "UPDATE padroes SET padrao_nome = %s, padrao_descr = %s "
+                        "UPDATE padroes_subgrupo SET id_grupo = %s, "
+                        "padrao_nome = %s, padrao_descr = %s "
                         "WHERE padrao_cod = %s "
-                        f"RETURNING {COLUNAS_PADRAO}",
-                        (nome, descricao, codigo),
+                        "RETURNING padrao_cod",
+                        (id_grupo, nome, descricao, codigo),
                     )
                     linha = cursor.fetchone()
                     if linha is None:
@@ -154,7 +217,9 @@ class RepositorioPadroes:
                             "O padrão não foi encontrado.",
                             padrao_cod=codigo,
                         )
-                    return _linha_para_padrao(linha)
+                    return _linha_para_padrao(
+                        self._selecionar_por_codigo(cursor, codigo)
+                    )
         except ErroRepositorioPadrao:
             raise
         except psycopg.errors.UniqueViolation:
@@ -177,18 +242,17 @@ class RepositorioPadroes:
         try:
             with self._conexao.transaction():
                 with self._conexao.cursor() as cursor:
-                    cursor.execute(
-                        "DELETE FROM padroes WHERE padrao_cod = %s "
-                        f"RETURNING {COLUNAS_PADRAO}",
-                        (codigo,),
-                    )
-                    linha = cursor.fetchone()
+                    linha = self._selecionar_por_codigo(cursor, codigo)
                     if linha is None:
                         raise ErroRepositorioPadrao(
                             "PADRAO_NAO_ENCONTRADO",
                             "O padrão não foi encontrado.",
                             padrao_cod=codigo,
                         )
+                    cursor.execute(
+                        "DELETE FROM padroes_subgrupo WHERE padrao_cod = %s",
+                        (codigo,),
+                    )
                     return _linha_para_padrao(linha)
         except ErroRepositorioPadrao:
             raise
@@ -200,7 +264,11 @@ class RepositorioPadroes:
             ) from None
 
     def garantir_cadastro(
-        self, padrao_cod: str, padrao_nome: str, padrao_descr: str
+        self,
+        padrao_cod: str,
+        padrao_nome: str,
+        padrao_descr: str,
+        grupo_cod: str,
     ) -> PadraoPersistido:
         """Insere um cadastro ausente sem sobrescrever textos já editados.
 
@@ -208,6 +276,7 @@ class RepositorioPadroes:
             padrao_cod: Código estável associado ao detector Python.
             padrao_nome: Nome inicial apresentado ao usuário.
             padrao_descr: Explicação inicial da regra.
+            grupo_cod: Código do grupo conceitual obrigatório.
 
         Retorno:
             A linha inserida ou a linha preexistente com o mesmo código.
@@ -220,26 +289,25 @@ class RepositorioPadroes:
         codigo = _validar_codigo(padrao_cod)
         nome = _validar_texto("padrao_nome", padrao_nome)
         descricao = _validar_texto("padrao_descr", padrao_descr)
+        codigo_grupo = _validar_codigo_grupo(grupo_cod)
         try:
             with self._conexao.transaction():
                 with self._conexao.cursor() as cursor:
+                    id_grupo = self._obter_id_grupo(cursor, codigo_grupo)
                     cursor.execute(
-                        "INSERT INTO padroes "
-                        "(padrao_cod, padrao_nome, padrao_descr) "
-                        "VALUES (%s, %s, %s) "
+                        "INSERT INTO padroes_subgrupo "
+                        "(id_grupo, padrao_cod, padrao_nome, padrao_descr) "
+                        "VALUES (%s, %s, %s, %s) "
                         "ON CONFLICT (padrao_cod) DO NOTHING "
-                        f"RETURNING {COLUNAS_PADRAO}",
-                        (codigo, nome, descricao),
+                        "RETURNING padrao_cod",
+                        (id_grupo, codigo, nome, descricao),
                     )
                     linha = cursor.fetchone()
-                    if linha is None:
-                        cursor.execute(
-                            f"SELECT {COLUNAS_PADRAO} FROM padroes "
-                            "WHERE padrao_cod = %s",
-                            (codigo,),
-                        )
-                        linha = cursor.fetchone()
-                    return _linha_para_padrao(linha)
+                    return _linha_para_padrao(
+                        self._selecionar_por_codigo(cursor, codigo)
+                    )
+        except ErroRepositorioPadrao:
+            raise
         except psycopg.errors.UniqueViolation:
             raise ErroRepositorioPadrao(
                 "CADASTRO_CONFLITANTE",
@@ -273,9 +341,9 @@ class RepositorioPadroes:
             with self._conexao.transaction():
                 with self._conexao.cursor() as cursor:
                     cursor.execute(
-                        "UPDATE padroes SET num_oco = %s, intervalo_medio = %s, "
+                        "UPDATE padroes_subgrupo SET num_oco = %s, intervalo_medio = %s, "
                         "desv_padrao = %s WHERE padrao_cod = %s "
-                        f"RETURNING {COLUNAS_PADRAO}",
+                        "RETURNING padrao_cod",
                         (
                             estatistica.num_oco,
                             estatistica.intervalo_medio,
@@ -290,7 +358,11 @@ class RepositorioPadroes:
                             "O padrão não está cadastrado.",
                             padrao_cod=estatistica.padrao_cod,
                         )
-                    return _linha_para_padrao(linha)
+                    return _linha_para_padrao(
+                        self._selecionar_por_codigo(
+                            cursor, estatistica.padrao_cod
+                        )
+                    )
         except ErroRepositorioPadrao:
             raise
         except psycopg.Error:

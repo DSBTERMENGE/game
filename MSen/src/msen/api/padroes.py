@@ -20,9 +20,18 @@ from msen.padroes import criar_registro_detectores_iniciais
 
 padroes_api = Blueprint("padroes_api", __name__)
 FORMATO_CODIGO = re.compile(r"PD_[0-9]{3,}")
-CAMPOS_EDITAVEIS = frozenset({"padrao_nome", "padrao_descr"})
+FORMATO_CODIGO_GRUPO = re.compile(r"PG_[0-9]{3,}")
+CAMPOS_EDITAVEIS = frozenset({"padrao_nome", "padrao_descr", "grupo_cod"})
 CAMPOS_PROTEGIDOS = frozenset(
-    {"id_padrao", "padrao_cod", "num_oco", "intervalo_medio", "desv_padrao"}
+    {
+        "id_padrao",
+        "id_grupo",
+        "grupo_nome",
+        "padrao_cod",
+        "num_oco",
+        "intervalo_medio",
+        "desv_padrao",
+    }
 )
 
 
@@ -36,27 +45,33 @@ class ErroEntradaPadrao(ValueError):
         self.codigo = codigo
 
 
-def listar_padroes_do_banco() -> tuple[PadraoPersistido, ...]:
-    """Abre uma conexão curta e lista o cadastro de padrões."""
+def listar_padroes_do_banco(
+    grupo_cod: str | None = None,
+) -> tuple[PadraoPersistido, ...]:
+    """Abre uma conexão curta e lista padrões, filtrando o grupo se informado."""
 
     with abrir_conexao(carregar_configuracao_banco()) as conexao:
-        return RepositorioPadroes(conexao).listar()
+        return RepositorioPadroes(conexao).listar(grupo_cod)
 
 
-def criar_padrao_no_banco(nome: str, descricao: str) -> PadraoPersistido:
+def criar_padrao_no_banco(
+    nome: str, descricao: str, grupo_cod: str
+) -> PadraoPersistido:
     """Abre uma conexão curta e cria um padrão com código automático."""
 
     with abrir_conexao(carregar_configuracao_banco()) as conexao:
-        return RepositorioPadroes(conexao).criar(nome, descricao)
+        return RepositorioPadroes(conexao).criar(nome, descricao, grupo_cod)
 
 
 def editar_padrao_no_banco(
-    codigo: str, nome: str, descricao: str
+    codigo: str, nome: str, descricao: str, grupo_cod: str
 ) -> PadraoPersistido:
-    """Abre uma conexão curta e altera somente os textos do padrão."""
+    """Abre uma conexão curta e altera grupo, nome e descrição do padrão."""
 
     with abrir_conexao(carregar_configuracao_banco()) as conexao:
-        return RepositorioPadroes(conexao).atualizar_textos(codigo, nome, descricao)
+        return RepositorioPadroes(conexao).atualizar_textos(
+            codigo, nome, descricao, grupo_cod
+        )
 
 
 def excluir_padrao_no_banco(codigo: str) -> PadraoPersistido:
@@ -76,6 +91,9 @@ def serializar_padrao(padrao: PadraoPersistido) -> dict[str, object]:
     registro = criar_registro_detectores_iniciais()
     return {
         "id_padrao": padrao.id_padrao,
+        "id_grupo": padrao.id_grupo,
+        "grupo_cod": padrao.grupo_cod,
+        "grupo_nome": padrao.grupo_nome,
         "padrao_cod": padrao.padrao_cod,
         "padrao_nome": padrao.padrao_nome,
         "padrao_descr": padrao.padrao_descr,
@@ -98,7 +116,15 @@ def _validar_codigo(codigo: str) -> str:
     return codigo
 
 
-def _textos_da_requisicao() -> tuple[str, str]:
+def _validar_codigo_grupo(codigo: str) -> str:
+    if FORMATO_CODIGO_GRUPO.fullmatch(codigo) is None:
+        raise ErroEntradaPadrao(
+            "GRUPO_INVALIDO", "O grupo deve seguir o formato PG_001."
+        )
+    return codigo
+
+
+def _dados_da_requisicao() -> tuple[str, str, str]:
     dados = request.get_json(silent=True)
     if not isinstance(dados, dict):
         raise ErroEntradaPadrao("JSON_INVALIDO", "O corpo deve ser um objeto JSON.")
@@ -107,7 +133,7 @@ def _textos_da_requisicao() -> tuple[str, str]:
     if protegidos:
         raise ErroEntradaPadrao(
             "CAMPOS_PROTEGIDOS",
-            "Código, identificador e estatísticas são controlados pelo sistema.",
+            "Identificadores, nomes derivados e estatísticas são controlados pelo sistema.",
         )
     desconhecidos = set(dados).difference(CAMPOS_EDITAVEIS)
     if desconhecidos:
@@ -117,6 +143,7 @@ def _textos_da_requisicao() -> tuple[str, str]:
 
     nome = dados.get("padrao_nome")
     descricao = dados.get("padrao_descr")
+    grupo_cod = dados.get("grupo_cod")
     if not isinstance(nome, str) or not nome.strip():
         raise ErroEntradaPadrao(
             "NOME_INVALIDO", "O nome do padrão deve ser preenchido."
@@ -134,12 +161,18 @@ def _textos_da_requisicao() -> tuple[str, str]:
             "DESCRICAO_INVALIDA",
             "A descrição do padrão aceita no máximo 4.000 caracteres.",
         )
-    return nome.strip(), descricao.strip()
+    if not isinstance(grupo_cod, str):
+        raise ErroEntradaPadrao(
+            "GRUPO_INVALIDO", "O grupo do padrão deve ser informado."
+        )
+    return nome.strip(), descricao.strip(), _validar_codigo_grupo(grupo_cod)
 
 
 def _tratar_erro_repositorio(erro: ErroRepositorioPadrao):
     if erro.codigo == "PADRAO_NAO_ENCONTRADO":
         return _erro(erro.codigo, "O padrão não foi encontrado.", 404)
+    if erro.codigo == "GRUPO_NAO_ENCONTRADO":
+        return _erro(erro.codigo, "O grupo de padrões não foi encontrado.", 404)
     if erro.codigo in {"PADRAO_DUPLICADO", "CADASTRO_CONFLITANTE"}:
         return _erro("PADRAO_DUPLICADO", "Já existe um padrão com esse nome.", 409)
     return _erro(
@@ -151,11 +184,16 @@ def _tratar_erro_repositorio(erro: ErroRepositorioPadrao):
 def listar_padroes():
     """Lista cadastro, estatísticas e disponibilidade dos detectores."""
 
-    servico: Callable[[], tuple[PadraoPersistido, ...]] = current_app.config[
-        "LISTAR_PADROES"
-    ]
     try:
-        itens = servico()
+        grupo_cod = request.args.get("grupo_cod")
+        if grupo_cod is not None:
+            grupo_cod = _validar_codigo_grupo(grupo_cod)
+        servico: Callable[..., tuple[PadraoPersistido, ...]] = current_app.config[
+            "LISTAR_PADROES"
+        ]
+        itens = servico() if grupo_cod is None else servico(grupo_cod)
+    except ErroEntradaPadrao as erro:
+        return _erro(erro.codigo, str(erro), 400)
     except (
         ErroConfiguracaoBanco,
         ErroConexaoBanco,
@@ -174,9 +212,9 @@ def criar_padrao():
     """Cria um cadastro textual com código automático e estatísticas nulas."""
 
     try:
-        nome, descricao = _textos_da_requisicao()
+        nome, descricao, grupo_cod = _dados_da_requisicao()
         servico = current_app.config["CRIAR_PADRAO"]
-        criado = servico(nome, descricao)
+        criado = servico(nome, descricao, grupo_cod)
     except ErroEntradaPadrao as erro:
         return _erro(erro.codigo, str(erro), 400)
     except ErroRepositorioPadrao as erro:
@@ -190,13 +228,13 @@ def criar_padrao():
 
 @padroes_api.put("/api/padroes/<codigo>")
 def editar_padrao(codigo: str):
-    """Edita somente nome e descrição do código informado."""
+    """Edita grupo, nome e descrição do código informado."""
 
     try:
         codigo_valido = _validar_codigo(codigo)
-        nome, descricao = _textos_da_requisicao()
+        nome, descricao, grupo_cod = _dados_da_requisicao()
         servico = current_app.config["EDITAR_PADRAO"]
-        editado = servico(codigo_valido, nome, descricao)
+        editado = servico(codigo_valido, nome, descricao, grupo_cod)
     except ErroEntradaPadrao as erro:
         return _erro(erro.codigo, str(erro), 400)
     except ErroRepositorioPadrao as erro:

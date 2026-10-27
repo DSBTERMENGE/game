@@ -137,3 +137,15 @@ não participaram da operação.
 - manter procedimento documentado de restauração;
 - usar usuário de aplicação com apenas os privilégios necessários;
 - nunca aceitar nomes de tabela ou trechos SQL vindos diretamente da interface.
+
+## Catálogo de padrões
+
+A migração `004` organiza o catálogo em:
+
+- `padroes_grupo`: código, nome e descrição do conceito;
+- `padroes_subgrupo`: padrão específico, grupo obrigatório e estatísticas.
+
+`PG_001` reúne `PD_001`–`PD_003`, relativos a dezenas sequenciais. `PG_002`
+reúne `PD_004`–`PD_006`, relativos a dezenas na mesma coluna. Um padrão legado
+sem classificação conhecida interrompe a migração para impedir associação
+incorreta. Exclusão de grupo ocupado é protegida por chave estrangeira.

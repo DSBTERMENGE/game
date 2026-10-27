@@ -9,7 +9,12 @@ from dotenv import load_dotenv
 
 from msen.calculos import calcular_resultado
 from msen.config import carregar_configuracao_banco
-from msen.database import RepositorioPadroes, RepositorioResultados
+from msen.database import (
+    ErroRepositorioPadrao,
+    RepositorioGruposPadroes,
+    RepositorioPadroes,
+    RepositorioResultados,
+)
 from msen.modelos import ResultadoEntrada
 from msen.services import recalcular_padroes_iniciais
 from suporte_banco_integracao import conectar, validar_nome
@@ -60,7 +65,8 @@ def validar_persistencia(nome_database: str) -> dict[str, object]:
         with conexao.transaction():
             with conexao.cursor() as cursor:
                 cursor.execute(
-                    "UPDATE padroes SET padrao_nome = %s WHERE padrao_cod = %s",
+                    "UPDATE padroes_subgrupo SET padrao_nome = %s "
+                    "WHERE padrao_cod = %s",
                     ("Nome editado pelo usuário", "PD_001"),
                 )
 
@@ -74,17 +80,45 @@ def validar_persistencia(nome_database: str) -> dict[str, object]:
             raise AssertionError("A quantidade de resultados analisados divergiu.")
 
         repositorio_padroes = RepositorioPadroes(conexao)
-        criado = repositorio_padroes.criar("Padrão futuro", "Detector pendente")
+        grupo_adicional = RepositorioGruposPadroes(conexao).criar(
+            "Outro conceito", "Grupo usado para testar o vínculo obrigatório"
+        )
+        criado = repositorio_padroes.criar(
+            "Padrão futuro", "Detector pendente", grupo_adicional.grupo_cod
+        )
         if criado.padrao_cod != "PD_004":
             raise AssertionError(f"Código automático inesperado: {criado.padrao_cod}")
+        if criado.grupo_cod != "PG_003":
+            raise AssertionError("O padrão não foi associado ao grupo informado.")
+        filtrados = repositorio_padroes.listar("PG_003")
+        if tuple(item.padrao_cod for item in filtrados) != ("PD_004",):
+            raise AssertionError(f"Filtro por grupo incorreto: {filtrados!r}")
         editado = repositorio_padroes.atualizar_textos(
-            criado.padrao_cod, "Padrão futuro revisto", "Descrição revista"
+            criado.padrao_cod,
+            "Padrão futuro revisto",
+            "Descrição revista",
+            "PG_001",
         )
-        if editado.padrao_nome != "Padrão futuro revisto":
-            raise AssertionError("A edição dos textos não foi persistida.")
+        if (
+            editado.padrao_nome != "Padrão futuro revisto"
+            or editado.grupo_cod != "PG_001"
+        ):
+            raise AssertionError("A edição dos textos e do grupo não foi persistida.")
+
+        try:
+            repositorio_padroes.criar(
+                "Grupo inválido", "Não deve persistir", "PG_999"
+            )
+        except ErroRepositorioPadrao as erro:
+            if erro.codigo != "GRUPO_NAO_ENCONTRADO":
+                raise AssertionError(f"Erro funcional inesperado: {erro.codigo}")
+        else:
+            raise AssertionError("O repositório aceitou um grupo inexistente.")
         repositorio_padroes.excluir(criado.padrao_cod)
         seguinte = repositorio_padroes.criar(
-            "Outro padrão futuro", "O código anterior não pode ser reutilizado"
+            "Outro padrão futuro",
+            "O código anterior não pode ser reutilizado",
+            "PG_001",
         )
         if seguinte.padrao_cod != "PD_005":
             raise AssertionError("O código excluído foi reutilizado.")
@@ -107,6 +141,8 @@ def validar_persistencia(nome_database: str) -> dict[str, object]:
         "crud": True,
         "codigos_nao_reutilizados": True,
         "exclusao_respeitada": True,
+        "grupo_obrigatorio": True,
+        "filtro_e_transferencia_de_grupo": True,
     }
 
 

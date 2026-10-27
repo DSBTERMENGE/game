@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Grupos de padrões — Game Analysis</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/navegacao.css">
+    <link rel="stylesheet" href="css/grupos-padroes.css">
+  </head>
+  <body>
+    <header class="barra-navegacao">
+      <a class="marca marca--compacta" href="/" aria-label="Game Analysis">GA</a>
+      <button id="botao-voltar" class="navegacao-voltar" type="button" data-destino-voltar="/cadastros.html">← Voltar</button>
+      <a class="navegacao-link" href="/">Painel</a>
+      <details class="navegacao-menu">
+        <summary>Cadastros</summary>
+        <nav aria-label="Cadastros">
+          <a href="/cadastros.html">Visão geral</a>
+          <a href="/grupos-padroes.html" aria-current="page">Grupos de padrões</a>
+          <a href="/padroes.html">Padrões</a>
+        </nav>
+      </details>
+      <strong class="navegacao-pagina">Grupos de padrões</strong>
+    </header>
+    <main class="pagina-conteudo pagina-grupos">
+      <form id="form-novo-grupo" class="grupos-barra">
+        <h1>Grupos de padrões</h1>
+        <label>
+          <span>Nome</span>
+          <input id="novo-grupo-nome" name="grupo_nome" maxlength="200" required>
+        </label>
+        <label class="grupos-barra__descricao">
+          <span>Descrição</span>
+          <input id="novo-grupo-descr" name="grupo_descr" maxlength="4000" required>
+        </label>
+        <button id="botao-adicionar-grupo" type="submit">Adicionar</button>
+      </form>
+
+      <p id="mensagem-grupos" class="grupos-mensagem" role="status" aria-live="polite">
+        Carregando grupos...
+      </p>
+
+      <div class="grupos-grade" tabindex="0" aria-label="Grade de grupos de padrões">
+        <table id="tabela-grupos">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Nome do grupo</th>
+              <th>Descrição</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="corpo-tabela-grupos"></tbody>
+        </table>
+      </div>
+    </main>
+    <script type="module" src="js/navegacao.js"></script>
+    <script type="module" src="js/grupos-padroes.js"></script>
+  </body>
+</html>

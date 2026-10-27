@@ -189,8 +189,68 @@ SELECT dezena
 FROM GENERATE_SERIES(1, 60) AS dezenas(dezena)
 ON CONFLICT (dezena) DO NOTHING;
 
-CREATE TABLE IF NOT EXISTS padroes (
+CREATE TABLE IF NOT EXISTS padroes_grupo (
+    id_grupo BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    grupo_cod VARCHAR(20) NOT NULL,
+    grupo_nome VARCHAR(200) NOT NULL,
+    grupo_descr TEXT NOT NULL,
+
+    CONSTRAINT uk_padroes_grupo_grupo_cod UNIQUE (grupo_cod),
+    CONSTRAINT ck_padroes_grupo_grupo_cod_formato
+        CHECK (grupo_cod ~ '^PG_[0-9]{3,}$'),
+    CONSTRAINT ck_padroes_grupo_grupo_nome_preenchido
+        CHECK (BTRIM(grupo_nome) <> ''),
+    CONSTRAINT ck_padroes_grupo_grupo_descr_preenchida
+        CHECK (BTRIM(grupo_descr) <> '')
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uk_padroes_grupo_nome_normalizado
+    ON padroes_grupo (LOWER(BTRIM(grupo_nome)));
+
+COMMENT ON TABLE padroes_grupo IS
+    'Grupos conceituais usados para organizar padrões relacionados.';
+COMMENT ON COLUMN padroes_grupo.id_grupo IS
+    'Identificador interno automático do grupo.';
+COMMENT ON COLUMN padroes_grupo.grupo_cod IS
+    'Código estável e único do grupo, gerado pelo sistema.';
+COMMENT ON COLUMN padroes_grupo.grupo_nome IS
+    'Nome curto e editável do conceito agrupador.';
+COMMENT ON COLUMN padroes_grupo.grupo_descr IS
+    'Descrição detalhada e editável do conceito agrupador.';
+
+INSERT INTO padroes_grupo (grupo_cod, grupo_nome, grupo_descr)
+VALUES
+(
+    'PG_001',
+    'Dezenas sequenciais',
+    'Padrões baseados em grupos de dezenas consecutivas no resultado.'
+),
+(
+    'PG_002',
+    'Dezenas na mesma coluna',
+    'Padrões baseados em dezenas posicionadas na mesma coluna da matriz.'
+)
+ON CONFLICT (grupo_cod) DO NOTHING;
+
+CREATE SEQUENCE IF NOT EXISTS padroes_grupo_codigo_seq
+    AS BIGINT MINVALUE 1 START WITH 3;
+
+SELECT SETVAL(
+    'padroes_grupo_codigo_seq',
+    GREATEST(
+        2,
+        COALESCE(MAX(SUBSTRING(grupo_cod FROM 4)::BIGINT), 2)
+    ),
+    TRUE
+)
+FROM padroes_grupo;
+
+COMMENT ON SEQUENCE padroes_grupo_codigo_seq IS
+    'Gera a parte numérica de grupo_cod sem reutilizar códigos excluídos.';
+
+CREATE TABLE IF NOT EXISTS padroes_subgrupo (
     id_padrao BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_grupo BIGINT NOT NULL,
     padrao_cod VARCHAR(20) NOT NULL,
     padrao_nome VARCHAR(200) NOT NULL,
     padrao_descr TEXT NOT NULL,
@@ -199,7 +259,6 @@ CREATE TABLE IF NOT EXISTS padroes (
     desv_padrao NUMERIC(12,6),
 
     CONSTRAINT uk_padroes_padrao_cod UNIQUE (padrao_cod),
-    CONSTRAINT uk_padroes_padrao_nome UNIQUE (padrao_nome),
     CONSTRAINT ck_padroes_padrao_cod_formato
         CHECK (padrao_cod ~ '^PD_[0-9]{3,}$'),
     CONSTRAINT ck_padroes_padrao_nome_preenchido
@@ -230,28 +289,41 @@ CREATE TABLE IF NOT EXISTS padroes (
             AND intervalo_medio IS NOT NULL
             AND desv_padrao IS NOT NULL
         )
-    )
+    ),
+    CONSTRAINT fk_padroes_subgrupo_grupo
+        FOREIGN KEY (id_grupo)
+        REFERENCES padroes_grupo (id_grupo)
+        ON UPDATE RESTRICT
+        ON DELETE RESTRICT
 );
 
-COMMENT ON TABLE padroes IS
-    'Cadastro dos padrões e resumo estatístico calculado sobre os resultados históricos.';
-COMMENT ON COLUMN padroes.id_padrao IS
+CREATE UNIQUE INDEX IF NOT EXISTS uk_padroes_subgrupo_nome_no_grupo
+    ON padroes_subgrupo (id_grupo, LOWER(BTRIM(padrao_nome)));
+
+COMMENT ON TABLE padroes_subgrupo IS
+    'Padrões específicos vinculados a grupos e suas estatísticas históricas.';
+COMMENT ON COLUMN padroes_subgrupo.id_padrao IS
     'Identificador interno automático, sem significado funcional.';
-COMMENT ON COLUMN padroes.padrao_cod IS
+COMMENT ON COLUMN padroes_subgrupo.id_grupo IS
+    'Grupo conceitual obrigatório ao qual o padrão pertence.';
+COMMENT ON COLUMN padroes_subgrupo.padrao_cod IS
     'Código estável e único usado para vincular o cadastro ao detector Python.';
-COMMENT ON COLUMN padroes.padrao_nome IS
+COMMENT ON COLUMN padroes_subgrupo.padrao_nome IS
     'Nome curto e editável apresentado ao usuário.';
-COMMENT ON COLUMN padroes.padrao_descr IS
+COMMENT ON COLUMN padroes_subgrupo.padrao_descr IS
     'Descrição detalhada e editável da regra reconhecida pelo detector.';
-COMMENT ON COLUMN padroes.num_oco IS
+COMMENT ON COLUMN padroes_subgrupo.num_oco IS
     'Quantidade de resultados históricos que correspondem ao padrão; nulo antes do cálculo.';
-COMMENT ON COLUMN padroes.intervalo_medio IS
+COMMENT ON COLUMN padroes_subgrupo.intervalo_medio IS
     'Média dos intervalos entre ocorrências; nula quando existem menos de duas ocorrências.';
-COMMENT ON COLUMN padroes.desv_padrao IS
+COMMENT ON COLUMN padroes_subgrupo.desv_padrao IS
     'Desvio-padrão populacional dos intervalos; nulo quando existem menos de duas ocorrências.';
 
-INSERT INTO padroes (padrao_cod, padrao_nome, padrao_descr)
-VALUES
+INSERT INTO padroes_subgrupo (id_grupo, padrao_cod, padrao_nome, padrao_descr)
+SELECT grupo.id_grupo, dados.padrao_cod, dados.padrao_nome, dados.padrao_descr
+FROM padroes_grupo AS grupo
+CROSS JOIN (
+    VALUES
     (
         'PD_001',
         'Duas dezenas sequenciais',
@@ -267,22 +339,24 @@ VALUES
         'Mais de três dezenas sequenciais',
         'O maior grupo consecutivo do resultado possui quatro, cinco ou seis dezenas.'
     )
+) AS dados(padrao_cod, padrao_nome, padrao_descr)
+WHERE grupo.grupo_cod = 'PG_001'
 ON CONFLICT (padrao_cod) DO NOTHING;
 
-CREATE SEQUENCE IF NOT EXISTS padroes_codigo_seq
+CREATE SEQUENCE IF NOT EXISTS padroes_subgrupo_codigo_seq
     AS BIGINT MINVALUE 1 START WITH 4;
 
 SELECT SETVAL(
-    'padroes_codigo_seq',
+    'padroes_subgrupo_codigo_seq',
     GREATEST(
         3,
         COALESCE(MAX(SUBSTRING(padrao_cod FROM 4)::BIGINT), 3)
     ),
     TRUE
 )
-FROM padroes;
+FROM padroes_subgrupo;
 
-COMMENT ON SEQUENCE padroes_codigo_seq IS
+COMMENT ON SEQUENCE padroes_subgrupo_codigo_seq IS
     'Gera a parte numérica de padrao_cod sem reutilizar códigos excluídos.';
 
 COMMIT;

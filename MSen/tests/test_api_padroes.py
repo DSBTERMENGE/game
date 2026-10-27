@@ -14,6 +14,9 @@ def padrao(
     num_oco=2,
     intervalo=Decimal("15.000000"),
     desvio=Decimal("0.000000"),
+    id_grupo=1,
+    grupo_cod="PG_001",
+    grupo_nome="Dezenas sequenciais",
 ):
     return PadraoPersistido(
         identificador,
@@ -23,6 +26,9 @@ def padrao(
         num_oco,
         intervalo,
         desvio,
+        id_grupo,
+        grupo_cod,
+        grupo_nome,
     )
 
 
@@ -31,7 +37,7 @@ class ApiPadroesTestCase(unittest.TestCase):
         configuracao = {
             "TESTING": True,
             "LISTAR_PADROES": lambda: (),
-            "CRIAR_PADRAO": lambda nome, descricao: padrao(
+            "CRIAR_PADRAO": lambda nome, descricao, grupo_cod: padrao(
                 "PD_004",
                 nome,
                 descricao,
@@ -39,9 +45,10 @@ class ApiPadroesTestCase(unittest.TestCase):
                 num_oco=None,
                 intervalo=None,
                 desvio=None,
+                grupo_cod=grupo_cod,
             ),
-            "EDITAR_PADRAO": lambda codigo, nome, descricao: padrao(
-                codigo, nome, descricao
+            "EDITAR_PADRAO": lambda codigo, nome, descricao, grupo_cod: padrao(
+                codigo, nome, descricao, grupo_cod=grupo_cod
             ),
             "EXCLUIR_PADRAO": lambda codigo: padrao(codigo),
         }
@@ -68,44 +75,74 @@ class ApiPadroesTestCase(unittest.TestCase):
         self.assertEqual(2, corpo["total"])
         self.assertEqual("15.000000", corpo["padroes"][0]["intervalo_medio"])
         self.assertTrue(corpo["padroes"][0]["detector_implementado"])
+        self.assertEqual("PG_001", corpo["padroes"][0]["grupo_cod"])
+        self.assertEqual("Dezenas sequenciais", corpo["padroes"][0]["grupo_nome"])
         self.assertFalse(corpo["padroes"][1]["detector_implementado"])
         self.assertIsNone(corpo["padroes"][1]["num_oco"])
+
+    def test_filtra_listagem_por_grupo(self):
+        recebidos = []
+
+        def listar(grupo_cod):
+            recebidos.append(grupo_cod)
+            return (padrao(grupo_cod=grupo_cod),)
+
+        resposta = self._cliente(LISTAR_PADROES=listar).get(
+            "/api/padroes?grupo_cod=PG_001"
+        )
+        self.assertEqual(200, resposta.status_code)
+        self.assertEqual(["PG_001"], recebidos)
+        self.assertEqual(1, resposta.get_json()["total"])
+
+    def test_rejeita_filtro_de_grupo_invalido(self):
+        resposta = self._cliente().get("/api/padroes?grupo_cod=pg-1")
+        self.assertEqual(400, resposta.status_code)
+        self.assertEqual("GRUPO_INVALIDO", resposta.get_json()["erro"]["codigo"])
 
     def test_cria_com_codigo_automatico_e_estatisticas_nulas(self):
         recebidos = []
 
-        def criar(nome, descricao):
-            recebidos.append((nome, descricao))
+        def criar(nome, descricao, grupo_cod):
+            recebidos.append((nome, descricao, grupo_cod))
             return padrao(
                 "PD_004", nome, descricao, identificador=4,
                 num_oco=None, intervalo=None, desvio=None,
+                grupo_cod=grupo_cod,
             )
 
         resposta = self._cliente(CRIAR_PADRAO=criar).post(
             "/api/padroes",
-            json={"padrao_nome": "  Novo padrão  ", "padrao_descr": "  Regra  "},
+            json={
+                "padrao_nome": "  Novo padrão  ",
+                "padrao_descr": "  Regra  ",
+                "grupo_cod": "PG_001",
+            },
         )
 
         self.assertEqual(201, resposta.status_code)
-        self.assertEqual([("Novo padrão", "Regra")], recebidos)
+        self.assertEqual([("Novo padrão", "Regra", "PG_001")], recebidos)
         self.assertEqual("PD_004", resposta.get_json()["padrao"]["padrao_cod"])
         self.assertFalse(resposta.get_json()["padrao"]["detector_implementado"])
 
     def test_edita_somente_nome_e_descricao(self):
         recebidos = []
 
-        def editar(codigo, nome, descricao):
-            recebidos.append((codigo, nome, descricao))
-            return padrao(codigo, nome, descricao)
+        def editar(codigo, nome, descricao, grupo_cod):
+            recebidos.append((codigo, nome, descricao, grupo_cod))
+            return padrao(codigo, nome, descricao, grupo_cod=grupo_cod)
 
         resposta = self._cliente(EDITAR_PADRAO=editar).put(
             "/api/padroes/PD_001",
-            json={"padrao_nome": "Nome revisto", "padrao_descr": "Texto revisto"},
+            json={
+                "padrao_nome": "Nome revisto",
+                "padrao_descr": "Texto revisto",
+                "grupo_cod": "PG_002",
+            },
         )
 
         self.assertEqual(200, resposta.status_code)
         self.assertEqual(
-            [("PD_001", "Nome revisto", "Texto revisto")], recebidos
+            [("PD_001", "Nome revisto", "Texto revisto", "PG_002")], recebidos
         )
         self.assertEqual(2, resposta.get_json()["padrao"]["num_oco"])
 
@@ -119,6 +156,8 @@ class ApiPadroesTestCase(unittest.TestCase):
         for campo, valor in (
             ("padrao_cod", "PD_999"),
             ("id_padrao", 999),
+            ("id_grupo", 999),
+            ("grupo_nome", "Alterado"),
             ("num_oco", 999),
             ("intervalo_medio", "1.000000"),
             ("desv_padrao", "1.000000"),
@@ -129,6 +168,7 @@ class ApiPadroesTestCase(unittest.TestCase):
                     json={
                         "padrao_nome": "Nome",
                         "padrao_descr": "Descrição",
+                        "grupo_cod": "PG_001",
                         campo: valor,
                     },
                 )
@@ -140,9 +180,11 @@ class ApiPadroesTestCase(unittest.TestCase):
     def test_rejeita_json_campos_e_textos_invalidos(self):
         casos = (
             ([], "JSON_INVALIDO"),
-            ({"padrao_nome": "Nome", "padrao_descr": "Texto", "extra": 1}, "CAMPOS_DESCONHECIDOS"),
-            ({"padrao_nome": " ", "padrao_descr": "Texto"}, "NOME_INVALIDO"),
-            ({"padrao_nome": "Nome", "padrao_descr": " "}, "DESCRICAO_INVALIDA"),
+            ({"padrao_nome": "Nome", "padrao_descr": "Texto", "grupo_cod": "PG_001", "extra": 1}, "CAMPOS_DESCONHECIDOS"),
+            ({"padrao_nome": " ", "padrao_descr": "Texto", "grupo_cod": "PG_001"}, "NOME_INVALIDO"),
+            ({"padrao_nome": "Nome", "padrao_descr": " ", "grupo_cod": "PG_001"}, "DESCRICAO_INVALIDA"),
+            ({"padrao_nome": "Nome", "padrao_descr": "Texto"}, "GRUPO_INVALIDO"),
+            ({"padrao_nome": "Nome", "padrao_descr": "Texto", "grupo_cod": "pg-1"}, "GRUPO_INVALIDO"),
         )
         for corpo, codigo in casos:
             with self.subTest(codigo=codigo):
@@ -156,12 +198,16 @@ class ApiPadroesTestCase(unittest.TestCase):
         self.assertEqual("CODIGO_INVALIDO", resposta.get_json()["erro"]["codigo"])
 
     def test_duplicidade_retorna_conflito(self):
-        def duplicar(_nome, _descricao):
+        def duplicar(_nome, _descricao, _grupo_cod):
             raise ErroRepositorioPadrao("PADRAO_DUPLICADO", "detalhe interno")
 
         resposta = self._cliente(CRIAR_PADRAO=duplicar).post(
             "/api/padroes",
-            json={"padrao_nome": "Nome", "padrao_descr": "Descrição"},
+            json={
+                "padrao_nome": "Nome",
+                "padrao_descr": "Descrição",
+                "grupo_cod": "PG_001",
+            },
         )
         self.assertEqual(409, resposta.status_code)
         self.assertEqual("PADRAO_DUPLICADO", resposta.get_json()["erro"]["codigo"])
@@ -176,6 +222,23 @@ class ApiPadroesTestCase(unittest.TestCase):
         self.assertEqual(404, resposta.status_code)
         self.assertEqual(
             "PADRAO_NAO_ENCONTRADO", resposta.get_json()["erro"]["codigo"]
+        )
+
+    def test_grupo_ausente_retorna_404(self):
+        def grupo_ausente(_nome, _descricao, _grupo_cod):
+            raise ErroRepositorioPadrao("GRUPO_NAO_ENCONTRADO", "interno")
+
+        resposta = self._cliente(CRIAR_PADRAO=grupo_ausente).post(
+            "/api/padroes",
+            json={
+                "padrao_nome": "Nome",
+                "padrao_descr": "Descrição",
+                "grupo_cod": "PG_999",
+            },
+        )
+        self.assertEqual(404, resposta.status_code)
+        self.assertEqual(
+            "GRUPO_NAO_ENCONTRADO", resposta.get_json()["erro"]["codigo"]
         )
 
     def test_erro_do_banco_nao_expoe_detalhes(self):

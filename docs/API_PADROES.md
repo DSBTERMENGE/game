@@ -2,16 +2,18 @@
 
 ## Contrato geral
 
-Todas as rotas usam JSON. Somente `padrao_nome` e `padrao_descr` são aceitos em
-operações de escrita. `id_padrao`, `padrao_cod`, `num_oco`, `intervalo_medio` e
-`desv_padrao` são controlados pelo sistema e uma tentativa de enviá-los retorna
-erro `400 CAMPOS_PROTEGIDOS`.
+Todas as rotas usam JSON. `grupo_cod`, `padrao_nome` e `padrao_descr` são
+obrigatórios nas operações de escrita. `id_padrao`, `id_grupo`, `grupo_nome`,
+`padrao_cod`, `num_oco`, `intervalo_medio` e `desv_padrao` são controlados pelo
+sistema e uma tentativa de enviá-los retorna `400 CAMPOS_PROTEGIDOS`.
 
 ## Listar
 
 ```http
 GET /api/padroes
 ```
+
+A listagem pode ser filtrada com `GET /api/padroes?grupo_cod=PG_001`.
 
 Resposta `200`:
 
@@ -21,6 +23,9 @@ Resposta `200`:
   "padroes": [
     {
       "id_padrao": 1,
+      "id_grupo": 1,
+      "grupo_cod": "PG_001",
+      "grupo_nome": "Dezenas sequenciais",
       "padrao_cod": "PD_001",
       "padrao_nome": "Duas dezenas sequenciais",
       "padrao_descr": "Descrição da regra",
@@ -43,6 +48,7 @@ POST /api/padroes
 Content-Type: application/json
 
 {
+  "grupo_cod": "PG_001",
   "padrao_nome": "Novo padrão",
   "padrao_descr": "Descrição detalhada"
 }
@@ -51,19 +57,21 @@ Content-Type: application/json
 Retorna `201` com o código automático. Um cadastro novo sem função Python tem
 estatísticas nulas e `detector_implementado: false`.
 
-## Editar textos
+## Editar grupo e textos
 
 ```http
 PUT /api/padroes/PD_001
 Content-Type: application/json
 
 {
+  "grupo_cod": "PG_001",
   "padrao_nome": "Nome revisto",
   "padrao_descr": "Descrição revista"
 }
 ```
 
-Retorna `200`. Código e estatísticas permanecem inalterados.
+Retorna `200`. O padrão pode ser transferido para outro grupo válido. Código e
+estatísticas permanecem inalterados.
 
 ## Excluir
 
@@ -78,5 +86,6 @@ código excluído não será reutilizado e o recálculo não recriará o cadastr
 
 - `400`: JSON, código, textos ou campos inválidos;
 - `404 PADRAO_NAO_ENCONTRADO`;
+- `404 GRUPO_NAO_ENCONTRADO`;
 - `409 PADRAO_DUPLICADO`;
 - `503 BANCO_INDISPONIVEL`, sem detalhes internos ou credenciais.

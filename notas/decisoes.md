@@ -160,6 +160,19 @@
   anterior ao primeiro é o último, e o próximo ao último é o primeiro.
 - O seletor de fonte aceita somente `.xlsx`, em conformidade com a API.
 
+## 2026-10-27 — Grupos de padrões e navegação compacta
+
+- Os padrões serão organizados em `padroes_grupo` e `padroes_subgrupo`, ligados
+  por chave estrangeira obrigatória.
+- Um grupo com padrões não poderá ser excluído.
+- Nomes de grupos serão únicos sem diferenciar maiúsculas, minúsculas e espaços
+  externos; nomes de padrões seguirão a mesma regra dentro de cada grupo.
+- Estatísticas continuarão pertencendo aos padrões, não aos grupos.
+- A aplicação separará Painel e Cadastros usando uma única barra horizontal,
+  submenu flutuante e botão Voltar na mesma linha.
+- Grades deverão conter sua própria rolagem e priorizar largura para nomes e
+  descrições.
+
 ## 2026-10-26 — Testes reais de navegador
 
 - Playwright 1.64.1 é a ferramenta de testes funcionais do frontend.

@@ -21,6 +21,13 @@ from .padroes import (
     listar_padroes_do_banco,
     padroes_api,
 )
+from .grupos_padroes import (
+    criar_grupo_padrao_no_banco,
+    editar_grupo_padrao_no_banco,
+    excluir_grupo_padrao_no_banco,
+    grupos_padroes_api,
+    listar_grupos_padroes_do_banco,
+)
 
 
 def criar_app(configuracao: Mapping[str, Any] | None = None) -> Flask:
@@ -44,6 +51,10 @@ def criar_app(configuracao: Mapping[str, Any] | None = None) -> Flask:
         EDITAR_PADRAO=editar_padrao_no_banco,
         EXCLUIR_PADRAO=excluir_padrao_no_banco,
         LISTAR_PADROES=listar_padroes_do_banco,
+        CRIAR_GRUPO_PADRAO=criar_grupo_padrao_no_banco,
+        EDITAR_GRUPO_PADRAO=editar_grupo_padrao_no_banco,
+        EXCLUIR_GRUPO_PADRAO=excluir_grupo_padrao_no_banco,
+        LISTAR_GRUPOS_PADROES=listar_grupos_padroes_do_banco,
     )
     if configuracao is not None:
         app.config.update(configuracao)
@@ -65,5 +76,6 @@ def criar_app(configuracao: Mapping[str, Any] | None = None) -> Flask:
 
     app.register_blueprint(resultados_api)
     app.register_blueprint(padroes_api)
+    app.register_blueprint(grupos_padroes_api)
 
     return app

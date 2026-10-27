@@ -6,12 +6,22 @@
     <meta name="description" content="Visualização gráfica e análise de resultados da Mega-Sena.">
     <title>Game Analysis</title>
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/padroes.css">
+    <link rel="stylesheet" href="css/navegacao.css">
   </head>
   <body>
-    <header class="barra-titulo">
-      <div class="marca" aria-hidden="true">GA</div>
-      <h1>Game Analysis</h1>
+    <header class="barra-navegacao">
+      <a class="marca marca--compacta" href="/" aria-label="Game Analysis">GA</a>
+      <button id="botao-voltar" class="navegacao-voltar" type="button" disabled>← Voltar</button>
+      <a class="navegacao-link" href="/" aria-current="page">Painel</a>
+      <details class="navegacao-menu">
+        <summary>Cadastros</summary>
+        <nav aria-label="Cadastros">
+          <a href="/cadastros.html">Visão geral</a>
+          <a href="/grupos-padroes.html">Grupos de padrões</a>
+          <a href="/padroes.html">Padrões</a>
+        </nav>
+      </details>
+      <strong class="navegacao-pagina">Painel</strong>
     </header>
 
     <main class="area-trabalho">
@@ -43,7 +53,6 @@
           <button id="botao-voo" type="button" disabled>Iniciar voo dos pássaros</button>
           <button id="botao-mancha" type="button" disabled>Desenhar mancha</button>
           <button id="botao-limpar" type="button">Limpar gráfico</button>
-          <button id="botao-cadastro-padroes" type="button">Cadastro de Padrões</button>
         </div>
 
         <p id="mensagem-sistema" class="mensagem-sistema" role="status" aria-live="polite">
@@ -72,68 +81,7 @@
       </section>
     </main>
 
-    <section
-      id="painel-padroes"
-      class="cadastro-padroes"
-      aria-labelledby="titulo-padroes"
-      aria-modal="true"
-      role="dialog"
-      hidden
-    >
-      <div class="cadastro-padroes__janela">
-        <header class="cadastro-padroes__cabecalho">
-          <div>
-            <h2 id="titulo-padroes">Cadastro de Padrões</h2>
-            <p>Nome e descrição são editáveis; estatísticas são calculadas pelo sistema.</p>
-          </div>
-          <button id="botao-fechar-padroes" type="button" aria-label="Fechar cadastro">
-            Fechar
-          </button>
-        </header>
-
-        <form id="form-novo-padrao" class="cadastro-padroes__novo">
-          <label>
-            Nome do novo padrão
-            <input id="novo-padrao-nome" name="padrao_nome" maxlength="200" required>
-          </label>
-          <label>
-            Descrição detalhada
-            <textarea
-              id="novo-padrao-descr"
-              name="padrao_descr"
-              maxlength="4000"
-              rows="2"
-              required
-            ></textarea>
-          </label>
-          <button id="botao-adicionar-padrao" type="submit">Adicionar padrão</button>
-        </form>
-
-        <p id="mensagem-padroes" class="cadastro-padroes__mensagem" role="status" aria-live="polite">
-          Abra o cadastro para carregar os padrões.
-        </p>
-
-        <div class="cadastro-padroes__grade" tabindex="0" aria-label="Grade de padrões cadastrados">
-          <table id="tabela-padroes">
-            <thead>
-              <tr>
-                <th>Código</th>
-                <th>Nome do padrão</th>
-                <th>Descrição</th>
-                <th>Ocorrências</th>
-                <th>Intervalo médio</th>
-                <th>Desvio-padrão</th>
-                <th>Função Python</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody id="corpo-tabela-padroes"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
     <script type="module" src="js/main.js"></script>
-    <script type="module" src="js/padroes.js"></script>
+    <script type="module" src="js/navegacao.js"></script>
   </body>
 </html>

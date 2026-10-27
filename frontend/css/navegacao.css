@@ -1,0 +1,145 @@
+.barra-navegacao {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  min-height: 2.8rem;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.65rem;
+  background: var(--barra);
+  border-bottom: 1px solid rgb(23 33 43 / 12%);
+  white-space: nowrap;
+}
+
+.marca--compacta {
+  width: 2.1rem;
+  height: 2.1rem;
+  margin-right: 0.15rem;
+  border-width: 0.16rem;
+  border-radius: 0.4rem;
+  color: #fff;
+  font-size: 0.72rem;
+  text-decoration: none;
+}
+
+.navegacao-link,
+.navegacao-menu summary,
+.navegacao-voltar {
+  min-height: 2rem;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid transparent;
+  border-radius: 0.3rem;
+  color: var(--texto);
+  background: transparent;
+  font: inherit;
+  line-height: 1.3;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.navegacao-link:hover,
+.navegacao-menu summary:hover,
+.navegacao-voltar:hover:not(:disabled),
+.navegacao-link[aria-current="page"] {
+  border-color: rgb(57 119 128 / 35%);
+  background: rgb(255 255 255 / 60%);
+  filter: none;
+}
+
+.navegacao-voltar:disabled {
+  opacity: 0.4;
+}
+
+.navegacao-menu {
+  position: relative;
+}
+
+.navegacao-menu summary {
+  list-style: none;
+}
+
+.navegacao-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.navegacao-menu summary::after {
+  content: " ▾";
+}
+
+.navegacao-menu nav {
+  position: absolute;
+  top: calc(100% + 0.2rem);
+  left: 0;
+  display: grid;
+  min-width: 13rem;
+  padding: 0.3rem;
+  border: 1px solid #b8c2c7;
+  border-radius: 0.35rem;
+  background: #fff;
+  box-shadow: 0 0.45rem 1rem rgb(23 33 43 / 18%);
+}
+
+.navegacao-menu nav a {
+  padding: 0.45rem 0.55rem;
+  border-radius: 0.25rem;
+  color: var(--texto);
+  text-decoration: none;
+}
+
+.navegacao-menu nav a:hover {
+  background: var(--fundo);
+}
+
+.navegacao-pagina {
+  min-width: 0;
+  margin-left: auto;
+  overflow: hidden;
+  font-size: 0.9rem;
+  text-overflow: ellipsis;
+}
+
+.pagina-conteudo {
+  height: calc(100vh - 2.8rem);
+  overflow: auto;
+  padding: 0.65rem;
+}
+
+.pagina-acoes {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.3rem;
+}
+
+.pagina-acoes h1 {
+  margin-right: auto;
+  font-family: inherit;
+  font-size: 1.05rem;
+  letter-spacing: 0;
+}
+
+.atalhos-cadastro {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+}
+
+.atalhos-cadastro a {
+  padding: 0.45rem 0.7rem;
+  border: 1px solid #aebbc0;
+  border-radius: 0.3rem;
+  color: #fff;
+  background: var(--destaque);
+  text-decoration: none;
+}
+
+@media (max-width: 36rem) {
+  .barra-navegacao {
+    overflow-x: auto;
+  }
+
+  .navegacao-pagina {
+    display: none;
+  }
+}

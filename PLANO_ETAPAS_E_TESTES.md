@@ -803,10 +803,159 @@ Etapa 9.
 
 ---
 
+## ETAPA 10 — Grupos de padrões e navegação compacta
+
+Esta etapa reorganiza os padrões em grupos conceituais e separa o Painel dos
+cadastros. Os itens serão curtos, usarão testes direcionados e dependerão de
+autorização expressa. A regressão completa ficará reservada aos marcos finais.
+
+### Item 10.1 — Contrato da reorganização
+
+Definir tabelas, relação, duplicidades, exclusões, migração dos registros
+existentes, menu horizontal, botão Voltar e regras de aproveitamento de espaço.
+
+Estado: concluído em 2026-10-27, sem alterar banco ou aplicação. Foi definida
+a relação de um grupo para muitos padrões; exclusão protegida de grupos com
+padrões; unicidade normalizada dos nomes; migração preservando `PD_001` a
+`PD_003`; e navegação em uma única barra horizontal. Documento em
+`docs/CONTRATO_GRUPOS_E_NAVEGACAO.md`.
+
+### Item 10.2 — Migração isolada da estrutura
+
+Criar `padroes_grupo`, transformar `padroes` em `padroes_subgrupo`, adicionar a
+chave estrangeira e classificar os padrões nos grupos iniciais aprovados.
+Validar em PostgreSQL temporário, sem alterar o `games`.
+
+Estado: concluído em 2026-10-27. A migração `004` e o esquema canônico foram
+criados. O ensaio partiu das versões `001`–`003`, preservou os padrões e
+estatísticas previamente preenchidas, e rejeitou duplicidades, grupo inexistente
+e exclusão de grupo ocupado. O database temporário foi removido; `games` e
+PythonAnywhere não foram alterados. Evidências em
+`MSen/tests/TESTE_ITEM_10_2.md`.
+
+### Item 10.3 — Validação e aplicação local
+
+Validar a migração sobre estrutura anterior preenchida, conferir preservação e
+aplicá-la ao PostgreSQL local `games`, com evidência.
+
+Estado: concluído em 2026-10-27, depois dos Itens 10.4–10.10 para manter todas
+as camadas compatíveis. Foi gerado backup com SHA-256, a migração foi ampliada
+para classificar corretamente os seis padrões reais e novamente ensaiada. O
+`games` recebeu somente a versão `004`, preservando 3.069 resultados, 60
+frequências, seis padrões e suas estatísticas. Uma instância antiga que
+compartilhava a porta 5050 foi encerrada e o servidor atualizado respondeu HTTP
+200 nas APIs e páginas. Evidências em `MSen/tests/TESTE_ITEM_10_3.md`.
+
+### Item 10.4 — Repositório Python de grupos
+
+Implementar CRUD e proteção de exclusão, com docstrings e testes em banco
+temporário.
+
+Estado: concluído em 2026-10-27. O repositório separado lista, cria, edita,
+consulta vínculos e exclui somente grupos vazios. Os códigos não são
+reutilizados e os erros de duplicidade, grupo ocupado e grupo inexistente são
+seguros. Passaram 5 testes unitários e o CRUD PostgreSQL temporário; o database
+efêmero foi removido. Evidências em `MSen/tests/TESTE_ITEM_10_4.md`.
+
+### Item 10.5 — Adaptação do repositório de padrões
+
+Usar `padroes_subgrupo`, exigir grupo válido e preservar detectores e cálculos.
+
+Estado: concluído em 2026-10-27. O repositório passou a retornar o grupo, exigir
+grupo válido na criação, permitir transferência na edição e filtrar a listagem.
+Recálculo, estatísticas, exclusões e códigos não reutilizáveis foram preservados.
+Passaram 27 testes direcionados e um fluxo PostgreSQL temporário. Evidências em
+`MSen/tests/TESTE_ITEM_10_5.md`.
+
+### Item 10.6 — API de grupos
+
+Implementar e testar listagem, inclusão, edição e exclusão protegida.
+
+Estado: concluído em 2026-10-27. A API `/api/grupos-padroes` oferece CRUD,
+protege código e identificador, rejeita duplicidade e distingue grupo ocupado e
+ausente. Passaram 28 testes direcionados da API e da fábrica Flask, sem acessar
+o database `games`. Contrato em `docs/API_GRUPOS_PADROES.md` e evidências em
+`MSen/tests/TESTE_ITEM_10_6.md`.
+
+### Item 10.7 — Adaptação da API de padrões
+
+Incluir o grupo no contrato da API e preservar a proteção das estatísticas.
+
+Estado: concluído em 2026-10-27. A API exige e retorna o grupo, aceita filtro e
+transferência, protege campos derivados e diferencia grupo inválido de ausente.
+Passaram 36 testes direcionados e um fluxo HTTP/PostgreSQL temporário completo.
+Evidências em `MSen/tests/TESTE_ITEM_10_7.md`.
+
+### Item 10.8 — Páginas e menu horizontal
+
+Separar Painel e Cadastros e criar a navegação compacta com submenu e Voltar.
+
+Estado: concluído em 2026-10-27. O Painel e três páginas de cadastro foram
+separados e ligados por barra horizontal de 2,8 rem, submenu flutuante e botão
+Voltar. Passaram 20 testes de frontend, 4 fluxos no Google Chrome e a entrega
+HTTP 200 das quatro páginas pelo Flask. Evidências em
+`MSen/tests/TESTE_ITEM_10_8.md`.
+
+### Item 10.9 — Página de grupos
+
+Criar grade CRUD compacta, com cabeçalho fixo e rolagem interna.
+
+Estado: concluído em 2026-10-27. A página possui barra de inclusão em uma linha,
+grade com rolagem interna, cabeçalho fixo, colunas compactas e CRUD completo. A
+interface preserva grupo ocupado e mostra o erro da API. Passaram 21 testes de
+frontend e o fluxo CRUD no Google Chrome. Evidências em
+`MSen/tests/TESTE_ITEM_10_9.md`.
+
+### Item 10.10 — Página de padrões
+
+Transferir o cadastro atual para página própria, com grupo obrigatório e filtro.
+
+Estado: concluído em 2026-10-27. A grade permite inclusão, edição, transferência,
+filtro e exclusão, mantendo estatísticas somente para leitura. A disposição
+compacta preserva as larguras aprovadas para ocorrência, nome e descrição.
+Passaram 22 testes de frontend e 6 fluxos no Google Chrome. Evidências em
+`MSen/tests/TESTE_ITEM_10_10.md`.
+
+### Item 10.11 — Integração com PostgreSQL
+
+Validar o fluxo real completo em banco temporário e fazer leitura final do
+`games`.
+
+Estado: concluído em 2026-10-27. Passaram três fluxos Chrome/PostgreSQL cobrindo
+Excel, cálculos, grupos, padrões, transferência, exclusões, navegação, voo e
+mancha. Os bancos mutáveis foram temporários e removidos; a leitura final do
+`games` confirmou 3.069 resultados, 60 frequências, dois grupos e seis padrões,
+com estatísticas preservadas. Evidências em `MSen/tests/TESTE_ITEM_10_11.md`.
+
+### Item 10.12 — Teste de compactação visual
+
+Conferir consumo vertical, larguras, rolagens, cabeçalhos e telas menores no
+Google Chrome.
+
+Estado: concluído em 2026-10-27. Com 30 grupos e 45 padrões simulados, o Chrome
+confirmou barra de até 46 px, submenu sem deslocamento, grades contidas, rolagens
+internas e cabeçalhos fixos em 1280 × 720 e 700 × 600. Passaram 22 testes de
+frontend e 8 fluxos Chrome. Evidências em `MSen/tests/TESTE_ITEM_10_12.md`.
+
+### Item 10.13 — Regressão e documentação
+
+Executar todas as suítes, validar migrações e atualizar os documentos de
+continuidade.
+
+Estado: concluído em 2026-10-27. Passaram 193 testes Python, 22 testes de
+frontend, 8 fluxos no Google Chrome e 3 fluxos Chrome/PostgreSQL. A migração
+004 foi validada no caminho normal, na interrupção segura e reversão diante de
+padrão não classificado e na criação do esquema canônico do zero. O database
+`games` permaneceu íntegro e o servidor local saudável. Evidências em
+`MSen/tests/TESTE_ITEM_10_13.md`.
+
+Estado da Etapa 10: concluída em 2026-10-27. Alterações ainda não commitadas.
+PythonAnywhere permanece adiado.
+
+---
+
 ## Próximo item proposto
 
-Criar um commit de segurança das subetapas 9.1 a 9.8, somente após autorização
-expressa do usuário. Depois, definir as próximas funcionalidades locais; a
-Etapa 8/PythonAnywhere permanece adiada.
-
-Este item não deve ser iniciado sem autorização expressa do usuário.
+Criar um commit de segurança da Etapa 10 e, depois, enviá-lo ao GitHub. Cada
+ação depende de autorização expressa separada. A Etapa 8/PythonAnywhere
+permanece adiada.

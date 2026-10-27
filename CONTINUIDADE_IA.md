@@ -285,6 +285,103 @@ produzem intervalo 15.
 
 ## Pendências conhecidas
 
+Em 2026-10-27 foi concluído o Item 10.1, exclusivamente documental. O contrato
+em `docs/CONTRATO_GRUPOS_E_NAVEGACAO.md` define as tabelas `padroes_grupo` e
+`padroes_subgrupo`, relação obrigatória, proteção contra duplicidades e exclusão
+de grupo ocupado, migração preservando os três padrões atuais e navegação em
+uma única linha. O próximo item é 10.2: criar e testar a migração somente em
+PostgreSQL temporário. Aguardar autorização expressa; não alterar o `games`, a
+aplicação ou o PythonAnywhere antes dela.
+
+O Item 10.2 foi concluído em 2026-10-27. A migração
+`004_organizar_grupos_de_padroes.sql` cria `padroes_grupo`, renomeia `padroes`
+para `padroes_subgrupo`, classifica os padrões nos grupos aprovados e protege
+nomes normalizados e exclusão de grupo ocupado. O teste partiu de `001`–`003` com
+estatística preenchida, aplicou `004`, preservou os valores e removeu o database
+efêmero. O `games` não recebeu a migração. Antes de autorizar a aplicação local,
+considerar que o código atual ainda consulta a tabela antiga `padroes`.
+
+O Item 10.4 foi concluído em 2026-10-27 antes do 10.3 para evitar quebrar a
+aplicação local. O novo `RepositorioGruposPadroes` implementa CRUD, consulta de
+vínculos, códigos não reutilizáveis e proteção contra exclusão de grupo ocupado.
+Passaram 5 testes unitários e o fluxo PostgreSQL temporário; nenhum database de
+teste permaneceu. O próximo item seguro é 10.5, adaptação do repositório de
+padrões. O `games` ainda não recebeu a migração 004.
+
+O Item 10.5 foi concluído em 2026-10-27. `RepositorioPadroes` usa a nova tabela,
+retorna dados do grupo, exige associação válida, filtra e transfere padrões
+entre grupos sem alterar estatísticas. Passaram 27 testes direcionados e o fluxo
+PostgreSQL temporário com cálculos. O `games` permanece na versão 003. A API
+real ainda chama as assinaturas antigas de criação e edição; por isso, executar
+10.6 e 10.7 antes de retornar à aplicação local do Item 10.3.
+
+O Item 10.6 foi concluído em 2026-10-27. A nova API
+`/api/grupos-padroes` lista, cria, edita e exclui grupos vazios, com código e
+identificador protegidos e respostas específicas para duplicidade, grupo em uso
+e ausência. Passaram 28 testes simulados; `games` não foi acessado. O próximo
+item é 10.7, adaptação da API de padrões ao grupo obrigatório.
+
+O Item 10.7 foi concluído em 2026-10-27. `/api/padroes` exige e retorna o grupo,
+filtra por `grupo_cod` e permite transferência entre grupos. Passaram 36 testes
+direcionados e um fluxo HTTP real em PostgreSQL temporário; o database efêmero
+foi removido. Não aplicar ainda a migração 004 ao `games`: o frontend atual não
+envia `grupo_cod` e deixaria de criar ou editar padrões. O próximo item seguro é
+10.8, seguido de 10.9 e 10.10; depois retornar ao 10.3.
+
+O Item 10.8 foi concluído em 2026-10-27. Foram criadas páginas separadas para
+Painel, visão geral de Cadastros, Grupos de padrões e Padrões. A barra horizontal
+de 2,8 rem contém Voltar, Painel, submenu flutuante e página atual. Passaram 20
+testes de frontend, 4 fluxos Chrome e a entrega HTTP 200 pelo Flask. As páginas
+de grupos e padrões ainda são estruturais. Próximo item: 10.9, grade CRUD de
+grupos; `games` permanece na versão 003.
+
+O Item 10.9 foi concluído em 2026-10-27. `/grupos-padroes.html` possui barra de
+inclusão horizontal e grade CRUD com cabeçalho fixo e rolagem interna. Passaram
+21 testes de frontend e o fluxo Chrome, inclusive a rejeição visual da exclusão
+de grupo ocupado. A API foi simulada e PostgreSQL não foi acessado. Próximo item:
+10.10, adaptar a grade de padrões aos grupos; `games` segue na versão 003.
+
+O Item 10.10 foi concluído em 2026-10-27. `/padroes.html` possui grupo
+obrigatório, filtro, transferência e grade compacta; estatísticas continuam
+somente para leitura. Passaram 22 testes de frontend e 6 fluxos Chrome. Agora
+frontend, API, repositórios e migração são compatíveis. Próximo passo: retornar
+ao 10.3, gerar backup, aplicar 004 ao `games`, validar e reiniciar o servidor
+local. O servidor antigo em memória deve ser encerrado antes da migração.
+
+O Item 10.3 foi concluído em 2026-10-27 após as camadas compatíveis. O backup
+pré-004 está em `MSen/dados/backups/games_pre_migracao_004_20261027_075306.dump`
+e possui SHA-256 `1F3FE26CF8202F97A2CAF9909EF6669F1C6488563727DA08C3F57BF98B98A8ED`.
+A inspeção encontrou `PD_004`–`PD_006` relacionados a colunas; a migração foi
+corrigida e testada para criar `PG_002` e associá-los corretamente, abortando se
+existir código desconhecido. O `games` está na versão 004 com 3.069 resultados,
+60 frequências, 2 grupos e 6 padrões. O servidor atualizado está em
+`http://127.0.0.1:5050/`, PID 23176; o antigo PID 228 foi encerrado. Próximo
+item: 10.11, integração completa temporária e leitura final do `games`.
+
+O Item 10.11 foi concluído em 2026-10-27. Passaram três fluxos integrados no
+Chrome em 16 segundos: importação Excel, CRUD real de grupos/padrões em banco
+temporário e gráficos em leitura do `games`. Nenhum database temporário ficou.
+O `games` permanece com 3.069 resultados, 60 frequências, 2 grupos e 6 padrões,
+três em cada grupo, com estatísticas preservadas. O servidor 5050 segue
+saudável. Próximo item: 10.12, validação específica da compactação visual.
+
+O Item 10.12 foi concluído em 2026-10-27. O Chrome mediu as páginas com 30 grupos
+e 45 padrões em 1280 × 720 e 700 × 600. A barra permaneceu em até 46 px, o
+submenu não deslocou o conteúdo, as grades contiveram suas rolagens e os
+cabeçalhos ficaram fixos. Passaram 22 testes de frontend e 8 fluxos Chrome, sem
+acesso ao banco. Próximo item: 10.13, regressão completa e fechamento documental
+da Etapa 10.
+
+O Item 10.13 e a Etapa 10 foram concluídos em 2026-10-27. Passaram 193 testes
+Python, 22 de frontend, 8 fluxos Chrome e 3 fluxos Chrome/PostgreSQL. A migração
+004 passou no caminho normal, rejeitou e reverteu integralmente um padrão legado
+sem classificação e o esquema canônico foi validado do zero. O `games`
+permaneceu com 3.069 resultados, 60 frequências, 2 grupos e 6 padrões; o servidor
+local na porta 5050 permaneceu saudável. As alterações da Etapa 10 ainda não
+foram commitadas. Próxima ação exata: aguardar autorização para o commit de
+segurança da Etapa 10. O push dependerá de autorização posterior e o
+PythonAnywhere continua adiado.
+
 Em 2026-10-26 foi planejada a Etapa 9, destinada ao cadastro e à análise de
 padrões. O plano divide o trabalho em contrato, migração PostgreSQL, módulo
 Python documentado, detectores e estatísticas, persistência, API CRUD, grade com

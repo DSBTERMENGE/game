@@ -71,6 +71,16 @@ aprovação e priorização antes da implementação.
 - [ ] Executar somente migrações pendentes, preservando os dados existentes.
 - [ ] Permitir diagnóstico da versão do aplicativo e do esquema do banco.
 
+## Organização de padrões concluída
+
+- [x] Organizar padrões em grupos conceituais relacionados.
+- [x] Cadastrar grupos em grade CRUD compacta.
+- [x] Vincular obrigatoriamente cada padrão a um grupo.
+- [x] Filtrar e transferir padrões entre grupos.
+- [x] Proteger estatísticas calculadas contra edição manual.
+- [x] Separar Painel e Cadastros em páginas com menu horizontal e Voltar.
+- [x] Conter rolagens vertical e horizontal dentro das grades.
+
 ## Fora do escopo inicial
 
 - apostas automáticas;

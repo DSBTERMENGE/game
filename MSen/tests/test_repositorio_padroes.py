@@ -10,9 +10,20 @@ from msen.database.padroes_repository import (
 
 
 class MapeamentoRepositorioPadroesTestCase(unittest.TestCase):
-    def test_mapeia_as_sete_colunas_sem_converter_decimais_para_float(self):
+    def test_mapeia_as_dez_colunas_sem_converter_decimais_para_float(self):
         padrao = _linha_para_padrao(
-            (1, "PD_001", "Duas", "Descrição", 2, Decimal("15.000000"), Decimal("0.000000"))
+            (
+                1,
+                "PD_001",
+                "Duas",
+                "Descrição",
+                2,
+                Decimal("15.000000"),
+                Decimal("0.000000"),
+                10,
+                "PG_001",
+                "Sequenciais",
+            )
         )
 
         self.assertEqual(
@@ -24,11 +35,15 @@ class MapeamentoRepositorioPadroesTestCase(unittest.TestCase):
                 2,
                 Decimal("15.000000"),
                 Decimal("0.000000"),
+                10,
+                "PG_001",
+                "Sequenciais",
             ),
             padrao,
         )
         self.assertIsInstance(padrao.intervalo_medio, Decimal)
         self.assertIsInstance(padrao.desv_padrao, Decimal)
+        self.assertEqual("PG_001", padrao.grupo_cod)
 
     def test_rejeita_quantidade_incorreta_de_colunas(self):
         with self.assertRaises(ValueError):

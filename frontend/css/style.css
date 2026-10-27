@@ -60,7 +60,7 @@ h1 {
 
 .area-trabalho {
   display: grid;
-  min-height: calc(100vh - 4.5rem);
+  min-height: calc(100vh - 2.8rem);
   align-content: start;
   gap: 0.65rem;
   padding: 0.65rem;
@@ -247,7 +247,7 @@ h2 {
   }
 
   .area-trabalho {
-    min-height: calc(100vh - 3.8rem);
+    min-height: calc(100vh - 2.8rem);
     padding: 0.4rem;
   }
 

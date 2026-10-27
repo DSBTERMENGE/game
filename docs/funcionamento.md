@@ -234,3 +234,18 @@ preparar_dados_do_grafico
 
 Os nomes definitivos poderão mudar, mas importação, cálculos, persistência e
 representação visual não deverão ser misturados numa única função.
+
+## Grupos de padrões e navegação
+
+Os padrões são organizados em grupos conceituais. Cada padrão pertence a um
+único grupo e conserva sua própria função detectora e suas estatísticas. Um
+grupo com padrões associados não pode ser excluído.
+
+A aplicação possui páginas separadas para Painel, visão geral de Cadastros,
+Grupos de padrões e Padrões. Uma barra horizontal única oferece Voltar, Painel e
+submenu Cadastros. As grades mantêm cabeçalhos fixos e suas próprias rolagens,
+evitando consumir espaço vertical ou alargar a página.
+
+Na página de padrões, o grupo é obrigatório na inclusão, pode ser alterado na
+edição e também funciona como filtro. Código e estatísticas permanecem somente
+para leitura.

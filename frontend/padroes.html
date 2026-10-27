@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Padrões — Game Analysis</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/navegacao.css">
+    <link rel="stylesheet" href="css/padroes.css">
+  </head>
+  <body>
+    <header class="barra-navegacao">
+      <a class="marca marca--compacta" href="/" aria-label="Game Analysis">GA</a>
+      <button id="botao-voltar" class="navegacao-voltar" type="button" data-destino-voltar="/cadastros.html">← Voltar</button>
+      <a class="navegacao-link" href="/">Painel</a>
+      <details class="navegacao-menu">
+        <summary>Cadastros</summary>
+        <nav aria-label="Cadastros">
+          <a href="/cadastros.html">Visão geral</a>
+          <a href="/grupos-padroes.html">Grupos de padrões</a>
+          <a href="/padroes.html" aria-current="page">Padrões</a>
+        </nav>
+      </details>
+      <strong class="navegacao-pagina">Padrões</strong>
+    </header>
+    <main class="pagina-conteudo pagina-padroes">
+      <form id="form-novo-padrao" class="padroes-barra">
+        <h1>Padrões</h1>
+        <label><span>Grupo</span><select id="novo-padrao-grupo" name="grupo_cod" required></select></label>
+        <label><span>Nome</span><input id="novo-padrao-nome" name="padrao_nome" maxlength="200" required></label>
+        <label class="padroes-barra__descricao"><span>Descrição</span><input id="novo-padrao-descr" name="padrao_descr" maxlength="4000" required></label>
+        <button id="botao-adicionar-padrao" type="submit">Adicionar</button>
+      </form>
+      <div class="padroes-filtro">
+        <label for="filtro-grupo">Filtrar grupo</label>
+        <select id="filtro-grupo"><option value="">Todos</option></select>
+        <p id="mensagem-padroes" role="status" aria-live="polite">Carregando padrões...</p>
+      </div>
+      <div class="padroes-grade" tabindex="0" aria-label="Grade de padrões cadastrados">
+        <table id="tabela-padroes"><thead><tr>
+          <th>Código</th><th>Grupo</th><th>Nome do padrão</th><th>Descrição</th>
+          <th>Ocorrências</th><th>Intervalo médio</th><th>Desvio-padrão</th>
+          <th>Função Python</th><th>Ações</th>
+        </tr></thead><tbody id="corpo-tabela-padroes"></tbody></table>
+      </div>
+    </main>
+    <script type="module" src="js/navegacao.js"></script>
+    <script type="module" src="js/padroes.js"></script>
+  </body>
+</html>

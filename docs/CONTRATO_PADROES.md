@@ -23,6 +23,11 @@ próxima combinação.
 
 ## 2. Tabela `padroes`
 
+> Atualização de 2026-10-27: a Etapa 10 reorganizará esta tabela como
+> `padroes_subgrupo` e acrescentará o vínculo obrigatório com
+> `padroes_grupo`. As demais regras deste contrato permanecem válidas. O
+> contrato complementar está em `docs/CONTRATO_GRUPOS_E_NAVEGACAO.md`.
+
 Campos aprovados conceitualmente:
 
 | Campo | Finalidade | Origem |

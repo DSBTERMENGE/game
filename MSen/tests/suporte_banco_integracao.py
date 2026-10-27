@@ -97,7 +97,7 @@ def resumo_padroes(configuracao: ConfiguracaoBanco, nome: str) -> list[dict[str,
         with conexao.cursor() as cursor:
             cursor.execute(
                 "SELECT padrao_cod, num_oco, intervalo_medio, desv_padrao "
-                "FROM padroes ORDER BY padrao_cod"
+                "FROM padroes_subgrupo ORDER BY padrao_cod"
             )
             return [
                 {

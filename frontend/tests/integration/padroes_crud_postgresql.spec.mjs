@@ -102,31 +102,41 @@ test("histórico, estatísticas, PostgreSQL, API e grade CRUD funcionam em conju
     ],
   });
 
-  await page.goto(`${origem}/`);
-  await page.locator("#botao-cadastro-padroes").click();
+  await page.goto(`${origem}/grupos-padroes.html`);
+  await expect(page.locator("#corpo-tabela-grupos tr")).toHaveCount(2);
+  await page.locator("#novo-grupo-nome").fill("Grupo temporário integrado");
+  await page.locator("#novo-grupo-descr").fill("Criado pelo fluxo Chrome/PostgreSQL.");
+  await page.locator("#botao-adicionar-grupo").click();
+  await expect(page.locator('#corpo-tabela-grupos tr[data-codigo="PG_003"]')).toHaveCount(1);
+
+  await page.goto(`${origem}/padroes.html`);
   await expect(page.locator("#corpo-tabela-padroes tr")).toHaveCount(3);
   const pd001 = page.locator('#corpo-tabela-padroes tr[data-codigo="PD_001"]');
-  await expect(pd001.locator("td").nth(3)).toHaveText("2");
-  await expect(pd001.locator("td").nth(4)).toHaveText("15,000000");
+  await expect(pd001.locator("td").nth(4)).toHaveText("2");
+  await expect(pd001.locator("td").nth(5)).toHaveText("15,000000");
 
   await pd001.locator("input").fill("Duas sequenciais — texto revisto");
   await pd001.locator('button[data-acao="salvar"]').click();
   await expect(page.locator("#mensagem-padroes")).toHaveText("PD_001 atualizado.");
 
   await incluirResultado(page, 90, "2020-03-30", [1, 3, 5, 7, 9, 11]);
-  await page.evaluate(() => window.gamePadroes.carregarPadroes());
+  await page.reload();
   await expect(pd001.locator("input")).toHaveValue("Duas sequenciais — texto revisto");
 
+  await page.locator("#novo-padrao-grupo").selectOption("PG_003");
   await page.locator("#novo-padrao-nome").fill("Padrão ainda sem função");
   await page.locator("#novo-padrao-descr").fill("Será implementado futuramente.");
   await page.locator("#botao-adicionar-padrao").click();
   const pd004 = page.locator('#corpo-tabela-padroes tr[data-codigo="PD_004"]');
-  await expect(pd004.locator("td").nth(6)).toHaveText("Pendente");
-  await expect(pd004.locator("td").nth(3)).toHaveText("—");
+  await expect(pd004.locator("td").nth(7)).toHaveText("Pendente");
+  await expect(pd004.locator("td").nth(4)).toHaveText("—");
+  await expect(pd004.locator("select")).toHaveValue("PG_003");
 
+  await pd004.locator("select").selectOption("PG_001");
   await pd004.locator("textarea").fill("Descrição revista antes da exclusão.");
   await pd004.locator('button[data-acao="salvar"]').click();
   await expect(page.locator("#mensagem-padroes")).toHaveText("PD_004 atualizado.");
+  await expect(pd004.locator("select")).toHaveValue("PG_001");
   page.once("dialog", (dialogo) => dialogo.accept());
   await pd004.locator('button[data-acao="excluir"]').click();
   await expect(pd004).toHaveCount(0);
@@ -140,7 +150,7 @@ test("histórico, estatísticas, PostgreSQL, API e grade CRUD funcionam em conju
   page.once("dialog", (dialogo) => dialogo.accept());
   await pd003.locator('button[data-acao="excluir"]').click();
   await incluirResultado(page, 100, "2020-04-09", [2, 4, 6, 8, 10, 12]);
-  await page.evaluate(() => window.gamePadroes.carregarPadroes());
+  await page.reload();
   await expect(pd003).toHaveCount(0);
 
   const final = await (await page.request.get(`${origem}/api/padroes`)).json();
@@ -151,4 +161,10 @@ test("histórico, estatísticas, PostgreSQL, API e grade CRUD funcionam em conju
     intervalo_medio: null,
     desv_padrao: null,
   });
+
+  await page.goto(`${origem}/grupos-padroes.html`);
+  const pg003 = page.locator('#corpo-tabela-grupos tr[data-codigo="PG_003"]');
+  page.once("dialog", (dialogo) => dialogo.accept());
+  await pg003.locator('button[data-acao="excluir"]').click();
+  await expect(pg003).toHaveCount(0);
 });

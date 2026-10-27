@@ -179,25 +179,67 @@ test("HTML possui controles necessários e aceita somente XLSX", async () => {
   assert.match(html, /id="arquivo-excel"[^>]+accept="\.xlsx"/);
 });
 
-test("cadastro de padrões mantém HTML, CSS e JavaScript separados", async () => {
-  const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
-  const css = await readFile(new URL("../css/padroes.css", import.meta.url), "utf8");
-  const javascript = await readFile(new URL("../js/padroes.js", import.meta.url), "utf8");
+test("navegação separa Painel e Cadastros em uma barra compacta", async () => {
+  const paginas = await Promise.all([
+    "index.html", "cadastros.html", "grupos-padroes.html", "padroes.html",
+  ].map((arquivo) => readFile(new URL(`../${arquivo}`, import.meta.url), "utf8")));
+  const css = await readFile(new URL("../css/navegacao.css", import.meta.url), "utf8");
+  const javascript = await readFile(new URL("../js/navegacao.js", import.meta.url), "utf8");
+
+  for (const html of paginas) {
+    assert.match(html, /class="barra-navegacao"/);
+    assert.match(html, /id="botao-voltar"/);
+    assert.match(html, /href="\/"[^>]*>Painel</);
+    assert.match(html, /<summary>Cadastros<\/summary>/);
+    assert.match(html, /href="\/grupos-padroes\.html"/);
+    assert.match(html, /href="\/padroes\.html"/);
+    assert.match(html, /js\/navegacao\.js/);
+  }
+  assert.doesNotMatch(paginas[0], /painel-padroes|botao-cadastro-padroes/);
+  assert.match(css, /\.barra-navegacao\s*\{[^}]*min-height:\s*2\.8rem/s);
+  assert.match(css, /\.navegacao-menu nav\s*\{[^}]*position:\s*absolute/s);
+  assert.match(css, /\.pagina-conteudo\s*\{[^}]*height:\s*calc\(100vh - 2\.8rem\)/s);
+  assert.match(javascript, /window\.history\.back/);
+});
+
+test("cadastro de grupos usa grade compacta e arquivos separados", async () => {
+  const html = await readFile(new URL("../grupos-padroes.html", import.meta.url), "utf8");
+  const css = await readFile(new URL("../css/grupos-padroes.css", import.meta.url), "utf8");
+  const javascript = await readFile(new URL("../js/grupos-padroes.js", import.meta.url), "utf8");
 
   for (const id of [
-    "botao-cadastro-padroes", "painel-padroes", "form-novo-padrao",
-    "tabela-padroes", "corpo-tabela-padroes", "mensagem-padroes",
-  ]) {
-    assert.match(html, new RegExp(`id=["']${id}["']`));
-  }
-  assert.match(html, /css\/padroes\.css/);
-  assert.match(html, /js\/padroes\.js/);
-  assert.match(css, /\.cadastro-padroes__grade\s*\{[^}]*overflow:\s*auto/s);
-  assert.match(css, /#tabela-padroes th\s*\{[^}]*position:\s*sticky/s);
-  assert.match(javascript, /window\.confirm/);
+    "form-novo-grupo", "novo-grupo-nome", "novo-grupo-descr",
+    "mensagem-grupos", "tabela-grupos", "corpo-tabela-grupos",
+  ]) assert.match(html, new RegExp(`id=["']${id}["']`));
+  assert.match(html, /css\/grupos-padroes\.css/);
+  assert.match(html, /js\/grupos-padroes\.js/);
+  assert.match(css, /\.pagina-grupos\s*\{[^}]*grid-template-rows:\s*auto auto minmax\(0, 1fr\)/s);
+  assert.match(css, /\.grupos-grade\s*\{[^}]*overflow:\s*auto/s);
+  assert.match(css, /#tabela-grupos th\s*\{[^}]*position:\s*sticky/s);
   assert.match(javascript, /method:\s*"POST"/);
   assert.match(javascript, /method:\s*"PUT"/);
   assert.match(javascript, /method:\s*"DELETE"/);
+  assert.match(javascript, /window\.confirm/);
+});
+
+test("cadastro de padrões usa grupo obrigatório e grade compacta", async () => {
+  const html = await readFile(new URL("../padroes.html", import.meta.url), "utf8");
+  const css = await readFile(new URL("../css/padroes.css", import.meta.url), "utf8");
+  const javascript = await readFile(new URL("../js/padroes.js", import.meta.url), "utf8");
+  for (const id of [
+    "form-novo-padrao", "novo-padrao-grupo", "novo-padrao-nome",
+    "novo-padrao-descr", "filtro-grupo", "mensagem-padroes",
+    "tabela-padroes", "corpo-tabela-padroes",
+  ]) assert.match(html, new RegExp(`id=["']${id}["']`));
+  assert.match(css, /\.pagina-padroes\s*\{[^}]*grid-template-rows:\s*auto auto minmax\(0, 1fr\)/s);
+  assert.match(css, /\.padroes-grade\s*\{[^}]*overflow:\s*auto/s);
+  assert.match(css, /#tabela-padroes th\s*\{[^}]*position:\s*sticky/s);
+  assert.match(css, /#tabela-padroes th:nth-child\(3\)\s*\{\s*width:\s*17rem/);
+  assert.match(css, /#tabela-padroes th:nth-child\(5\)\s*\{\s*width:\s*5\.5rem/);
+  assert.match(css, /#tabela-padroes input,[^{]+\{[^}]*height:\s*4\.75rem/s);
+  assert.match(javascript, /grupo_cod:\s*grupoNovo\.value/);
+  assert.match(javascript, /grupo_cod:\s*grupo\.value/);
+  assert.match(javascript, /encodeURIComponent\(filtroGrupo\.value\)/);
 });
 
 test("nenhum resultado mantém navegação desabilitada e informa o estado", () => {

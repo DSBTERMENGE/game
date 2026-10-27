@@ -9,6 +9,11 @@ from .migrations import (
     descobrir_migracoes,
     executar_migracoes,
 )
+from .grupos_padroes_repository import (
+    ErroRepositorioGrupoPadrao,
+    GrupoPadraoPersistido,
+    RepositorioGruposPadroes,
+)
 from .padroes_repository import (
     ErroRepositorioPadrao,
     PadraoPersistido,
@@ -25,6 +30,8 @@ __all__ = [
     "ErroConexaoBanco", "InformacaoConexao", "abrir_conexao", "verificar_conexao",
     "ErroMigracao", "Migracao", "RelatorioMigracoes", "aplicar_migracoes",
     "descobrir_migracoes", "executar_migracoes",
+    "ErroRepositorioGrupoPadrao", "GrupoPadraoPersistido",
+    "RepositorioGruposPadroes",
     "ErroRepositorioResultado", "RepositorioFrequencias", "RepositorioResultados",
     "ResultadoPersistido",
     "ErroRepositorioPadrao", "PadraoPersistido", "RepositorioPadroes",
