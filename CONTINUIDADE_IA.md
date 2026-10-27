@@ -440,10 +440,69 @@ também foi atualizado. Passaram 205 testes Python, 22 de frontend, 8 fluxos
 Chrome e 3 fluxos Chrome/PostgreSQL. Migrações `001`–`005`, esquema criado do
 zero, API, grade real e `games` foram auditados; nenhum database temporário
 permaneceu. O `games` está na versão `005`, com 3.069 resultados e estatísticas
-verticais `PD_004=1037`, `PD_005=66` e `PD_006=4`. As alterações ainda não foram
-commitadas. Próxima ação exata: aguardar autorização para o commit de segurança
-da Etapa 11; o push exigirá autorização separada. PythonAnywhere permanece
+verticais `PD_004=1037`, `PD_005=66` e `PD_006=4`. A Etapa 11 foi commitada e
+publicada em `origin/developer` como `e24ba66`. PythonAnywhere permanece adiado.
+
+O Item 12.1 foi concluído em 2026-10-27. A leitura da API confirmou `PG_003 —
+Dezenas na mesma linha` e `PD_007`–`PD_009` corretamente associados, ainda sem
+detector ou estatística. O contrato define a linha por
+`((dezena - 1) // 10) + 1` e classifica exclusivamente pela maior ocupação:
+exatamente duas, exatamente três ou mais de três dezenas, sem exigir que sejam
+sequenciais. Nenhum código ou dado foi alterado. Próxima ação: aguardar
+autorização para o Item 12.2, detectores Python puros. PythonAnywhere permanece
 adiado.
+
+O Item 12.2 foi concluído em 2026-10-27. `padroes/mesma_linha.py` implementa os
+três detectores exclusivos pela maior ocupação de linha, sem exigir
+sequencialidade, com validação e docstrings em português. Passaram 38 testes
+direcionados. As funções foram exportadas, mas ainda não foram registradas em
+`PD_007`–`PD_009`; nenhum banco foi acessado. Próxima ação: aguardar autorização
+para o Item 12.3, registro e estatísticas históricas em memória. PythonAnywhere
+permanece adiado.
+
+O Item 12.3 foi concluído em 2026-10-27. `padroes/linhas.py` associa
+`PD_007`–`PD_009` e calcula em memória ocorrências, intervalos, média e
+desvio-padrão populacional. O catálogo unificado passou a conter nove
+detectores. Foram aprovados 55 testes direcionados, incluindo históricos
+insuficientes, iterador e regressões; nenhum banco foi acessado. Próxima ação:
+aguardar autorização para o Item 12.4, integração e persistência em PostgreSQL
+temporário. PythonAnywhere permanece adiado.
+
+O Item 12.4 foi concluído em 2026-10-27. O serviço transacional passou a
+calcular os nove padrões. A migração `006` reserva `PG_003` e `PD_007`–`PD_009`,
+e o esquema canônico agora cria três grupos e nove padrões. A persistência
+idempotente produziu intervalos controlados de 15, 10 e 20 concursos. Passaram
+216 testes Python; migrações `001`–`006` e esquema do zero foram validados, e
+nenhum database temporário permaneceu. O `games` não foi acessado e continua na
+versão `005`. Próxima ação: aguardar autorização para o Item 12.5, backup,
+migração `006` e recálculo local. PythonAnywhere permanece adiado.
+
+O Item 12.5 foi concluído em 2026-10-27. Antes da migração e do recálculo foi
+criado o backup ignorado pelo Git
+`games_pre_recalculo_colunas_20261027_105900.dump`, com 118.044 bytes e SHA-256
+`55DDB37760DC36DC8311A61061F188A389F2590A183625741633762F7277CED5`.
+O `games` passou à versão `006`, preservou 3.069 resultados e gravou
+`PD_007=2053`, `PD_008=863` e `PD_009=93`, com médias e desvios. Textos e grupos
+foram preservados. A API retornou os valores, mas o processo antigo ainda mostra
+os detectores como pendentes. Próxima ação: aguardar autorização para o Item
+12.6, reinício e validação real no Chrome. PythonAnywhere permanece adiado.
+
+O Item 12.6 foi concluído em 2026-10-27. O servidor atualizado foi iniciado no
+PID 12888 e permaneceu saudável em `127.0.0.1:5050`. A API retornou nove padrões
+e nove detectores implementados. O validador real no Google Chrome confirmou as
+nove linhas da grade e os nomes, estatísticas e estado de `PD_004`–`PD_009`, sem
+alterar dados. Próxima ação: aguardar autorização para o Item 12.7, regressão
+integrada e fechamento da Etapa 12. PythonAnywhere permanece adiado.
+
+O Item 12.7 e a Etapa 12 foram concluídos em 2026-10-27. Passaram 216 testes
+Python, 22 testes de frontend, 8 fluxos Chrome e 3 fluxos Chrome/PostgreSQL. Os
+fluxos integrados foram adaptados de seis para nove padrões e agora respeitam
+os próximos códigos livres `PG_004`, `PD_010` e `PD_011`. A auditoria confirmou
+as migrações `001`–`006`, nenhum database temporário e a API saudável com nove
+detectores. No `games`, `PD_007=2053`, `PD_008=863` e `PD_009=93`. O servidor
+local permanece no PID 12888; PythonAnywhere não foi alterado. As mudanças da
+Etapa 12 estão sem commit. Próxima ação exata: aguardar autorização para criar
+o commit de segurança da Etapa 12; solicitar o push separadamente.
 
 Em 2026-10-26 foi planejada a Etapa 9, destinada ao cadastro e à análise de
 padrões. O plano divide o trabalho em contrato, migração PostgreSQL, módulo

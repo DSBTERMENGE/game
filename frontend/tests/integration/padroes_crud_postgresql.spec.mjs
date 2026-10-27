@@ -94,7 +94,7 @@ test("histórico, estatísticas, PostgreSQL, API e grade CRUD funcionam em conju
 
   const respostaPadroes = await page.request.get(`${origem}/api/padroes`);
   expect(await respostaPadroes.json()).toMatchObject({
-    total: 6,
+    total: 9,
     padroes: [
       { padrao_cod: "PD_001", num_oco: 2, intervalo_medio: "15.000000", desv_padrao: "0.000000" },
       { padrao_cod: "PD_002", num_oco: 1, intervalo_medio: null, desv_padrao: null },
@@ -102,18 +102,21 @@ test("histórico, estatísticas, PostgreSQL, API e grade CRUD funcionam em conju
       { padrao_cod: "PD_004", num_oco: 1, intervalo_medio: null, desv_padrao: null },
       { padrao_cod: "PD_005", num_oco: 0, intervalo_medio: null, desv_padrao: null },
       { padrao_cod: "PD_006", num_oco: 0, intervalo_medio: null, desv_padrao: null },
+      { padrao_cod: "PD_007", num_oco: 2, intervalo_medio: "15.000000", desv_padrao: "0.000000" },
+      { padrao_cod: "PD_008", num_oco: 1, intervalo_medio: null, desv_padrao: null },
+      { padrao_cod: "PD_009", num_oco: 2, intervalo_medio: "20.000000", desv_padrao: "0.000000" },
     ],
   });
 
   await page.goto(`${origem}/grupos-padroes.html`);
-  await expect(page.locator("#corpo-tabela-grupos tr")).toHaveCount(2);
+  await expect(page.locator("#corpo-tabela-grupos tr")).toHaveCount(3);
   await page.locator("#novo-grupo-nome").fill("Grupo temporário integrado");
   await page.locator("#novo-grupo-descr").fill("Criado pelo fluxo Chrome/PostgreSQL.");
   await page.locator("#botao-adicionar-grupo").click();
-  await expect(page.locator('#corpo-tabela-grupos tr[data-codigo="PG_003"]')).toHaveCount(1);
+  await expect(page.locator('#corpo-tabela-grupos tr[data-codigo="PG_004"]')).toHaveCount(1);
 
   await page.goto(`${origem}/padroes.html`);
-  await expect(page.locator("#corpo-tabela-padroes tr")).toHaveCount(6);
+  await expect(page.locator("#corpo-tabela-padroes tr")).toHaveCount(9);
   const pd001 = page.locator('#corpo-tabela-padroes tr[data-codigo="PD_001"]');
   await expect(pd001.locator("td").nth(4)).toHaveText("2");
   await expect(pd001.locator("td").nth(5)).toHaveText("15,000000");
@@ -126,28 +129,28 @@ test("histórico, estatísticas, PostgreSQL, API e grade CRUD funcionam em conju
   await page.reload();
   await expect(pd001.locator("input")).toHaveValue("Duas sequenciais — texto revisto");
 
-  await page.locator("#novo-padrao-grupo").selectOption("PG_003");
+  await page.locator("#novo-padrao-grupo").selectOption("PG_004");
   await page.locator("#novo-padrao-nome").fill("Padrão ainda sem função");
   await page.locator("#novo-padrao-descr").fill("Será implementado futuramente.");
   await page.locator("#botao-adicionar-padrao").click();
-  const pd007 = page.locator('#corpo-tabela-padroes tr[data-codigo="PD_007"]');
-  await expect(pd007.locator("td").nth(7)).toHaveText("Pendente");
-  await expect(pd007.locator("td").nth(4)).toHaveText("—");
-  await expect(pd007.locator("select")).toHaveValue("PG_003");
+  const pd010 = page.locator('#corpo-tabela-padroes tr[data-codigo="PD_010"]');
+  await expect(pd010.locator("td").nth(7)).toHaveText("Pendente");
+  await expect(pd010.locator("td").nth(4)).toHaveText("—");
+  await expect(pd010.locator("select")).toHaveValue("PG_004");
 
-  await pd007.locator("select").selectOption("PG_001");
-  await pd007.locator("textarea").fill("Descrição revista antes da exclusão.");
-  await pd007.locator('button[data-acao="salvar"]').click();
-  await expect(page.locator("#mensagem-padroes")).toHaveText("PD_007 atualizado.");
-  await expect(pd007.locator("select")).toHaveValue("PG_001");
+  await pd010.locator("select").selectOption("PG_001");
+  await pd010.locator("textarea").fill("Descrição revista antes da exclusão.");
+  await pd010.locator('button[data-acao="salvar"]').click();
+  await expect(page.locator("#mensagem-padroes")).toHaveText("PD_010 atualizado.");
+  await expect(pd010.locator("select")).toHaveValue("PG_001");
   page.once("dialog", (dialogo) => dialogo.accept());
-  await pd007.locator('button[data-acao="excluir"]').click();
-  await expect(pd007).toHaveCount(0);
+  await pd010.locator('button[data-acao="excluir"]').click();
+  await expect(pd010).toHaveCount(0);
 
   await page.locator("#novo-padrao-nome").fill("Código seguinte");
-  await page.locator("#novo-padrao-descr").fill("Não pode reutilizar PD_007.");
+  await page.locator("#novo-padrao-descr").fill("Não pode reutilizar PD_010.");
   await page.locator("#botao-adicionar-padrao").click();
-  await expect(page.locator('#corpo-tabela-padroes tr[data-codigo="PD_008"]')).toHaveCount(1);
+  await expect(page.locator('#corpo-tabela-padroes tr[data-codigo="PD_011"]')).toHaveCount(1);
 
   const pd003 = page.locator('#corpo-tabela-padroes tr[data-codigo="PD_003"]');
   page.once("dialog", (dialogo) => dialogo.accept());
@@ -158,7 +161,8 @@ test("histórico, estatísticas, PostgreSQL, API e grade CRUD funcionam em conju
 
   const final = await (await page.request.get(`${origem}/api/padroes`)).json();
   expect(final.padroes.map((item) => item.padrao_cod)).toEqual([
-    "PD_001", "PD_002", "PD_004", "PD_005", "PD_006", "PD_008",
+    "PD_001", "PD_002", "PD_004", "PD_005", "PD_006",
+    "PD_007", "PD_008", "PD_009", "PD_011",
   ]);
   expect(final.padroes.at(-1)).toMatchObject({
     detector_implementado: false,
@@ -168,8 +172,8 @@ test("histórico, estatísticas, PostgreSQL, API e grade CRUD funcionam em conju
   });
 
   await page.goto(`${origem}/grupos-padroes.html`);
-  const pg003 = page.locator('#corpo-tabela-grupos tr[data-codigo="PG_003"]');
+  const pg004 = page.locator('#corpo-tabela-grupos tr[data-codigo="PG_004"]');
   page.once("dialog", (dialogo) => dialogo.accept());
-  await pg003.locator('button[data-acao="excluir"]').click();
-  await expect(pg003).toHaveCount(0);
+  await pg004.locator('button[data-acao="excluir"]').click();
+  await expect(pg004).toHaveCount(0);
 });

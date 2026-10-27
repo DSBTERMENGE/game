@@ -2,6 +2,7 @@
 
 from .colunas import criar_registro_detectores_mesma_coluna
 from .iniciais import criar_registro_detectores_iniciais
+from .linhas import criar_registro_detectores_mesma_linha
 from .registro import RegistroDetectores
 
 
@@ -20,6 +21,7 @@ def criar_registro_detectores_aprovados() -> RegistroDetectores:
     for origem in (
         criar_registro_detectores_iniciais(),
         criar_registro_detectores_mesma_coluna(),
+        criar_registro_detectores_mesma_linha(),
     ):
         for codigo in origem.codigos_registrados():
             registro.registrar(codigo, origem.obter(codigo))

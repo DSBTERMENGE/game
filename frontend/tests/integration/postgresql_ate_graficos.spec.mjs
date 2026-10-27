@@ -79,7 +79,7 @@ test("PostgreSQL real alimenta navegação, voo e mancha no Chrome", async ({ pa
   await page.locator("#botao-voo").click();
 
   await page.goto("/padroes.html");
-  await expect(page.locator("#corpo-tabela-padroes tr")).toHaveCount(6);
+  await expect(page.locator("#corpo-tabela-padroes tr")).toHaveCount(9);
   const padraoDuas = page.locator('#corpo-tabela-padroes tr[data-codigo="PD_001"]');
   await expect(padraoDuas.locator("td").nth(4)).toHaveText("1192");
   await expect(padraoDuas.locator("td").nth(5)).toHaveText("2,575147");

@@ -138,7 +138,7 @@ def validar_estrutura(nome_database: str) -> dict[str, object]:
                 "SELECT versao FROM schema_migrations ORDER BY versao"
             )
             versoes = tuple(linha[0] for linha in cursor.fetchall())
-            if versoes != ("001", "002", "003", "004", "005"):
+            if versoes != ("001", "002", "003", "004", "005", "006"):
                 raise AssertionError(f"Migrações inesperadas: {versoes!r}")
 
             cursor.execute(
@@ -156,6 +156,9 @@ def validar_estrutura(nome_database: str) -> dict[str, object]:
                 ("PG_002", "PD_004", "Duas dezenas na mesma coluna"),
                 ("PG_002", "PD_005", "Três dezenas na mesma coluna"),
                 ("PG_002", "PD_006", "Mais de três dezenas na mesma coluna"),
+                ("PG_003", "PD_007", "Duas dezenas na mesma linha"),
+                ("PG_003", "PD_008", "Três dezenas na mesma linha"),
+                ("PG_003", "PD_009", "Mais de três dezenas na mesma linha"),
             ):
                 raise AssertionError(f"Padrões não preservados: {padroes!r}")
             if padroes[0][3:] != (2, 15, 0):

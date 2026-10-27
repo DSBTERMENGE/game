@@ -1034,13 +1034,96 @@ Python, 22 de frontend, 8 fluxos Chrome e 3 fluxos Chrome/PostgreSQL. Migraçõe
 esquema do zero, banco local, API e grade real foram auditados. Evidência em
 `MSen/tests/TESTE_ITEM_11_7.md`.
 
-Estado da Etapa 11: concluída localmente em 2026-10-27. Alterações ainda não
+Estado da Etapa 11: concluída em 2026-10-27 e publicada em `origin/developer`
+no commit `e24ba66`. PythonAnywhere permanece adiado.
+
+---
+
+## ETAPA 12 — Padrões de dezenas na mesma linha
+
+### Item 12.1 — Leitura do cadastro, contrato e casos de teste
+
+Interpretar `PG_003` e `PD_007`–`PD_009`, formalizar a classificação exclusiva
+e preparar os casos obrigatórios antes de criar funções.
+
+Estado: concluído em 2026-10-27. Os três padrões estão corretamente associados
+a `PG_003`. A classificação usará a maior ocupação entre as seis linhas, sem
+exigir sequencialidade. Nenhum código ou dado foi alterado. Contrato em
+`docs/CONTRATO_PADROES_MESMA_LINHA.md` e evidência em
+`MSen/tests/TESTE_ITEM_12_1.md`.
+
+### Item 12.2 — Detectores Python
+
+Implementar e testar os três detectores puros, com docstrings em português,
+sem registro no catálogo ou acesso ao PostgreSQL.
+
+Estado: concluído em 2026-10-27. Os detectores classificam exclusivamente pela
+maior ocupação de linha, sem exigir sequencialidade, validam a entrada e possuem
+docstrings em português. Passaram 38 testes direcionados. Nenhum banco foi
+acessado. Evidência em `MSen/tests/TESTE_ITEM_12_2.md`.
+
+### Item 12.3 — Registro e estatísticas históricas
+
+Associar os detectores a `PD_007`–`PD_009`, reutilizar o cálculo estatístico e
+testar ocorrências e intervalos conhecidos em memória.
+
+Estado: concluído em 2026-10-27. O registro associa os três códigos, o catálogo
+unificado contém nove detectores e o cálculo em memória reutiliza a estatística
+aprovada. Passaram 55 testes direcionados; nenhum banco foi acessado. Evidência
+em `MSen/tests/TESTE_ITEM_12_3.md`.
+
+### Item 12.4 — Integração e persistência temporária
+
+Integrar `PD_007`–`PD_009` ao serviço de recálculo e validar suas estatísticas
+em PostgreSQL temporário, sem alterar o `games`.
+
+Estado: concluído em 2026-10-27. O serviço calcula nove padrões. A migração
+`006` e o esquema canônico reservam `PG_003` e `PD_007`–`PD_009`. A persistência
+idempotente foi validada com intervalos conhecidos, as migrações `001`–`006`
+foram ensaiadas e passaram 216 testes Python. Nenhum database temporário
+permaneceu e o `games` não foi acessado. Evidência em
+`MSen/tests/TESTE_ITEM_12_4.md`.
+
+### Item 12.5 — Aplicação controlada no banco local
+
+Criar backup, aplicar a migração `006`, recalcular os nove padrões no `games` e
+conferir `PD_007`–`PD_009` por leitura.
+
+Estado: concluído em 2026-10-27. Um backup custom validado foi criado antes da
+migração e da transação. O `games` passou à versão `006`, preservou 3.069
+resultados e calculou `PD_007=2053`, `PD_008=863` e `PD_009=93`, mantendo
+cadastros e textos. A API retornou os valores; o processo ainda será reiniciado.
+Evidência em `MSen/tests/TESTE_ITEM_12_5.md`.
+
+### Item 12.6 — Reinício e integração visual
+
+Reiniciar o servidor local, confirmar os nove detectores na API e validar a
+grade real no Google Chrome.
+
+Estado: concluído em 2026-10-27. O servidor foi reiniciado no PID 12888. A API
+retornou nove padrões implementados e a grade real no Chrome confirmou nomes,
+estatísticas e estado de `PD_004`–`PD_009`. Nenhum dado foi modificado pelo
+teste. Evidência em `MSen/tests/TESTE_ITEM_12_6.md`.
+
+### Item 12.7 — Regressão integrada e fechamento
+
+Executar todas as suítes, adaptar os fluxos Chrome/PostgreSQL ao catálogo de
+nove padrões, auditar o `games` e finalizar a documentação da Etapa 12.
+
+Estado: concluído em 2026-10-27. Passaram 216 testes Python, 22 testes de
+frontend, 8 fluxos Chrome e 3 fluxos Chrome/PostgreSQL. Os testes integrados
+foram atualizados para o catálogo de nove padrões e para os próximos códigos
+livres `PG_004`, `PD_010` e `PD_011`. O banco `games` foi auditado na versão
+`006`, sem migrações pendentes, com 3.069 resultados, nove padrões
+implementados e nenhum database temporário remanescente. Evidência em
+`MSen/tests/TESTE_ITEM_12_7.md`.
+
+Estado da Etapa 12: concluída em 2026-10-27. As alterações ainda não foram
 commitadas. PythonAnywhere permanece adiado.
 
 ---
 
 ## Próximo item proposto
 
-Criar um commit de segurança da Etapa 11 e, depois, enviá-lo ao GitHub. Cada
-ação depende de autorização expressa separada. A Etapa 8/PythonAnywhere
-permanece adiada.
+Commit de segurança da Etapa 12. Não executar sem autorização expressa. O push
+será solicitado separadamente. A Etapa 8/PythonAnywhere permanece adiada.

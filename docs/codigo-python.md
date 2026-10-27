@@ -136,6 +136,12 @@ editados pelo usuário. Importação, inclusão e edição de resultados chamam 
 serviço na mesma transação que atualiza as frequências. O catálogo unificado em
 `padroes/catalogo.py` também permite que a API identifique os seis detectores.
 
+Os detectores puros de `padroes/mesma_linha.py` classificam pela maior ocupação
+entre as seis linhas, sem exigir dezenas sequenciais: exatamente duas,
+exatamente três ou mais de três. `padroes/linhas.py` associa `PD_007`–`PD_009`
+e calcula suas estatísticas históricas. O serviço transacional inclui os nove
+padrões aprovados no mesmo recálculo.
+
 `api/padroes.py` expõe o CRUD HTTP. A API aceita do usuário somente
 `padrao_nome` e `padrao_descr`; código, identificador e estatísticas são
 protegidos no servidor. O retorno informa ainda `detector_implementado`, valor

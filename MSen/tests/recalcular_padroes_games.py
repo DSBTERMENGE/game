@@ -11,12 +11,18 @@ import sys
 from dotenv import load_dotenv
 
 from msen.config import carregar_configuracao_banco
-from msen.database import RepositorioPadroes, RepositorioResultados, abrir_conexao
+from msen.database import (
+    RepositorioPadroes,
+    RepositorioResultados,
+    abrir_conexao,
+    executar_migracoes,
+)
 from msen.services import recalcular_padroes_iniciais
 
 
 PG_DUMP = Path(r"C:\Program Files\PostgreSQL\16\bin\pg_dump.exe")
 PASTA_BACKUPS = Path(__file__).resolve().parents[1] / "dados" / "backups"
+MIGRACOES = Path(__file__).resolve().parents[2] / "database" / "migrations"
 TEXTOS_COLUNAS = {
     "PD_004": (
         "Duas dezenas em linhas subjacentes na mesma coluna",
@@ -57,7 +63,7 @@ def _criar_backup(configuracao) -> tuple[Path, str]:
         raise FileNotFoundError(f"pg_dump não encontrado: {PG_DUMP}")
     PASTA_BACKUPS.mkdir(parents=True, exist_ok=True)
     instante = datetime.now().strftime("%Y%m%d_%H%M%S")
-    destino = PASTA_BACKUPS / f"games_pre_recalculo_colunas_{instante}.dump"
+    destino = PASTA_BACKUPS / f"games_pre_recalculo_padroes_{instante}.dump"
     ambiente = os.environ.copy()
     ambiente["PGPASSWORD"] = configuracao.senha
     subprocess.run(
@@ -101,13 +107,14 @@ def executar() -> dict[str, object]:
         raise RuntimeError("A operação exige GAME_DB_NAME=games.")
 
     destino, sha256 = _criar_backup(configuracao)
+    migracoes = executar_migracoes(configuracao, MIGRACOES)
     with abrir_conexao(configuracao) as conexao:
         repositorio_padroes = RepositorioPadroes(conexao)
         repositorio_resultados = RepositorioResultados(conexao)
         total_antes = repositorio_resultados.contar()
         antes = _resumo_padroes(repositorio_padroes.listar())
-        if tuple(antes) != tuple(f"PD_{numero:03d}" for numero in range(1, 7)):
-            raise RuntimeError("O catálogo local não contém exatamente PD_001–PD_006.")
+        if tuple(antes) != tuple(f"PD_{numero:03d}" for numero in range(1, 10)):
+            raise RuntimeError("O catálogo local não contém exatamente PD_001–PD_009.")
 
         for codigo, (nome, descricao) in TEXTOS_COLUNAS.items():
             repositorio_padroes.atualizar_textos(
@@ -132,6 +139,8 @@ def executar() -> dict[str, object]:
         "backup": str(destino),
         "backup_bytes": destino.stat().st_size,
         "backup_sha256": sha256,
+        "migracoes_aplicadas": list(migracoes.aplicadas),
+        "migracoes_anteriores": list(migracoes.ja_aplicadas),
         "resultados": total_depois,
         "antes": antes,
         "depois": depois,

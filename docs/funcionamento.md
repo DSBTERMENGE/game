@@ -249,3 +249,18 @@ evitando consumir espaço vertical ou alargar a página.
 Na página de padrões, o grupo é obrigatório na inclusão, pode ser alterado na
 edição e também funciona como filtro. Código e estatísticas permanecem somente
 para leitura.
+
+## Padrões de dezenas na mesma linha
+
+A matriz de 01 a 60 possui seis linhas de dez dezenas. Para cada resultado, o
+sistema conta quantas dezenas ocupam cada linha e usa a maior ocupação para uma
+classificação exclusiva, sem exigir que as dezenas sejam consecutivas:
+
+- `PD_007`: a maior ocupação é exatamente duas dezenas;
+- `PD_008`: a maior ocupação é exatamente três dezenas;
+- `PD_009`: a maior ocupação é superior a três dezenas.
+
+No histórico local de 3.069 resultados, foram apuradas respectivamente 2.053,
+863 e 93 ocorrências. Cada detector está associado ao cadastro de seu padrão;
+nome e descrição podem ser revisados pelo usuário sem alterar a função Python
+nem as estatísticas calculadas.

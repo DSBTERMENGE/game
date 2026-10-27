@@ -229,17 +229,22 @@ VALUES
     'PG_002',
     'Dezenas na mesma coluna',
     'Padrões baseados em dezenas posicionadas na mesma coluna da matriz.'
+),
+(
+    'PG_003',
+    'Dezenas na mesma linha',
+    'Padrões baseados na quantidade de dezenas posicionadas na mesma linha da matriz.'
 )
 ON CONFLICT (grupo_cod) DO NOTHING;
 
 CREATE SEQUENCE IF NOT EXISTS padroes_grupo_codigo_seq
-    AS BIGINT MINVALUE 1 START WITH 3;
+    AS BIGINT MINVALUE 1 START WITH 4;
 
 SELECT SETVAL(
     'padroes_grupo_codigo_seq',
     GREATEST(
-        2,
-        COALESCE(MAX(SUBSTRING(grupo_cod FROM 4)::BIGINT), 2)
+        3,
+        COALESCE(MAX(SUBSTRING(grupo_cod FROM 4)::BIGINT), 3)
     ),
     TRUE
 )
@@ -367,14 +372,38 @@ CROSS JOIN (
 WHERE grupo.grupo_cod = 'PG_002'
 ON CONFLICT (padrao_cod) DO NOTHING;
 
+INSERT INTO padroes_subgrupo (id_grupo, padrao_cod, padrao_nome, padrao_descr)
+SELECT grupo.id_grupo, dados.padrao_cod, dados.padrao_nome, dados.padrao_descr
+FROM padroes_grupo AS grupo
+CROSS JOIN (
+    VALUES
+    (
+        'PD_007',
+        'Duas dezenas na mesma linha',
+        'Duas dezenas do resultado estão na mesma linha, independentemente de serem sequenciais.'
+    ),
+    (
+        'PD_008',
+        'Três dezenas na mesma linha',
+        'Três dezenas do resultado estão na mesma linha, independentemente de serem sequenciais.'
+    ),
+    (
+        'PD_009',
+        'Mais de três dezenas na mesma linha',
+        'Quatro, cinco ou seis dezenas do resultado estão na mesma linha, independentemente de serem sequenciais.'
+    )
+) AS dados(padrao_cod, padrao_nome, padrao_descr)
+WHERE grupo.grupo_cod = 'PG_003'
+ON CONFLICT (padrao_cod) DO NOTHING;
+
 CREATE SEQUENCE IF NOT EXISTS padroes_subgrupo_codigo_seq
-    AS BIGINT MINVALUE 1 START WITH 7;
+    AS BIGINT MINVALUE 1 START WITH 10;
 
 SELECT SETVAL(
     'padroes_subgrupo_codigo_seq',
     GREATEST(
-        6,
-        COALESCE(MAX(SUBSTRING(padrao_cod FROM 4)::BIGINT), 6)
+        9,
+        COALESCE(MAX(SUBSTRING(padrao_cod FROM 4)::BIGINT), 9)
     ),
     TRUE
 )

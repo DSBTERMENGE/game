@@ -40,7 +40,7 @@ Resposta `200`:
 
 Valores decimais são textos para preservar precisão. Estatísticas ainda não
 calculadas são `null`. `detector_implementado` é calculado pela aplicação;
-atualmente os códigos `PD_001`–`PD_006` possuem detector.
+atualmente os códigos `PD_001`–`PD_009` possuem detector.
 
 ## Criar
 
@@ -55,9 +55,9 @@ Content-Type: application/json
 }
 ```
 
-Retorna `201` com o código automático. Os códigos `PD_001`–`PD_006` são
+Retorna `201` com o código automático. Os códigos `PD_001`–`PD_009` são
 reservados para os detectores oficiais. Portanto, o primeiro padrão livre recebe
-`PD_007`; enquanto não possuir função Python, terá estatísticas nulas e
+`PD_010`; enquanto não possuir função Python, terá estatísticas nulas e
 `detector_implementado: false`.
 
 ## Editar grupo e textos

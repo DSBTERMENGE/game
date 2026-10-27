@@ -157,3 +157,10 @@ de `PD_006`. O recálculo atualiza somente os campos estatísticos.
 A migração `005` reserva e inicializa `PD_004`–`PD_006` em instalações novas,
 recalibrando a sequência para que o primeiro padrão livre seja `PD_007`. Se um
 desses códigos já pertencer a outro grupo, a migração é interrompida.
+
+A migração `006` reserva `PG_003` e os padrões `PD_007`–`PD_009` de dezenas na
+mesma linha. Em instalações novas, o catálogo passa a iniciar com três grupos e
+nove padrões, e o primeiro código livre torna-se `PD_010`.
+
+Após backup e aplicação local da migração `006`, os 3.069 resultados produziram
+2.053 ocorrências de `PD_007`, 863 de `PD_008` e 93 de `PD_009`.

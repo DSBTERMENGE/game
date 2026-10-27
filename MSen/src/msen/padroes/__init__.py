@@ -21,10 +21,22 @@ from .iniciais import (
     calcular_estatisticas_sequenciais,
     criar_registro_detectores_iniciais,
 )
+from .linhas import (
+    CODIGO_DUAS_NA_MESMA_LINHA,
+    CODIGO_MAIS_DE_TRES_NA_MESMA_LINHA,
+    CODIGO_TRES_NA_MESMA_LINHA,
+    calcular_estatisticas_mesma_linha,
+    criar_registro_detectores_mesma_linha,
+)
 from .mesma_coluna import (
     detectar_duas_dezenas_na_mesma_coluna,
     detectar_mais_de_tres_dezenas_na_mesma_coluna,
     detectar_tres_dezenas_na_mesma_coluna,
+)
+from .mesma_linha import (
+    detectar_duas_dezenas_na_mesma_linha,
+    detectar_mais_de_tres_dezenas_na_mesma_linha,
+    detectar_tres_dezenas_na_mesma_linha,
 )
 from .registro import (
     CodigoPadraoInvalido,
@@ -52,11 +64,16 @@ __all__ = [
     "CODIGO_DUAS_NA_MESMA_COLUNA",
     "CODIGO_TRES_NA_MESMA_COLUNA",
     "CODIGO_MAIS_DE_TRES_NA_MESMA_COLUNA",
+    "CODIGO_DUAS_NA_MESMA_LINHA",
+    "CODIGO_TRES_NA_MESMA_LINHA",
+    "CODIGO_MAIS_DE_TRES_NA_MESMA_LINHA",
     "calcular_estatistica_padrao",
     "calcular_estatisticas_sequenciais",
     "calcular_estatisticas_mesma_coluna",
+    "calcular_estatisticas_mesma_linha",
     "criar_registro_detectores_iniciais",
     "criar_registro_detectores_mesma_coluna",
+    "criar_registro_detectores_mesma_linha",
     "criar_registro_detectores_aprovados",
     "detectar_duas_dezenas_sequenciais",
     "detectar_tres_dezenas_sequenciais",
@@ -64,4 +81,7 @@ __all__ = [
     "detectar_duas_dezenas_na_mesma_coluna",
     "detectar_tres_dezenas_na_mesma_coluna",
     "detectar_mais_de_tres_dezenas_na_mesma_coluna",
+    "detectar_duas_dezenas_na_mesma_linha",
+    "detectar_tres_dezenas_na_mesma_linha",
+    "detectar_mais_de_tres_dezenas_na_mesma_linha",
 ]

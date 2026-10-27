@@ -104,6 +104,9 @@ test("Excel percorre API, cálculos, PostgreSQL e relatório sem duplicar", asyn
     { padrao_cod: "PD_004", num_oco: 0, intervalo_medio: null, desv_padrao: null },
     { padrao_cod: "PD_005", num_oco: 0, intervalo_medio: null, desv_padrao: null },
     { padrao_cod: "PD_006", num_oco: 2, intervalo_medio: "1.000000", desv_padrao: "0.000000" },
+    { padrao_cod: "PD_007", num_oco: 1, intervalo_medio: null, desv_padrao: null },
+    { padrao_cod: "PD_008", num_oco: 0, intervalo_medio: null, desv_padrao: null },
+    { padrao_cod: "PD_009", num_oco: 0, intervalo_medio: null, desv_padrao: null },
   ]);
 
   await page.locator("#botao-importar-excel").click();
