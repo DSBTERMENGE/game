@@ -1123,3 +1123,177 @@ Próxima ação exata:
 - Nenhuma porta de teste permaneceu aberta; banco não acessado; integral
   bloqueado; PythonAnywhere adiado.
 - Etapa 15 concluída. Próxima ação: commit de segurança somente se autorizado.
+
+## Atualização — 2026-10-28 — contrato de classificação por grupos
+
+- Subetapa 16.1 executada somente em documentação e validação das funções reais.
+- Os grupos atuais são exclusivos pelo maior bloco ou maior ocupação.
+- Quando nenhum padrão do grupo corresponder, será usado o estado
+  `SEM_CORRESPONDENCIA`; ele não será um novo padrão PD.
+- As propostas PD_010, PD_011 e PD_012 foram retiradas após esclarecimento.
+- Denominador principal proposto: todos os resultados válidos. A diferença até
+  100% será `SEM_CORRESPONDENCIA`.
+- As frequências serão obtidas executando as funções no histórico e revelarão
+  quais padrões são raros. Nenhuma raridade será presumida previamente.
+- No screener, `SEM_CORRESPONDENCIA` passa; somente padrões configurados para
+  exclusão poderão eliminar a combinação.
+- Contrato em `docs/CONTRATO_CLASSIFICACAO_GRUPOS.md`.
+- A raridade será calculada aplicando os padrões ao histórico. Um limite
+  configurável selecionará os padrões estritamente abaixo dele; 10% é apenas
+  hipótese inicial.
+- A lista excludente será calculada uma vez por execução e registrada com o
+  intervalo, denominador, frequências, operador e versões.
+- Contrato conceitual aprovado. Nenhuma tabela ou função foi alterada; a
+  subetapa 16.2 depende de autorização para preparar o DDL.
+
+## Atualização — 2026-10-28 — DDL da classificação por grupos
+
+- Subetapa 16.2 concluída sem aplicar alterações ao database `games`.
+- Criada a migração `008_criar_classificacao_resultado_padrao.sql`.
+- A tabela garante uma linha por resultado/grupo e aceita um padrão do mesmo
+  grupo ou o estado `SEM_CORRESPONDENCIA`, nunca ambos.
+- Foram incluídos versão, data de cálculo e índice para o perfil histórico.
+- O esquema PostgreSQL consolidado foi atualizado.
+- Passaram 13 testes direcionados e 384 testes na regressão Python.
+- Próxima ação: aguardar autorização para a subetapa 16.3, que executará a
+  migração e testará suas restrições em um database PostgreSQL temporário.
+
+## Atualização — 2026-10-28 — teste PostgreSQL da migração 008
+
+- Subetapa 16.3 concluída exclusivamente no database efêmero
+  `games_test_7_1_163`.
+- A estrutura anterior recebeu `001`–`007`; na primeira execução seguinte,
+  somente a `008` foi aplicada.
+- A segunda execução reconheceu `001`–`008` e não reaplicou nenhuma versão.
+- Foram aceitos os estados válidos com padrão e sem correspondência.
+- Foram rejeitados duplicidade resultado/grupo, estados incompatíveis, padrão
+  de outro grupo e versão não positiva.
+- A exclusão em cascata do resultado foi confirmada.
+- Uma migração `009` defeituosa, criada como fixture de teste, sofreu rollback:
+  nem sua tabela nem sua versão permaneceram.
+- O database temporário foi removido; a auditoria de remanescentes retornou
+  lista vazia. O database `games` não foi alterado.
+- Próxima ação: aguardar autorização para a subetapa 16.4, modelo imutável e
+  repositório Python da classificação.
+
+## Atualização — 2026-10-28 — modelo e repositório de classificações
+
+- Subetapa 16.4 concluída.
+- Criado o modelo imutável `ClassificacaoPadrao`, com estados tipados e
+  validação de coerência antes do SQL.
+- Criado `RepositorioClassificacoesPadrao`, com salvamento idempotente por
+  resultado/grupo e consultas por resultado e por grupo.
+- O recálculo preserva `id_classificacao` e atualiza padrão, estado, versão e
+  data do cálculo.
+- A integração passou no database efêmero `games_test_7_1_164`, que foi
+  removido; a auditoria de remanescentes retornou `[]`.
+- Passaram oito testes direcionados e 392 testes na regressão Python.
+- O database principal `games` não foi alterado.
+- Próxima ação: aguardar autorização para a subetapa 16.5, classificador do
+  grupo piloto de dezenas sequenciais.
+
+## Atualização — 2026-10-28 — classificador piloto do grupo PG_001
+
+- Subetapa 16.5 concluída sem acesso ao banco.
+- O classificador retorna exclusivamente `PD_001`, `PD_002`, `PD_003` ou
+  `SEM_CORRESPONDENCIA`, conforme o maior bloco consecutivo.
+- A análise central agora também fornece dezenas ordenadas, tamanho máximo e
+  blocos máximos, usando a mesma regra dos detectores históricos.
+- `58,59,60,01,02,03` foi confirmado como dois blocos de três (`PD_002`), sem
+  continuidade circular entre 60 e 01.
+- `01,02,03,04,20,40` foi confirmado como `PD_003`.
+- Passaram 18 testes direcionados e 398 testes na regressão Python.
+- Nenhuma classificação foi persistida.
+- Próxima ação: aguardar autorização para a subetapa 16.6, recálculo histórico
+  e persistência transacional/idempotente do grupo piloto.
+
+## Atualização — 2026-10-28 — recálculo histórico do grupo piloto
+
+- Subetapa 16.6 concluída sem alterar o database principal `games`.
+- O novo serviço resolve `PG_001` e seus três padrões, percorre resultados em
+  ordem, classifica e persiste tudo em uma única transação.
+- Uma falha controlada no terceiro registro comprovou rollback sem gravações
+  parciais.
+- O subconjunto controlado produziu uma ocorrência em cada uma das quatro
+  classes e preservou identidades em três recálculos, inclusive ao mudar a
+  versão para 2.
+- Um clone do histórico completo classificou 3.069 resultados: `PD_001=1.192`,
+  `PD_002=92`, `PD_003=5` e `SEM_CORRESPONDENCIA=1.780`.
+- O segundo recálculo do histórico preservou as 3.069 identidades.
+- Os databases temporários foram removidos; a auditoria retornou `[]`.
+- Passaram 400 testes na regressão Python.
+- Próxima ação: aguardar autorização para a subetapa 16.7, perfil de contagens,
+  percentuais, fechamento em 100% e indicação experimental de raridade.
+
+## Atualização — 2026-10-28 — perfil histórico e raridade experimental
+
+- Subetapa 16.7 concluída sem alterar o database principal `games`.
+- O denominador oficial é o total de resultados; o perfil também mostra o
+  percentual alternativo entre os resultados que encontraram algum padrão.
+- `SEM_CORRESPONDENCIA` participa do fechamento oficial, mas nunca pode ser
+  selecionado como padrão raro.
+- O operador foi comprovado como estritamente menor (`<`): valor exatamente no
+  limite é preservado.
+- No clone dos 3.069 resultados, `PD_001=38,840013%`, `PD_002=2,997719%`,
+  `PD_003=0,162920%` e `SEM_CORRESPONDENCIA=57,999348%`.
+- Com limite experimental de 10%, somente `PD_002` e `PD_003` foram indicados;
+  nenhuma exclusão foi ativada no screener.
+- O perfil sincroniza as estatísticas completas do catálogo e rejeita histórico
+  com classificações incompletas ou divergentes.
+- Passaram cinco testes unitários, dois ensaios PostgreSQL temporários e 403
+  testes de regressão. Os databases temporários foram removidos.
+- Próxima ação: aguardar autorização para a subetapa 16.8, API do perfil por
+  grupo com corte histórico preparado para uso futuro.
+
+## Atualização — 2026-10-28 — API do perfil histórico
+
+- Subetapa 16.8 concluída sem alterar o database principal `games`.
+- Criado `GET /api/grupos-padroes/PG_001/perfil`.
+- A API aceita limite de raridade e um corte inclusivo por concurso ou data;
+  os dois cortes juntos são rejeitados.
+- A resposta inclui intervalo efetivo, totais, versões, quatro classes,
+  percentuais, intervalo médio, desvio-padrão e padrões indicados.
+- `ativa_no_screener` permanece sempre falso nesta etapa.
+- Na integração, o perfil completo retornou 3.069 resultados; os cortes no
+  concurso 100 e na data 1998-02-01 retornaram 100 cada.
+- Fotografias antes/depois comprovaram que as requisições GET não alteraram o
+  catálogo global.
+- Passaram 12 testes direcionados, integração Flask/PostgreSQL e 410 testes de
+  regressão. O database temporário foi removido.
+- Próxima ação: aguardar autorização para a subetapa 16.9, tela compacta do
+  perfil na página de padrões.
+
+## Atualização — 2026-10-28 — painel compacto do perfil
+
+- Subetapa 16.9 concluída sem alteração de banco.
+- `padroes.html` ganhou o acionador `Perfil PG_001` na mesma linha do filtro.
+- O painel é absoluto e flutuante: não acrescenta linha à navegação e não
+  reduz permanentemente a altura da grade.
+- São exibidos limite, corte, amostra, classificados, sem correspondência,
+  padrões indicados e as quatro classes com percentuais e estatísticas.
+- A interface declara explicitamente que o screener continua inativo.
+- Passaram 24 testes JavaScript, 12 fluxos no Google Chrome e 410 testes Python.
+- A API real já passou em clone PostgreSQL na 16.8; o perfil no servidor ligado
+  ao `games` continuará indisponível até a migração `008` e o recálculo serem
+  aplicados com autorização expressa.
+- Próxima ação: aguardar autorização para a subetapa 16.10, regressão e
+  fechamento da Etapa 16, incluindo decisão segura sobre aplicação local.
+
+## Atualização — 2026-10-28 — fechamento operacional da Etapa 16
+
+- Backup criado antes da aplicação local:
+  `games_pre_classificacao_20261028_100708.dump`, 226.601 bytes, SHA-256
+  `9C662ADC4EC8E94336C13E2D576AC91F6AD706C10D56DB8E3D4F78B1D389880E`.
+- O `games` recebeu somente a migração `008` e 3.069 classificações de
+  `PG_001`; resultados, frequências e análises geométricas foram preservados.
+- Contagens finais: `PD_001=1.192`, `PD_002=92`, `PD_003=5` e
+  `SEM_CORRESPONDENCIA=1.780`.
+- Duas instâncias concorrentes na porta 5050 foram encerradas. O servidor
+  atualizado está no PID 17116 e responde pela única escuta da porta.
+- API e Chrome reais confirmaram o perfil completo, corte até concurso 100,
+  painel compacto e screener inativo.
+- Regressão: 410 testes Python, 24 JavaScript, 12 Chrome e três fluxos
+  integrados aprovados; nenhum database temporário permaneceu.
+- Etapa 16 concluída localmente. PythonAnywhere não foi acessado.
+- Próxima ação recomendada: criar commit de segurança da Etapa 16 somente após
+  autorização expressa; depois iniciar a subetapa 17.1.

@@ -81,6 +81,28 @@ aprovação e priorização antes da implementação.
 - [x] Separar Painel e Cadastros em páginas com menu horizontal e Voltar.
 - [x] Conter rolagens vertical e horizontal dentro das grades.
 
+## Auditoria do screener e dos backtests
+
+- [ ] Selecionar um sorteio histórico ou uma combinação experimental para
+  auditoria.
+- [ ] Mostrar as seis dezenas, origem, intervalo histórico, configuração e
+  versões das funções usadas.
+- [ ] Detalhar fórmulas, valores substituídos e resultados intermediários de
+  cada critério estatístico.
+- [ ] Permitir confirmar manualmente operações como a soma das seis dezenas.
+- [ ] Detalhar coordenadas, segmentos, extensão, perímetro, áreas e centro de
+  gravidade dos critérios geométricos.
+- [ ] Mostrar ocorrências encontradas, subgrupo identificado e decisão de cada
+  grupo de padrões.
+- [ ] Exibir a ordem percorrida no funil e marcar os estágios posteriores como
+  não avaliados quando houver exclusão anterior.
+- [ ] Registrar resultado esperado, resultado obtido, conformidade, observação
+  e revisor humano, IA ou teste automatizado.
+- [ ] Disponibilizar visão resumida e abertura dos detalhes dos três níveis.
+- [ ] Exportar futuramente a auditoria em JSON, CSV ou planilha.
+- [ ] Garantir que o relatório seja reproduzível com os mesmos dados,
+  configurações, versões e intervalo histórico.
+
 ## Fora do escopo inicial
 
 - apostas automáticas;

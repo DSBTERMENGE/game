@@ -36,6 +36,26 @@
         <label for="filtro-grupo">Filtrar grupo</label>
         <select id="filtro-grupo"><option value="">Todos</option></select>
         <p id="mensagem-padroes" role="status" aria-live="polite">Carregando padrões...</p>
+        <details id="perfil-padroes" class="perfil-padroes">
+          <summary><span>Perfil PG_001</span><small id="resumo-perfil">Abrir análise</small></summary>
+          <section class="perfil-padroes__painel" aria-label="Perfil histórico do grupo PG_001">
+            <form id="form-perfil" class="perfil-padroes__controles">
+              <label>Limite %<input id="perfil-limite" type="number" min="0" max="100" step="0.000001" value="10"></label>
+              <label>Corte<select id="perfil-tipo-corte"><option value="">Histórico completo</option><option value="numero">Concurso</option><option value="data">Data</option></select></label>
+              <label id="perfil-campo-numero" hidden>Até o concurso<input id="perfil-numero" type="number" min="1" step="1"></label>
+              <label id="perfil-campo-data" hidden>Até a data<input id="perfil-data" type="date"></label>
+              <button type="submit">Atualizar</button>
+              <p id="mensagem-perfil" role="status" aria-live="polite">Perfil ainda não consultado.</p>
+            </form>
+            <div id="perfil-indicadores" class="perfil-padroes__indicadores"></div>
+            <div class="perfil-padroes__grade" tabindex="0">
+              <table id="tabela-perfil"><thead><tr>
+                <th>Classe</th><th>Quantidade</th><th>% total</th><th>% classificados</th>
+                <th>Intervalo médio</th><th>Desvio-padrão</th><th>Diagnóstico</th>
+              </tr></thead><tbody id="corpo-tabela-perfil"></tbody></table>
+            </div>
+          </section>
+        </details>
       </div>
       <div class="padroes-grade" tabindex="0" aria-label="Grade de padrões cadastrados">
         <table id="tabela-padroes"><thead><tr>

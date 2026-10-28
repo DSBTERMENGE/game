@@ -181,3 +181,14 @@
 - A camada de interface simula as respostas HTTP para testar o navegador sem
   modificar o PostgreSQL; a integração com o banco pertence à Etapa 7.
 - `node_modules`, `test-results` e `playwright-report` não são versionados.
+
+## 2026-10-28 — Auditoria usa as funções reais do sistema
+
+- Todo valor apresentado na auditoria será produzido pela mesma função de
+  produção usada no screener, na persistência ou na análise correspondente.
+- Não haverá cópia da fórmula no frontend nem função paralela exclusiva para
+  produzir valores do relatório.
+- As funções de produção fornecerão valor e evidências da mesma execução.
+- A tela de auditoria apenas organizará as evidências para conferência humana.
+- Testes deverão provar a igualdade entre valor auditado, valor persistido e
+  valor utilizado na decisão do funil.

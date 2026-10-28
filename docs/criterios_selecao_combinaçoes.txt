@@ -1,0 +1,575 @@
+CRITÉRIOS DE SELEÇÃO DE COMBINAÇÕES
+=====================================
+
+Documento de raciocínio funcional
+Data inicial: 28/10/2026
+
+Objetivo
+--------
+
+Registrar as ideias, decisões e regras usadas para analisar resultados
+históricos e selecionar combinações experimentais. Este documento deverá ser
+atualizado sempre que um critério for criado, alterado, aprovado ou rejeitado.
+
+O sistema trabalhará com três famílias de critérios:
+
+1. classificação por grupos de padrões;
+2. medidas estatísticas;
+3. medidas gráficas ou geométricas.
+
+Todos os critérios atuarão como um funil. Quando uma combinação for rejeitada
+por um estágio, sua exclusão será contabilizada nesse estágio e o processamento
+passará imediatamente para a próxima combinação.
+
+
+1. PERFIL DOS RESULTADOS POR GRUPO DE PADRÕES
+------------------------------------------------
+
+Cada grupo representa um conceito. Seus subgrupos representam as diferentes
+classes possíveis dentro daquele conceito.
+
+Exemplo conceitual:
+
+Grupo G001: dezenas sequenciais
+
+- PD001: maior sequência formada por duas dezenas;
+- PD002: maior sequência formada por três dezenas;
+- PD003: maior sequência formada por mais de três dezenas;
+- classe complementar: resultado sem dezenas sequenciais, caso seja necessário
+  classificar todos os resultados do grupo.
+
+Para cada resultado histórico, o sistema executará a função classificadora do
+grupo e registrará o subgrupo em que o resultado se enquadra.
+
+Exemplo apenas ilustrativo de distribuição:
+
+- 70% dos resultados classificados em G001 pertencem a PD001;
+- 20% pertencem a PD002;
+- 10% pertencem a PD003.
+
+Esses percentuais serão obtidos por contagem dos resultados reais, nunca
+informados manualmente.
+
+
+2. ESTRUTURA RECOMENDADA PARA A CLASSIFICAÇÃO
+-------------------------------------------------
+
+Não criar uma coluna física para cada grupo na tabela de resultados. Isso
+obrigaria a alterar o banco sempre que um grupo fosse incluído ou excluído.
+
+Usar uma tabela relacionada e normalizada, com nome provisório:
+
+resultado_classificacao_padrao
+
+Campos propostos:
+
+- id_classificacao: chave primária;
+- id_resultado: chave estrangeira para resultados;
+- id_grupo: chave estrangeira para padroes_grupo;
+- id_padrao: chave estrangeira para padroes_subgrupo;
+- versao_calculo: versão da função que realizou a classificação;
+- calculado_em: data e hora do cálculo.
+
+Regra de unicidade inicialmente proposta:
+
+- um registro por resultado e grupo;
+- UNIQUE (id_resultado, id_grupo).
+
+Essa unicidade somente será correta quando os subgrupos de um mesmo grupo forem
+mutuamente exclusivos, ou seja, quando um resultado puder pertencer a apenas um
+subgrupo daquele grupo.
+
+Se futuramente um grupo permitir que o mesmo resultado pertença a mais de um
+padrão, a modelagem deverá aceitar múltiplas linhas e usar a unicidade:
+
+- UNIQUE (id_resultado, id_grupo, id_padrao).
+
+Antes de criar cada classificador de grupo, deverá ser decidido se suas classes
+são exclusivas e se cobrem todos os casos possíveis.
+
+
+3. CUIDADO COM O DENOMINADOR DOS PERCENTUAIS
+---------------------------------------------
+
+Para que os percentuais de um grupo somem 100%, todo resultado precisa receber
+uma classificação naquele grupo. Quando nenhum padrão definido for encontrado,
+deverá existir uma classe complementar, por exemplo:
+
+- NENHUM_PADRAO_DO_GRUPO;
+- SEM_SEQUENCIA;
+- NAO_CLASSIFICADO.
+
+Alternativamente, o sistema poderá calcular dois percentuais diferentes:
+
+1. percentual sobre todos os resultados históricos;
+2. percentual somente sobre os resultados que corresponderam a algum padrão.
+
+O sistema deverá sempre informar qual denominador foi usado, para não produzir
+uma interpretação enganosa da tendência.
+
+
+4. PERFIL HISTÓRICO DO GRUPO
+------------------------------
+
+A consulta estatística por grupo deverá apresentar, no mínimo:
+
+- código e nome do grupo;
+- código e nome de cada subgrupo;
+- quantidade de resultados classificados no subgrupo;
+- quantidade total usada como denominador;
+- percentual de ocorrência;
+- primeiro e último concurso do intervalo analisado;
+- data inicial e data final do intervalo;
+- versão da função classificadora.
+
+No estudo completo atual poderão ser usados todos os resultados. No backtest,
+somente poderão ser usados resultados anteriores ao concurso ou à data que
+estiver sendo avaliada. Resultados futuros jamais poderão participar do perfil
+usado para avaliar o passado.
+
+
+5. CONFIGURAÇÃO DO FUNIL POR GRUPO
+------------------------------------
+
+O perfil histórico servirá para o estudo e para a decisão do usuário. Ele não
+ativará exclusões automaticamente.
+
+O usuário poderá configurar quais subgrupos serão aceitos em cada grupo.
+
+Exemplo:
+
+- grupo G001 habilitado no funil;
+- somente PD001 aceito;
+- PD002 e PD003 rejeitados.
+
+Para cada combinação experimental:
+
+1. executar o classificador de G001;
+2. identificar o subgrupo correspondente;
+3. verificar se o subgrupo está entre os aceitos;
+4. se estiver aceito, avançar para o próximo grupo;
+5. se não estiver aceito, contabilizar a exclusão em G001 e interromper a
+   avaliação daquela combinação.
+
+Uma futura configuração normalizada poderá conter:
+
+- id_configuracao;
+- id_grupo;
+- id_padrao;
+- aceito;
+- ordem_no_funil;
+- habilitado;
+- intervalo histórico de referência;
+- observação e justificativa da decisão.
+
+O total excluído por grupo e o saldo após cada grupo deverão ser exibidos no
+quadro do screener.
+
+
+6. PARÂMETROS ESTATÍSTICOS
+----------------------------
+
+Para cada parâmetro estatístico, calcular seu valor em todos os resultados do
+intervalo histórico autorizado. Em seguida calcular:
+
+- média histórica do parâmetro;
+- desvio-padrão histórico;
+- distribuição real dos valores;
+- limites inferior e superior configurados.
+
+Modelo inicial de aceitação por desvio-padrão:
+
+limite inferior = média histórica - K_inferior * desvio-padrão
+limite superior = média histórica + K_superior * desvio-padrão
+
+Modelo alternativo por percentual da média:
+
+limite inferior = média histórica * (1 - percentual_inferior)
+limite superior = média histórica * (1 + percentual_superior)
+
+O modo escolhido e os valores usados deverão ficar explicitamente registrados.
+A curva normal servirá como referência visual, mas o histograma dos resultados
+reais também deverá ser mostrado, pois a distribuição pode não ser normal.
+
+Observação: soma e média das seis dezenas são linearmente equivalentes, pois
+média = soma / 6. Se usarem limites equivalentes, não devem atuar como dois
+filtros independentes, para evitar contagem duplicada da mesma informação.
+
+
+7. PARÂMETROS GRÁFICOS E GEOMÉTRICOS
+---------------------------------------
+
+A tabela analise_geometrica_resultado já existe e está relacionada
+individualmente com resultados. Ela armazena atualmente:
+
+- extensão aberta;
+- perímetro fechado;
+- quantidade de regiões;
+- área total;
+- centro de gravidade X;
+- centro de gravidade Y;
+- versão do cálculo.
+
+Portanto, não é necessário criar agora outra tabela individual para as mesmas
+medidas. Novas medidas gráficas poderão ser adicionadas de forma controlada ou
+armazenadas em uma estrutura complementar quando forem definidas.
+
+Para cada medida geométrica será calculado o perfil histórico, seguindo o mesmo
+princípio dos parâmetros estatísticos:
+
+- média da medida;
+- desvio-padrão;
+- distribuição real;
+- faixa de aceitação configurada;
+- quantidade e percentual dentro e fora da faixa.
+
+Cada combinação em estudo terá suas medidas geométricas calculadas e será
+comparada com as faixas configuradas. Se falhar em um critério geométrico ativo,
+será excluída no respectivo estágio do funil.
+
+O centro de gravidade é bidimensional. Inicialmente, X e Y deverão ser
+analisados separadamente. Uma faixa retangular independente para X e Y é mais
+simples, mas poderá ser substituída futuramente por uma região bidimensional que
+considere a relação entre os dois eixos.
+
+
+8. PAINEL VISUAL DAS DISTRIBUIÇÕES
+------------------------------------
+
+Todos os gráficos estatísticos e geométricos deverão ser apresentados juntos
+em um painel compacto. Cada gráfico mostrará:
+
+- histograma dos valores históricos reais;
+- curva normal de referência;
+- média global do intervalo;
+- desvio-padrão;
+- marcações de menos e mais um desvio-padrão;
+- faixa de aceitação configurada;
+- valor da combinação analisada;
+- percentual histórico dentro e fora da faixa.
+
+A janela de configuração deverá permitir informar margens inferiores e
+superiores, por percentual da média ou por multiplicadores do desvio-padrão.
+Os limites calculados deverão ser mostrados antes de a configuração ser usada
+para excluir combinações.
+
+
+9. REGRAS DE SEGURANÇA DA ANÁLISE
+-----------------------------------
+
+- Nenhum perfil histórico ativa exclusão automaticamente.
+- Toda regra precisa ser compreendida, testada e autorizada.
+- Backtests usam apenas informações anteriores ao ponto avaliado.
+- Cada combinação é contabilizada somente no primeiro filtro que a excluir.
+- Alterar a ordem do funil muda a atribuição das exclusões, mas não deveria
+  mudar o conjunto final quando os mesmos filtros independentes forem usados.
+- Versões das funções e intervalos históricos devem ser registrados para que
+  os resultados possam ser reproduzidos.
+- O modo integral permanece bloqueado enquanto os critérios forem experimentais.
+
+
+10. DECISÕES AINDA PENDENTES
+------------------------------
+
+- Nome definitivo da tabela de classificação por resultado e grupo.
+- Confirmar se todo grupo terá classes mutuamente exclusivas.
+- Definir a classe complementar de cada grupo.
+- Definir se os percentuais principais usarão todos os resultados ou somente
+  resultados classificados em algum padrão.
+- Definir a tabela de configuração dos subgrupos aceitos.
+- Definir, por parâmetro, se a faixa usará percentual da média, múltiplos do
+  desvio-padrão ou ambos como alternativas configuráveis.
+- Definir o tratamento bidimensional definitivo do centro de gravidade.
+- Validar os critérios no backtest antes de ampliar o universo de combinações.
+
+
+Estado atual
+------------
+
+Este documento registra a estratégia conceitual. A nova tabela de classificação,
+as configurações do funil e o painel de distribuições ainda não foram criados.
+Sua implementação deverá ser dividida em subetapas curtas e autorizadas pelo
+usuário.
+
+
+11. FORMATO DO RESULTADO DO SCREENER DE COMBINAÇÕES
+------------------------------------------------------
+
+O quadro final do screener deverá ser organizado por família de critério e
+permitir a abertura dos detalhes de cada filtro.
+
+Para combinações de seis dezenas escolhidas entre 01 e 60, sem repetição, o
+universo integral possui exatamente 50.063.860 combinações, calculadas por
+C(60, 6). Durante o desenvolvimento, o limite experimental de 5.000 permanece.
+
+Modelo do quadro:
+
+SCREENER DE COMBINAÇÕES
+
+Total de combinações recebidas: 50.063.860 (100%)
+
+1 - Critérios de valores estatísticos
+    Soma                         exclusões: X     percentual: X%
+    Média                       exclusões: Y     percentual: Y%
+    Mediana                     exclusões: Z     percentual: Z%
+    Desvio-padrão              exclusões: N     percentual: N%
+    Total estatístico          exclusões: TE    percentual: TE%
+    Saldo após estatística: SE
+
+2 - Critérios gráficos ou geométricos
+    Extensão, perímetro, área, centro de gravidade e outros
+    Total gráfico               exclusões: TG    percentual: TG%
+    Saldo após geometria: SG
+
+3 - Critérios de grupos de padrões
+    Grupo G001 e seus subgrupos aceitos ou rejeitados
+    Demais grupos cadastrados e habilitados
+    Total padrões               exclusões: TP    percentual: TP%
+    Saldo após padrões: SP
+
+4 - Combinações aprovadas
+    Total aprovado: W
+    Percentual aprovado sobre o universo inicial: W%
+
+As letras X, Y, Z, N, TE, TG, TP e W representam valores calculados na execução,
+não valores configurados manualmente.
+
+Regras para fechamento do quadro:
+
+- cada combinação será contada somente no primeiro filtro que a excluir;
+- o total da família será a soma das exclusões líquidas de seus filtros;
+- o saldo de uma família será a entrada da família seguinte;
+- exclusões totais mais aprovadas deverão ser iguais ao total recebido;
+- mostrar o percentual sobre o universo inicial para permitir comparação
+  global;
+- opcionalmente mostrar também o percentual sobre o saldo recebido pelo filtro,
+  para revelar a eficiência daquele estágio;
+- permitir expandir cada família para ver os filtros individuais, sem consumir
+  espaço vertical quando os detalhes estiverem fechados.
+
+Observação sobre soma e média: como toda combinação possui seis dezenas,
+média = soma / 6. Os dois valores podem aparecer no estudo e no quadro, mas
+limites matematicamente equivalentes não devem excluir a mesma combinação duas
+vezes nem ser apresentados como evidências independentes.
+
+
+12. IMPORTÂNCIA DOS BACKTESTS
+-------------------------------
+
+O backtest é indispensável antes de usar qualquer critério para selecionar o
+universo integral de combinações.
+
+Para cada concurso histórico usado no teste:
+
+1. construir perfis, médias, desvios e percentuais usando somente concursos
+   anteriores;
+2. configurar ou reaplicar os critérios existentes naquele ponto do tempo;
+3. submeter o resultado real posterior ao funil como se ainda fosse desconhecido;
+4. registrar em qual filtro ele seria aprovado ou excluído;
+5. repetir o processo para muitos pontos do histórico;
+6. consolidar taxas de aprovação, exclusão e falsos descartes por critério.
+
+O backtest ajuda a descobrir:
+
+- critérios que parecem bons apenas porque usaram informação futura;
+- filtros excessivamente restritivos que eliminariam muitos resultados reais;
+- filtros redundantes que removem as mesmas combinações;
+- sensibilidade à ordem dos estágios;
+- estabilidade das médias, desvios e percentuais ao longo do tempo;
+- diferença entre uma relação histórica aparente e um critério realmente
+  consistente fora da amostra usada para criá-lo.
+
+Nenhum bom desempenho em backtest prova capacidade de prever sorteios
+aleatórios. Sua função é testar coerência, evitar vazamento de dados futuros,
+medir o comportamento do funil e tornar explícito o custo de cada exclusão.
+
+
+13. RELATÓRIO DE AUDITORIA DE UM SORTEIO OU COMBINAÇÃO
+---------------------------------------------------------
+
+O sistema deverá produzir um relatório de auditoria detalhado para qualquer
+resultado histórico usado em backtest e, quando solicitado, para uma combinação
+experimental.
+
+O objetivo é permitir que o usuário e a IA confiram se os dados, cálculos,
+classificações e decisões estão corretos nos três níveis de julgamento:
+
+1. valores estatísticos;
+2. medidas gráficas ou geométricas;
+3. grupos de padrões.
+
+Princípio obrigatório da auditoria:
+
+- todos os cálculos auditados serão executados pelas mesmas funções usadas em
+  produção pelo sistema e pelo screener;
+- a auditoria não possuirá uma segunda versão da fórmula;
+- o frontend não recalculará soma, média, geometria ou padrões;
+- as funções reais devolverão o valor e as evidências estruturadas da mesma
+  execução;
+- o relatório somente organizará e apresentará essas evidências;
+- testes provarão que o valor exibido, o persistido e o usado na decisão do
+  funil são iguais.
+
+Uma implementação paralela poderia repetir o mesmo erro ou produzir um valor
+diferente sem testar o sistema real. Por isso, ela não será aceita como prova de
+confiabilidade.
+
+Identificação geral do relatório:
+
+- número do sorteio ou identificador da combinação;
+- data do sorteio, quando for um resultado real;
+- seis dezenas recebidas pela função;
+- origem: resultado real, backtest ou combinação experimental;
+- data e hora da execução;
+- versão das funções e da configuração;
+- intervalo histórico usado como referência;
+- quantidade de resultados existentes nesse intervalo;
+- semente e identificação da execução, quando aplicável.
+
+
+13.1 Auditoria dos valores estatísticos
+-----------------------------------------
+
+Para cada critério estatístico, apresentar:
+
+- nome e código do critério;
+- dados de entrada e fórmula utilizada;
+- substituição dos valores na fórmula;
+- valor calculado;
+- média e desvio-padrão históricos;
+- modo de configuração e limites inferior e superior;
+- operador da comparação;
+- decisão: aprovado ou excluído;
+- justificativa textual da decisão.
+
+Exemplo de conferência da soma:
+
+Dezenas: 04, 09, 10, 13, 39, 52
+
+04 + 09 + 10 + 13 + 39 + 52 = 127
+
+Referência ilustrativa:
+
+- limite inferior: 120;
+- limite superior: 220;
+- comparação: 120 <= 127 <= 220;
+- decisão obtida: aprovado;
+- motivo: soma dentro da faixa configurada.
+
+Esse detalhamento permitirá recalcular manualmente a soma e confirmar se a
+função, a faixa e a decisão estão corretas.
+
+
+13.2 Auditoria gráfica ou geométrica
+--------------------------------------
+
+Para cada medida geométrica, apresentar:
+
+- coordenadas dos seis pontos e ordem usada para uni-los;
+- segmentos e comprimentos individuais;
+- soma usada na extensão aberta e segmento de fechamento;
+- perímetro calculado;
+- regiões ou polígonos identificados;
+- áreas parciais e área total;
+- centro de gravidade X e Y;
+- média, desvio-padrão e limites históricos de cada medida;
+- comparação realizada, decisão e representação visual.
+
+Os valores intermediários deverão permitir localizar um erro de coordenada,
+segmento, área, perímetro ou centro de gravidade sem depender apenas do valor
+final.
+
+
+13.3 Auditoria dos grupos de padrões
+-------------------------------------
+
+Para cada grupo de padrões, apresentar:
+
+- código e nome do grupo;
+- função classificadora executada;
+- dados e ocorrências encontrados;
+- subgrupo identificado e seu percentual histórico;
+- subgrupos aceitos na configuração;
+- decisão obtida e justificativa textual.
+
+Exemplo para sequências:
+
+- dezenas ordenadas: 04, 09, 10, 11, 39, 52;
+- sequência encontrada: 09, 10, 11;
+- comprimento da maior sequência: 3;
+- classificação: PD002;
+- PD002 aceito na configuração: não;
+- decisão: excluído pelo grupo G001.
+
+
+13.4 Caminho no funil
+----------------------
+
+O relatório mostrará os critérios na ordem exata em que foram aplicados. Para
+cada estágio, registrará posição, critério, valor calculado, decisão e tempo
+gasto, quando medido.
+
+Se a combinação for excluída, os critérios posteriores aparecerão como "não
+avaliados devido à exclusão anterior". Isso evita interpretar ausência de
+resultado como aprovação.
+
+
+13.5 Validação humana e pela IA
+----------------------------------
+
+Cada linha auditável permitirá registrar:
+
+- resultado esperado pelo revisor;
+- resultado obtido pelo sistema;
+- conformidade: conforme, divergente ou pendente;
+- observação e data da revisão;
+- identificação do revisor: usuário, IA ou teste automatizado.
+
+A validação não alterará automaticamente a função nem o critério. Uma
+divergência abrirá uma pendência para investigação, correção e novo teste.
+
+
+13.6 Apresentação e exportação
+----------------------------------
+
+O relatório deverá possuir:
+
+- visão resumida dos três níveis;
+- abertura dos detalhes de cada cálculo;
+- destaque do primeiro critério que excluiu a combinação;
+- versão para leitura no navegador;
+- exportação futura em JSON para auditoria técnica;
+- exportação futura em CSV ou planilha;
+- possibilidade futura de gerar relatório imprimível.
+
+Com os mesmos dados, configuração, versões e intervalo histórico, o sistema
+deverá produzir novamente os mesmos cálculos e decisões.
+
+
+14. PERFIL HISTÓRICO DOS PADRÕES E LIMITE DE RARIDADE
+------------------------------------------------------
+
+Decisão confirmada em 28/10/2026:
+
+- a frequência de cada padrão será calculada sobre todos os resultados válidos
+  do intervalo histórico;
+- resultados sem padrão no grupo serão contabilizados como
+  SEM_CORRESPONDENCIA e completarão a diferença até 100%;
+- SEM_CORRESPONDENCIA não é um padrão e não será usado para excluir combinação;
+- o limite de raridade será configurável e usará o operador estrito menor que;
+- um padrão com percentual exatamente igual ao limite não será selecionado;
+- a seleção apenas indica candidatos raros até que uma etapa posterior ative o
+  screener de forma expressa;
+- amostra vazia não fornece evidência suficiente para declarar padrão raro.
+
+Ensaio do grupo PG_001 sobre 3.069 resultados históricos clonados:
+
+- PD_001: 1.192 ocorrências, 38,840013% do total;
+- PD_002: 92 ocorrências, 2,997719% do total;
+- PD_003: 5 ocorrências, 0,162920% do total;
+- SEM_CORRESPONDENCIA: 1.780 resultados, 57,999348% do total.
+
+Com o limite apenas experimental de 10%, PD_002 e PD_003 ficaram abaixo do
+limite. Este resultado não autoriza exclusões. Antes de uso operacional ainda
+serão necessários configuração reproduzível, auditoria e backtest sem dados
+futuros.

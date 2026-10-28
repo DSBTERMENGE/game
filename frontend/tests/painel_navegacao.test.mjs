@@ -250,7 +250,9 @@ test("cadastro de padrões usa grupo obrigatório e grade compacta", async () =>
   for (const id of [
     "form-novo-padrao", "novo-padrao-grupo", "novo-padrao-nome",
     "novo-padrao-descr", "filtro-grupo", "mensagem-padroes",
-    "tabela-padroes", "corpo-tabela-padroes",
+    "tabela-padroes", "corpo-tabela-padroes", "perfil-padroes",
+    "form-perfil", "perfil-limite", "perfil-tipo-corte",
+    "perfil-indicadores", "tabela-perfil", "corpo-tabela-perfil",
   ]) assert.match(html, new RegExp(`id=["']${id}["']`));
   assert.match(css, /\.pagina-padroes\s*\{[^}]*grid-template-rows:\s*auto auto minmax\(0, 1fr\)/s);
   assert.match(css, /\.padroes-grade\s*\{[^}]*overflow:\s*auto/s);
@@ -259,10 +261,14 @@ test("cadastro de padrões usa grupo obrigatório e grade compacta", async () =>
   assert.match(css, /#tabela-padroes input,[^{]+\{[^}]*height:\s*4\.75rem/s);
   assert.match(css, /#tabela-padroes th:nth-child\(2\)\s*\{\s*width:\s*20rem/);
   assert.match(css, /#tabela-padroes th:nth-child\(3\)\s*\{\s*width:\s*22rem/);
+  assert.match(css, /\.perfil-padroes__painel\s*\{[^}]*position:\s*absolute/s);
+  assert.match(css, /\.perfil-padroes__grade\s*\{[^}]*overflow:\s*auto/s);
   assert.match(javascript, /criarCampo\("textarea", padrao\.padrao_nome/);
   assert.match(javascript, /grupo_cod:\s*grupoNovo\.value/);
   assert.match(javascript, /grupo_cod:\s*grupo\.value/);
   assert.match(javascript, /encodeURIComponent\(filtroGrupo\.value\)/);
+  assert.match(javascript, /api\/grupos-padroes\/PG_001\/perfil/i);
+  assert.match(javascript, /ativa_no_screener|screener inativo/i);
 });
 
 test("nenhum resultado mantém navegação desabilitada e informa o estado", () => {

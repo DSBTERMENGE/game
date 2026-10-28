@@ -12,6 +12,15 @@ from .analise_geometrica import (
     calcular_e_persistir_analise_geometrica,
     recalcular_analises_geometricas,
 )
+from .classificacao_padroes import (
+    ClassePerfilPadrao,
+    ContagemClassificacao,
+    ErroRecalculoClassificacao,
+    PerfilClassificacaoGrupo,
+    RelatorioRecalculoClassificacao,
+    calcular_perfil_grupo_sequenciais,
+    recalcular_classificacoes_grupo_sequenciais,
+)
 
 __all__ = [
     "RelatorioImportacaoBanco",
@@ -24,4 +33,11 @@ __all__ = [
     "RelatorioRecalculoGeometrico",
     "calcular_e_persistir_analise_geometrica",
     "recalcular_analises_geometricas",
+    "ContagemClassificacao",
+    "ClassePerfilPadrao",
+    "ErroRecalculoClassificacao",
+    "PerfilClassificacaoGrupo",
+    "RelatorioRecalculoClassificacao",
+    "calcular_perfil_grupo_sequenciais",
+    "recalcular_classificacoes_grupo_sequenciais",
 ]

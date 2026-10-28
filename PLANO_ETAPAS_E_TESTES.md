@@ -1668,5 +1668,547 @@ aberto. Evidência em `MSen/tests/TESTE_ITEM_15_16_FECHAMENTO.md`.
 
 ## Próximo item proposto
 
-Commit de segurança da Etapa 15, somente após autorização. Depois, definir com
-o usuário a próxima etapa funcional. A Etapa 8/PythonAnywhere permanece adiada.
+Iniciar a Etapa 16 pela definição formal do contrato de classificação por grupo.
+A Etapa 8/PythonAnywhere permanece adiada.
+
+---
+
+## Etapas 16 a 21 — perfis, screener, backtests e auditoria
+
+As subetapas abaixo foram planejadas para sessões curtas, preferencialmente de
+4 a 8 minutos. Cada subetapa deverá terminar com teste proporcional, atualização
+da continuidade e pedido de autorização para a seguinte. Nenhuma etapa autoriza
+automaticamente a próxima.
+
+### Etapa 16 — classificação dos resultados por grupos de padrões
+
+Objetivo: registrar, para cada resultado real e grupo, o subgrupo identificado
+pela função classificadora e produzir os percentuais históricos.
+
+#### 16.1 — Contrato da classificação
+
+- Confirmar o nome `resultado_classificacao_padrao`.
+- Definir se cada grupo terá classes mutuamente exclusivas.
+- Definir o estado `SEM_CORRESPONDENCIA` para a diferença até 100%, sem criar
+  automaticamente um novo padrão.
+- Definir o denominador oficial dos percentuais e a exibição de denominadores
+  alternativos.
+- Documentar exemplos de entrada, classificação e casos ambíguos.
+- Teste: revisar o contrato com casos manuais antes de criar DDL.
+
+Executado em 28/10/2026. O levantamento confirmou exclusividade nos nove
+padrões atuais e identificou a diferença `SEM_CORRESPONDENCIA` em cada grupo.
+Contrato proposto em `docs/CONTRATO_CLASSIFICACAO_GRUPOS.md` e evidência em
+`MSen/tests/TESTE_ITEM_16_1.md`. Após os esclarecimentos, o contrato conceitual
+foi aprovado com seleção de padrões raros por limite configurável. Nenhum DDL
+foi criado.
+
+#### 16.2 — DDL e migração isolada
+
+- Criar migração versionada da nova tabela.
+- Incluir chaves estrangeiras para `resultados`, `padroes_grupo` e
+  `padroes_subgrupo`.
+- Incluir unicidade, versão de cálculo, data de cálculo e índices de consulta.
+- Atualizar o esquema consolidado sem executar ainda no banco local principal.
+- Teste: validar sintaxe e ordem da migração em estrutura temporária.
+
+Executado em 28/10/2026. Foi criada a migração versionada `008` com uma
+classificação por resultado e grupo, estados mutuamente coerentes, referências
+ao resultado, grupo e padrão pertencente ao grupo, versão, data e índice de
+contagem. O esquema consolidado foi atualizado; passaram 13 testes direcionados
+e 384 testes na regressão Python. O database `games` não recebeu a migração.
+Evidência em `MSen/tests/TESTE_ITEM_16_2.md`.
+
+#### 16.3 — Teste PostgreSQL da migração
+
+- Aplicar a migração em database temporário.
+- Confirmar primeira execução, segunda execução idempotente, restrições e
+  rollback em falha.
+- Confirmar remoção do database temporário.
+
+Executado em 28/10/2026 no database efêmero `games_test_7_1_163`. A versão
+`008` foi a única aplicada sobre a estrutura `001`–`007`; a segunda execução
+reconheceu todas as versões sem reaplicá-las. Os dois estados válidos foram
+aceitos, cinco violações foram rejeitadas, a cascata do resultado funcionou e
+uma migração defeituosa sofreu rollback completo. O database temporário foi
+removido e a auditoria final retornou `[]`. O `games` não foi alterado.
+Evidência em `MSen/tests/TESTE_ITEM_16_3.md`.
+
+#### 16.4 — Modelo e repositório Python
+
+- Criar o modelo imutável da classificação.
+- Criar operações de inserir/atualizar, listar por resultado e listar por grupo.
+- Manter SQL restrito ao repositório.
+- Teste: unitário e integração em PostgreSQL temporário.
+
+Executado em 28/10/2026. Foram criados o modelo imutável, os dois estados
+tipados e o repositório exclusivo de classificações. O salvamento insere ou
+atualiza pelo par resultado/grupo, preservando a identidade, e as consultas
+listam por resultado ou grupo. Passaram oito testes direcionados, a integração
+real no database temporário e 392 testes de regressão. O database efêmero foi
+removido e o `games` não foi alterado. Evidência em
+`MSen/tests/TESTE_ITEM_16_4.md`.
+
+#### 16.5 — Classificador de um grupo piloto
+
+- Usar o grupo de dezenas sequenciais como piloto.
+- Classificar pelo maior grupo sequencial ou registrar `SEM_CORRESPONDENCIA`.
+- Garantir exatamente uma classificação por resultado nesse grupo.
+- Registrar descrição do que cada função faz.
+- Teste: casos aprovados manualmente, fronteiras e dezenas fora de ordem.
+
+Executado em 28/10/2026. O classificador de `PG_001` passou a produzir uma
+classe exclusiva pelo maior bloco e `SEM_CORRESPONDENCIA` quando o maior bloco
+tem tamanho um. A mesma análise central alimenta os detectores existentes e
+gera evidência estruturada para auditoria. Os casos de dois, três, quatro,
+cinco e seis, ausência, empate, limites 01/60 e entrada fora de ordem foram
+validados. Passaram 18 testes direcionados e 398 testes de regressão. Nenhum
+banco foi acessado. Evidência em `MSen/tests/TESTE_ITEM_16_5.md`.
+
+#### 16.6 — Recálculo histórico do grupo piloto
+
+- Varrer os resultados reais em ordem de concurso.
+- Persistir classificações de forma transacional e idempotente.
+- Permitir recalcular quando mudar a versão da função.
+- Teste: subconjunto controlado e depois histórico completo local.
+
+Executado em 28/10/2026. O serviço transacional lê o histórico paginado,
+resolve grupo e padrões pelos códigos estáveis, classifica e grava de forma
+idempotente. Uma falha controlada na terceira gravação comprovou rollback
+integral. No clone dos 3.069 resultados, foram obtidos 1.192 `PD_001`, 92
+`PD_002`, cinco `PD_003` e 1.780 `SEM_CORRESPONDENCIA`; o total fechou em 3.069
+e a segunda execução preservou todas as identidades. Passaram 400 testes. Os
+databases temporários foram removidos e o `games` não foi alterado. Evidência
+em `MSen/tests/TESTE_ITEM_16_6.md`.
+
+#### 16.7 — Perfil de contagens e percentuais
+
+- Contar ocorrências por subgrupo.
+- Calcular percentual sobre todos os resultados e sobre os classificados.
+- Reconciliar soma das classes com o total de resultados.
+- Atualizar `num_oco` consolidado sem perder a trilha individual.
+- Calcular a diferença `SEM_CORRESPONDENCIA` sem cadastrá-la como padrão.
+- Receber um limite percentual experimental e indicar quais padrões ficaram
+  estritamente abaixo dele, sem ativar ainda o screener.
+- Teste: contagens conhecidas e fechamento em 100% somando padrões e
+  `SEM_CORRESPONDENCIA`.
+
+Executado em 28/10/2026. O perfil usa todos os resultados como denominador
+oficial e mostra também o percentual entre os classificados. O operador de
+raridade é estritamente `<`; `SEM_CORRESPONDENCIA` fecha os 100%, mas nunca é
+selecionado. Com limite experimental de 10% no clone histórico, `PD_002`
+(2,997719%) e `PD_003` (0,162920%) foram indicados, sem ativação no screener.
+O catálogo foi sincronizado com estatísticas completas e reconciliado com as
+classificações. Passaram cinco testes unitários, dois fluxos PostgreSQL e 403
+testes de regressão. Evidência em `MSen/tests/TESTE_ITEM_16_7.md`.
+
+#### 16.8 — API de perfil por grupo
+
+- Expor grupo, subgrupos, contagens, percentuais, intervalo e versão.
+- Permitir data ou concurso de corte para uso futuro no backtest.
+- Teste: contrato JSON, corte histórico e erros seguros.
+
+Executado em 28/10/2026. Foi criado o endpoint somente leitura
+`GET /api/grupos-padroes/PG_001/perfil`, com limite de raridade e cortes
+inclusivos por concurso ou data. A resposta expõe amostra, versões, contagens,
+percentuais e estatísticas, mantendo `ativa_no_screener=false`. Doze testes
+direcionados e a integração Flask/PostgreSQL confirmaram o perfil completo de
+3.069 resultados e dois cortes de 100 resultados sem alterar o catálogo.
+Passaram 410 testes de regressão. Evidência em
+`MSen/tests/TESTE_ITEM_16_8.md`; contrato em `docs/API_PERFIS_PADROES.md`.
+
+#### 16.9 — Tela compacta do perfil
+
+- Mostrar a distribuição dos subgrupos na página de padrões.
+- Usar tabela com rolagem interna e percentual claramente identificado.
+- Não consumir nova linha permanente na navegação.
+- Teste: JavaScript e Google Chrome.
+
+Executado em 28/10/2026. A página de padrões recebeu um painel flutuante aberto
+na própria linha do filtro, sem criar linha de navegação nem deslocar a grade.
+Ele mostra resumo, corte, quatro classes, percentuais, estatísticas e indicação
+de raridade em tabela com rolagem interna, sempre informando que o screener está
+inativo. Passaram 24 testes JavaScript, 12 fluxos no Google Chrome e 410 testes
+Python. Nenhum banco foi alterado. Evidência em
+`MSen/tests/TESTE_ITEM_16_9.md`.
+
+#### 16.10 — Regressão e fechamento da classificação
+
+- Executar testes Python, PostgreSQL temporário, API e Chrome.
+- Conferir que resultados históricos não foram alterados.
+- Preparar commit somente mediante autorização.
+
+Executado em 28/10/2026. Após backup validado de 226.601 bytes e SHA-256
+registrado, somente a migração `008` foi aplicada ao `games`. Foram persistidas
+3.069 classificações sem alterar resultados, frequências ou análises
+geométricas. Uma instância antiga que dividia a porta 5050 foi removida; o
+servidor atualizado e o Chrome real confirmaram API, perfil completo e corte.
+Passaram 410 testes Python, 24 JavaScript, 12 fluxos Chrome e três fluxos
+integrados. Não restou database temporário. Evidência em
+`MSen/tests/TESTE_ITEM_16_10.md`.
+
+Estado da Etapa 16: concluída localmente e operacional. O screener continua sem
+exclusão pelos novos perfis. Commit e push dependem de autorização expressa.
+
+
+### Etapa 17 — perfis estatísticos, geométricos e distribuições
+
+Objetivo: construir as referências históricas usadas nas faixas e mostrá-las
+simultaneamente em gráficos compreensíveis.
+
+#### 17.1 — Catálogo dos parâmetros
+
+- Relacionar soma, média, mediana, desvio-padrão, extensão, perímetro, área,
+  quantidade de regiões e centro de gravidade X/Y.
+- Registrar unidade, precisão, fórmula e fonte de cada parâmetro.
+- Marcar soma e média como informações linearmente equivalentes.
+- Teste: inventário comparado com as colunas e funções existentes.
+
+#### 17.2 — Serviço de janela histórica
+
+- Selecionar todos os resultados ou somente os anteriores a uma data/concurso.
+- Proibir inclusão do próprio resultado avaliado e de resultados futuros.
+- Teste: cortes inicial, intermediário e final.
+
+#### 17.3 — Perfil estatístico genérico
+
+- Calcular quantidade, média, desvio-padrão, mínimo, máximo e distribuição.
+- Produzir limites por percentual da média ou multiplicador de desvio-padrão.
+- Permitir margens inferior e superior diferentes.
+- Teste: conjunto controlado com cálculos manuais.
+
+#### 17.4 — Perfis geométricos
+
+- Aplicar o perfil genérico à tabela `analise_geometrica_resultado`.
+- Tratar centro de gravidade X e Y separadamente na primeira versão.
+- Registrar valores ausentes ou cálculos impossíveis sem substituição silenciosa.
+- Teste: figuras controladas e reconciliação com resultados persistidos.
+
+#### 17.5 — API das distribuições
+
+- Expor classes do histograma, frequências, curva normal de referência, média,
+  desvio e limites.
+- Informar intervalo histórico e tamanho da amostra.
+- Teste: JSON reproduzível e proteção contra intervalos vazios.
+
+#### 17.6 — Painel com todos os gráficos
+
+- Mostrar todos os parâmetros simultaneamente em uma grade compacta.
+- Exibir histograma real, curva normal, média, desvios e faixa configurada.
+- Usar rolagem interna e reorganização responsiva.
+- Teste: dados simulados e Google Chrome em larguras diferentes.
+
+#### 17.7 — Janela de configuração das faixas
+
+- Escolher percentual da média ou multiplicador do desvio-padrão.
+- Configurar margens inferior e superior.
+- Mostrar limites calculados antes de salvar.
+- Não ativar exclusão automaticamente ao salvar o estudo.
+- Teste: cálculos, validação de entrada e persistência da configuração.
+
+#### 17.8 — Regressão e fechamento dos perfis
+
+- Conferir cálculos Python, API, gráficos e Chrome.
+- Preparar commit somente mediante autorização.
+
+
+### Etapa 18 — adaptação do screener aos três níveis
+
+Objetivo: produzir o quadro consolidado solicitado e manter contabilidade exata
+do funil.
+
+Decisão de 28/10/2026: antes de construir API, persistência ou novas funções,
+será criada uma tela de demonstração com valores fictícios. O usuário deverá
+aprovar a organização e a quantidade de informações. A demonstração poderá usar
+texto, blocos e detalhes expansíveis; não é obrigada a usar tabelas.
+
+#### 18.0 — Protótipo visual sem backend
+
+- Criar uma página provisória com dados fictícios e identificada como esboço.
+- Mostrar todas as informações em um conjunto único e compacto.
+- Usar três blocos principais: estatística, geometria e padrões.
+- Exibir em cada bloco: entrada, exclusões, percentual, saldo e detalhes dos
+  filtros.
+- No bloco de padrões, mostrar limite de raridade, frequência de cada padrão e
+  lista de padrões selecionados para exclusão.
+- Mostrar total inicial, total excluído e total aprovado em destaque.
+- Permitir abrir e fechar detalhes sem aumentar permanentemente a altura.
+- Não chamar API, não gravar banco e não alterar o screener atual.
+- Apresentar no Chrome para aprovação antes da subetapa 18.1.
+
+#### 18.1 — Contrato do novo funil
+
+- Fixar a ordem inicial: estatística, geometria e grupos de padrões.
+- Definir entrada, saída, motivo e evidência de cada filtro.
+- Definir subtotais e percentuais sobre total inicial e saldo recebido.
+- Teste: exemplos manuais de fechamento contábil.
+
+#### 18.2 — Fotografia reproduzível da configuração
+
+- Registrar parâmetros, limites, grupos aceitos, ordem, versões e semente.
+- Registrar limite de raridade, operador, intervalo histórico, denominador,
+  frequências e lista de padrões excludentes calculada no início da execução.
+- Garantir que uma execução passada possa ser reproduzida.
+- Teste: serialização e checksum da configuração.
+
+#### 18.3 — Família estatística
+
+- Conectar os parâmetros configurados ao funil.
+- Evitar dupla exclusão por soma e média equivalentes.
+- Contabilizar exclusões líquidas e subtotal.
+- Teste: combinações dentro, fora e nos limites.
+
+#### 18.4 — Família geométrica
+
+- Conectar extensão, perímetro, área, regiões e centro de gravidade.
+- Interromper a combinação no primeiro filtro geométrico que a excluir.
+- Teste: figuras controladas e subtotal geométrico.
+
+#### 18.5 — Família de grupos de padrões
+
+- Classificar a combinação uma vez por grupo.
+- Calcular previamente as frequências no espaço amostral disponível.
+- Selecionar para exclusão os padrões estritamente abaixo do limite configurado.
+- Comparar o subgrupo obtido com a fotografia dos padrões excludentes.
+- Contabilizar exclusão pelo grupo, não por colunas fixas de padrões.
+- Teste: grupos aceitos, rejeitados e `SEM_CORRESPONDENCIA` passando pelo funil.
+
+#### 18.6 — Quadro contábil consolidado
+
+- Mostrar total possível ou tamanho da amostra.
+- Mostrar filtros, exclusões, percentuais e subtotais das três famílias.
+- Mostrar saldo entre famílias e total aprovado.
+- Exigir: recebidas = exclusões líquidas + aprovadas.
+- Teste: reconciliação automática obrigatória.
+
+#### 18.7 — Interface expansível do screener
+
+- Exibir as três famílias em linhas compactas.
+- Permitir expandir os filtros individuais sem ocupar espaço quando fechados.
+- Mostrar total aprovado e percentuais finais.
+- Teste: JavaScript, responsividade e Chrome.
+
+#### 18.8 — Ensaio protegido de 5.000 e fechamento
+
+- Executar o novo funil somente sobre a amostra protegida.
+- Comparar resultados com a versão anterior e explicar divergências.
+- Manter o processamento integral bloqueado.
+- Preparar commit somente mediante autorização.
+
+
+### Etapa 19 — mecanismo de backtest sem informação futura
+
+Objetivo: avaliar se os critérios teriam preservado resultados reais ainda
+desconhecidos no ponto histórico simulado.
+
+Estado decidido em 28/10/2026: etapa formalmente adiada. O backtest somente
+será desenvolvido quando cadastro, classificações, perfis, configurações,
+screener e auditoria manual estiverem operacionais e validados. A numeração é
+mantida para preservar o planejamento, mas a Etapa 20 poderá ser desenvolvida
+antes da Etapa 19.
+
+#### 19.1 — Contrato temporal do backtest
+
+- Definir concurso avaliado, janela de treinamento e primeiro concurso elegível.
+- Impedir o uso do concurso avaliado e de concursos posteriores.
+- Teste: casos de vazamento de futuro obrigatoriamente rejeitados.
+
+#### 19.2 — Backtest de um único sorteio
+
+- Construir os perfis apenas com o passado.
+- Submeter o resultado real seguinte aos três níveis.
+- Registrar aprovação, primeira exclusão e fotografia da configuração.
+- Teste: exemplo pequeno calculado manualmente.
+
+#### 19.3 — Execução sequencial de vários sorteios
+
+- Repetir o processo para um intervalo histórico.
+- Processar em lotes reiniciáveis e mostrar progresso.
+- Teste: interrupção e retomada sem duplicidade.
+
+#### 19.4 — Métricas do backtest
+
+- Contar resultados reais aprovados e descartados.
+- Mostrar falso descarte por filtro e por família.
+- Medir estabilidade dos limites e percentuais no tempo.
+- Teste: fechamento das métricas com o total avaliado.
+
+#### 19.5 — Comparação de configurações
+
+- Comparar percentuais, multiplicadores, grupos aceitos e ordens do funil.
+- Usar exatamente os mesmos concursos para tornar a comparação justa.
+- Não escolher automaticamente uma configuração vencedora.
+- Teste: resultados reproduzíveis por identificação de execução.
+
+#### 19.6 — API e tela do backtest
+
+- Criar execução, acompanhar progresso e consultar resumo.
+- Mostrar linha do tempo de aprovações e exclusões.
+- Teste: API, JavaScript e Chrome sem bloquear a interface.
+
+#### 19.7 — Regressão e fechamento do backtest
+
+- Testar banco temporário, cálculos, retomada, API e Chrome.
+- Preparar commit somente mediante autorização.
+
+
+### Etapa 20 — relatório de auditoria detalhado
+
+Objetivo: permitir que o usuário e a IA confiram entradas, fórmulas, valores
+intermediários e decisões para um sorteio ou combinação.
+
+Decisão de 28/10/2026: a primeira versão começará pela digitação intencional de
+uma combinação, por exemplo `02 04 06 08 10 12`. O sistema executará vários
+testes independentes e permitirá que a conferência seja salva aos poucos, de
+acordo com o tempo e o cansaço do usuário.
+
+Decisão obrigatória de 28/10/2026: os valores mostrados pela auditoria serão
+produzidos pelas mesmas funções de produção usadas pelo sistema e pelo screener.
+Não serão criadas fórmulas duplicadas no frontend nem funções paralelas somente
+para montar o relatório. A auditoria exibirá o resultado e as evidências
+estruturadas devolvidas pela execução real.
+
+#### 20.0 — Protótipo visual da auditoria manual
+
+- Criar esboço com caixa para seis dezenas e botão `Calcular testes`.
+- Mostrar lista compacta de testes com nome, resultado, demonstração do cálculo,
+  estado da revisão e observação.
+- Usar exemplos simples de soma e média antes de integrar todos os testes.
+- Identificar os valores do protótipo como meramente ilustrativos; eles servem
+  somente para aprovar o leiaute e não contam como auditoria ou validação.
+- Apresentar no Chrome para aprovação sem banco e sem API definitiva.
+
+#### 20.1 — Contrato do relatório
+
+- Definir identificação, origem, dezenas, intervalo, configuração e versões.
+- Definir estados: aprovado, excluído e não avaliado por exclusão anterior.
+- Separar a definição do teste, a execução para uma combinação e a revisão
+  humana do resultado.
+- Teste: documento JSON de exemplo aprovado pelo usuário.
+
+#### 20.1.1 — Modelo persistente dos testes e revisões
+
+Usar três entidades, evitando repetir nome e descrição do teste em cada
+combinação:
+
+1. `testes_auditoria`: catálogo com `id_teste`, código, nome, categoria,
+   descrição, função e estado ativo;
+2. `auditoria_execucao`: combinação digitada, origem, data, configuração e
+   versões;
+3. `auditoria_resultado_teste`: liga execução e teste, guardando valores,
+   demonstração, resultado obtido, revisão, observação e datas.
+
+Para preservar a ideia de aprovação S/N sem confundir falta de revisão com
+erro confirmado, guardar dois estados:
+
+- `testado`: S/N, inicialmente N;
+- `aprovado`: S/N, inicialmente N e somente significativo quando `testado = S`.
+
+Na interface, o estado principal será mostrado como:
+
+- PENDENTE: `testado = N`;
+- APROVADO: `testado = S` e `aprovado = S`;
+- DIVERGENTE: `testado = S` e `aprovado = N`.
+
+Isso permite interromper a auditoria, retornar outro dia e saber exatamente
+quais testes ainda não foram conferidos.
+
+#### 20.2 — Evidências estatísticas
+
+- Fazer as funções estatísticas de produção devolverem resultado e evidência
+  estruturada da mesma execução.
+- Registrar fórmula, substituição dos valores, resultado, referências, limites
+  e decisão sem recalcular nada na camada de auditoria.
+- Mostrar operações completas, como `04 + 09 + ... + 52 = 127`.
+- Teste: confirmar que o valor auditado é o mesmo objeto/resultado consumido
+  pelo screener e recalcular manualmente exemplos conhecidos.
+
+#### 20.3 — Evidências geométricas
+
+- Instrumentar as funções geométricas de produção para devolver coordenadas,
+  segmentos, comprimentos, áreas parciais, perímetro e centro de gravidade como
+  evidência da mesma execução.
+- Relacionar cada valor ao desenho exibido.
+- Proibir recálculo geométrico em JavaScript para fins de auditoria.
+- Teste: figuras simples com valores exatos e igualdade com o valor usado pelo
+  filtro de produção.
+
+#### 20.4 — Evidências dos grupos de padrões
+
+- Executar os classificadores de produção e usar diretamente a classificação
+  consumida pelo funil.
+- Registrar ocorrências encontradas, classificação, percentual histórico,
+  padrões excludentes e decisão devolvidos pela mesma execução.
+- Registrar denominador, limite de raridade, operador e motivo pelo qual o
+  padrão foi ou não selecionado para exclusão.
+- Teste: sequências e colunas aprovadas manualmente e igualdade entre auditoria,
+  classificação persistida e decisão do screener.
+
+#### 20.5 — Trilha completa do funil
+
+- Mostrar a ordem aplicada e destacar o primeiro critério excludente.
+- Marcar explicitamente os estágios posteriores como não avaliados.
+- Teste: nenhuma ausência poderá ser interpretada como aprovação.
+- Teste de integração: executar uma combinação uma vez e provar que quadro do
+  screener e relatório de auditoria usam as mesmas decisões e evidências.
+
+#### 20.6 — Revisão humana e pela IA
+
+- Registrar esperado, obtido, conformidade, observação, revisor e data.
+- Permitir salvar uma revisão por vez sem exigir que todos os testes sejam
+  concluídos na mesma sessão.
+- Mostrar quantidade total, pendente, aprovada e divergente.
+- Criar pendência quando houver divergência, sem corrigir automaticamente.
+- Teste: fluxo pendente, conforme e divergente.
+
+#### 20.7 — Tela de auditoria
+
+- Digitar seis dezenas ou selecionar futuramente um sorteio existente.
+- Validar exatamente seis números distintos entre 01 e 60.
+- Mostrar resumo dos três níveis e detalhes expansíveis.
+- Permitir salvar e retomar a conferência parcial.
+- Preservar espaço vertical e horizontal com rolagens internas.
+- Teste: Chrome com um relatório grande.
+
+#### 20.8 — Exportação JSON
+
+- Exportar a trilha técnica completa e reproduzível.
+- Incluir checksum da configuração e versões.
+- Teste: exportar e reabrir sem perda.
+
+#### 20.9 — Exportação tabular
+
+- Criar CSV ou planilha para conferência humana.
+- Proteger contra fórmulas injetadas em células exportadas.
+- Teste: reabertura e comparação dos valores.
+
+#### 20.10 — Regressão e fechamento da auditoria
+
+- Executar testes Python, banco temporário, API, exportação e Chrome.
+- Preparar commit somente mediante autorização.
+
+
+### Etapa 21 — capacidade e decisão sobre o universo integral
+
+Objetivo: preparar tecnicamente a análise das 50.063.860 combinações sem
+liberá-la automaticamente.
+
+#### 21.1 — Medição de capacidade
+
+- Medir custo real por família, memória, tempo e volume de saída.
+- Projetar cenários para o universo integral.
+
+#### 21.2 — Processamento em lotes
+
+- Planejar lotes, checkpoints, retomada e cancelamento seguro.
+- Evitar manter todas as combinações simultaneamente em memória.
+
+#### 21.3 — Ensaio ampliado controlado
+
+- Aumentar o limite gradualmente somente mediante autorização.
+- Confirmar contabilidade e reprodução em cada escala.
+
+#### 21.4 — Decisão de liberação integral
+
+- Revisar backtests, falsos descartes, auditorias, desempenho e armazenamento.
+- Manter trava integral até autorização explícita final.

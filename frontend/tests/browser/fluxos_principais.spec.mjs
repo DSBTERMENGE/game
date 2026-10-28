@@ -218,6 +218,34 @@ async function simularApiGrupos(page, incluirSegundo = false) {
 }
 
 
+async function simularPerfilPadroes(page) {
+  const consultas = [];
+  await page.route("**/api/grupos-padroes/PG_001/perfil**", async (rota) => {
+    consultas.push(new URL(rota.request().url()).searchParams.toString());
+    await rota.fulfill({ json: { perfil: {
+      grupo_cod: "PG_001",
+      amostra: {
+        total_resultados: 3069, total_classificados: 1289,
+        sem_correspondencia: 1780, numero_ap_inicial: 1,
+        numero_ap_final: 3069, data_inicial: "1996-03-11", data_final: "2026-10-25",
+      },
+      raridade: {
+        limite_percentual: "10.000000", operador: "<",
+        padroes_indicados: ["PD_002", "PD_003"], ativa_no_screener: false,
+      },
+      versoes_calculo: [1],
+      classes: [
+        { padrao_cod: "PD_001", quantidade: 1192, percentual_total: "38.840013", percentual_classificados: "92.474787", intervalo_medio: "2.575147", desvio_padrao: "1.995592", raro: false },
+        { padrao_cod: "PD_002", quantidade: 92, percentual_total: "2.997719", percentual_classificados: "7.137316", intervalo_medio: "33.527473", desvio_padrao: "33.637806", raro: true },
+        { padrao_cod: "PD_003", quantidade: 5, percentual_total: "0.162920", percentual_classificados: "0.387898", intervalo_medio: "680.500000", desvio_padrao: "545.478460", raro: true },
+        { padrao_cod: null, quantidade: 1780, percentual_total: "57.999348", percentual_classificados: null, intervalo_medio: null, desvio_padrao: null, raro: false },
+      ],
+    } } });
+  });
+  return consultas;
+}
+
+
 async function simularCatalogoExtenso(page) {
   const grupos = Array.from({ length: 30 }, (_, indice) => ({
     id_grupo: indice + 1,
@@ -423,6 +451,35 @@ test("grade de padrões filtra, inclui, transfere e protege estatísticas", asyn
   page.once("dialog", (dialogo) => dialogo.accept());
   await novo.locator('button[data-acao="excluir"]').click();
   await expect(novo).toHaveCount(0);
+});
+
+
+test("perfil de padrões abre sobre a grade e mostra diagnóstico sem ativar filtro", async ({ page }) => {
+  await simularApi(page);
+  await simularApiGrupos(page, true);
+  const consultas = await simularPerfilPadroes(page);
+  await page.goto("/padroes.html");
+  await page.locator("#perfil-padroes summary").click();
+
+  await expect(page.locator("#corpo-tabela-perfil tr")).toHaveCount(4);
+  await expect(page.locator("#resumo-perfil")).toHaveText("3.069 resultados");
+  await expect(page.locator("#perfil-indicadores")).toContainText("PD_002, PD_003");
+  await expect(page.locator("#mensagem-perfil")).toContainText("screener inativo");
+  await expect(page.locator('#corpo-tabela-perfil tr[data-raro="true"]')).toHaveCount(2);
+
+  const geometria = await page.evaluate(() => {
+    const painel = document.querySelector(".perfil-padroes__painel").getBoundingClientRect();
+    const grade = document.querySelector(".padroes-grade").getBoundingClientRect();
+    return { painelTopo: painel.top, gradeTopo: grade.top, posicao: getComputedStyle(document.querySelector(".perfil-padroes__painel")).position };
+  });
+  expect(geometria.posicao).toBe("absolute");
+  expect(geometria.painelTopo).toBeLessThan(geometria.gradeTopo + 60);
+
+  await page.locator("#perfil-tipo-corte").selectOption("numero");
+  await page.locator("#perfil-numero").fill("100");
+  await page.locator("#form-perfil button").click();
+  await expect.poll(() => consultas.length).toBe(2);
+  expect(consultas[1]).toContain("numero_ap_ate=100");
 });
 
 

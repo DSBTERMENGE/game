@@ -1,6 +1,16 @@
 """Detectores puros dos padrões iniciais de dezenas sequenciais."""
 
 from collections.abc import Sequence
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True, slots=True)
+class AnaliseSequencial:
+    """Evidência reproduzível dos maiores blocos consecutivos encontrados."""
+
+    dezenas_ordenadas: tuple[int, ...]
+    maior_tamanho: int
+    maiores_blocos: tuple[tuple[int, ...], ...]
 
 
 def _validar_dezenas(dezenas: Sequence[int]) -> tuple[int, ...]:
@@ -18,15 +28,33 @@ def _validar_dezenas(dezenas: Sequence[int]) -> tuple[int, ...]:
 
 
 def _maior_grupo_sequencial(dezenas: Sequence[int]) -> int:
+    return analisar_dezenas_sequenciais(dezenas).maior_tamanho
+
+
+def analisar_dezenas_sequenciais(dezenas: Sequence[int]) -> AnaliseSequencial:
+    """Localiza o maior bloco sequencial sem unir as dezenas 60 e 01.
+
+    A entrada é validada e ordenada. A evidência contém todos os blocos que
+    empatam no maior tamanho, permitindo conferir a classificação produzida
+    pela mesma função central usada pelos detectores.
+    """
+
     ordenadas = _validar_dezenas(dezenas)
-    maior = atual = 1
+    blocos: list[tuple[int, ...]] = []
+    atual = [ordenadas[0]]
     for anterior, numero in zip(ordenadas, ordenadas[1:]):
         if numero - anterior == 1:
-            atual += 1
-            maior = max(maior, atual)
+            atual.append(numero)
         else:
-            atual = 1
-    return maior
+            blocos.append(tuple(atual))
+            atual = [numero]
+    blocos.append(tuple(atual))
+    maior = max(len(bloco) for bloco in blocos)
+    return AnaliseSequencial(
+        dezenas_ordenadas=ordenadas,
+        maior_tamanho=maior,
+        maiores_blocos=tuple(bloco for bloco in blocos if len(bloco) == maior),
+    )
 
 
 def detectar_duas_dezenas_sequenciais(dezenas: tuple[int, ...]) -> bool:

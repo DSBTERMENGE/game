@@ -122,3 +122,24 @@ regras Python.
 Uma funcionalidade estará pronta quando tiver comportamento definido,
 implementação, teste correspondente, documentação atualizada e nenhuma
 credencial ou dado temporário incluído no Git.
+
+## Próximo ciclo aprovado para planejamento
+
+O desenvolvimento seguinte será dividido em seis etapas funcionais:
+
+1. classificar cada resultado real por grupo e subgrupo de padrões;
+2. construir perfis estatísticos e geométricos por intervalo histórico;
+3. adaptar o screener para os três níveis e seus subtotais;
+4. executar backtests sem utilizar informações futuras;
+5. produzir relatórios auditáveis de entradas, cálculos e decisões;
+6. medir capacidade antes de qualquer liberação das 50.063.860 combinações.
+
+Antes da construção definitiva do novo screener e da auditoria, serão
+apresentados protótipos visuais estáticos no Chrome. O backtest foi adiado até
+que as demais partes do sistema estejam operacionais. A auditoria manual poderá
+ser desenvolvida antes dele e guardar revisões parciais para continuação em
+outra sessão.
+
+O detalhamento operacional está nas Etapas 16 a 21 de
+`PLANO_ETAPAS_E_TESTES.md`. Cada subetapa exige autorização separada e teste
+antes do avanço. A publicação no PythonAnywhere continua adiada.

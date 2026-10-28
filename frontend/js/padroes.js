@@ -1,5 +1,6 @@
 const API_PADROES = "/api/padroes";
 const API_GRUPOS = "/api/grupos-padroes";
+const API_PERFIL = "/api/grupos-padroes/PG_001/perfil";
 
 const formulario = document.querySelector("#form-novo-padrao");
 const grupoNovo = document.querySelector("#novo-padrao-grupo");
@@ -9,7 +10,19 @@ const filtroGrupo = document.querySelector("#filtro-grupo");
 const corpoTabela = document.querySelector("#corpo-tabela-padroes");
 const mensagem = document.querySelector("#mensagem-padroes");
 const botaoAdicionar = document.querySelector("#botao-adicionar-padrao");
-const estado = { grupos: [], padroes: [], ocupado: false };
+const detalhesPerfil = document.querySelector("#perfil-padroes");
+const formularioPerfil = document.querySelector("#form-perfil");
+const limitePerfil = document.querySelector("#perfil-limite");
+const tipoCortePerfil = document.querySelector("#perfil-tipo-corte");
+const campoNumeroPerfil = document.querySelector("#perfil-campo-numero");
+const numeroPerfil = document.querySelector("#perfil-numero");
+const campoDataPerfil = document.querySelector("#perfil-campo-data");
+const dataPerfil = document.querySelector("#perfil-data");
+const resumoPerfil = document.querySelector("#resumo-perfil");
+const mensagemPerfil = document.querySelector("#mensagem-perfil");
+const indicadoresPerfil = document.querySelector("#perfil-indicadores");
+const corpoPerfil = document.querySelector("#corpo-tabela-perfil");
+const estado = { grupos: [], padroes: [], ocupado: false, perfilCarregado: false };
 
 function informar(texto, tipo = "informacao") {
   mensagem.textContent = texto;
@@ -83,6 +96,78 @@ function criarBotao(texto, acao, codigo) {
 
 function formatarCalculado(valor) {
   return valor === null || valor === undefined ? "—" : String(valor).replace(".", ",");
+}
+
+function formatarNumero(valor) {
+  return Number(valor).toLocaleString("pt-BR");
+}
+
+function informarPerfil(texto, tipo = "informacao") {
+  mensagemPerfil.textContent = texto;
+  mensagemPerfil.dataset.tipo = tipo;
+}
+
+function criarCelulaPerfil(texto) {
+  const celula = document.createElement("td");
+  celula.textContent = texto;
+  return celula;
+}
+
+function renderizarPerfil(perfil) {
+  const raros = perfil.raridade.padroes_indicados;
+  resumoPerfil.textContent = `${formatarNumero(perfil.amostra.total_resultados)} resultados`;
+  indicadoresPerfil.replaceChildren();
+  const textos = [
+    ["Amostra", formatarNumero(perfil.amostra.total_resultados)],
+    ["Classificados", formatarNumero(perfil.amostra.total_classificados)],
+    ["Sem correspondência", formatarNumero(perfil.amostra.sem_correspondencia)],
+    ["Limite", `${formatarCalculado(perfil.raridade.limite_percentual)}%`],
+    ["Indicados", raros.length ? raros.join(", ") : "nenhum"],
+  ];
+  for (const [rotulo, valor] of textos) {
+    const item = document.createElement("span");
+    const titulo = document.createElement("strong");
+    titulo.textContent = `${rotulo}: `;
+    item.append(titulo, document.createTextNode(valor));
+    indicadoresPerfil.append(item);
+  }
+  corpoPerfil.replaceChildren(...perfil.classes.map((classe) => {
+    const linha = document.createElement("tr");
+    linha.dataset.raro = String(classe.raro);
+    linha.append(
+      criarCelulaPerfil(classe.padrao_cod ?? "Sem correspondência"),
+      criarCelulaPerfil(formatarNumero(classe.quantidade)),
+      criarCelulaPerfil(`${formatarCalculado(classe.percentual_total)}%`),
+      criarCelulaPerfil(classe.percentual_classificados === null ? "—" : `${formatarCalculado(classe.percentual_classificados)}%`),
+      criarCelulaPerfil(formatarCalculado(classe.intervalo_medio)),
+      criarCelulaPerfil(formatarCalculado(classe.desvio_padrao)),
+      criarCelulaPerfil(classe.raro ? "Abaixo do limite" : "Preservado"),
+    );
+    return linha;
+  }));
+}
+
+function atualizarCamposCorte() {
+  campoNumeroPerfil.hidden = tipoCortePerfil.value !== "numero";
+  campoDataPerfil.hidden = tipoCortePerfil.value !== "data";
+  numeroPerfil.required = tipoCortePerfil.value === "numero";
+  dataPerfil.required = tipoCortePerfil.value === "data";
+}
+
+async function carregarPerfil(evento) {
+  evento?.preventDefault();
+  const parametros = new URLSearchParams({ limite_raridade: limitePerfil.value });
+  if (tipoCortePerfil.value === "numero") parametros.set("numero_ap_ate", numeroPerfil.value);
+  if (tipoCortePerfil.value === "data") parametros.set("data_ate", dataPerfil.value);
+  informarPerfil("Consultando perfil...");
+  try {
+    const corpo = await requisitar(`${API_PERFIL}?${parametros}`);
+    renderizarPerfil(corpo.perfil);
+    estado.perfilCarregado = true;
+    informarPerfil("Diagnóstico informativo; screener inativo.", "sucesso");
+  } catch (erro) {
+    informarPerfil(`Não foi possível consultar: ${erro.message}`, "erro");
+  }
 }
 
 function criarLinha(padrao) {
@@ -206,4 +291,10 @@ async function tratarAcao(evento) {
 formulario.addEventListener("submit", criar);
 corpoTabela.addEventListener("click", tratarAcao);
 filtroGrupo.addEventListener("change", carregarPadroes);
+tipoCortePerfil.addEventListener("change", atualizarCamposCorte);
+formularioPerfil.addEventListener("submit", carregarPerfil);
+detalhesPerfil.addEventListener("toggle", () => {
+  if (detalhesPerfil.open && !estado.perfilCarregado) carregarPerfil();
+});
+atualizarCamposCorte();
 carregar();
