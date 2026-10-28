@@ -1415,3 +1415,141 @@ Próxima ação exata:
 - A conferência final no Chrome passou usando a página e o PostgreSQL reais,
   sem simular a API: dez gráficos, amostra 3.069 e prévia dos dez limites.
 - PythonAnywhere não foi acessado. Commit e push aguardam autorização expressa.
+
+## Atualização — 2026-10-28 — protótipo do screener em três níveis
+
+- A subetapa 18.0 criou `screener-prototipo.html` sem alterar a execução atual.
+- O esboço usa dados totalmente fictícios e três blocos: estatística, geometria
+  e padrões, com entrada, exclusões, percentuais e saldo.
+- Os detalhes são fechados inicialmente e podem ser expandidos em conjunto.
+- O bloco de padrões mostra limite de 10%, frequências e lista selecionada.
+- A contabilidade fictícia fecha em total inicial = exclusões + aprovadas.
+- O protótipo não usa `fetch`, não grava banco e não ativa filtros reais.
+- Passaram 33 testes JavaScript, 17 fluxos completos no Google Chrome e 446
+  testes Python. A página real respondeu HTTP 200 na porta 5050.
+- Próxima ação, após testes e avaliação do usuário: aprovar ou solicitar ajustes
+  visuais antes de autorizar a subetapa 18.1.
+
+## Atualização — 2026-10-28 — contrato extensível do novo funil
+
+- A subetapa 18.1 criou um contrato hierárquico separado, sem quebrar o funil
+  linear usado pelo ensaio atual.
+- Famílias e filtros são definições ordenadas e dinâmicas; não existem colunas
+  ou nomes fixos no executor.
+- Toda decisão contém código, aprovação/exclusão, motivo e evidências imutáveis.
+- A primeira exclusão interrompe a combinação e é contabilizada uma única vez.
+- Filtros e famílias informam percentuais sobre total inicial e saldo recebido.
+- O fechamento obrigatório é total inicial = excluídas + aprovadas.
+- Passaram 7 testes específicos e 453 testes Python de regressão.
+- Filtros reais ainda não foram conectados; a próxima ação é aguardar
+  autorização para a subetapa 18.2.
+
+## Atualização — 2026-10-28 — fotografia reproduzível da configuração
+
+- A subetapa 18.2 criou uma fotografia canônica e imutável para cada futura
+  execução do novo funil.
+- Ela congela modo, semente, limite da amostra, ordem de famílias/filtros,
+  parâmetros e versões das funções de cálculo.
+- Para cada grupo de padrões, registra o intervalo histórico, denominador,
+  frequências, política de raridade e a lista excludente calculada no início.
+- A classe sem correspondência fecha os 100%, mas nunca se torna um padrão
+  excludente.
+- Datas, decimais e mapas possuem representação determinística; tipos ambíguos
+  são recusados. O JSON canônico recebe checksum SHA-256 verificável.
+- A fotografia ainda não é persistida nem ligada ao ensaio real; isso ocorrerá
+  nas subetapas de integração do novo screener.
+- Passaram 8 testes específicos e 461 testes Python de regressão; os três
+  arquivos da subetapa também passaram pela validação sintática em memória.
+- Próxima ação: aguardar autorização expressa para a subetapa 18.3, conexão da
+  família estatística ao contrato extensível.
+
+## Atualização — 2026-10-28 — família estatística extensível
+
+- A subetapa 18.3 conectou a primeira família real ao contrato do novo funil.
+- `EST_SOMA_MEDIA` trata soma e média em uma única decisão, pois a média é
+  exatamente a soma dividida por seis; a evidência conserva as duas medidas e
+  seus limites equivalentes sem gerar dupla exclusão.
+- `EST_MEDIANA` e `EST_DESVIO_PADRAO` são filtros independentes e recebem apenas
+  o saldo aprovado pelos filtros anteriores.
+- Todos os cálculos reutilizam as funções oficiais do domínio, importantes para
+  a futura auditoria.
+- As faixas são fechadas: valores exatamente nos limites são aprovados.
+- Passaram 5 testes específicos e 466 testes Python de regressão.
+- A família ainda não foi ligada à interface, API ou amostra de 5.000.
+- Próxima ação: aguardar autorização para a subetapa 18.4, família geométrica.
+
+## Atualização — 2026-10-28 — família geométrica extensível
+
+- A subetapa 18.4 conectou a família geométrica ao contrato do novo funil.
+- Os filtros são extensão, perímetro, área, quantidade de regiões e centro de
+  gravidade; X e Y do centro constituem uma decisão única.
+- Cada combinação tem uma única análise geométrica compartilhada pelos filtros.
+- A primeira exclusão interrompe a combinação, produzindo subtotal líquido.
+- Faixas são fechadas e aceitam os valores exatamente nos limites.
+- Figuras sem centro de gravidade exigem política explícita `aprovar` ou
+  `excluir`; essa política deverá integrar a fotografia do screener completo.
+- Passaram 7 testes específicos e 473 testes Python de regressão.
+- A família ainda não foi ligada à interface, banco ou amostra de 5.000.
+- Próxima ação: aguardar autorização para a subetapa 18.5, grupos de padrões.
+
+## Atualização — 2026-10-28 — família extensível de padrões
+
+- A subetapa 18.5 conectou os grupos de padrões ao novo funil.
+- Cada grupo fotografado produz um filtro e classifica cada combinação uma vez.
+- A exclusão consulta apenas a lista rara congelada pela fotografia da execução.
+- A classe sem correspondência fecha os 100%, mas nunca vira padrão excludente.
+- A evidência contém classe, frequência, denominador, política e detalhes do
+  classificador, permitindo futura auditoria.
+- O classificador oficial PG_001 foi adaptado; a estrutura aceita novos grupos,
+  mas exige que cada um possua classificador específico e resposta reconciliada.
+- Passaram 6 testes específicos e 479 testes Python de regressão.
+- Próxima ação: aguardar autorização para a subetapa 18.6, quadro contábil
+  consolidado das três famílias.
+
+## Atualização — 2026-10-28 — quadro contábil consolidado
+
+- A subetapa 18.6 criou a visão serializável das três famílias do novo funil.
+- O quadro distingue universo total, amostra analisada e execução integral.
+- Cada filtro mostra entrada, avaliações, exclusões, percentuais sobre total e
+  saldo recebido, além do saldo final.
+- Cada família mostra entrada, subtotal líquido e saldo entregue à seguinte.
+- Todas as transições e percentuais são recalculados e comparados; relatórios
+  adulterados ou não reconciliados são recusados.
+- A equação obrigatória é total analisado = excluído + aprovado.
+- Passaram 7 testes específicos e 486 testes Python de regressão.
+- O quadro ainda não foi conectado à API ou interface.
+- Próxima ação: aguardar autorização para a subetapa 18.7, interface expansível.
+
+## Atualização — 2026-10-28 — interface expansível do novo screener
+
+- A subetapa 18.7 criou `screener-extensivel.html`, ligada ao formato real do
+  quadro consolidado e sem números fictícios.
+- A tela mostra resumo, três famílias recolhidas, filtros expansíveis, dois
+  percentuais, saldos e fechamento, conservando espaço vertical e horizontal.
+- Ficou registrada a regra: cadastro não gera filtro. Cada grupo exige função
+  Python, testes, versão e integração; sem isso ele não participa da execução.
+- O botão de execução permanece desabilitado e nenhuma API é chamada; a amostra
+  de 5.000 será conectada somente na subetapa 18.8.
+- Passaram 35 testes JavaScript e 18 testes completos no Google Chrome.
+- A página respondeu HTTP 200 no servidor local em 5050.
+- Próxima ação: aguardar autorização para a subetapa 18.8, ensaio protegido e
+  fechamento da Etapa 18.
+
+## Atualização — 2026-10-28 — fechamento da Etapa 18
+
+- A subetapa 18.8 ligou o novo quadro à API e executou somente 5.000 combinações.
+- O modo integral continua bloqueado por configuração, validação e ausência de
+  parâmetro de ampliação na API POST.
+- A configuração foi fotografada com SHA-256
+  `10f549c1b1c6cd4e05b38d8f8b981a5db33bedb6fb101805e322530bb0274db3`.
+- O novo funil excluiu 2.999 em estatística, 1.578 em geometria e 3 em PG_001,
+  aprovando 420; a contabilidade fecha em 5.000.
+- Na mesma amostra, o screener anterior aprovou 4.409. A diferença não representa
+  superioridade porque ordem, faixas e conjunto de filtros são diferentes.
+- Passaram 487 testes Python, 35 JavaScript, 18 fluxos controlados no Chrome e
+  um fluxo Chrome/PostgreSQL real.
+- Duas instâncias locais concorrentes, PIDs 31468 e 39120, foram encerradas; o
+  servidor atualizado é o único listener, PID 34596, na porta 5050.
+- A Etapa 18 está implementada e testada, mas ainda não foi commitada.
+- Próxima ação: aguardar autorização para o commit de segurança da Etapa 18 ou
+  orientação do usuário sobre a etapa seguinte.

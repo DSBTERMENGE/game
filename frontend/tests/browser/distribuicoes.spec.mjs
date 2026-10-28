@@ -17,12 +17,20 @@ test.beforeAll(async () => {
   servidor = http.createServer(async (requisicao, respostaHttp) => {
     const arquivos = {
       "/distribuicoes.html": ["distribuicoes.html", "text/html; charset=utf-8"],
+      "/screener-prototipo.html": ["screener-prototipo.html", "text/html; charset=utf-8"],
+      "/screener-prototipo.html": ["screener-prototipo.html", "text/html; charset=utf-8"],
       "/css/style.css": ["css/style.css", "text/css; charset=utf-8"],
       "/css/navegacao.css": ["css/navegacao.css", "text/css; charset=utf-8"],
       "/css/distribuicoes.css": ["css/distribuicoes.css", "text/css; charset=utf-8"],
+      "/css/screener.css": ["css/screener.css", "text/css; charset=utf-8"],
+      "/css/screener.css": ["css/screener.css", "text/css; charset=utf-8"],
       "/js/distribuicoes.js": ["js/distribuicoes.js", "text/javascript; charset=utf-8"],
       "/js/configuracao-distribuicoes.js": ["js/configuracao-distribuicoes.js", "text/javascript; charset=utf-8"],
       "/js/navegacao.js": ["js/navegacao.js", "text/javascript; charset=utf-8"],
+      "/js/screener-prototipo.js": ["js/screener-prototipo.js", "text/javascript; charset=utf-8"],
+      "/js/screener-prototipo-dados.js": ["js/screener-prototipo-dados.js", "text/javascript; charset=utf-8"],
+      "/js/screener-prototipo.js": ["js/screener-prototipo.js", "text/javascript; charset=utf-8"],
+      "/js/screener-prototipo-dados.js": ["js/screener-prototipo-dados.js", "text/javascript; charset=utf-8"],
     };
     const item = arquivos[new URL(requisicao.url, "http://127.0.0.1").pathname];
     if (!item) {
@@ -150,3 +158,23 @@ for (const largura of [1280, 760]) {
     expect(medidas.rolagemVertical).toBeTruthy();
   });
 }
+
+test("protótipo mostra o funil compacto e expande detalhes sem API", async ({ page }) => {
+  let requisicoesApi = 0;
+  page.on("request", (requisicao) => {
+    if (requisicao.url().includes("/api/")) requisicoesApi += 1;
+  });
+  await page.setViewportSize({ width: 1280, height: 820 });
+  await page.goto("/screener-prototipo.html");
+  await expect(page.locator(".prototipo-nivel")).toHaveCount(3);
+  await expect(page.locator("#prototipo-total-inicial")).toHaveText("50.063.860");
+  await expect(page.locator("#prototipo-total-aprovado")).toHaveText("25.344.829");
+  await expect(page.locator("#prototipo-reconciliacao")).toContainText("Fechamento correto");
+  await expect(page.locator(".prototipo-nivel[open]")).toHaveCount(0);
+  await page.locator("#botao-abrir-todos").click();
+  await expect(page.locator(".prototipo-nivel[open]")).toHaveCount(3);
+  await expect(page.locator(".prototipo-detalhes tbody tr")).toHaveCount(12);
+  await page.locator("#botao-fechar-todos").click();
+  await expect(page.locator(".prototipo-nivel[open]")).toHaveCount(0);
+  expect(requisicoesApi).toBe(0);
+});

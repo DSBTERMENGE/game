@@ -1952,6 +1952,8 @@ texto, blocos e detalhes expansíveis; não é obrigada a usar tabelas.
 - Permitir abrir e fechar detalhes sem aumentar permanentemente a altura.
 - Não chamar API, não gravar banco e não alterar o screener atual.
 - Apresentar no Chrome para aprovação antes da subetapa 18.1.
+- Estado: **implementado em 2026-10-28** em página separada, com dados
+  fictícios reconciliados e sem chamada de API. Aguarda aprovação visual.
 
 #### 18.1 — Contrato do novo funil
 
@@ -1959,6 +1961,8 @@ texto, blocos e detalhes expansíveis; não é obrigada a usar tabelas.
 - Definir entrada, saída, motivo e evidência de cada filtro.
 - Definir subtotais e percentuais sobre total inicial e saldo recebido.
 - Teste: exemplos manuais de fechamento contábil.
+- Estado: **implementado em 2026-10-28** como contrato hierárquico extensível,
+  preservando o funil linear existente e ainda sem conectar filtros reais.
 
 #### 18.2 — Fotografia reproduzível da configuração
 
@@ -1967,6 +1971,9 @@ texto, blocos e detalhes expansíveis; não é obrigada a usar tabelas.
   frequências e lista de padrões excludentes calculada no início da execução.
 - Garantir que uma execução passada possa ser reproduzida.
 - Teste: serialização e checksum da configuração.
+- Estado: **implementado em 2026-10-28** como fotografia canônica e imutável,
+  incluindo a evidência histórica que determinou os padrões excludentes. Ainda
+  não foi conectada a uma execução real nem persistida no banco.
 
 #### 18.3 — Família estatística
 
@@ -1974,21 +1981,33 @@ texto, blocos e detalhes expansíveis; não é obrigada a usar tabelas.
 - Evitar dupla exclusão por soma e média equivalentes.
 - Contabilizar exclusões líquidas e subtotal.
 - Teste: combinações dentro, fora e nos limites.
+- Estado: **implementado em 2026-10-28** com soma/média em uma decisão única,
+  mediana e desvio-padrão independentes, todos usando as funções matemáticas
+  oficiais do sistema. Ainda não foi conectado à interface nem ao ensaio real.
 
 #### 18.4 — Família geométrica
 
 - Conectar extensão, perímetro, área, regiões e centro de gravidade.
 - Interromper a combinação no primeiro filtro geométrico que a excluir.
 - Teste: figuras controladas e subtotal geométrico.
+- Estado: **implementado em 2026-10-28** com uma análise compartilhada por
+  combinação e cinco decisões ordenadas. Centro ausente exige política explícita.
+  Ainda não foi conectado à interface nem ao ensaio de 5.000 combinações.
 
 #### 18.5 — Família de grupos de padrões
 
 - Classificar a combinação uma vez por grupo.
+- Comparar a classe encontrada somente com os padrões excludentes da fotografia.
+- Preservar `SEM_CORRESPONDENCIA` no fechamento, sem transformá-la em exclusão.
+- Teste: grupo sequencial real, múltiplos grupos e subtotal líquido.
 - Calcular previamente as frequências no espaço amostral disponível.
 - Selecionar para exclusão os padrões estritamente abaixo do limite configurado.
 - Comparar o subgrupo obtido com a fotografia dos padrões excludentes.
 - Contabilizar exclusão pelo grupo, não por colunas fixas de padrões.
 - Teste: grupos aceitos, rejeitados e `SEM_CORRESPONDENCIA` passando pelo funil.
+- Estado: **implementado em 2026-10-28** montando um filtro de execução somente
+  para cada grupo que já possua classificador Python integrado e testado. O
+  classificador oficial PG_001 foi adaptado; cadastrar um grupo não cria código.
 
 #### 18.6 — Quadro contábil consolidado
 
@@ -1997,6 +2016,9 @@ texto, blocos e detalhes expansíveis; não é obrigada a usar tabelas.
 - Mostrar saldo entre famílias e total aprovado.
 - Exigir: recebidas = exclusões líquidas + aprovadas.
 - Teste: reconciliação automática obrigatória.
+- Estado: **implementado em 2026-10-28** como representação serializável que
+  valida cada transição de filtro e família. Distingue amostra do universo total
+  e recusa relatórios adulterados. Ainda não foi conectado à interface.
 
 #### 18.7 — Interface expansível do screener
 
@@ -2004,6 +2026,9 @@ texto, blocos e detalhes expansíveis; não é obrigada a usar tabelas.
 - Permitir expandir os filtros individuais sem ocupar espaço quando fechados.
 - Mostrar total aprovado e percentuais finais.
 - Teste: JavaScript, responsividade e Chrome.
+- Estado: **implementado em 2026-10-28** em página própria ligada ao contrato
+  serializado real, sem dados fictícios e sem API nesta subetapa. A execução
+  permanece bloqueada até o ensaio protegido da 18.8.
 
 #### 18.8 — Ensaio protegido de 5.000 e fechamento
 
@@ -2011,6 +2036,12 @@ texto, blocos e detalhes expansíveis; não é obrigada a usar tabelas.
 - Comparar resultados com a versão anterior e explicar divergências.
 - Manter o processamento integral bloqueado.
 - Preparar commit somente mediante autorização.
+- Estado: **implementado em 2026-10-28** com API POST sem parâmetro de ampliação,
+  fotografia SHA-256, comparação na mesma amostra e integração real no Chrome.
+  O resultado é experimental e não substitui auditoria ou backtest.
+- Estado: **implementado em 2026-10-28** com API POST sem parâmetro de ampliação,
+  fotografia SHA-256, comparação na mesma amostra e integração real no Chrome.
+  O resultado é experimental e não substitui auditoria ou backtest.
 
 
 ### Etapa 19 — mecanismo de backtest sem informação futura

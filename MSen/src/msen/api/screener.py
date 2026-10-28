@@ -27,3 +27,19 @@ def obter_quadro_screener():
         }), 400
     executor = current_app.config["GERAR_QUADRO_SCREENER"]
     return jsonify(executor(limite))
+
+
+@screener_api.post("/api/screener/quadro-extensivel")
+def obter_quadro_screener_extensivel():
+    """Executa somente a amostra fixa do novo funil em três níveis."""
+
+    try:
+        executor = current_app.config["GERAR_QUADRO_SCREENER_EXTENSIVEL"]
+        return jsonify(executor())
+    except Exception as erro:
+        codigo = getattr(erro, "codigo", "ENSAIO_EXTENSIVEL_INDISPONIVEL")
+        current_app.logger.exception("Falha no ensaio extensível")
+        return jsonify(erro={
+            "codigo": codigo,
+            "mensagem": "Não foi possível executar a amostra protegida.",
+        }), 503

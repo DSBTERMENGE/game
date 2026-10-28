@@ -192,3 +192,14 @@
 - A tela de auditoria apenas organizará as evidências para conferência humana.
 - Testes deverão provar a igualdade entre valor auditado, valor persistido e
   valor utilizado na decisão do funil.
+
+## 2026-10-28 — Cadastro de padrão não cria função de filtro
+
+- O cadastro organiza grupo, padrão, descrição e estatísticas; ele não gera
+  lógica Python automaticamente.
+- Cada novo grupo de padrões precisa de uma função classificadora Python,
+  testes automatizados, versão de cálculo e integração explícita ao registro.
+- Um grupo sem classificador não participa do screener e deve aparecer como
+  indisponível, nunca como padrão que não ocorreu.
+- Somente após a classificação histórica e sua fotografia a frequência poderá
+  definir quais subgrupos são candidatos à exclusão.

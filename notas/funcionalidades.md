@@ -102,6 +102,8 @@ aprovação e priorização antes da implementação.
 - [ ] Exportar futuramente a auditoria em JSON, CSV ou planilha.
 - [ ] Garantir que o relatório seja reproduzível com os mesmos dados,
   configurações, versões e intervalo histórico.
+- [ ] Mostrar no cadastro de grupos se existe função Python classificadora,
+  sua versão e se os testes de integração foram aprovados.
 
 ## Fora do escopo inicial
 

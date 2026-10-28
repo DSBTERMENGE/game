@@ -573,3 +573,23 @@ Com o limite apenas experimental de 10%, PD_002 e PD_003 ficaram abaixo do
 limite. Este resultado não autoriza exclusões. Antes de uso operacional ainda
 serão necessários configuração reproduzível, auditoria e backtest sem dados
 futuros.
+
+
+15. ENSAIO PROTEGIDO DO NOVO FUNIL
+-----------------------------------
+
+Em 28/10/2026, a engrenagem completa foi executada sobre 5.000 combinações com
+semente fixa. Foram aprovadas 420 e excluídas 4.580, distribuídas em 2.999 pela
+família estatística, 1.578 pela geométrica e 3 pelo grupo PG_001.
+
+O screener anterior aprovou 4.409 na mesma amostra. Os números não podem ser
+comparados como medida de qualidade, pois o novo ensaio mudou a ordem, usa faixas
+de mais ou menos um desvio-padrão para todas as medidas, possui cinco filtros
+geométricos e classifica PG_001 de forma exclusiva.
+
+Esse resultado prova que a engrenagem executa e fecha contabilmente. Ele não
+prova que 420 seja uma quantidade adequada, que os limites sejam eficazes ou que
+os filtros preservem resultados reais. Essas perguntas pertencem à auditoria e
+ao futuro backtest sem informação posterior ao ponto analisado.
+
+O processamento integral de 50.063.860 combinações permanece bloqueado.
