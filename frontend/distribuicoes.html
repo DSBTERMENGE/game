@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Distribuições — Game Analysis</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/navegacao.css">
+    <link rel="stylesheet" href="css/distribuicoes.css">
+  </head>
+  <body>
+    <header class="barra-navegacao">
+      <a class="marca marca--compacta" href="/" aria-label="Game Analysis">GA</a>
+      <button id="botao-voltar" class="navegacao-voltar" type="button" data-destino-voltar="/">← Voltar</button>
+      <a class="navegacao-link" href="/">Painel</a>
+      <details class="navegacao-menu">
+        <summary>Cadastros</summary>
+        <nav aria-label="Cadastros">
+          <a href="/cadastros.html">Visão geral</a>
+          <a href="/grupos-padroes.html">Grupos de padrões</a>
+          <a href="/padroes.html">Padrões</a>
+        </nav>
+      </details>
+      <a class="navegacao-link" href="/distribuicoes.html" aria-current="page">Distribuições</a>
+      <a class="navegacao-link" href="/screener.html">Screener</a>
+      <strong class="navegacao-pagina">Perfis históricos</strong>
+    </header>
+
+    <main class="pagina-conteudo distribuicoes-pagina">
+      <section class="distribuicoes-topo" aria-labelledby="titulo-distribuicoes">
+        <h1 id="titulo-distribuicoes">Distribuições históricas</h1>
+        <button id="botao-atualizar-distribuicoes" type="button">Atualizar</button>
+        <button id="botao-configurar-faixas" type="button">Configurar faixas</button>
+        <p id="mensagem-distribuicoes" role="status" aria-live="polite">Carregando os perfis…</p>
+        <span class="screener-inativo">Estudo — screener inativo</span>
+      </section>
+
+      <section class="distribuicoes-resumo" aria-label="Resumo da janela histórica">
+        <output>Amostra: <strong id="resumo-amostra">—</strong></output>
+        <output>Concursos: <strong id="resumo-concursos">—</strong></output>
+        <output>Datas: <strong id="resumo-datas">—</strong></output>
+        <output>Faixa: <strong id="resumo-faixa">—</strong></output>
+      </section>
+
+      <p class="aviso-equivalencia">
+        Soma e média são equivalentes (média = soma ÷ 6) e não representam dois filtros independentes.
+        A curva normal é somente uma referência visual; as barras são os dados observados.
+      </p>
+
+      <section id="grade-distribuicoes" class="grade-distribuicoes" aria-label="Gráficos dos parâmetros" tabindex="0"></section>
+    </main>
+
+    <dialog id="dialogo-configuracao-faixas" class="dialogo-configuracao-faixas">
+      <form id="form-configuracao-faixas">
+        <header>
+          <h2>Configuração das faixas do estudo</h2>
+          <button id="botao-fechar-configuracao" type="button" aria-label="Fechar">×</button>
+        </header>
+        <div class="campos-configuracao-faixas">
+          <label>Método
+            <select id="config-metodo-faixa">
+              <option value="desvio_padrao">Múltiplos do desvio-padrão</option>
+              <option value="percentual_media">Percentual da média</option>
+            </select>
+          </label>
+          <label>Margem inferior
+            <input id="config-margem-inferior" type="number" min="0" step="0.1" required>
+          </label>
+          <label>Margem superior
+            <input id="config-margem-superior" type="number" min="0" step="0.1" required>
+          </label>
+          <button id="botao-calcular-previa" type="button">Calcular prévia</button>
+        </div>
+        <p id="mensagem-previa" role="status" aria-live="polite">
+          A prévia usa as mesmas funções da API e não altera o screener.
+        </p>
+        <div class="grade-previa-faixas" tabindex="0">
+          <table>
+            <thead><tr><th>Parâmetro</th><th>Limite inferior</th><th>Limite superior</th></tr></thead>
+            <tbody id="corpo-previa-faixas"></tbody>
+          </table>
+        </div>
+        <footer>
+          <span>Salvo somente como estudo neste navegador.</span>
+          <button id="botao-cancelar-configuracao" type="button">Cancelar</button>
+          <button id="botao-salvar-configuracao" type="submit" disabled>Salvar estudo</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <script type="module" src="js/distribuicoes.js"></script>
+    <script type="module" src="js/navegacao.js"></script>
+  </body>
+</html>

@@ -1297,3 +1297,121 @@ Próxima ação exata:
 - Etapa 16 concluída localmente. PythonAnywhere não foi acessado.
 - Próxima ação recomendada: criar commit de segurança da Etapa 16 somente após
   autorização expressa; depois iniciar a subetapa 17.1.
+
+## Atualização — 2026-10-28 — catálogo dos parâmetros de análise
+
+- Subetapa 17.1 implementada como inventário técnico, sem mudança no banco, na
+  API, na interface ou no screener.
+- `docs/CATALOGO_PARAMETROS_ANALISE.md` relaciona os dez parâmetros, fórmulas,
+  unidades, precisões, colunas PostgreSQL e funções Python existentes.
+- Soma e média foram marcadas como linearmente equivalentes (`média = soma/6`),
+  portanto não deverão ser contadas como dois filtros independentes.
+- Foi documentado que `desvio_padrao_media` contém o desvio-padrão populacional
+  das seis dezenas de uma linha, não o desvio de uma série histórica de médias.
+- Passaram 4 testes específicos e 414 testes Python de regressão. Banco, API,
+  interface e regras do screener permaneceram inalterados.
+- Próxima ação: aguardar autorização expressa para a 17.2, serviço de janela
+  histórica.
+
+## Atualização — 2026-10-28 — serviço de janela histórica
+
+- A subetapa 17.2 criou `selecionar_janela_historica`, sem consultar ou alterar
+  banco, API, interface e screener.
+- Sem corte, o serviço entrega toda a série validada e ordenada. Os cortes
+  `numero_ap_antes_de` e `data_antes_de` são exclusivos e mutuamente exclusivos.
+- Assim, o resultado que será avaliado e todos os posteriores não participam
+  da amostra do futuro backtest.
+- O serviço rejeita concursos duplicados, datas divergentes da ordem dos
+  concursos, tipos inválidos e cortes ambíguos.
+- Passaram 8 testes específicos e 422 testes Python de regressão. Banco, API,
+  interface e regras do screener permaneceram inalterados.
+- Próxima ação: aguardar autorização expressa para a 17.3, perfil estatístico
+  genérico.
+
+## Atualização — 2026-10-28 — perfil estatístico genérico
+
+- A subetapa 17.3 criou um serviço puro para quantidade, média, desvio-padrão
+  populacional, mínimo, máximo e distribuição empírica de qualquer parâmetro.
+- Os cálculos usam `Decimal`; a distribuição conserva valor, frequência e
+  percentual realmente observados, sem pressupor normalidade.
+- As faixas podem usar percentuais da média ou múltiplos do desvio-padrão, com
+  margens inferior e superior independentes e limites inclusivos.
+- Nenhuma faixa foi conectada ao screener e nenhuma exclusão foi ativada.
+- Passaram 8 testes específicos e 430 testes Python de regressão. Banco, API,
+  interface e regras do screener permaneceram inalterados.
+- Próxima ação: aguardar autorização expressa para a 17.4, perfis geométricos.
+
+## Atualização — 2026-10-28 — perfis geométricos
+
+- A subetapa 17.4 aplica o perfil genérico às seis medidas da tabela de análise
+  geométrica: extensão, perímetro, regiões, área e centro X/Y separados.
+- Cada parâmetro contabiliza total, valores existentes e ausentes.
+- Área zero e quantidade zero permanecem valores válidos. Centro inexistente
+  em figura sem área continua nulo e não contamina média ou desvio como zero.
+- O serviço rejeita resultado duplicado e incoerências entre área e centro.
+- Nenhum perfil foi exposto em API ou ligado ao screener.
+- Passaram 7 testes específicos e 437 testes Python de regressão. Banco, API,
+  interface e regras do screener permaneceram inalterados.
+- Próxima ação: aguardar autorização expressa para a 17.5, API das
+  distribuições.
+
+## Atualização — 2026-10-28 — API das distribuições
+
+- A subetapa 17.5 criou `GET /api/perfis/distribuicoes`, somente leitura.
+- A resposta reúne os dez parâmetros, janela, tamanho da amostra, média,
+  desvio, extremos, faixa, histograma real e curva normal de referência.
+- Os cortes por concurso/data são exclusivos; classes e margens são validadas.
+- Janela vazia e geometria incompleta são recusadas explicitamente.
+- Soma e média são declaradas dependentes e o screener permanece inativo.
+- Passaram 9 testes específicos e 446 testes Python de regressão. Uma consulta
+  real, somente leitura, processou 3.069 resultados e os dez parâmetros com dez
+  classes cada; o screener permaneceu inativo.
+- Próxima ação: aguardar autorização expressa para a 17.6, painel com todos os
+  gráficos.
+
+## Atualização — 2026-10-28 — painel das distribuições
+
+- A subetapa 17.6 criou `distribuicoes.html`, acessível pela barra compacta.
+- Os dez parâmetros aparecem juntos em cartões com histograma real, normal de
+  referência, média, desvio, extremos, faixa, amostra e ausências.
+- A grade usa rolagem interna e se reorganiza em uma, duas ou três colunas sem
+  aumentar continuamente a altura da página.
+- A página declara permanentemente que soma/média são dependentes, a normal é
+  só referência e o screener está inativo.
+- Passaram 25 testes JavaScript, 3 testes específicos e 15 fluxos completos no
+  Google Chrome, além de 446 testes Python. A grade ficou contida nas larguras
+  de 1.280 e 760 pixels com rolagem interna.
+- O servidor Flask local em 5050 não foi reiniciado nesta subetapa; a nova rota
+  da API exige reinício antes da visualização real pelo usuário.
+- Próxima ação: aguardar autorização expressa para a 17.7, janela de
+  configuração das faixas.
+
+## Atualização — 2026-10-28 — configuração das faixas do estudo
+
+- A subetapa 17.7 adicionou um diálogo compacto à página de distribuições.
+- O usuário escolhe percentual da média ou múltiplos do desvio e informa
+  margens inferior/superior independentes.
+- Uma prévia pela API mostra os dez pares de limites antes de habilitar salvar.
+- A configuração é persistida no `localStorage` do navegador e restaurada ao
+  reabrir a página; ela ainda não é uma regra operacional compartilhada.
+- Salvar atualiza somente o estudo e não contém nem ativa estado do screener.
+- Passaram 29 testes JavaScript, 16 fluxos completos no Google Chrome e 446
+  testes Python. O Chrome confirmou prévia, salvamento e recuperação.
+- O servidor Flask local em 5050 continua sem reinício desde a inclusão da nova
+  API; ele precisa ser reiniciado antes da conferência manual com dados reais.
+- Próxima ação: aguardar autorização expressa para a 17.8, regressão e
+  fechamento dos perfis.
+
+## Atualização — 2026-10-28 — fechamento da Etapa 17
+
+- O fechamento reuniu as subetapas 17.1 a 17.7 sem ativar exclusões.
+- Foram confirmados 446 testes Python, 29 JavaScript e 16 fluxos no Chrome.
+- `netstat` revelou duas instâncias antigas concorrendo na porta 5050; somente
+  os PIDs Python 17116 e 34644 foram encerrados.
+- Uma única instância atualizada foi iniciada no PID 31468 com `PYTHONPATH`
+  absoluto do workspace.
+- A API real respondeu saúde `ok`, 3.069 resultados, dez parâmetros e
+  `ativa_no_screener=false`.
+- A conferência final no Chrome passou usando a página e o PostgreSQL reais,
+  sem simular a API: dez gráficos, amostra 3.069 e prévia dos dez limites.
+- PythonAnywhere não foi acessado. Commit e push aguardam autorização expressa.

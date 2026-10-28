@@ -21,6 +21,31 @@ from .classificacao_padroes import (
     calcular_perfil_grupo_sequenciais,
     recalcular_classificacoes_grupo_sequenciais,
 )
+from .janela_historica import (
+    ErroJanelaHistorica,
+    JanelaHistorica,
+    selecionar_janela_historica,
+)
+from .perfil_estatistico import (
+    ErroPerfilEstatistico,
+    FaixaPerfil,
+    PerfilEstatistico,
+    PontoDistribuicao,
+    calcular_faixa_desvio_padrao,
+    calcular_faixa_percentual_media,
+    calcular_perfil_estatistico,
+)
+from .perfis_geometricos import (
+    PerfilParametroGeometrico,
+    PerfisGeometricos,
+    calcular_perfis_geometricos,
+)
+from .distribuicoes import (
+    ClasseHistograma,
+    DistribuicaoVisual,
+    PontoCurvaNormal,
+    construir_distribuicao_visual,
+)
 
 __all__ = [
     "RelatorioImportacaoBanco",
@@ -40,4 +65,21 @@ __all__ = [
     "RelatorioRecalculoClassificacao",
     "calcular_perfil_grupo_sequenciais",
     "recalcular_classificacoes_grupo_sequenciais",
+    "ErroJanelaHistorica",
+    "JanelaHistorica",
+    "selecionar_janela_historica",
+    "ErroPerfilEstatistico",
+    "FaixaPerfil",
+    "PerfilEstatistico",
+    "PontoDistribuicao",
+    "calcular_faixa_desvio_padrao",
+    "calcular_faixa_percentual_media",
+    "calcular_perfil_estatistico",
+    "PerfilParametroGeometrico",
+    "PerfisGeometricos",
+    "calcular_perfis_geometricos",
+    "ClasseHistograma",
+    "DistribuicaoVisual",
+    "PontoCurvaNormal",
+    "construir_distribuicao_visual",
 ]

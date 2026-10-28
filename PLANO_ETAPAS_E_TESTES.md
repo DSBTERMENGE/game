@@ -1863,12 +1863,16 @@ simultaneamente em gráficos compreensíveis.
 - Registrar unidade, precisão, fórmula e fonte de cada parâmetro.
 - Marcar soma e média como informações linearmente equivalentes.
 - Teste: inventário comparado com as colunas e funções existentes.
+- Estado: **implementado em 2026-10-28**. O catálogo técnico está em
+  `docs/CATALOGO_PARAMETROS_ANALISE.md`; nenhuma regra do screener foi ativada.
 
 #### 17.2 — Serviço de janela histórica
 
 - Selecionar todos os resultados ou somente os anteriores a uma data/concurso.
 - Proibir inclusão do próprio resultado avaliado e de resultados futuros.
 - Teste: cortes inicial, intermediário e final.
+- Estado: **implementado em 2026-10-28** com cortes exclusivos e contrato em
+  `docs/CONTRATO_JANELA_HISTORICA.md`; nenhuma integração foi ativada ainda.
 
 #### 17.3 — Perfil estatístico genérico
 
@@ -1876,6 +1880,8 @@ simultaneamente em gráficos compreensíveis.
 - Produzir limites por percentual da média ou multiplicador de desvio-padrão.
 - Permitir margens inferior e superior diferentes.
 - Teste: conjunto controlado com cálculos manuais.
+- Estado: **implementado em 2026-10-28** como serviço puro baseado em
+  `Decimal`, ainda sem integração com banco, API, interface ou screener.
 
 #### 17.4 — Perfis geométricos
 
@@ -1883,6 +1889,8 @@ simultaneamente em gráficos compreensíveis.
 - Tratar centro de gravidade X e Y separadamente na primeira versão.
 - Registrar valores ausentes ou cálculos impossíveis sem substituição silenciosa.
 - Teste: figuras controladas e reconciliação com resultados persistidos.
+- Estado: **implementado em 2026-10-28** sobre os modelos persistidos, com X/Y
+  separados e ausência explícita; ainda sem API, interface ou screener.
 
 #### 17.5 — API das distribuições
 
@@ -1890,6 +1898,8 @@ simultaneamente em gráficos compreensíveis.
   desvio e limites.
 - Informar intervalo histórico e tamanho da amostra.
 - Teste: JSON reproduzível e proteção contra intervalos vazios.
+- Estado: **implementado em 2026-10-28** como API somente leitura, com curva
+  normal identificada apenas como referência e screener inativo.
 
 #### 17.6 — Painel com todos os gráficos
 
@@ -1897,6 +1907,8 @@ simultaneamente em gráficos compreensíveis.
 - Exibir histograma real, curva normal, média, desvios e faixa configurada.
 - Usar rolagem interna e reorganização responsiva.
 - Teste: dados simulados e Google Chrome em larguras diferentes.
+- Estado: **implementado em 2026-10-28** em página própria, com dez cartões,
+  grade responsiva e rolagem interna; o screener continua inativo.
 
 #### 17.7 — Janela de configuração das faixas
 
@@ -1905,11 +1917,16 @@ simultaneamente em gráficos compreensíveis.
 - Mostrar limites calculados antes de salvar.
 - Não ativar exclusão automaticamente ao salvar o estudo.
 - Teste: cálculos, validação de entrada e persistência da configuração.
+- Estado: **implementado em 2026-10-28** como estudo persistido no navegador,
+  com prévia obrigatória pela API e sem configuração operacional do screener.
 
 #### 17.8 — Regressão e fechamento dos perfis
 
 - Conferir cálculos Python, API, gráficos e Chrome.
 - Preparar commit somente mediante autorização.
+- Estado: **concluído em 2026-10-28** com regressões Python/JavaScript/Chrome e
+  validação integrada local contra os 3.069 resultados reais. Commit pendente
+  de autorização expressa.
 
 
 ### Etapa 18 — adaptação do screener aos três níveis

@@ -2,7 +2,7 @@
   "name": "game-msen",
   "private": true,
   "scripts": {
-    "test:frontend": "node --test frontend/tests/painel_navegacao.test.mjs",
+    "test:frontend": "node --test frontend/tests/*.test.mjs",
     "test:browser": "playwright test",
     "test:integration:browser": "playwright test --config=playwright.integration.config.mjs"
   },

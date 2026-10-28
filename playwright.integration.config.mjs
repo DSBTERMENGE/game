@@ -8,7 +8,7 @@ export default defineConfig({
   timeout: 60_000,
   reporter: "line",
   use: {
-    baseURL: "http://127.0.0.1:5051",
+    baseURL: process.env.MSEN_BASE_URL ?? "http://127.0.0.1:5051",
     browserName: "chromium",
     channel: "chrome",
     headless: true,
