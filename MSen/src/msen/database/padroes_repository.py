@@ -1,7 +1,7 @@
 """Persistência exclusiva do cadastro e das estatísticas de padrões."""
 
 from dataclasses import dataclass
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 import re
 from typing import Any
 
@@ -14,7 +14,8 @@ from msen.padroes import EstatisticaPadrao
 COLUNAS_PADRAO = """
 p.id_padrao, p.padrao_cod, p.padrao_nome, p.padrao_descr,
 p.num_oco, p.intervalo_medio, p.desv_padrao,
-p.id_grupo, g.grupo_cod, g.grupo_nome
+p.id_grupo, g.grupo_cod, g.grupo_nome,
+p.total_sorteios, p.percentual_ocorrencia
 """
 FORMATO_CODIGO = re.compile(r"PD_[0-9]{3,}")
 
@@ -44,13 +45,15 @@ class PadraoPersistido:
     id_grupo: int | None = None
     grupo_cod: str | None = None
     grupo_nome: str | None = None
+    total_sorteios: int | None = None
+    percentual_ocorrencia: Decimal | None = None
 
 
 def _linha_para_padrao(linha: tuple[Any, ...]) -> PadraoPersistido:
-    """Converte as dez colunas esperadas em um padrão persistido."""
+    """Converte as doze colunas esperadas em um padrão persistido."""
 
-    if len(linha) != 10:
-        raise ValueError("A consulta de padrão deve retornar exatamente 10 colunas.")
+    if len(linha) != 12:
+        raise ValueError("A consulta de padrão deve retornar exatamente 12 colunas.")
     return PadraoPersistido(*linha)
 
 
@@ -68,6 +71,20 @@ def _validar_texto(nome: str, valor: str) -> str:
     if not isinstance(valor, str) or not valor.strip():
         raise ValueError(f"{nome} deve ser um texto preenchido.")
     return valor.strip()
+
+
+def _validar_limite_percentual(valor: Decimal | int | str) -> Decimal:
+    """Normaliza um limite de 0% a 100% usado em consulta parametrizada."""
+
+    if isinstance(valor, bool) or not isinstance(valor, (Decimal, int, str)):
+        raise TypeError("O limite percentual deve ser Decimal, inteiro ou texto.")
+    try:
+        limite = Decimal(valor)
+    except (InvalidOperation, ValueError) as erro:
+        raise ValueError("O limite percentual deve ser numérico.") from erro
+    if not limite.is_finite() or not Decimal(0) <= limite <= Decimal(100):
+        raise ValueError("O limite percentual deve estar entre 0 e 100.")
+    return limite.quantize(Decimal("0.000001"), rounding=ROUND_HALF_UP)
 
 
 class RepositorioPadroes:
@@ -132,6 +149,64 @@ class RepositorioPadroes:
         except psycopg.Error:
             raise ErroRepositorioPadrao(
                 "FALHA_LISTAGEM", "Não foi possível listar os padrões."
+            ) from None
+
+    def listar_raros(
+        self,
+        limite_percentual: Decimal | int | str,
+        total_sorteios: int,
+        codigos_com_detector: tuple[str, ...],
+    ) -> tuple[PadraoPersistido, ...]:
+        """Lista somente padrões aprovados abaixo do limite estrito informado."""
+
+        limite = _validar_limite_percentual(limite_percentual)
+        if (
+            isinstance(total_sorteios, bool)
+            or not isinstance(total_sorteios, int)
+            or total_sorteios <= 0
+        ):
+            raise ValueError("total_sorteios deve ser inteiro positivo.")
+        if not isinstance(codigos_com_detector, tuple) or not codigos_com_detector:
+            raise ValueError("Informe ao menos um código com detector aprovado.")
+        codigos = tuple(_validar_codigo(codigo) for codigo in codigos_com_detector)
+        if len(codigos) != len(set(codigos)):
+            raise ValueError("Os códigos com detector não podem se repetir.")
+
+        try:
+            with self._conexao.transaction():
+                with self._conexao.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT COUNT(*), "
+                        "COUNT(*) FILTER (WHERE total_sorteios IS NULL OR "
+                        "percentual_ocorrencia IS NULL), "
+                        "COUNT(*) FILTER (WHERE total_sorteios <> %s) "
+                        "FROM padroes_subgrupo WHERE padrao_cod = ANY(%s)",
+                        (total_sorteios, list(codigos)),
+                    )
+                    encontrados, incompletos, divergentes = cursor.fetchone()
+                    if encontrados != len(codigos) or incompletos or divergentes:
+                        raise ErroRepositorioPadrao(
+                            "FOTOGRAFIA_INCOMPATIVEL",
+                            "Os padrões não possuem a fotografia histórica esperada.",
+                        )
+                    cursor.execute(
+                        f"SELECT {COLUNAS_PADRAO} FROM padroes_subgrupo p "
+                        "JOIN padroes_grupo g USING (id_grupo) "
+                        "WHERE p.padrao_cod = ANY(%s) "
+                        "AND p.total_sorteios = %s "
+                        "AND p.percentual_ocorrencia < %s "
+                        "ORDER BY p.padrao_cod",
+                        (list(codigos), total_sorteios, limite),
+                    )
+                    return tuple(
+                        _linha_para_padrao(linha) for linha in cursor.fetchall()
+                    )
+        except ErroRepositorioPadrao:
+            raise
+        except psycopg.Error:
+            raise ErroRepositorioPadrao(
+                "FALHA_LISTAGEM_RAROS",
+                "Não foi possível selecionar os padrões raros.",
             ) from None
 
     def criar(
@@ -321,11 +396,14 @@ class RepositorioPadroes:
                 padrao_cod=codigo,
             ) from None
 
-    def atualizar_estatistica(self, estatistica: EstatisticaPadrao) -> PadraoPersistido:
-        """Grava somente os três campos calculados de um padrão cadastrado.
+    def atualizar_estatistica(
+        self, estatistica: EstatisticaPadrao, total_sorteios: int
+    ) -> PadraoPersistido:
+        """Grava a fotografia estatística atual de um padrão cadastrado.
 
         Parâmetros:
             estatistica: Resumo produzido pelas funções históricas aprovadas.
+            total_sorteios: Quantidade de resultados usada como denominador.
 
         Retorno:
             Linha atualizada, preservando código, nome e descrição.
@@ -337,15 +415,35 @@ class RepositorioPadroes:
 
         if not isinstance(estatistica, EstatisticaPadrao):
             raise TypeError("A atualização exige uma EstatisticaPadrao.")
+        if (
+            isinstance(total_sorteios, bool)
+            or not isinstance(total_sorteios, int)
+            or total_sorteios < 0
+        ):
+            raise ValueError("total_sorteios deve ser um inteiro não negativo.")
+        if estatistica.num_oco > total_sorteios:
+            raise ValueError("As ocorrências não podem superar o total de sorteios.")
+        percentual = (
+            None
+            if total_sorteios == 0
+            else (
+                Decimal(estatistica.num_oco)
+                * Decimal("100")
+                / Decimal(total_sorteios)
+            ).quantize(Decimal("0.000001"), rounding=ROUND_HALF_UP)
+        )
         try:
             with self._conexao.transaction():
                 with self._conexao.cursor() as cursor:
                     cursor.execute(
-                        "UPDATE padroes_subgrupo SET num_oco = %s, intervalo_medio = %s, "
+                        "UPDATE padroes_subgrupo SET num_oco = %s, total_sorteios = %s, "
+                        "percentual_ocorrencia = %s, intervalo_medio = %s, "
                         "desv_padrao = %s WHERE padrao_cod = %s "
                         "RETURNING padrao_cod",
                         (
                             estatistica.num_oco,
+                            None if total_sorteios == 0 else total_sorteios,
+                            percentual,
                             estatistica.intervalo_medio,
                             estatistica.desv_padrao,
                             estatistica.padrao_cod,

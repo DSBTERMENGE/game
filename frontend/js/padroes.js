@@ -120,7 +120,6 @@ function renderizarPerfil(perfil) {
   const textos = [
     ["Amostra", formatarNumero(perfil.amostra.total_resultados)],
     ["Classificados", formatarNumero(perfil.amostra.total_classificados)],
-    ["Sem correspondência", formatarNumero(perfil.amostra.sem_correspondencia)],
     ["Limite", `${formatarCalculado(perfil.raridade.limite_percentual)}%`],
     ["Indicados", raros.length ? raros.join(", ") : "nenhum"],
   ];
@@ -135,7 +134,7 @@ function renderizarPerfil(perfil) {
     const linha = document.createElement("tr");
     linha.dataset.raro = String(classe.raro);
     linha.append(
-      criarCelulaPerfil(classe.padrao_cod ?? "Sem correspondência"),
+      criarCelulaPerfil(classe.padrao_cod),
       criarCelulaPerfil(formatarNumero(classe.quantidade)),
       criarCelulaPerfil(`${formatarCalculado(classe.percentual_total)}%`),
       criarCelulaPerfil(classe.percentual_classificados === null ? "—" : `${formatarCalculado(classe.percentual_classificados)}%`),

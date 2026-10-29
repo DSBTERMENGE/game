@@ -44,30 +44,74 @@ function filtros(prefixo, quantidade, entrada, totalExclusoes) {
   }));
 }
 
+function padrao(codigo, estado, avaliacoes = 0, exclusoes = 0, saldo = null) {
+  return {
+    padrao_cod: codigo, padrao_nome: `Padrão ${codigo}`, num_ocorrencias: 1,
+    total_sorteios: 100, percentual_ocorrencia: "1.000000",
+    limite_percentual: "10.000000", operador: "<", estado,
+    avaliacoes, correspondencias: exclusoes, exclusoes, saldo,
+  };
+}
+
 const dados = {
   escopo: { tipo: "amostra", total_universo: 50063860, total_analisado: 5000, processamento_integral: false },
   resumo: { total_analisado: 5000, total_excluido: 1000, percentual_excluido: "20.000000", total_aprovado: 4000, percentual_aprovado: "80.000000", reconciliado: true },
   familias: [
     { codigo: "ESTATISTICA", nome: "Valores estatísticos", ordem: 1, entrada: 5000, exclusoes: 300, saldo: 4700, percentual_total_inicial: "6", percentual_saldo_recebido: "6", filtros: filtros("EST", 3, 5000, 300) },
     { codigo: "GEOMETRIA", nome: "Análise geométrica", ordem: 2, entrada: 4700, exclusoes: 500, saldo: 4200, percentual_total_inicial: "10", percentual_saldo_recebido: "10.638298", filtros: filtros("GEO", 5, 4700, 500) },
-    { codigo: "PADROES", nome: "Padrões históricos", ordem: 3, entrada: 4200, exclusoes: 200, saldo: 4000, percentual_total_inicial: "4", percentual_saldo_recebido: "4.761905", filtros: filtros("PAD", 1, 4200, 200) },
+    { codigo: "PADROES", nome: "Padrões históricos", ordem: 3, entrada: 4200, exclusoes: 200, saldo: 4000, percentual_total_inicial: "4", percentual_saldo_recebido: "4.761905", filtros: [
+      { ...filtros("PAD_PD_002", 1, 4200, 200)[0], codigo: "PAD_PD_002" },
+      { ...filtros("PAD_PD_003", 1, 4000, 0)[0], codigo: "PAD_PD_003" },
+      { ...filtros("PAD_PD_005", 1, 4000, 0)[0], codigo: "PAD_PD_005" },
+      { ...filtros("PAD_PD_006", 1, 4000, 0)[0], codigo: "PAD_PD_006" },
+      { ...filtros("PAD_PD_009", 1, 4000, 0)[0], codigo: "PAD_PD_009" },
+    ] },
   ],
   fechamento: { equacao: "total_analisado = total_excluido + total_aprovado", lado_esquerdo: 5000, lado_direito: 5000, valido: true },
+  detalhes_padroes: {
+    limite_percentual: "10.000000", operador: "<",
+    grupos: [
+      { grupo_cod: "PG_001", grupo_nome: "Sequenciais", entrada: 4200, exclusoes: 200, saldo: 4000, reconciliado: true,
+        padroes: [padrao("PD_002", "APLICADO_RARO", 4200, 200, 4000), padrao("PD_003", "APLICADO_RARO", 4000, 0, 4000)] },
+      { grupo_cod: "PG_002", grupo_nome: "Colunas", entrada: 4000, exclusoes: 0, saldo: 4000, reconciliado: true,
+        padroes: [padrao("PD_005", "APLICADO_RARO", 4000, 0, 4000), padrao("PD_006", "APLICADO_RARO", 4000, 0, 4000)] },
+      { grupo_cod: "PG_003", grupo_nome: "Linhas", entrada: 4000, exclusoes: 0, saldo: 4000, reconciliado: true,
+        padroes: [padrao("PD_009", "APLICADO_RARO", 4000, 0, 4000)] },
+    ],
+    fechamento: { entrada: 4200, exclusoes: 200, saldo: 4000, valido: true },
+  },
+  configuracao_raridade: {
+    limite_percentual: "10.000000", operador: "<",
+    padroes_selecionados: ["PD_002", "PD_003", "PD_005", "PD_006", "PD_009"],
+  },
 };
 
 test("renderiza contrato real em blocos expansíveis e compactos", async ({ page }) => {
+  let limiteRecebido;
   await page.setViewportSize({ width: 1280, height: 820 });
-  await page.route("**/api/screener/quadro-extensivel", (rota) => rota.fulfill({
-    status: 200, contentType: "application/json", body: JSON.stringify({
-      ...dados,
-      comparacao: {
-        anterior: { total_aprovado: 4409 }, novo: { total_aprovado: 4000 },
-        diferenca_aprovadas: -409,
-      },
-    }),
-  }));
+  await page.route("**/api/screener/quadro-extensivel", (rota) => {
+    limiteRecebido = rota.request().postDataJSON().limite_raridade;
+    const respostaDados = structuredClone(dados);
+    const limiteFormatado = Number(limiteRecebido).toFixed(6);
+    respostaDados.configuracao_raridade.limite_percentual = limiteFormatado;
+    respostaDados.detalhes_padroes.limite_percentual = limiteFormatado;
+    respostaDados.detalhes_padroes.grupos.forEach((grupo) => grupo.padroes.forEach((padrao) => {
+      padrao.limite_percentual = limiteFormatado;
+    }));
+    return rota.fulfill({
+      status: 200, contentType: "application/json", body: JSON.stringify({
+        ...respostaDados,
+        comparacao: {
+          anterior: { total_aprovado: 4409 }, novo: { total_aprovado: 4000 },
+          diferenca_aprovadas: -409,
+        },
+      }),
+    });
+  });
   await page.goto("http://127.0.0.1:4175/screener-extensivel.html");
+  await page.locator("#limite-raridade-extensivel").fill("7.5");
   await page.locator("#botao-executar-extensivel").click();
+  expect(limiteRecebido).toBe("7.5");
 
   await expect(page.locator(".prototipo-nivel")).toHaveCount(3);
   await expect(page.locator("#extensivel-total-universo")).toHaveText("50.063.860");
@@ -77,8 +121,17 @@ test("renderiza contrato real em blocos expansíveis e compactos", async ({ page
   await expect(page.locator(".prototipo-nivel[open]")).toHaveCount(0);
   await page.locator("#botao-abrir-todos").click();
   await expect(page.locator(".prototipo-nivel[open]")).toHaveCount(3);
-  await expect(page.locator(".prototipo-detalhes tbody tr")).toHaveCount(9);
-  await expect(page.locator(".integracao-validada")).toHaveCount(9);
+  await expect(page.locator(".prototipo-detalhes > table > tbody > tr")).toHaveCount(13);
+  await expect(page.locator(".integracao-validada")).toHaveCount(13);
+  await expect(page.locator(".prototipo-nivel--padroes > .prototipo-detalhes > table tbody tr").first().locator("td").first()).toContainText("PD_002 · Padrão PD_002 | PG_001 · Sequenciais");
+  await expect(page.locator(".padrao-grupo")).toHaveCount(3);
+  await page.locator(".padrao-grupo").first().locator("summary").click();
+  await expect(page.locator(".padrao-grupo").first().locator("tbody tr")).toHaveCount(2);
+  await expect(page.locator(".padrao-aplicado")).toHaveCount(5);
+  await expect(page.locator(".padrao-nao-aplicado")).toHaveCount(0);
+  await expect(page.locator("#extensivel-raridade-usada")).toContainText("PD_002, PD_003, PD_005, PD_006, PD_009");
+  await expect(page.locator("#extensivel-raridade-usada")).toContainText("7,500000%");
+  expect(await page.evaluate(() => localStorage.getItem("msen.screener.limiteRaridade"))).toBe("7.500000");
   const medidas = await page.locator("#extensivel-niveis").evaluate((elemento) => ({
     direita: elemento.getBoundingClientRect().right,
     inferior: elemento.getBoundingClientRect().bottom,

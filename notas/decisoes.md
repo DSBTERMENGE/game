@@ -203,3 +203,20 @@
   indisponível, nunca como padrão que não ocorreu.
 - Somente após a classificação histórica e sua fotografia a frequência poderá
   definir quais subgrupos são candidatos à exclusão.
+
+## 2026-10-29 — Incidência histórica e seleção dos padrões raros
+
+- O percentual de cada padrão usa todos os sorteios válidos como denominador:
+  `num_oco / total_sorteios * 100`.
+- Um resultado que não corresponda aos padrões estudados não cria classe,
+  registro ou filtro complementar; `SEM_CORRESPONDENCIA` foi removido.
+- Quantidade, denominador e percentual atuais são atualizados na própria linha
+  do padrão, sem criar séries históricas a cada recálculo.
+- O screener consulta somente padrões com detector Python aprovado e
+  `percentual_ocorrencia < limite_configurado`; igualdade não seleciona.
+- Somente os padrões retornados pela consulta aparecem no relatório e são
+  executados. Ausência significa que o padrão não foi eleito.
+- Novos padrões exigem detector Python, testes, integração ao registro e
+  recálculo histórico antes de poderem participar do screener.
+- O processamento das 50.063.860 combinações permanece bloqueado; por enquanto
+  somente a amostra reproduzível de 5.000 está autorizada.

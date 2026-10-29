@@ -49,6 +49,12 @@ def _resumo_padroes(padroes) -> dict[str, dict[str, object]]:
             "padrao_nome": item.padrao_nome,
             "padrao_descr": item.padrao_descr,
             "num_oco": item.num_oco,
+            "total_sorteios": item.total_sorteios,
+            "percentual_ocorrencia": (
+                None
+                if item.percentual_ocorrencia is None
+                else str(item.percentual_ocorrencia)
+            ),
             "intervalo_medio": (
                 None if item.intervalo_medio is None else str(item.intervalo_medio)
             ),

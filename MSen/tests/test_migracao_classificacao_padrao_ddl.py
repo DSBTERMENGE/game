@@ -18,10 +18,14 @@ class MigracaoClassificacaoPadraoDDLTestCase(unittest.TestCase):
         cls.sql = cls.migracao.read_text(encoding="utf-8")
         cls.esquema = ESQUEMA_CONSOLIDADO.read_text(encoding="utf-8")
 
-    def test_migracao_008_e_descoberta_na_ordem_correta(self):
+    def test_migracao_008_e_descoberta_antes_da_009(self):
         migracoes = descobrir_migracoes(PASTA_MIGRACOES)
-        self.assertEqual("008", migracoes[-1].versao)
-        self.assertEqual(self.migracao, migracoes[-1].caminho)
+        migracao_008 = next(item for item in migracoes if item.versao == "008")
+        self.assertEqual(self.migracao, migracao_008.caminho)
+        self.assertLess(
+            migracoes.index(migracao_008),
+            next(i for i, item in enumerate(migracoes) if item.versao == "009"),
+        )
 
     def test_tabela_tem_unicidade_versao_e_data(self):
         self.assertIn("CREATE TABLE resultado_classificacao_padrao", self.sql)

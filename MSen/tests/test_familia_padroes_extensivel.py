@@ -34,9 +34,6 @@ def grupo(
             FrequenciaPadraoFotografada(
                 "PD_003", excludente_percentual, Decimal(excludente_percentual)
             ),
-            FrequenciaPadraoFotografada(
-                None, 10 - excludente_percentual, Decimal(10 - excludente_percentual)
-            ),
         ),
     )
 
@@ -84,7 +81,7 @@ class FamiliaPadroesExtensivelTests(unittest.TestCase):
         self.assertEqual(100, decisao.evidencias["denominador_historico"])
         self.assertEqual(("PD_003",), decisao.evidencias["padroes_excludentes"])
 
-    def test_sem_correspondencia_completa_o_perfil_mas_nao_exclui(self) -> None:
+    def test_ausencia_de_padrao_estudado_nao_cria_classe_nem_exclui(self) -> None:
         familia = criar_familia_padroes(
             grupos_fotografados=(grupo(),),
             classificadores={"PG_001": classificar_sequenciais_para_funil},
@@ -93,8 +90,8 @@ class FamiliaPadroesExtensivelTests(unittest.TestCase):
 
         self.assertTrue(decisao.aprovada)
         self.assertIsNone(decisao.evidencias["padrao_cod"])
-        self.assertEqual("SEM_CORRESPONDENCIA", decisao.evidencias["classe"])
-        self.assertNotIn(None, decisao.evidencias["padroes_excludentes"])
+        self.assertEqual("PADRAO_ESTUDADO_NAO_IDENTIFICADO", decisao.motivo)
+        self.assertNotIn("classe", decisao.evidencias)
 
     def test_multiplos_grupos_formam_funil_com_exclusoes_liquidas(self) -> None:
         primeiro = grupo("G001")

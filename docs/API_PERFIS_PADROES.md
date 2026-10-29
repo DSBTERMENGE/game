@@ -21,13 +21,15 @@ juntos. Para um backtest do concurso N, o chamador deverá informar como corte o
 A resposta contém:
 
 - identificação do grupo;
-- total da amostra, total classificado e sem correspondência;
+- total da amostra e total de ocorrências identificadas nos padrões estudados;
 - primeiro e último concurso e data efetivamente incluídos;
 - limite, operador estrito `<` e padrões apenas indicados como raros;
 - versões das classificações usadas;
 - contagem, percentuais, intervalo médio, desvio-padrão e indicação de raridade
   de cada padrão;
-- classe `SEM_CORRESPONDENCIA`, sem estatística de intervalo e nunca rara.
+
+O complemento até 100% não é uma classe e não aparece na resposta. Cada
+percentual usa como denominador o total da amostra.
 
 `raridade.ativa_no_screener` permanece sempre `false` nesta etapa.
 

@@ -24,9 +24,6 @@ def perfil_teste() -> PerfilClassificacaoGrupo:
             "PD_003", 0, Decimal("0.000000"), Decimal("0.000000"),
             None, None, True,
         ),
-        ClassePerfilPadrao(
-            None, 1, Decimal("10.000000"), None, None, None, False,
-        ),
     )
     return PerfilClassificacaoGrupo(
         "PG_001",
@@ -60,7 +57,8 @@ class ApiPerfisPadroesTestCase(unittest.TestCase):
         self.assertEqual(["PD_003"], corpo["raridade"]["padroes_indicados"])
         self.assertFalse(corpo["raridade"]["ativa_no_screener"])
         self.assertEqual("2.000000", corpo["classes"][0]["intervalo_medio"])
-        self.assertEqual("SEM_CORRESPONDENCIA", corpo["classes"][-1]["estado"])
+        self.assertNotIn("sem_correspondencia", corpo["amostra"])
+        self.assertTrue(all(item["padrao_cod"] for item in corpo["classes"]))
 
     def test_encaminha_corte_por_concurso_inclusivo(self):
         recebidos = []

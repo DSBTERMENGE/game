@@ -2044,10 +2044,218 @@ texto, blocos e detalhes expansíveis; não é obrigada a usar tabelas.
   O resultado é experimental e não substitui auditoria ou backtest.
 
 
+### Etapa 18-C — correção e ampliação do screener de padrões
+
+Objetivo: corrigir o modelo de padrões após a validação experimental da Etapa
+18, eliminar a classe indevida `SEM_CORRESPONDENCIA`, armazenar explicitamente
+a incidência histórica de todos os padrões e aplicar no screener somente os
+padrões cuja incidência seja estritamente menor que o limite configurado.
+
+Esta etapa tem prioridade sobre as Etapas 19, 20 e 21. O backtest e a auditoria
+continuam em espera. Cada subetapa exige autorização separada e foi limitada a
+uma entrega curta, testável e reversível.
+
+Regra aprovada:
+
+```text
+percentual_ocorrencia = quantidade_ocorrencias / total_sorteios * 100
+padrão aplicado no screener quando percentual_ocorrencia < limite_configurado
+```
+
+Um padrão com zero ocorrências permanece cadastrado com quantidade `0` e
+percentual `0%`. O complemento até 100% não é padrão, classe, ocorrência ou
+critério e não deve ser persistido como `SEM_CORRESPONDENCIA`.
+
+#### 18-C.1 — Contrato definitivo e inventário do impacto
+
+- Registrar a distinção entre cálculo histórico e detector de combinação.
+- Definir nomes semânticos: `quantidade_ocorrencias`, `total_sorteios` e
+  `percentual_ocorrencia`.
+- Preservar quantidade e denominador para auditoria, mas apresentar e consultar
+  prioritariamente o percentual.
+- Inventariar banco, Python, API, frontend, testes e documentos que ainda usam
+  `SEM_CORRESPONDENCIA`.
+- Teste: relatório somente de leitura provando o estado anterior à correção.
+- Estado: **concluído em 29/10/2026**, sem escrita no banco. Foram localizados
+  34 arquivos afetados e confirmadas 1.780 linhas `SEM_CORRESPONDENCIA`, contra
+  1.289 classificações válidas. O contrato e a ordem segura estão registrados
+  em `MSen/tests/TESTE_ITEM_18_C_1.md`.
+
+#### 18-C.2 — Migração dos percentuais históricos
+
+- Criar migração SQL versionada para armazenar `total_sorteios` e
+  `percentual_ocorrencia` em todos os padrões cadastrados.
+- Manter somente uma linha por padrão: cada recálculo atualizará e substituirá
+  os valores estatísticos atuais nessa mesma linha, sem criar histórico ou um
+  novo conjunto de registros.
+- Renomear `num_oco` para `quantidade_ocorrencias`, se a análise de impacto da
+  18-C.1 confirmar que a migração pode ser feita sem ambiguidade.
+- Definir precisão decimal, faixa de 0% a 100% e consistência entre os três
+  valores.
+- Não apagar a quantidade: ela permite provar e recalcular o percentual.
+- Teste: banco temporário, migração repetível e padrão com zero ocorrência.
+- Estado: **concluído em 29/10/2026** pela migração `009`, aplicada ao banco
+  local após teste temporário. Foram adicionados `total_sorteios` e
+  `percentual_ocorrencia`; `num_oco` foi preservado por compatibilidade. Os
+  campos novos permanecem nulos até o recálculo da 18-C.3. Passaram 492 testes.
+
+#### 18-C.3 — Recálculo histórico de todos os nove padrões
+
+- Executar as funções oficiais de `PD_001` a `PD_009` sobre os 3.069 resultados.
+- Gravar quantidade, total de sorteios e percentual, inclusive quando for zero.
+- Atualizar os campos do padrão existente; não inserir outra linha estatística.
+- Manter intervalo médio e desvio-padrão já calculados.
+- Teste: conferir manualmente amostras e reconciliar os nove totais com o banco.
+- Estado: **concluído em 29/10/2026** após ensaio em restauração temporária e
+  backup do `games`. As nove linhas foram atualizadas com denominador 3.069 e
+  percentuais reconciliados; não houve inserção de linha. Passaram 492 testes.
+  Resultado detalhado em `MSen/tests/TESTE_ITEM_18_C_3.md`.
+
+#### 18-C.4 — Remoção do modelo `SEM_CORRESPONDENCIA`
+
+- Remover os 1.780 registros indevidos após backup e conferência do alvo.
+- Retirar enumeração, persistência, fotografia, API e apresentação dessa classe.
+- Quando nenhum padrão estudado incidir sobre um resultado, não criar registro.
+- O denominador histórico continuará sendo o total de sorteios, e não apenas os
+  resultados que corresponderam a algum padrão.
+- Teste: provar ausência da classe e preservação dos percentuais dos padrões.
+- Estado: **concluído em 29/10/2026** pela migração `010`. Foram removidas
+  exatamente 1.780 linhas indevidas e preservadas 1.289 ocorrências reais.
+  Domínio, repositório, perfil, fotografia, API e frontend deixaram de tratar o
+  complemento como classe. Passaram 493 testes Python, 35 JavaScript e 11 no
+  Chrome. Relatório em `MSen/tests/TESTE_ITEM_18_C_4.md`.
+
+#### 18-C.5 — Consulta parametrizada dos padrões raros
+
+- Consultar somente padrões com função Python aprovada e
+  `percentual_ocorrencia < limite_configurado`.
+- Usar o percentual armazenado; quantidade e denominador serão evidências.
+- Não usar `<=`: um padrão exatamente no limite não será aplicado.
+- Recusar padrões sem detector, percentual desatualizado ou denominador
+  incompatível com a fotografia histórica.
+- Teste: limites 0%, exatamente iguais, abaixo e acima da configuração.
+
+Estado: concluída em 2026-10-29. A consulta SQL parametrizada seleciona somente
+os códigos com detector Python aprovado e percentual estritamente menor que o
+limite. Com 10%, foram selecionados PD_002, PD_003, PD_005, PD_006 e PD_009.
+A fronteira exata de PD_003 confirmou a regra `<`; fotografia com denominador
+incompatível foi recusada. Passaram 8 testes direcionados e 496 testes Python.
+Evidência em `MSen/tests/TESTE_ITEM_18_C_5.md`.
+
+#### 18-C.6 — Configuração do limite de raridade
+
+- Retirar o valor experimental fixo de 10% do serviço da Etapa 18.
+- Criar uma única configuração validada para o limite percentual.
+- Fotografar valor, operador `<`, data, intervalo histórico e versão do cálculo
+  no início de cada execução.
+- Teste: alteração da configuração muda a seleção dos padrões, mas não altera
+  retroativamente uma execução já fotografada.
+
+Estado: concluída em 2026-10-29. O limite único foi incluído em
+`MSen/config/screener.toml`, validado como `Decimal` de 0% a 100% e ligado ao
+ensaio extensível no lugar do valor fixo. O formato 2 da fotografia registra
+data, operador `<`, limite, intervalo histórico, frequências, seleção e versões
+dos cálculos. Uma mudança posterior do limite não altera fotografia anterior.
+Passaram 500 testes Python. Evidência em `MSen/tests/TESTE_ITEM_18_C_6.md`.
+
+#### 18-C.7 — Adaptadores dos três grupos disponíveis
+
+- Integrar `PG_001`, `PG_002` e `PG_003` ao screener.
+- Usar somente os detectores dos padrões selecionados pela consulta de raridade.
+- Não executar detectores de padrões que estejam no limite ou acima dele.
+- Interromper a combinação na primeira exclusão e contabilizar o padrão que a
+  eliminou.
+- Teste: combinações manuais para cada `PD_001` a `PD_009`.
+
+Estado: concluída em 2026-10-29. Cada padrão raro selecionado produz um filtro
+individual; detectores não selecionados não são executados, e a primeira
+correspondência interrompe a combinação e contabiliza sua exclusão no padrão
+responsável. Os nove detectores passaram por casos manuais. Na execução real de
+5.000 combinações, a família recebeu 423, excluiu 9 por PD_002, PD_005 e PD_009
+e entregou 414. Passaram 503 testes Python. Evidência em
+`MSen/tests/TESTE_ITEM_18_C_7.md`.
+
+#### 18-C.8 — Relatório detalhado por padrão
+
+- Manter o resumo compacto por família e grupo.
+- Permitir expansão mostrando somente cada `PD_nnn` retornado pela consulta de
+  raridade, com nome, grupo, incidência histórica, limite, combinações recebidas,
+  correspondências, exclusões e saldo.
+- A ausência de um grupo ou padrão significa que ele não foi selecionado pela
+  consulta e, portanto, não foi aplicado ao screener.
+- Teste: fechamento por padrão, grupo, família e total geral.
+
+Estado: concluída e corrigida em 2026-10-29. O painel mantém o resumo compacto e
+acrescenta somente os grupos e padrões retornados pela consulta de raridade,
+com incidência, limite, avaliações, correspondências, exclusões e saldo. A
+ausência já informa que o padrão não foi eleito e não foi aplicado. Com 10%,
+foram exibidos PD_002, PD_003, PD_005, PD_006 e PD_009. Os grupos fecharam em
+423→420, 420→417 e 417→414; a família fechou 423 = 9 + 414.
+Passaram 505 testes Python, 35 JavaScript e 18 fluxos Chrome. Evidência em
+`MSen/tests/TESTE_ITEM_18_C_8.md`.
+
+#### 18-C.9 — API e interface da configuração
+
+- Expor o limite efetivamente usado e a lista de padrões selecionados.
+- Permitir configurar o limite sem editar código-fonte.
+- Mostrar percentuais como informação principal; quantidades e denominador
+  aparecerão nos detalhes de auditoria.
+- Preservar o uso compacto de espaço vertical e horizontal.
+- Teste: API, JavaScript e fluxo no Google Chrome.
+
+Estado: concluída em 2026-10-29. A API aceita um limite de 0% a 100% por
+execução, preserva o operador `<`, fotografa o valor efetivo e devolve somente a
+lista selecionada. A interface possui campo compacto, mostra limite e padrões
+usados e memoriza o último valor válido no navegador. Limites reais de 3% e 0%
+foram reconciliados. Passaram 508 testes Python, 35 JavaScript e 18 fluxos
+Chrome. Evidência em `MSen/tests/TESTE_ITEM_18_C_9.md`.
+
+#### 18-C.10 — Ensaio protegido com 5.000 combinações
+
+- Repetir a mesma amostra reproduzível de 5.000 combinações.
+- Aplicar estatística, geometria e todos os padrões raros dos três grupos.
+- Exibir somente os padrões eleitos pela consulta de raridade, com sua incidência
+  histórica, o limite aplicado e quantas combinações eliminaram após receber o
+  saldo dos níveis anteriores. A ausência significa que o padrão não foi eleito
+  e não foi executado.
+- Manter o processamento integral bloqueado.
+- Teste: reconciliação automática e comparação com o ensaio anterior.
+
+Estado: concluída em 2026-10-29. Duas execuções com a mesma semente produziram
+o mesmo checksum e fecharam em 5.000 = 4.586 excluídas + 414 aprovadas.
+Estatística entregou 2.001, geometria entregou 423 e os cinco padrões raros
+eleitos dos três grupos excluíram 9, entregando 414. Somente PD_002, PD_003,
+PD_005, PD_006 e PD_009 apareceram e foram executados. O processamento integral
+permaneceu bloqueado. Passaram 508 testes Python, 35 JavaScript e 18 fluxos
+Chrome. Evidência em `MSen/tests/TESTE_ITEM_18_C_10.md`.
+
+#### 18-C.11 — Regressão, documentação e fechamento
+
+- Executar testes Python, PostgreSQL temporário, API, JavaScript e Chrome.
+- Atualizar funcionalidades, decisões e continuidade da IA.
+- Registrar que novos padrões exigem função Python e recálculo histórico antes
+  de poderem participar da consulta de raridade.
+- Preparar commit e push somente mediante autorização específica.
+
+Estado: concluída em 2026-10-29. Passaram 508 testes Python, 35 JavaScript, 18
+fluxos Chrome simulados, três fluxos integrados Chrome/PostgreSQL e dois fluxos
+Chrome contra a API local real. Uma restauração temporária recebeu as migrações
+001–010, recalculou os nove padrões sobre 3.069 resultados e foi removida; a
+auditoria final não encontrou databases temporários. Foram corrigidas duas
+expectativas antigas dos testes integrados e atualizados funcionalidades,
+decisões, critérios, plano e continuidade. Evidência em
+`MSen/tests/TESTE_ITEM_18_C_11.md`. A Etapa 18-C está tecnicamente encerrada;
+commit e push dependem de autorização específica.
+
+
 ### Etapa 19 — mecanismo de backtest sem informação futura
 
 Objetivo: avaliar se os critérios teriam preservado resultados reais ainda
 desconhecidos no ponto histórico simulado.
+
+Estado: **em espera por decisão expressa do usuário em 2026-10-28**. Não iniciar
+planejamento detalhado, implementação, preparação de dados ou testes de backtest
+até nova autorização. O encerramento da Etapa 18 não autoriza esta etapa.
 
 Estado decidido em 28/10/2026: etapa formalmente adiada. O backtest somente
 será desenvolvido quando cadastro, classificações, perfis, configurações,

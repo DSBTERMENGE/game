@@ -6,30 +6,28 @@ import psycopg
 
 from msen.modelos import (
     ClassificacaoPadrao,
-    EstadoClassificacaoPadrao,
     validar_classificacao,
 )
 
 
 COLUNAS_CLASSIFICACAO = (
     "id_classificacao, id_resultado, id_grupo, id_padrao, "
-    "estado_classificacao, versao_calculo, calculado_em"
+    "versao_calculo, calculado_em"
 )
 
 
 def _linha_para_classificacao(linha: tuple[Any, ...]) -> ClassificacaoPadrao:
-    """Converte as sete colunas do PostgreSQL para o modelo imutável."""
+    """Converte as seis colunas do PostgreSQL para o modelo imutável."""
 
-    if len(linha) != 7:
-        raise ValueError("A consulta de classificação deve retornar exatamente 7 colunas.")
+    if len(linha) != 6:
+        raise ValueError("A consulta de classificação deve retornar exatamente 6 colunas.")
     return ClassificacaoPadrao(
         id_classificacao=linha[0],
         id_resultado=linha[1],
         id_grupo=linha[2],
         id_padrao=linha[3],
-        estado=EstadoClassificacaoPadrao(linha[4]),
-        versao_calculo=linha[5],
-        calculado_em=linha[6],
+        versao_calculo=linha[4],
+        calculado_em=linha[5],
     )
 
 
@@ -58,31 +56,27 @@ class RepositorioClassificacoesPadrao:
         id_resultado: int,
         id_grupo: int,
         *,
-        id_padrao: int | None,
-        estado: EstadoClassificacaoPadrao,
+        id_padrao: int,
         versao_calculo: int = 1,
     ) -> ClassificacaoPadrao:
         """Insere ou atualiza atomicamente a classificação do resultado/grupo.
 
-        Um recálculo preserva `id_classificacao` e atualiza padrão, estado,
-        versão e data do cálculo.
+        Um recálculo preserva `id_classificacao` e atualiza padrão, versão e
+        data do cálculo.
         """
 
-        validar_classificacao(
-            id_resultado, id_grupo, id_padrao, estado, versao_calculo
-        )
+        validar_classificacao(id_resultado, id_grupo, id_padrao, versao_calculo)
         with self._conexao.cursor() as cursor:
             cursor.execute(
                 "INSERT INTO resultado_classificacao_padrao "
-                "(id_resultado, id_grupo, id_padrao, estado_classificacao, versao_calculo) "
-                "VALUES (%s, %s, %s, %s, %s) "
+                "(id_resultado, id_grupo, id_padrao, versao_calculo) "
+                "VALUES (%s, %s, %s, %s) "
                 "ON CONFLICT (id_resultado, id_grupo) DO UPDATE SET "
                 "id_padrao = EXCLUDED.id_padrao, "
-                "estado_classificacao = EXCLUDED.estado_classificacao, "
                 "versao_calculo = EXCLUDED.versao_calculo, "
                 "calculado_em = CURRENT_TIMESTAMP "
                 f"RETURNING {COLUNAS_CLASSIFICACAO}",
-                (id_resultado, id_grupo, id_padrao, estado.value, versao_calculo),
+                (id_resultado, id_grupo, id_padrao, versao_calculo),
             )
             return _linha_para_classificacao(cursor.fetchone())
 
@@ -111,3 +105,38 @@ class RepositorioClassificacoesPadrao:
                 (id_grupo,),
             )
             return tuple(_linha_para_classificacao(linha) for linha in cursor.fetchall())
+
+    def excluir_por_grupo(self, id_grupo: int) -> int:
+        """Remove a fotografia anterior do grupo antes do recálculo completo."""
+
+        _id_positivo("id_grupo", id_grupo)
+        with self._conexao.cursor() as cursor:
+            cursor.execute(
+                "DELETE FROM resultado_classificacao_padrao WHERE id_grupo = %s",
+                (id_grupo,),
+            )
+            return cursor.rowcount
+
+    def excluir_nao_identificados(
+        self, id_grupo: int, ids_resultados_identificados: tuple[int, ...]
+    ) -> int:
+        """Remove somente linhas antigas que não correspondem mais a padrão."""
+
+        _id_positivo("id_grupo", id_grupo)
+        if not isinstance(ids_resultados_identificados, tuple):
+            raise TypeError("ids_resultados_identificados deve ser uma tupla.")
+        for identificador in ids_resultados_identificados:
+            _id_positivo("id_resultado", identificador)
+        with self._conexao.cursor() as cursor:
+            if ids_resultados_identificados:
+                cursor.execute(
+                    "DELETE FROM resultado_classificacao_padrao "
+                    "WHERE id_grupo = %s AND NOT (id_resultado = ANY(%s))",
+                    (id_grupo, list(ids_resultados_identificados)),
+                )
+            else:
+                cursor.execute(
+                    "DELETE FROM resultado_classificacao_padrao WHERE id_grupo = %s",
+                    (id_grupo,),
+                )
+            return cursor.rowcount

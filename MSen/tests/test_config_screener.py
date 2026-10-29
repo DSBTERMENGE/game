@@ -1,4 +1,5 @@
 import tempfile
+from decimal import Decimal
 from pathlib import Path
 import unittest
 
@@ -16,6 +17,7 @@ class ConfiguracaoScreenerTestCase(unittest.TestCase):
         self.assertEqual(5_000, configuracao.limite_combinacoes)
         self.assertEqual(20261027, configuracao.semente)
         self.assertFalse(configuracao.confirmacao_processamento_integral)
+        self.assertEqual(Decimal("10.000000"), configuracao.limite_raridade_percentual)
         self.assertEqual(
             ("padroes_historicos", "medidas_estatisticas", "medidas_geometricas"),
             configuracao.ordem_filtros,
@@ -69,6 +71,26 @@ class ConfiguracaoScreenerTestCase(unittest.TestCase):
     def test_local_ausente_nao_impede_carregamento(self):
         configuracao = carregar_configuracao_screener(PADRAO, "inexistente.toml")
         self.assertEqual(5_000, configuracao.limite_combinacoes)
+
+    def test_local_substitui_o_limite_unico_de_raridade(self):
+        with tempfile.TemporaryDirectory() as pasta:
+            local = Path(pasta) / "local.toml"
+            local.write_text("[raridade]\nlimite_percentual = 3.25\n", encoding="utf-8")
+            configuracao = carregar_configuracao_screener(PADRAO, local)
+        self.assertEqual(Decimal("3.250000"), configuracao.limite_raridade_percentual)
+
+    def test_rejeita_limite_de_raridade_invalido(self):
+        for texto in (
+            "[raridade]\nlimite_percentual = -0.1\n",
+            "[raridade]\nlimite_percentual = 100.1\n",
+            "[raridade]\nlimite_percentual = 'texto'\n",
+        ):
+            with self.subTest(texto=texto), tempfile.TemporaryDirectory() as pasta:
+                local = Path(pasta) / "local.toml"
+                local.write_text(texto, encoding="utf-8")
+                with self.assertRaises(ErroConfiguracaoScreener) as contexto:
+                    carregar_configuracao_screener(PADRAO, local)
+                self.assertEqual("LIMITE_RARIDADE_INVALIDO", contexto.exception.codigo)
 
     def test_rejeita_alteracao_do_limite_experimental(self):
         with tempfile.TemporaryDirectory() as pasta:

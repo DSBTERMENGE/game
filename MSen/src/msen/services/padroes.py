@@ -72,7 +72,9 @@ def recalcular_padroes_iniciais(
         for padrao in cadastrados:
             estatistica = estatisticas.get(padrao.padrao_cod)
             if estatistica is not None:
-                repositorio_padroes.atualizar_estatistica(estatistica)
+                repositorio_padroes.atualizar_estatistica(
+                    estatistica, len(resultados)
+                )
         atualizados = repositorio_padroes.listar()
 
     return RelatorioRecalculoPadroes(

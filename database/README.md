@@ -14,8 +14,14 @@ confirmar o ambiente e o banco de destino.
   padrões;
 - `migrations/003_inicializar_catalogo_padroes.sql`: três registros iniciais e
   sequência de códigos que não reutiliza exclusões;
-- `migrations/003_inicializar_catalogo_padroes.sql`: três registros iniciais e
-  sequência de códigos que não reutiliza exclusões;
+- `migrations/004` a `008`: grupos adicionais, geometria e classificações;
+- `migrations/009_adicionar_percentual_ocorrencia_padroes.sql`: denominador e
+  percentual da fotografia estatística atual de cada padrão;
+- `migrations/010_remover_sem_correspondencia.sql`: mantém somente ocorrências
+  reais de padrões na classificação histórica;
+- `migrations/004` a `008`: grupos adicionais, geometria e classificações;
+- `migrations/009_adicionar_percentual_ocorrencia_padroes.sql`: denominador e
+  percentual da fotografia estatística atual de cada padrão;
 - `seeds/README.md`: regras para dados iniciais e importados.
 
 ## Regras

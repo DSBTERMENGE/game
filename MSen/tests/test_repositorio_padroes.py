@@ -10,7 +10,7 @@ from msen.database.padroes_repository import (
 
 
 class MapeamentoRepositorioPadroesTestCase(unittest.TestCase):
-    def test_mapeia_as_dez_colunas_sem_converter_decimais_para_float(self):
+    def test_mapeia_as_doze_colunas_sem_converter_decimais_para_float(self):
         padrao = _linha_para_padrao(
             (
                 1,
@@ -23,6 +23,8 @@ class MapeamentoRepositorioPadroesTestCase(unittest.TestCase):
                 10,
                 "PG_001",
                 "Sequenciais",
+                3069,
+                Decimal("0.065168"),
             )
         )
 
@@ -38,11 +40,15 @@ class MapeamentoRepositorioPadroesTestCase(unittest.TestCase):
                 10,
                 "PG_001",
                 "Sequenciais",
+                3069,
+                Decimal("0.065168"),
             ),
             padrao,
         )
         self.assertIsInstance(padrao.intervalo_medio, Decimal)
         self.assertIsInstance(padrao.desv_padrao, Decimal)
+        self.assertEqual(3069, padrao.total_sorteios)
+        self.assertEqual(Decimal("0.065168"), padrao.percentual_ocorrencia)
         self.assertEqual("PG_001", padrao.grupo_cod)
 
     def test_rejeita_quantidade_incorreta_de_colunas(self):

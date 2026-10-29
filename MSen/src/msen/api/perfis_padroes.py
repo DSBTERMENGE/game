@@ -14,7 +14,9 @@ from msen.services import (
     ErroRecalculoClassificacao,
     PerfilClassificacaoGrupo,
     calcular_perfil_grupo_sequenciais,
+    selecionar_padroes_raros,
 )
+from msen.services.selecao_padroes import SelecaoPadroesRaros
 
 
 perfis_padroes_api = Blueprint("perfis_padroes_api", __name__)
@@ -45,6 +47,21 @@ def calcular_perfil_no_banco(
             data_ate=data_ate,
             sincronizar_catalogo=False,
         )
+
+
+def selecionar_padroes_raros_no_banco(
+    limite: Decimal, total_sorteios: int
+) -> SelecaoPadroesRaros:
+    """Seleciona em conexão curta somente detectores abaixo do limite atual."""
+
+    with abrir_conexao(carregar_configuracao_banco()) as conexao:
+        return selecionar_padroes_raros(
+            conexao,
+            limite_percentual=limite,
+            total_sorteios=total_sorteios,
+        )
+
+
 
 
 def _erro(codigo: str, mensagem: str, status: int):
@@ -107,15 +124,11 @@ def _decimal(valor: Decimal | None) -> str | None:
 def serializar_perfil(perfil: PerfilClassificacaoGrupo) -> dict[str, object]:
     """Converte o perfil imutável no contrato JSON público."""
 
-    sem_correspondencia = next(
-        item.quantidade for item in perfil.classes if item.padrao_cod is None
-    )
     return {
         "grupo_cod": perfil.grupo_cod,
         "amostra": {
             "total_resultados": perfil.total_resultados,
             "total_classificados": perfil.total_classificados,
-            "sem_correspondencia": sem_correspondencia,
             "numero_ap_inicial": perfil.numero_ap_inicial,
             "numero_ap_final": perfil.numero_ap_final,
             "data_inicial": (
@@ -133,11 +146,7 @@ def serializar_perfil(perfil: PerfilClassificacaoGrupo) -> dict[str, object]:
         "classes": [
             {
                 "padrao_cod": item.padrao_cod,
-                "estado": (
-                    "SEM_CORRESPONDENCIA"
-                    if item.padrao_cod is None
-                    else "PADRAO_IDENTIFICADO"
-                ),
+                "estado": "PADRAO_IDENTIFICADO",
                 "quantidade": item.quantidade,
                 "percentual_total": _decimal(item.percentual_total),
                 "percentual_classificados": _decimal(item.percentual_classificados),

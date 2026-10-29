@@ -25,10 +25,14 @@
           <p id="mensagem-extensivel" role="status">Pronto para executar somente a amostra protegida de 5.000 combinações.</p>
           <p class="aviso-integracao">Cadastrar um padrão não cria seu filtro: cada grupo precisa de função Python, testes e integração validada.</p>
         </div>
+        <label class="controle-raridade">Limite de raridade (%)
+          <input id="limite-raridade-extensivel" type="number" min="0" max="100" step="0.000001" value="10" required>
+        </label>
         <button id="botao-executar-extensivel" type="button">Executar 5.000</button>
         <button id="botao-abrir-todos" type="button">Abrir detalhes</button>
         <button id="botao-fechar-todos" type="button">Fechar detalhes</button>
       </section>
+      <p id="extensivel-raridade-usada" class="prototipo-politica">Limite ainda não executado.</p>
 
       <section class="prototipo-resumo" aria-label="Resumo real do funil">
         <output><span>Universo possível</span><strong id="extensivel-total-universo">—</strong><small>Analisadas: <b id="extensivel-total-analisado">—</b></small></output>

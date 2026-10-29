@@ -81,6 +81,22 @@ aprovação e priorização antes da implementação.
 - [x] Separar Painel e Cadastros em páginas com menu horizontal e Voltar.
 - [x] Conter rolagens vertical e horizontal dentro das grades.
 
+## Screener de padrões históricos concluído
+
+- [x] Calcular e armazenar quantidade, total de sorteios e percentual histórico
+  para todos os padrões, inclusive os que tenham zero ocorrências.
+- [x] Não criar classe ou registro para resultados que não correspondam a um
+  dos padrões estudados.
+- [x] Selecionar somente padrões com função Python aprovada e incidência
+  histórica estritamente menor que o limite configurado.
+- [x] Aplicar os padrões selecionados em funil, interrompendo a combinação na
+  primeira exclusão e contabilizando o filtro responsável.
+- [x] Exibir somente grupos e padrões realmente selecionados e executados, com
+  incidência, limite, avaliações, exclusões e saldo.
+- [x] Mostrar código e nome legível do padrão e do grupo no relatório.
+- [x] Executar amostra protegida e reproduzível de 5.000 combinações, mantendo
+  bloqueado o processamento integral.
+
 ## Auditoria do screener e dos backtests
 
 - [ ] Selecionar um sorteio histórico ou uma combinação experimental para

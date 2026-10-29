@@ -46,6 +46,7 @@ from .distribuicoes import (
     PontoCurvaNormal,
     construir_distribuicao_visual,
 )
+from .selecao_padroes import SelecaoPadroesRaros, selecionar_padroes_raros
 
 __all__ = [
     "RelatorioImportacaoBanco",
@@ -82,4 +83,6 @@ __all__ = [
     "DistribuicaoVisual",
     "PontoCurvaNormal",
     "construir_distribuicao_visual",
+    "SelecaoPadroesRaros",
+    "selecionar_padroes_raros",
 ]

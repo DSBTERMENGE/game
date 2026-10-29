@@ -96,7 +96,8 @@ def resumo_padroes(configuracao: ConfiguracaoBanco, nome: str) -> list[dict[str,
     with conectar(configuracao, nome) as conexao:
         with conexao.cursor() as cursor:
             cursor.execute(
-                "SELECT padrao_cod, num_oco, intervalo_medio, desv_padrao "
+                "SELECT padrao_cod, num_oco, intervalo_medio, desv_padrao, "
+                "total_sorteios, percentual_ocorrencia "
                 "FROM padroes_subgrupo ORDER BY padrao_cod"
             )
             return [
@@ -107,6 +108,10 @@ def resumo_padroes(configuracao: ConfiguracaoBanco, nome: str) -> list[dict[str,
                         None if linha[2] is None else str(linha[2])
                     ),
                     "desv_padrao": None if linha[3] is None else str(linha[3]),
+                    "total_sorteios": linha[4],
+                    "percentual_ocorrencia": (
+                        None if linha[5] is None else str(linha[5])
+                    ),
                 }
                 for linha in cursor.fetchall()
             ]

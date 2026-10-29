@@ -1,6 +1,5 @@
 import unittest
 
-from msen.modelos import EstadoClassificacaoPadrao
 from msen.padroes import (
     CODIGO_DUAS_SEQUENCIAIS,
     CODIGO_GRUPO_SEQUENCIAIS,
@@ -14,7 +13,7 @@ from msen.padroes import (
 
 
 class ClassificacaoGrupoSequenciaisTestCase(unittest.TestCase):
-    def test_classifica_os_quatro_estados_aprovados(self):
+    def test_identifica_os_tres_padroes_estudados(self):
         casos = (
             ((1, 3, 5, 7, 9, 11), None, 1),
             ((10, 25, 26, 38, 50, 58), CODIGO_DUAS_SEQUENCIAIS, 2),
@@ -29,12 +28,6 @@ class ClassificacaoGrupoSequenciaisTestCase(unittest.TestCase):
                 self.assertEqual(CODIGO_GRUPO_SEQUENCIAIS, resultado.grupo_cod)
                 self.assertEqual(codigo, resultado.padrao_cod)
                 self.assertEqual(tamanho, resultado.evidencia.maior_tamanho)
-                estado = (
-                    EstadoClassificacaoPadrao.SEM_CORRESPONDENCIA
-                    if codigo is None
-                    else EstadoClassificacaoPadrao.PADRAO_IDENTIFICADO
-                )
-                self.assertEqual(estado, resultado.estado)
 
     def test_nao_une_sessenta_com_um(self):
         resultado = classificar_grupo_dezenas_sequenciais((58, 59, 60, 1, 2, 3))

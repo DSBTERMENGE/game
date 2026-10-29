@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 import tomllib
@@ -78,6 +79,7 @@ class ConfiguracaoScreener:
     semente: int
     limite_combinacoes: int
     confirmacao_processamento_integral: bool
+    limite_raridade_percentual: Decimal
     ordem_filtros: tuple[str, ...]
     criterios: dict[str, ConfiguracaoCriterio]
     regras: dict[str, RegraConfigurada] = field(default_factory=dict)
@@ -134,11 +136,35 @@ def _validar_percentual(nome: str, valor: object) -> float:
     return percentual
 
 
+def validar_limite_raridade(valor: object) -> Decimal:
+    """Normaliza a configuração única de raridade com seis casas decimais."""
+
+    if isinstance(valor, bool) or not isinstance(valor, (int, float, str, Decimal)):
+        raise ErroConfiguracaoScreener(
+            "LIMITE_RARIDADE_INVALIDO",
+            "O limite de raridade deve ser numérico e estar entre 0 e 100.",
+        )
+    try:
+        limite = Decimal(str(valor))
+    except InvalidOperation as erro:
+        raise ErroConfiguracaoScreener(
+            "LIMITE_RARIDADE_INVALIDO",
+            "O limite de raridade deve ser numérico e estar entre 0 e 100.",
+        ) from erro
+    if not limite.is_finite() or not Decimal(0) <= limite <= Decimal(100):
+        raise ErroConfiguracaoScreener(
+            "LIMITE_RARIDADE_INVALIDO",
+            "O limite de raridade deve ser numérico e estar entre 0 e 100.",
+        )
+    return limite.quantize(Decimal("0.000001"))
+
+
 def _validar(dados: dict[str, Any]) -> ConfiguracaoScreener:
     """Transforma a estrutura TOML no contrato seguro das próximas etapas."""
 
     execucao = dados.get("execucao", {})
     funil = dados.get("funil", {})
+    raridade = dados.get("raridade", {})
     if dados.get("versao") != 1:
         raise ErroConfiguracaoScreener("VERSAO_INVALIDA", "A versão deve ser 1.")
     modo = execucao.get("modo")
@@ -156,6 +182,7 @@ def _validar(dados: dict[str, Any]) -> ConfiguracaoScreener:
     confirmacao = execucao.get("confirmacao_processamento_integral")
     if not isinstance(confirmacao, bool):
         raise ErroConfiguracaoScreener("CONFIRMACAO_INVALIDA", "A confirmação deve ser booleana.")
+    limite_raridade = validar_limite_raridade(raridade.get("limite_percentual"))
     ordem = tuple(funil.get("ordem", ()))
     if ordem != ORDEM_CRITERIOS:
         raise ErroConfiguracaoScreener(
@@ -296,6 +323,7 @@ def _validar(dados: dict[str, Any]) -> ConfiguracaoScreener:
         semente,
         limite,
         confirmacao,
+        limite_raridade,
         ordem,
         criterios,
         regras,

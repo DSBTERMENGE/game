@@ -316,6 +316,8 @@ CREATE TABLE IF NOT EXISTS padroes_subgrupo (
     padrao_nome VARCHAR(200) NOT NULL,
     padrao_descr TEXT NOT NULL,
     num_oco INTEGER,
+    total_sorteios INTEGER,
+    percentual_ocorrencia NUMERIC(9,6),
     intervalo_medio NUMERIC(12,6),
     desv_padrao NUMERIC(12,6),
 
@@ -328,6 +330,30 @@ CREATE TABLE IF NOT EXISTS padroes_subgrupo (
         CHECK (BTRIM(padrao_descr) <> ''),
     CONSTRAINT ck_padroes_num_oco
         CHECK (num_oco IS NULL OR num_oco >= 0),
+    CONSTRAINT ck_padroes_total_sorteios
+        CHECK (total_sorteios IS NULL OR total_sorteios > 0),
+    CONSTRAINT ck_padroes_percentual_ocorrencia
+        CHECK (
+            percentual_ocorrencia IS NULL
+            OR percentual_ocorrencia BETWEEN 0 AND 100
+        ),
+    CONSTRAINT ck_padroes_fotografia_ocorrencia CHECK (
+        (
+            total_sorteios IS NULL
+            AND percentual_ocorrencia IS NULL
+        )
+        OR
+        (
+            total_sorteios IS NOT NULL
+            AND num_oco IS NOT NULL
+            AND num_oco <= total_sorteios
+            AND percentual_ocorrencia IS NOT NULL
+            AND percentual_ocorrencia = ROUND(
+                num_oco::NUMERIC * 100 / total_sorteios,
+                6
+            )
+        )
+    ),
     CONSTRAINT ck_padroes_intervalo_medio
         CHECK (intervalo_medio IS NULL OR intervalo_medio >= 0),
     CONSTRAINT ck_padroes_desv_padrao
@@ -378,6 +404,10 @@ COMMENT ON COLUMN padroes_subgrupo.padrao_descr IS
     'Descrição detalhada e editável da regra reconhecida pelo detector.';
 COMMENT ON COLUMN padroes_subgrupo.num_oco IS
     'Quantidade de resultados históricos que correspondem ao padrão; nulo antes do cálculo.';
+COMMENT ON COLUMN padroes_subgrupo.total_sorteios IS
+    'Total de sorteios da fotografia histórica atual; nulo antes do cálculo.';
+COMMENT ON COLUMN padroes_subgrupo.percentual_ocorrencia IS
+    'Incidência atual do padrão: num_oco / total_sorteios * 100, com seis casas.';
 COMMENT ON COLUMN padroes_subgrupo.intervalo_medio IS
     'Média dos intervalos entre ocorrências; nula quando existem menos de duas ocorrências.';
 COMMENT ON COLUMN padroes_subgrupo.desv_padrao IS
@@ -475,8 +505,7 @@ CREATE TABLE IF NOT EXISTS resultado_classificacao_padrao (
     id_classificacao BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     id_resultado BIGINT NOT NULL,
     id_grupo BIGINT NOT NULL,
-    id_padrao BIGINT,
-    estado_classificacao VARCHAR(30) NOT NULL,
+    id_padrao BIGINT NOT NULL,
     versao_calculo SMALLINT NOT NULL DEFAULT 1,
     calculado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -492,15 +521,6 @@ CREATE TABLE IF NOT EXISTS resultado_classificacao_padrao (
         FOREIGN KEY (id_grupo, id_padrao)
         REFERENCES padroes_subgrupo (id_grupo, id_padrao)
         ON UPDATE RESTRICT ON DELETE RESTRICT,
-    CONSTRAINT ck_resultado_classificacao_estado
-        CHECK (estado_classificacao IN (
-            'PADRAO_IDENTIFICADO', 'SEM_CORRESPONDENCIA'
-        )),
-    CONSTRAINT ck_resultado_classificacao_estado_padrao CHECK (
-        (estado_classificacao = 'PADRAO_IDENTIFICADO' AND id_padrao IS NOT NULL)
-        OR
-        (estado_classificacao = 'SEM_CORRESPONDENCIA' AND id_padrao IS NULL)
-    ),
     CONSTRAINT ck_resultado_classificacao_versao
         CHECK (versao_calculo > 0)
 );
@@ -509,11 +529,9 @@ CREATE INDEX IF NOT EXISTS ix_resultado_classificacao_grupo_padrao
     ON resultado_classificacao_padrao (id_grupo, id_padrao);
 
 COMMENT ON TABLE resultado_classificacao_padrao IS
-    'Classificação histórica de cada resultado em cada grupo de padrões.';
+    'Ocorrências reais de padrões identificadas nos resultados históricos.';
 COMMENT ON COLUMN resultado_classificacao_padrao.id_padrao IS
-    'Padrão identificado no grupo; nulo somente no estado SEM_CORRESPONDENCIA.';
-COMMENT ON COLUMN resultado_classificacao_padrao.estado_classificacao IS
-    'PADRAO_IDENTIFICADO ou SEM_CORRESPONDENCIA, conforme o classificador.';
+    'Padrão efetivamente identificado no resultado e no grupo.';
 COMMENT ON COLUMN resultado_classificacao_padrao.versao_calculo IS
     'Versão da função classificadora usada para produzir o registro.';
 COMMENT ON COLUMN resultado_classificacao_padrao.calculado_em IS

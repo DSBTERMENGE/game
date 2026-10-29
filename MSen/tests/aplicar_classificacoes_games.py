@@ -121,11 +121,7 @@ def executar() -> dict[str, object]:
         perfil = calcular_perfil_grupo_sequenciais(
             conexao, limite_raridade_percentual=10
         )
-        contagens = {
-            "SEM_CORRESPONDENCIA" if item.padrao_cod is None else item.padrao_cod:
-            item.quantidade
-            for item in perfil.classes
-        }
+        contagens = {item.padrao_cod: item.quantidade for item in perfil.classes}
         with conexao.cursor() as cursor:
             cursor.execute("SELECT versao FROM schema_migrations ORDER BY versao")
             versoes_depois = tuple(linha[0] for linha in cursor.fetchall())
@@ -144,17 +140,16 @@ def executar() -> dict[str, object]:
             )
             catalogo = tuple(cursor.fetchall())
 
-    esperado_versoes = tuple(f"{numero:03d}" for numero in range(1, 9))
+    esperado_versoes = tuple(f"{numero:03d}" for numero in range(1, 11))
     esperado_contagens = {
         "PD_001": 1192,
         "PD_002": 92,
         "PD_003": 5,
-        "SEM_CORRESPONDENCIA": 1780,
     }
     if versoes_depois != esperado_versoes:
         raise RuntimeError(f"Migrações finais inesperadas: {versoes_depois!r}")
     if (resultados_depois, frequencias_depois, analises_depois, classificacoes) != (
-        3069, 60, 3069, 3069
+        3069, 60, 3069, 1289
     ):
         raise RuntimeError("Os totais finais não reconciliaram.")
     if contagens != esperado_contagens:

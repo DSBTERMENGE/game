@@ -98,15 +98,15 @@ test("Excel percorre API, cálculos, PostgreSQL e relatório sem duplicar", asyn
   const resumoInicial = JSON.parse(banco("resumo"));
   expect(resumoInicial).toEqual({ resultados: 2, frequencias: 60, ocorrencias: 12 });
   expect(JSON.parse(banco("resumo_padroes"))).toEqual([
-    { padrao_cod: "PD_001", num_oco: 0, intervalo_medio: null, desv_padrao: null },
-    { padrao_cod: "PD_002", num_oco: 0, intervalo_medio: null, desv_padrao: null },
-    { padrao_cod: "PD_003", num_oco: 0, intervalo_medio: null, desv_padrao: null },
-    { padrao_cod: "PD_004", num_oco: 0, intervalo_medio: null, desv_padrao: null },
-    { padrao_cod: "PD_005", num_oco: 0, intervalo_medio: null, desv_padrao: null },
-    { padrao_cod: "PD_006", num_oco: 2, intervalo_medio: "1.000000", desv_padrao: "0.000000" },
-    { padrao_cod: "PD_007", num_oco: 1, intervalo_medio: null, desv_padrao: null },
-    { padrao_cod: "PD_008", num_oco: 0, intervalo_medio: null, desv_padrao: null },
-    { padrao_cod: "PD_009", num_oco: 0, intervalo_medio: null, desv_padrao: null },
+    { padrao_cod: "PD_001", num_oco: 0, intervalo_medio: null, desv_padrao: null, total_sorteios: 2, percentual_ocorrencia: "0.000000" },
+    { padrao_cod: "PD_002", num_oco: 0, intervalo_medio: null, desv_padrao: null, total_sorteios: 2, percentual_ocorrencia: "0.000000" },
+    { padrao_cod: "PD_003", num_oco: 0, intervalo_medio: null, desv_padrao: null, total_sorteios: 2, percentual_ocorrencia: "0.000000" },
+    { padrao_cod: "PD_004", num_oco: 0, intervalo_medio: null, desv_padrao: null, total_sorteios: 2, percentual_ocorrencia: "0.000000" },
+    { padrao_cod: "PD_005", num_oco: 0, intervalo_medio: null, desv_padrao: null, total_sorteios: 2, percentual_ocorrencia: "0.000000" },
+    { padrao_cod: "PD_006", num_oco: 2, intervalo_medio: "1.000000", desv_padrao: "0.000000", total_sorteios: 2, percentual_ocorrencia: "100.000000" },
+    { padrao_cod: "PD_007", num_oco: 1, intervalo_medio: null, desv_padrao: null, total_sorteios: 2, percentual_ocorrencia: "50.000000" },
+    { padrao_cod: "PD_008", num_oco: 0, intervalo_medio: null, desv_padrao: null, total_sorteios: 2, percentual_ocorrencia: "0.000000" },
+    { padrao_cod: "PD_009", num_oco: 0, intervalo_medio: null, desv_padrao: null, total_sorteios: 2, percentual_ocorrencia: "0.000000" },
   ]);
 
   await page.locator("#botao-importar-excel").click();

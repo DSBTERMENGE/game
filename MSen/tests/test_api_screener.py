@@ -1,4 +1,5 @@
 import unittest
+from decimal import Decimal
 
 from msen.api import criar_app
 
@@ -16,14 +17,14 @@ RESPOSTA = {
 class ApiScreenerTestCase(unittest.TestCase):
     def setUp(self):
         self.limites = []
-        self.execucoes_extensiveis = 0
+        self.execucoes_extensiveis = []
 
         def executor(limite):
             self.limites.append(limite)
             return RESPOSTA
 
-        def executor_extensivel():
-            self.execucoes_extensiveis += 1
+        def executor_extensivel(limite):
+            self.execucoes_extensiveis.append(limite)
             return {"resumo": {"total_analisado": 5000}, "protecao": {
                 "processamento_integral_bloqueado": True,
             }}
@@ -66,10 +67,32 @@ class ApiScreenerTestCase(unittest.TestCase):
         self.assertTrue(
             resposta.get_json()["protecao"]["processamento_integral_bloqueado"]
         )
-        self.assertEqual(1, self.execucoes_extensiveis)
+        self.assertEqual([None], self.execucoes_extensiveis)
         self.assertNotEqual(
             200, self.cliente.get("/api/screener/quadro-extensivel").status_code
         )
+
+    def test_recebe_limite_percentual_sem_editar_codigo(self):
+        resposta = self.cliente.post(
+            "/api/screener/quadro-extensivel", json={"limite_raridade": "3.25"}
+        )
+        self.assertEqual(200, resposta.status_code)
+        self.assertEqual([Decimal("3.250000")], self.execucoes_extensiveis)
+
+    def test_rejeita_limite_invalido_ou_parametro_desconhecido(self):
+        for corpo in ({"limite_raridade": 101}, {"outro": 10}, []):
+            with self.subTest(corpo=corpo):
+                resposta = self.cliente.post(
+                    "/api/screener/quadro-extensivel", json=corpo
+                )
+                self.assertEqual(400, resposta.status_code)
+        malformada = self.cliente.post(
+            "/api/screener/quadro-extensivel",
+            data="{",
+            content_type="application/json",
+        )
+        self.assertEqual(400, malformada.status_code)
+        self.assertEqual([], self.execucoes_extensiveis)
 
 
 if __name__ == "__main__":

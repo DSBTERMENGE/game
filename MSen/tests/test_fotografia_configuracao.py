@@ -51,7 +51,6 @@ class FotografiaConfiguracaoTests(unittest.TestCase):
             denominador=100,
             frequencias=(
                 FrequenciaPadraoFotografada("PD_003", 10, Decimal("10")),
-                FrequenciaPadraoFotografada(None, 17, Decimal("17")),
                 FrequenciaPadraoFotografada("PD_001", 70, Decimal("70")),
                 FrequenciaPadraoFotografada("PD_002", 3, Decimal("3")),
             ),
@@ -66,6 +65,7 @@ class FotografiaConfiguracaoTests(unittest.TestCase):
             "modo": "experimental",
             "semente": 20261028,
             "limite_combinacoes": 5000,
+            "data_fotografia": date(2026, 10, 29),
         }
         dados.update(alteracoes)
         return criar_fotografia_configuracao(**dados)
@@ -80,6 +80,12 @@ class FotografiaConfiguracaoTests(unittest.TestCase):
         self.assertEqual("2026-10-28", dados["familias"][0]["filtros"][0]["parametros"]["referencia"])
         self.assertEqual(["PD_002"], dados["grupos_padroes"][0]["padroes_excludentes"])
         self.assertEqual(5000, dados["limite_combinacoes"])
+        self.assertEqual("2026-10-29", dados["data_fotografia"])
+        self.assertEqual("10", dados["grupos_padroes"][0]["limite_raridade"])
+        self.assertEqual("<", dados["grupos_padroes"][0]["operador"])
+        self.assertEqual(
+            {"geometria": 2, "estatistica": 1}, dados["versoes_calculo"]
+        )
         self.assertTrue(verificar_envelope_fotografia(envelope))
 
     def test_mesmo_conteudo_logico_produz_json_e_checksum_identicos(self) -> None:
@@ -106,7 +112,22 @@ class FotografiaConfiguracaoTests(unittest.TestCase):
         self.parametros["SOMA"]["desvios"] = Decimal("99")
         self.assertEqual(envelope, envelopar_fotografia(fotografia))
 
-    def test_operador_define_limite_e_classe_sem_correspondencia_nao_exclui(self) -> None:
+    def test_novo_limite_muda_nova_selecao_sem_alterar_fotografia_anterior(self) -> None:
+        anterior = self._fotografia()
+        envelope_anterior = envelopar_fotografia(anterior)
+        limite_tres = criar_grupo_padroes_fotografado(
+            grupo_cod="G001", limite_raridade=3, operador="<",
+            numero_ap_inicial=1, numero_ap_final=100,
+            data_inicial=date(1996, 3, 11), data_final=date(2026, 10, 28),
+            denominador=100, frequencias=self.grupo.frequencias,
+        )
+        posterior = self._fotografia(grupos_padroes=(limite_tres,))
+
+        self.assertEqual(("PD_002",), anterior.grupos_padroes[0].padroes_excludentes)
+        self.assertEqual((), posterior.grupos_padroes[0].padroes_excludentes)
+        self.assertEqual(envelope_anterior, envelopar_fotografia(anterior))
+
+    def test_operador_define_limite_dos_padroes_reais(self) -> None:
         inclusivo = criar_grupo_padroes_fotografado(
             grupo_cod="G001", limite_raridade=10, operador="<=",
             numero_ap_inicial=1, numero_ap_final=100,
@@ -114,7 +135,6 @@ class FotografiaConfiguracaoTests(unittest.TestCase):
             denominador=100, frequencias=self.grupo.frequencias,
         )
         self.assertEqual(("PD_002", "PD_003"), inclusivo.padroes_excludentes)
-        self.assertNotIn(None, inclusivo.padroes_excludentes)
 
     def test_detecta_envelope_adulterado(self) -> None:
         envelope = envelopar_fotografia(self._fotografia())
@@ -136,6 +156,12 @@ class FotografiaConfiguracaoTests(unittest.TestCase):
                 denominador=1,
                 frequencias=(FrequenciaPadraoFotografada("PD_001", 1, Decimal("99")),),
             )
+
+    def test_rejeita_data_de_fotografia_com_horario(self) -> None:
+        from datetime import datetime
+
+        with self.assertRaisesRegex(ErroFotografia, "data_fotografia deve ser date"):
+            self._fotografia(data_fotografia=datetime(2026, 10, 29, 12, 0))
 
 
 if __name__ == "__main__":

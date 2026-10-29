@@ -29,7 +29,7 @@ class ErroFotografia(ValueError):
 class FrequenciaPadraoFotografada:
     """Frequência histórica congelada de uma classe de padrão."""
 
-    padrao_cod: str | None
+    padrao_cod: str
     quantidade: int
     percentual: Decimal
 
@@ -75,6 +75,7 @@ class FotografiaConfiguracao:
     """Conteúdo suficiente para identificar e reproduzir uma execução."""
 
     versao_formato: int
+    data_fotografia: date
     modo: str
     semente: int
     limite_combinacoes: int
@@ -174,13 +175,12 @@ def criar_grupo_padroes_fotografado(
     if not isinstance(frequencias, tuple) or not frequencias:
         raise ErroFotografia("FREQUENCIAS_AUSENTES", "Informe as frequências do grupo.")
 
-    vistas: set[str | None] = set()
+    vistas: set[str] = set()
     fixas: list[FrequenciaPadraoFotografada] = []
     for item in frequencias:
         if not isinstance(item, FrequenciaPadraoFotografada):
             raise TypeError("frequencias aceita somente FrequenciaPadraoFotografada.")
-        if item.padrao_cod is not None:
-            _texto("padrao_cod", item.padrao_cod)
+        _texto("padrao_cod", item.padrao_cod)
         if item.padrao_cod in vistas:
             raise ErroFotografia("PADRAO_DUPLICADO", "A classe aparece mais de uma vez.")
         vistas.add(item.padrao_cod)
@@ -198,21 +198,17 @@ def criar_grupo_padroes_fotografado(
                 "FREQUENCIA_DIVERGENTE", "Quantidade e percentual não reconciliam."
             )
         fixas.append(FrequenciaPadraoFotografada(item.padrao_cod, quantidade, percentual))
-    if sum(item.quantidade for item in fixas) != total:
-        raise ErroFotografia(
-            "DENOMINADOR_DIVERGENTE", "As classes não fecham com o denominador."
-        )
     comparar = (lambda valor: valor < limite) if operador == "<" else (lambda valor: valor <= limite)
     excludentes = tuple(
         sorted(
             item.padrao_cod
             for item in fixas
-            if item.padrao_cod is not None and comparar(item.percentual)
+            if comparar(item.percentual)
         )
     )
     return GrupoPadroesFotografado(
         codigo, limite, operador, inicio, fim, data_inicial, data_final, total,
-        tuple(sorted(fixas, key=lambda item: "" if item.padrao_cod is None else item.padrao_cod)),
+        tuple(sorted(fixas, key=lambda item: item.padrao_cod)),
         excludentes,
     )
 
@@ -226,7 +222,8 @@ def criar_fotografia_configuracao(
     modo: str,
     semente: int,
     limite_combinacoes: int,
-    versao_formato: int = 1,
+    data_fotografia: date,
+    versao_formato: int = 2,
 ) -> FotografiaConfiguracao:
     """Remove os avaliadores executáveis e congela somente dados reproduzíveis."""
 
@@ -270,8 +267,13 @@ def criar_fotografia_configuracao(
     codigos_grupos = [item.grupo_cod for item in grupos_padroes]
     if len(codigos_grupos) != len(set(codigos_grupos)):
         raise ErroFotografia("GRUPO_DUPLICADO", "O grupo aparece mais de uma vez.")
+    if isinstance(data_fotografia, datetime) or not isinstance(data_fotografia, date):
+        raise ErroFotografia(
+            "DATA_FOTOGRAFIA_INVALIDA", "data_fotografia deve ser date."
+        )
     return FotografiaConfiguracao(
         _inteiro_positivo("versao_formato", versao_formato),
+        data_fotografia,
         _texto("modo", modo),
         _inteiro_positivo("semente", semente, zero=True),
         _inteiro_positivo("limite_combinacoes", limite_combinacoes),
@@ -294,6 +296,7 @@ def _descanonizar(valor: ValorCanonico) -> object:
 def _dados_fotografia(fotografia: FotografiaConfiguracao) -> dict[str, object]:
     return {
         "versao_formato": fotografia.versao_formato,
+        "data_fotografia": fotografia.data_fotografia.isoformat(),
         "modo": fotografia.modo,
         "semente": fotografia.semente,
         "limite_combinacoes": fotografia.limite_combinacoes,

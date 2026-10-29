@@ -1,3 +1,9 @@
+CORREÇÃO VIGENTE DESDE 29/10/2026
+Somente padrões PD reais possuem ocorrência e percentual. A diferença até 100%
+não é armazenada nem aplicada pelo screener. Anotações históricas em contrário
+abaixo estão revogadas. Um padrão é selecionado quando seu percentual de
+ocorrência é menor que o limite configurado.
+
 CRITÉRIOS DE SELEÇÃO DE COMBINAÇÕES
 =====================================
 
@@ -549,47 +555,60 @@ deverá produzir novamente os mesmos cálculos e decisões.
 14. PERFIL HISTÓRICO DOS PADRÕES E LIMITE DE RARIDADE
 ------------------------------------------------------
 
-Decisão confirmada em 28/10/2026:
+Decisão definitiva atualizada em 29/10/2026:
 
 - a frequência de cada padrão será calculada sobre todos os resultados válidos
   do intervalo histórico;
-- resultados sem padrão no grupo serão contabilizados como
-  SEM_CORRESPONDENCIA e completarão a diferença até 100%;
-- SEM_CORRESPONDENCIA não é um padrão e não será usado para excluir combinação;
+- resultados que não correspondam aos padrões estudados não criam classe,
+  registro nem percentual complementar;
+- SEM_CORRESPONDENCIA foi removido do banco, do domínio, da API e da interface;
 - o limite de raridade será configurável e usará o operador estrito menor que;
 - um padrão com percentual exatamente igual ao limite não será selecionado;
-- a seleção apenas indica candidatos raros até que uma etapa posterior ative o
-  screener de forma expressa;
+- somente padrões com detector Python aprovado podem ser selecionados;
+- os padrões selecionados são aplicados no screener experimental de 5.000;
 - amostra vazia não fornece evidência suficiente para declarar padrão raro.
 
-Ensaio do grupo PG_001 sobre 3.069 resultados históricos clonados:
+Recálculo dos três grupos sobre 3.069 resultados históricos:
 
 - PD_001: 1.192 ocorrências, 38,840013% do total;
 - PD_002: 92 ocorrências, 2,997719% do total;
 - PD_003: 5 ocorrências, 0,162920% do total;
-- SEM_CORRESPONDENCIA: 1.780 resultados, 57,999348% do total.
+- PD_004: 1.037 ocorrências, 33,789508% do total;
+- PD_005: 66 ocorrências, 2,150538% do total;
+- PD_006: 4 ocorrências, 0,130336% do total;
+- PD_007: 2.053 ocorrências, 66,894754% do total;
+- PD_008: 863 ocorrências, 28,119909% do total;
+- PD_009: 93 ocorrências, 3,030303% do total.
 
-Com o limite apenas experimental de 10%, PD_002 e PD_003 ficaram abaixo do
-limite. Este resultado não autoriza exclusões. Antes de uso operacional ainda
-serão necessários configuração reproduzível, auditoria e backtest sem dados
-futuros.
+Com o limite experimental de 10%, foram selecionados PD_002, PD_003, PD_005,
+PD_006 e PD_009. Eles participam somente do screener protegido; uso operacional
+continua dependendo de auditoria e do futuro backtest sem dados posteriores.
 
 
 15. ENSAIO PROTEGIDO DO NOVO FUNIL
 -----------------------------------
 
-Em 28/10/2026, a engrenagem completa foi executada sobre 5.000 combinações com
-semente fixa. Foram aprovadas 420 e excluídas 4.580, distribuídas em 2.999 pela
-família estatística, 1.578 pela geométrica e 3 pelo grupo PG_001.
+Em 29/10/2026, a engrenagem completa foi repetida sobre 5.000 combinações com
+semente fixa. Foram aprovadas 414 e excluídas 4.586, distribuídas em 2.999 pela
+família estatística, 1.578 pela geométrica e 9 pelos padrões raros dos grupos
+PG_001, PG_002 e PG_003.
 
 O screener anterior aprovou 4.409 na mesma amostra. Os números não podem ser
 comparados como medida de qualidade, pois o novo ensaio mudou a ordem, usa faixas
 de mais ou menos um desvio-padrão para todas as medidas, possui cinco filtros
-geométricos e classifica PG_001 de forma exclusiva.
+geométricos e aplica detectores individuais somente aos padrões raros eleitos.
 
 Esse resultado prova que a engrenagem executa e fecha contabilmente. Ele não
-prova que 420 seja uma quantidade adequada, que os limites sejam eficazes ou que
+prova que 414 seja uma quantidade adequada, que os limites sejam eficazes ou que
 os filtros preservem resultados reais. Essas perguntas pertencem à auditoria e
 ao futuro backtest sem informação posterior ao ponto analisado.
 
 O processamento integral de 50.063.860 combinações permanece bloqueado.
+INTEGRAÇÃO DOS PADRÕES RAROS AO FUNIL — 2026-10-29
+
+Somente padrões cujo percentual histórico seja estritamente menor que o limite
+configurado participam do screener. Cada padrão selecionado possui um filtro e
+um detector Python próprios. Padrões não selecionados não são executados.
+
+Quando uma combinação corresponde a um padrão raro, ela é excluída, a exclusão
+é contabilizada naquele padrão e o funil salta para a próxima combinação.

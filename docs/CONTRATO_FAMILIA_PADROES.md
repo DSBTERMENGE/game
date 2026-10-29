@@ -1,8 +1,7 @@
 # Contrato da família de grupos de padrões
 
-Cada grupo fotografado gera um filtro no funil. A combinação é classificada uma
-única vez naquele grupo, resultando em um `padrao_cod` exclusivo ou na classe
-`SEM_CORRESPONDENCIA`.
+Cada grupo fotografado gera um filtro no funil. Somente padrões reais, com
+`padrao_cod` e função Python aprovada, participam da fotografia.
 
 A decisão consulta somente a lista de padrões excludentes congelada no início da
 execução. Frequências ou configurações alteradas posteriormente não mudam uma
@@ -12,14 +11,15 @@ execução em andamento nem uma auditoria reproduzida.
 
 Cada decisão registra:
 
-- grupo e classe encontrados;
+- grupo e padrão encontrados;
 - evidência própria do classificador;
-- quantidade e percentual históricos da classe;
+- quantidade e percentual históricos do padrão;
 - denominador e política de raridade;
 - lista excludente fotografada.
 
-`SEM_CORRESPONDENCIA` participa do denominador e do fechamento em 100%, mas não
-é código de padrão e nunca integra a lista excludente.
+Quando nenhum padrão estudado é identificado, nenhuma classe é criada ou
+persistida e a combinação segue para o próximo critério. O denominador dos
+percentuais continua sendo o total de sorteios históricos.
 
 ## Extensibilidade e segurança
 

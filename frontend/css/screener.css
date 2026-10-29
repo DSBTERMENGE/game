@@ -106,6 +106,8 @@
 }
 
 .prototipo-topo { display: flex; align-items: center; gap: 0.5rem; }
+.controle-raridade { display: grid; gap: 0.15rem; font-size: 0.7rem; white-space: nowrap; }
+.controle-raridade input { width: 7rem; }
 .prototipo-topo > div { margin-right: auto; }
 .prototipo-topo h1 { font-size: 1.15rem; }
 .prototipo-topo p { margin: 0.2rem 0 0; color: #7b4b08; font-size: 0.78rem; }
@@ -162,6 +164,13 @@
 .prototipo-detalhes th { position: sticky; top: 0; background: #edf2f3; }
 .prototipo-detalhes .numero { text-align: right; white-space: nowrap; }
 .prototipo-politica { margin: 0; padding: 0.4rem 0.5rem; background: #fff7e6; font-size: 0.75rem; }
+.padroes-detalhados { padding: 0.35rem; display: grid; gap: 0.3rem; background: #fffaf2; }
+.padrao-grupo { border: 1px solid #ddc9a9; background: #fff; }
+.padrao-grupo > summary { display: grid; grid-template-columns: minmax(12rem, 1fr) repeat(3, minmax(6rem, 0.5fr)); padding: 0.35rem 0.5rem; cursor: pointer; }
+.padrao-grupo > summary span { font-size: 0.7rem; color: #52616a; }
+.padrao-grupo-tabela { overflow-x: auto; max-height: 11rem; }
+.padrao-grupo table { min-width: 70rem; }
+.padrao-aplicado .estado-padrao { color: #8b2f24; font-weight: 700; }
 .prototipo-rodape { display: flex; align-items: center; gap: 0.75rem; font-size: 0.75rem; }
 .prototipo-rodape span { color: #52616a; }
 

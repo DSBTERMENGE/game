@@ -6,6 +6,10 @@ semente = 20261027
 limite_combinacoes = 5000
 confirmacao_processamento_integral = false
 
+[raridade]
+# Padrões com percentual histórico estritamente menor que este valor são raros.
+limite_percentual = 10.0
+
 [funil]
 ordem = ["padroes_historicos", "medidas_estatisticas", "medidas_geometricas"]
 

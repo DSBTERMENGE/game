@@ -176,7 +176,7 @@ def _validar_plano(
             raise ErroContratoFunil(
                 "FAMILIA_DUPLICADA", "Códigos e ordens de famílias devem ser únicos."
             )
-        if not familia.filtros:
+        if not familia.filtros and codigo != "PADROES":
             raise ErroContratoFunil(
                 "FAMILIA_SEM_FILTRO", "Toda família deve possuir ao menos um filtro."
             )

@@ -8,6 +8,7 @@ from .configuracao import (
     RegraEstatisticaConfigurada,
     RegraGeometricaConfigurada,
     carregar_configuracao_screener,
+    validar_limite_raridade,
 )
 from .gerador import (
     CONFIRMACAO_INTEGRAL,
@@ -115,6 +116,7 @@ from .familia_padroes import (
     ClassificadorGrupo,
     ErroFamiliaPadroes,
     classificar_sequenciais_para_funil,
+    criar_familia_detectores_raros,
     criar_familia_padroes,
 )
 from .quadro_extensivel import (
@@ -134,6 +136,7 @@ __all__ = [
     "RegraEstatisticaConfigurada",
     "RegraGeometricaConfigurada",
     "carregar_configuracao_screener",
+    "validar_limite_raridade",
     "ErroGeracaoAmostra",
     "ErroGeracaoIntegral",
     "CONFIRMACAO_INTEGRAL",
@@ -216,6 +219,7 @@ __all__ = [
     "ClassificadorGrupo",
     "ErroFamiliaPadroes",
     "classificar_sequenciais_para_funil",
+    "criar_familia_detectores_raros",
     "criar_familia_padroes",
     "ErroQuadroConsolidado",
     "LinhaFamiliaConsolidada",

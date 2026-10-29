@@ -226,8 +226,8 @@ async function simularPerfilPadroes(page) {
       grupo_cod: "PG_001",
       amostra: {
         total_resultados: 3069, total_classificados: 1289,
-        sem_correspondencia: 1780, numero_ap_inicial: 1,
-        numero_ap_final: 3069, data_inicial: "1996-03-11", data_final: "2026-10-25",
+        numero_ap_inicial: 1, numero_ap_final: 3069,
+        data_inicial: "1996-03-11", data_final: "2026-10-25",
       },
       raridade: {
         limite_percentual: "10.000000", operador: "<",
@@ -238,7 +238,6 @@ async function simularPerfilPadroes(page) {
         { padrao_cod: "PD_001", quantidade: 1192, percentual_total: "38.840013", percentual_classificados: "92.474787", intervalo_medio: "2.575147", desvio_padrao: "1.995592", raro: false },
         { padrao_cod: "PD_002", quantidade: 92, percentual_total: "2.997719", percentual_classificados: "7.137316", intervalo_medio: "33.527473", desvio_padrao: "33.637806", raro: true },
         { padrao_cod: "PD_003", quantidade: 5, percentual_total: "0.162920", percentual_classificados: "0.387898", intervalo_medio: "680.500000", desvio_padrao: "545.478460", raro: true },
-        { padrao_cod: null, quantidade: 1780, percentual_total: "57.999348", percentual_classificados: null, intervalo_medio: null, desvio_padrao: null, raro: false },
       ],
     } } });
   });
@@ -461,7 +460,7 @@ test("perfil de padrões abre sobre a grade e mostra diagnóstico sem ativar fil
   await page.goto("/padroes.html");
   await page.locator("#perfil-padroes summary").click();
 
-  await expect(page.locator("#corpo-tabela-perfil tr")).toHaveCount(4);
+  await expect(page.locator("#corpo-tabela-perfil tr")).toHaveCount(3);
   await expect(page.locator("#resumo-perfil")).toHaveText("3.069 resultados");
   await expect(page.locator("#perfil-indicadores")).toContainText("PD_002, PD_003");
   await expect(page.locator("#mensagem-perfil")).toContainText("screener inativo");

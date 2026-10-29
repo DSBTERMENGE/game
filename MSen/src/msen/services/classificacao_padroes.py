@@ -41,9 +41,9 @@ class ErroRecalculoClassificacao(RuntimeError):
 
 @dataclass(frozen=True, slots=True)
 class ContagemClassificacao:
-    """Quantidade calculada para um padrão ou para a ausência de correspondência."""
+    """Quantidade calculada para um padrão estudado."""
 
-    padrao_cod: str | None
+    padrao_cod: str
     quantidade: int
 
 
@@ -61,7 +61,7 @@ class RelatorioRecalculoClassificacao:
 class ClassePerfilPadrao:
     """Frequência e percentuais de uma classe no espaço amostral analisado."""
 
-    padrao_cod: str | None
+    padrao_cod: str
     quantidade: int
     percentual_total: Decimal
     percentual_classificados: Decimal | None
@@ -172,25 +172,29 @@ def recalcular_classificacoes_grupo_sequenciais(
             )
 
         resultados = _listar_todos_resultados(resultados_repo)
-        contagens: dict[str | None, int] = {
+        contagens: dict[str, int] = {
             CODIGO_DUAS_SEQUENCIAIS: 0,
             CODIGO_TRES_SEQUENCIAIS: 0,
             CODIGO_MAIS_DE_TRES_SEQUENCIAIS: 0,
-            None: 0,
         }
+        identificados: list[int] = []
         for resultado in resultados:
             decisao = classificar_grupo_dezenas_sequenciais(
                 resultado.resultado.resultados
             )
-            padrao = None if decisao.padrao_cod is None else padroes[decisao.padrao_cod]
-            classificacoes_repo.salvar(
-                resultado.id_resultado,
-                grupo.id_grupo,
-                id_padrao=None if padrao is None else padrao.id_padrao,
-                estado=decisao.estado,
-                versao_calculo=versao_calculo,
-            )
-            contagens[decisao.padrao_cod] += 1
+            if decisao.padrao_cod is not None:
+                padrao = padroes[decisao.padrao_cod]
+                classificacoes_repo.salvar(
+                    resultado.id_resultado,
+                    grupo.id_grupo,
+                    id_padrao=padrao.id_padrao,
+                    versao_calculo=versao_calculo,
+                )
+                identificados.append(resultado.id_resultado)
+                contagens[decisao.padrao_cod] += 1
+        classificacoes_repo.excluir_nao_identificados(
+            grupo.id_grupo, tuple(identificados)
+        )
 
     return RelatorioRecalculoClassificacao(
         grupo_cod=CODIGO_GRUPO_SEQUENCIAIS,
@@ -198,7 +202,7 @@ def recalcular_classificacoes_grupo_sequenciais(
         resultados_analisados=len(resultados),
         contagens=tuple(
             ContagemClassificacao(codigo, contagens[codigo])
-            for codigo in (*CODIGOS_SEQUENCIAIS, None)
+            for codigo in CODIGOS_SEQUENCIAIS
         ),
     )
 
@@ -214,9 +218,9 @@ def calcular_perfil_grupo_sequenciais(
     """Calcula frequências do PG_001 e apenas indica padrões abaixo do limite.
 
     O denominador oficial é o total de resultados. A função exige que todos já
-    possuam classificação no grupo, reconcilia os totais, sincroniza as
-    estatísticas completas de `PD_001`–`PD_003` e não aciona o screener.
-    `SEM_CORRESPONDENCIA` participa do fechamento em 100%, mas nunca é raro.
+    reconcilia as ocorrências persistidas, sincroniza as estatísticas completas
+    de `PD_001`–`PD_003` e não aciona o screener. O denominador permanece sendo
+    todo o histórico, mesmo quando um resultado não atende a padrão estudado.
     """
 
     if not isinstance(conexao, psycopg.Connection):
@@ -274,29 +278,19 @@ def calcular_perfil_grupo_sequenciais(
             for item in resultados
             if item.id_resultado in classificacao_por_resultado
         )
-        if len(classificacoes) != len(resultados):
-            raise ErroRecalculoClassificacao(
-                "CLASSIFICACAO_INCOMPLETA",
-                "Nem todos os resultados possuem classificação no grupo sequencial.",
-            )
         codigo_por_id = {padrao.id_padrao: codigo for codigo, padrao in padroes.items()}
-        contagens: dict[str | None, int] = {codigo: 0 for codigo in CODIGOS_SEQUENCIAIS}
-        contagens[None] = 0
+        contagens: dict[str, int] = {codigo: 0 for codigo in CODIGOS_SEQUENCIAIS}
         for classificacao in classificacoes:
-            codigo = (
-                None
-                if classificacao.id_padrao is None
-                else codigo_por_id.get(classificacao.id_padrao)
-            )
-            if classificacao.id_padrao is not None and codigo is None:
+            codigo = codigo_por_id.get(classificacao.id_padrao)
+            if codigo is None:
                 raise ErroRecalculoClassificacao(
                     "PADRAO_FORA_DO_GRUPO",
                     "Uma classificação referencia padrão inesperado para PG_001.",
                 )
             contagens[codigo] += 1
-        if sum(contagens.values()) != len(resultados):
+        if sum(contagens.values()) != len(classificacoes):
             raise ErroRecalculoClassificacao(
-                "TOTAL_DIVERGENTE", "As classificações não reconciliam com os resultados."
+                "TOTAL_DIVERGENTE", "As ocorrências não reconciliam com as classificações."
             )
 
         serie = tuple(
@@ -323,31 +317,24 @@ def calcular_perfil_grupo_sequenciais(
                     "A contagem das classificações diverge do detector histórico.",
                 )
             if sincronizar_catalogo:
-                padroes_repo.atualizar_estatistica(estatistica)
+                padroes_repo.atualizar_estatistica(estatistica, len(resultados))
 
     total = len(resultados)
-    total_classificados = total - contagens[None]
+    total_classificados = sum(contagens.values())
     classes = tuple(
         ClassePerfilPadrao(
             padrao_cod=codigo,
             quantidade=contagens[codigo],
             percentual_total=_percentual(contagens[codigo], total),
-            percentual_classificados=(
-                None if codigo is None else _percentual(contagens[codigo], total_classificados)
-            ),
-            intervalo_medio=(
-                None if codigo is None else estatistica_por_codigo[codigo].intervalo_medio
-            ),
-            desvio_padrao=(
-                None if codigo is None else estatistica_por_codigo[codigo].desv_padrao
-            ),
+            percentual_classificados=_percentual(contagens[codigo], total_classificados),
+            intervalo_medio=estatistica_por_codigo[codigo].intervalo_medio,
+            desvio_padrao=estatistica_por_codigo[codigo].desv_padrao,
             raro=(
-                codigo is not None
-                and total > 0
+                total > 0
                 and _percentual(contagens[codigo], total) < limite
             ),
         )
-        for codigo in (*CODIGOS_SEQUENCIAIS, None)
+        for codigo in CODIGOS_SEQUENCIAIS
     )
     return PerfilClassificacaoGrupo(
         grupo_cod=CODIGO_GRUPO_SEQUENCIAIS,
@@ -364,6 +351,6 @@ def calcular_perfil_grupo_sequenciais(
         padroes_raros=tuple(
             item.padrao_cod
             for item in classes
-            if item.raro and item.padrao_cod is not None
+            if item.raro
         ),
     )

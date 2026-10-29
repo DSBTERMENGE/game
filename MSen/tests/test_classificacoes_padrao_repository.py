@@ -7,16 +7,16 @@ from msen.database.classificacoes_padrao_repository import (
     _id_positivo,
     _linha_para_classificacao,
 )
-from msen.modelos import ClassificacaoPadrao, EstadoClassificacaoPadrao
+from msen.modelos import ClassificacaoPadrao
 
 
 class ModeloClassificacaoPadraoTestCase(unittest.TestCase):
     def setUp(self):
         self.momento = datetime(2026, 10, 28, tzinfo=timezone.utc)
 
-    def test_mapeia_as_sete_colunas_para_modelo_imutavel(self):
+    def test_mapeia_as_seis_colunas_para_modelo_imutavel(self):
         classificacao = _linha_para_classificacao(
-            (1, 2, 3, 4, "PADRAO_IDENTIFICADO", 5, self.momento)
+            (1, 2, 3, 4, 5, self.momento)
         )
         self.assertEqual(
             ClassificacaoPadrao(
@@ -24,7 +24,6 @@ class ModeloClassificacaoPadraoTestCase(unittest.TestCase):
                 2,
                 3,
                 4,
-                EstadoClassificacaoPadrao.PADRAO_IDENTIFICADO,
                 5,
                 self.momento,
             ),
@@ -37,43 +36,11 @@ class ModeloClassificacaoPadraoTestCase(unittest.TestCase):
         with self.assertRaises(ValueError):
             _linha_para_classificacao((1, 2, 3))
 
-    def test_exige_padrao_quando_identificado(self):
-        with self.assertRaisesRegex(ValueError, "exige id_padrao"):
-            ClassificacaoPadrao(
-                1,
-                2,
-                3,
-                None,
-                EstadoClassificacaoPadrao.PADRAO_IDENTIFICADO,
-                1,
-                self.momento,
-            )
-
-    def test_sem_correspondencia_proibe_padrao(self):
-        with self.assertRaisesRegex(ValueError, "não aceita id_padrao"):
-            ClassificacaoPadrao(
-                1,
-                2,
-                3,
-                4,
-                EstadoClassificacaoPadrao.SEM_CORRESPONDENCIA,
-                1,
-                self.momento,
-            )
-
-    def test_rejeita_estado_textual_e_data_sem_fuso(self):
+    def test_exige_padrao_real_e_data_com_fuso(self):
         with self.assertRaises(TypeError):
-            ClassificacaoPadrao(1, 2, 3, 4, "PADRAO_IDENTIFICADO", 1, self.momento)  # type: ignore[arg-type]
+            ClassificacaoPadrao(1, 2, 3, None, 1, self.momento)  # type: ignore[arg-type]
         with self.assertRaisesRegex(ValueError, "fuso horário"):
-            ClassificacaoPadrao(
-                1,
-                2,
-                3,
-                4,
-                EstadoClassificacaoPadrao.PADRAO_IDENTIFICADO,
-                1,
-                datetime(2026, 10, 28),
-            )
+            ClassificacaoPadrao(1, 2, 3, 4, 1, datetime(2026, 10, 28))
 
     def test_valida_identificadores_e_versao(self):
         for campo, valor in (("id_classificacao", 0), ("id_resultado", 0), ("id_grupo", -1)):
@@ -81,8 +48,7 @@ class ModeloClassificacaoPadraoTestCase(unittest.TestCase):
                 "id_classificacao": 1,
                 "id_resultado": 2,
                 "id_grupo": 3,
-                "id_padrao": None,
-                "estado": EstadoClassificacaoPadrao.SEM_CORRESPONDENCIA,
+                "id_padrao": 4,
                 "versao_calculo": 1,
                 "calculado_em": self.momento,
             }
@@ -91,10 +57,7 @@ class ModeloClassificacaoPadraoTestCase(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     ClassificacaoPadrao(**argumentos)
         with self.assertRaises(ValueError):
-            ClassificacaoPadrao(
-                1, 2, 3, None, EstadoClassificacaoPadrao.SEM_CORRESPONDENCIA, 0,
-                self.momento,
-            )
+            ClassificacaoPadrao(1, 2, 3, 4, 0, self.momento)
 
     def test_consultas_validam_id_isolado(self):
         self.assertEqual(7, _id_positivo("id_grupo", 7))
