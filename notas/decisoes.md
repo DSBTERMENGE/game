@@ -220,3 +220,15 @@
   recálculo histórico antes de poderem participar do screener.
 - O processamento das 50.063.860 combinações permanece bloqueado; por enquanto
   somente a amostra reproduzível de 5.000 está autorizada.
+
+## 2026-10-29 — Consolidação da interface do Screener
+
+- Existe somente um Screener público: `/screener.html`.
+- Sua única rota de execução é `POST /api/screener/quadro`.
+- O relatório apresenta as famílias estatística, geométrica e de padrões em um
+  conjunto único, com detalhes expansíveis.
+- O protótipo fictício, a interface anterior e suas rotas não fazem parte do
+  produto atual.
+- O cálculo do primeiro funil permanece apenas como referência interna da
+  comparação `anterior x atual`; não possui tela nem API própria.
+- A página `/auditoria.html` permanece vazia e reservada à Etapa 20.

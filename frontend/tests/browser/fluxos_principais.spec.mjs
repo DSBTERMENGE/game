@@ -69,17 +69,20 @@ test.beforeAll(async () => {
       "/grupos-padroes.html": ["grupos-padroes.html", "text/html; charset=utf-8"],
       "/padroes.html": ["padroes.html", "text/html; charset=utf-8"],
       "/screener.html": ["screener.html", "text/html; charset=utf-8"],
+      "/auditoria.html": ["auditoria.html", "text/html; charset=utf-8"],
       "/css/style.css": ["css/style.css", "text/css; charset=utf-8"],
       "/css/navegacao.css": ["css/navegacao.css", "text/css; charset=utf-8"],
       "/css/grupos-padroes.css": ["css/grupos-padroes.css", "text/css; charset=utf-8"],
       "/css/padroes.css": ["css/padroes.css", "text/css; charset=utf-8"],
       "/css/screener.css": ["css/screener.css", "text/css; charset=utf-8"],
+      "/css/auditoria.css": ["css/auditoria.css", "text/css; charset=utf-8"],
       "/js/main.js": ["js/main.js", "text/javascript; charset=utf-8"],
       "/js/configuracao-visual.js": ["js/configuracao-visual.js", "text/javascript; charset=utf-8"],
       "/js/navegacao.js": ["js/navegacao.js", "text/javascript; charset=utf-8"],
       "/js/grupos-padroes.js": ["js/grupos-padroes.js", "text/javascript; charset=utf-8"],
       "/js/padroes.js": ["js/padroes.js", "text/javascript; charset=utf-8"],
-      "/js/screener.js": ["js/screener.js", "text/javascript; charset=utf-8"],
+      "/js/screener-extensivel.js": ["js/screener-extensivel.js", "text/javascript; charset=utf-8"],
+      "/js/screener-extensivel-contrato.js": ["js/screener-extensivel-contrato.js", "text/javascript; charset=utf-8"],
     };
     const recurso = caminhos[requisicao.url];
     if (!recurso) {
@@ -380,6 +383,19 @@ test("menu horizontal navega entre Painel e páginas de Cadastros", async ({ pag
   await page.locator('a[href="/padroes.html"]').last().click();
   await expect(page).toHaveURL(/padroes\.html$/);
   await expect(page.locator(".navegacao-pagina")).toHaveText("Padrões");
+
+  await page.locator('a[href="/auditoria.html"]').click();
+  await expect(page).toHaveURL(/auditoria\.html$/);
+  await expect(page.locator(".navegacao-pagina")).toHaveText("Validação e auditoria");
+  await expect(page.locator(".auditoria-aviso")).toContainText("Funcionalidade em construção");
+  await page.setViewportSize({ width: 700, height: 600 });
+  const larguraAuditoria = await page.evaluate(() => ({
+    documento: document.documentElement.scrollWidth,
+    janela: window.innerWidth,
+  }));
+  expect(larguraAuditoria.documento).toBeLessThanOrEqual(larguraAuditoria.janela);
+  await page.locator("#botao-voltar").click();
+  await expect(page).toHaveURL(/padroes\.html$/);
 });
 
 
@@ -557,52 +573,22 @@ test("páginas compactas não alargam a janela estreita", async ({ page }) => {
 });
 
 
-test("quadro do screener executa e permite validação humana", async ({ page }) => {
-  const linhas = Array.from({ length: 8 }, (_, indice) => ({
-    ordem: indice + 1,
-    codigo_criterio: `CRIT_${indice + 1}`,
-    avaliacoes: 5000 - indice * 50,
-    exclusoes: indice + 1,
-    saldo: 5000 - ((indice + 1) * (indice + 2)) / 2,
-  }));
-  const validacoes = Array.from({ length: 30 }, (_, indice) => ({
-    combinacao: [1, 2, 3, 10, 20, 30].map((numero) => numero + indice),
-    resultado_esperado: null,
-    resultado_obtido: indice === 0 ? "excluir" : "aprovar",
-    criterio_decisivo: indice === 0 ? "PD_002" : null,
-    motivo: {},
-    conformidade: null,
-  }));
-  await page.route("**/api/screener/quadro**", (rota) => rota.fulfill({
-    json: {
-      total_recebido: 5000,
-      total_aprovado: 4409,
-      duracao_segundos: 0.5,
-      linhas,
-      validacoes,
-      aviso: "Faixas experimentais; processamento integral bloqueado.",
-    },
-  }));
-
+test("menu Screener abre diretamente o funil oficial em três níveis", async ({ page }) => {
   await page.goto("/screener.html");
-  await page.locator("#botao-executar-screener").click();
-  await expect(page.locator("#corpo-quadro-screener tr")).toHaveCount(8);
-  await expect(page.locator("#corpo-validacoes-screener tr")).toHaveCount(30);
-  await expect(page.locator("#total-aprovado")).toHaveText("4.409");
-
-  const primeiro = page.locator("#corpo-validacoes-screener tr").first();
-  await primeiro.locator("select").selectOption("excluir");
-  await expect(primeiro.locator("td").last()).toHaveText("Conforme");
-  await primeiro.locator("select").selectOption("aprovar");
-  await expect(primeiro.locator("td").last()).toHaveText("Divergente");
+  await expect(page.locator("h1")).toHaveText("Screener");
+  await expect(page.locator(".navegacao-pagina")).toHaveText("Funil em três níveis");
+  await expect(page.locator("#botao-executar-extensivel")).toHaveText("Executar 5.000");
+  await expect(page.locator("#corpo-validacoes-screener")).toHaveCount(0);
+  await expect(page.getByText("Abrir novo funil")).toHaveCount(0);
+  await expect(page.getByText("Screener atual")).toHaveCount(0);
 
   const medidas = await page.evaluate(() => ({
     documento: document.documentElement.scrollWidth,
     janela: window.innerWidth,
     barra: document.querySelector(".barra-navegacao").getBoundingClientRect().height,
-    gradeBaixo: document.querySelector(".screener-validacao .screener-grade").getBoundingClientRect().bottom,
+    painelDireita: document.querySelector("#extensivel-niveis").getBoundingClientRect().right,
   }));
   expect(medidas.documento).toBeLessThanOrEqual(medidas.janela);
   expect(medidas.barra).toBeLessThanOrEqual(46);
-  expect(medidas.gradeBaixo).toBeLessThanOrEqual(900);
+  expect(medidas.painelDireita).toBeLessThanOrEqual(medidas.janela + 1);
 });

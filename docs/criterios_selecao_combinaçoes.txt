@@ -585,7 +585,7 @@ PD_006 e PD_009. Eles participam somente do screener protegido; uso operacional
 continua dependendo de auditoria e do futuro backtest sem dados posteriores.
 
 
-15. ENSAIO PROTEGIDO DO NOVO FUNIL
+15. ENSAIO PROTEGIDO DO FUNIL OFICIAL
 -----------------------------------
 
 Em 29/10/2026, a engrenagem completa foi repetida sobre 5.000 combinações com

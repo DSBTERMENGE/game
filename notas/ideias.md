@@ -20,12 +20,12 @@ Observação: estatísticas históricas não tornam previsíveis sorteios aleat�
 
 ## Screener consolidado e backtests
 
-- Organizar o quadro do screener em três famílias: valores estatísticos,
+- [Concluído] Organizar o quadro do screener em três famílias: valores estatísticos,
   medidas gráficas/geométricas e grupos de padrões.
-- Mostrar exclusões e percentuais por filtro, subtotal por família, saldo entre
+- [Concluído] Mostrar exclusões e percentuais por filtro, subtotal por família, saldo entre
   famílias e total final de combinações aprovadas.
-- Contabilizar cada combinação somente no primeiro filtro que a excluir.
-- Preservar o limite experimental de 5.000 enquanto o funil estiver em teste; o
+- [Concluído] Contabilizar cada combinação somente no primeiro filtro que a excluir.
+- [Em vigor] Preservar o limite experimental de 5.000 enquanto o funil estiver em teste; o
   universo integral C(60, 6) possui 50.063.860 combinações.
 - Criar backtests antes de liberar exclusões no universo integral. Em cada ponto
   do backtest, usar somente concursos anteriores para construir as referências.

@@ -2248,6 +2248,151 @@ decisões, critérios, plano e continuidade. Evidência em
 commit e push dependem de autorização específica.
 
 
+### Etapa 18-D — consolidação do screener e separação da auditoria
+
+Objetivo: eliminar a convivência confusa entre o funil antigo e o funil atual,
+tornar o screener em três níveis a única interface oficial e transferir toda
+ideia de validação humana para uma página própria de `Validação e auditoria`.
+
+Decisão de 29/10/2026:
+
+- o screener antigo de oito filtros e sua validação humana não permanecerão
+  acessíveis na interface oficial;
+- o funil em três níveis será chamado apenas de `Screener`, sem os qualificadores
+  `novo`, `atual` ou `extensível`;
+- a página oficial do screener continuará executando somente a amostra protegida
+  de 5.000 combinações;
+- `Validação e auditoria` terá item próprio no menu e página inicialmente vazia,
+  apenas com identificação e aviso de funcionalidade em construção;
+- os métodos de validação e auditoria continuarão reservados para a Etapa 20;
+- nenhuma função provisória de validação do screener antigo será transportada
+  automaticamente para a futura auditoria.
+
+Cada subetapa exige autorização separada. A Etapa 19 permanece em espera e a
+Etapa 20 não é iniciada pela simples criação de sua página vazia.
+
+#### 18-D.1 — Inventário e contrato definitivo de consolidação
+
+- Inventariar páginas, scripts, APIs, testes, menus e documentos dos screeners
+  antigo, protótipo e atual.
+- Definir o destino de cada elemento: manter, migrar, redirecionar ou remover.
+- Confirmar que nenhuma função ainda necessária existe somente no screener
+  antigo antes de retirá-lo.
+- Teste: relatório de impacto sem modificar comportamento, banco ou rotas.
+
+Estado: concluída em 2026-10-29, somente por inspeção. Foram confirmadas três
+apresentações: screener antigo, protótipo fictício e funil real em três níveis.
+A tela, a validação humana e a API antiga podem ser retiradas, mas os adaptadores
+e políticas do primeiro funil devem permanecer como referência interna porque o
+serviço atual os usa na comparação sobre a mesma amostra. O destino de páginas,
+scripts, rotas, testes e documentos está registrado em
+`MSen/tests/TESTE_ITEM_18_D_1.md`. Nenhum comportamento ou dado foi alterado.
+
+#### 18-D.2 — Screener em três níveis como página oficial
+
+- Fazer `/screener.html` apresentar diretamente o funil atual em três níveis.
+- Usar somente os nomes `Screener` e `Funil em três níveis` onde for necessário
+  explicar sua estrutura.
+- Retirar da interface os links `Abrir novo funil` e `Screener atual`.
+- Preservar limite de raridade, amostra de 5.000, fotografia, reconciliação e
+  relatório por grupo e padrão.
+- Teste: menu abre uma única página e a execução mantém o resultado validado.
+
+Estado: concluída em 2026-10-29. `/screener.html` apresenta diretamente o funil
+real em três níveis, com o nome único `Screener` e sem links `Abrir novo funil`
+ou `Screener atual`. A validação provisória não aparece mais na página oficial;
+os artefatos legados permanecem fisicamente preservados até 18-D.5 e 18-D.6.
+Passaram 7 testes direcionados da API, 35 JavaScript, 18 fluxos Chrome e um
+fluxo Chrome contra a API real, que reconciliou 5.000 = 4.586 + 414. Evidência
+em `MSen/tests/TESTE_ITEM_18_D_2.md`.
+
+#### 18-D.3 — Estado coerente dos controles
+
+- Deixar `Abrir detalhes` e `Fechar detalhes` desabilitados antes da primeira
+  execução e durante o processamento.
+- Habilitá-los somente quando existirem blocos expansíveis carregados.
+- Exibir mensagens claras para execução, sucesso e erro, sem botão aparentemente
+  inoperante.
+- Teste: estados inicial, processando, concluído e falha de API no Chrome.
+
+Estado: concluída em 2026-10-29. Os controles de detalhes ficam desabilitados
+antes da primeira execução e durante o processamento, e são habilitados somente
+após conteúdo válido ser carregado. Falha inicial mantém detalhes indisponíveis;
+falha posterior preserva acesso ao último resultado válido. Passaram 35 testes
+JavaScript e dois fluxos Chrome direcionados cobrindo todos os estados.
+Evidência em `MSen/tests/TESTE_ITEM_18_D_3.md`.
+
+#### 18-D.4 — Página vazia de Validação e auditoria
+
+- Criar item horizontal `Validação e auditoria` no menu oficial.
+- Criar `/auditoria.html` com a barra de navegação comum, botão Voltar, título e
+  aviso de que os métodos serão desenvolvidos posteriormente.
+- Não criar formulário, cálculo, tabela, API ou persistência nesta subetapa.
+- Preservar consumo mínimo de espaço vertical e horizontal.
+- Teste: navegação de ida e volta e página compacta no Chrome.
+
+Estado: concluída em 2026-10-29. O item horizontal `Validação e auditoria` foi
+incluído nas páginas oficiais e `/auditoria.html` foi criada somente com
+navegação, título e aviso de construção. Não há formulário, tabela, cálculo,
+API ou persistência. Passaram 36 testes JavaScript e 11 fluxos Chrome do
+conjunto principal, incluindo ida, volta e largura de 700 px. Evidência em
+`MSen/tests/TESTE_ITEM_18_D_4.md`.
+
+#### 18-D.5 — Remoção da validação humana provisória
+
+- Remover da interface a tabela `Validação humana`, seus seletores e a lógica de
+  conformidade apenas local.
+- Remover dados de validação provisórios da resposta antiga quando nenhum outro
+  consumidor legítimo depender deles.
+- Garantir que a remoção não alcance o futuro modelo planejado da Etapa 20.
+- Teste: busca de referências e regressão da API.
+
+**Concluída em 2026-10-29.** A rota antiga deixou de aceitar
+`limite_validacoes` e de produzir a coleção `validacoes`; o montador legado e
+seu JavaScript também não contêm mais casos, seletores ou cálculo local de
+conformidade. A página reservada à Etapa 20 não foi alterada. Passaram 505
+testes Python, 36 testes JavaScript e 19 fluxos Chrome. Evidência em
+`MSen/tests/TESTE_ITEM_18_D_5.md`.
+
+#### 18-D.6 — Retirada segura do screener legado e do protótipo
+
+- Remover ou redirecionar páginas, JavaScript e rotas exclusivas do funil antigo
+  depois da confirmação do inventário.
+- Retirar o protótipo fictício da navegação e dos artefatos de produção; manter
+  apenas evidência histórica que ainda seja útil à documentação.
+- Atualizar testes para possuir um único contrato oficial do screener.
+- Teste: nenhuma URL interna aponta para tela antiga e nenhuma função de
+  produção fica órfã.
+
+**Concluída em 2026-10-29.** Permanecem publicados somente `screener.html` e
+`POST /api/screener/quadro`. Foram retirados a segunda página executável, o
+protótipo fictício, o JavaScript antigo, a rota GET anterior e o montador
+exclusivo daquele quadro. O núcleo matemático do primeiro funil foi preservado
+porque ainda alimenta a comparação interna do relatório oficial. Passaram 503
+testes Python, 32 testes JavaScript, 18 fluxos Chrome e 5 testes integrados
+(3 aprovados e 2 ignorados por dependerem do PostgreSQL local). Evidência em
+`MSen/tests/TESTE_ITEM_18_D_6.md`.
+
+#### 18-D.7 — Regressão, documentação e fechamento
+
+- Executar testes Python, API, JavaScript e Google Chrome.
+- Executar o fluxo real de 5.000 contra o servidor local e confirmar o mesmo
+  fechamento de referência, salvo mudança expressamente aprovada.
+- Atualizar funcionalidades, decisões, critérios e continuidade da IA.
+- Preparar commit e push somente mediante autorização específica.
+
+**Concluída em 2026-10-29.** A documentação operacional passou a registrar uma
+única página e uma única API oficiais; documentos do protótipo foram marcados
+como históricos, registros duplicados de continuidade foram removidos e as
+funcionalidades e decisões foram reconciliadas. O Chrome confirmou novamente o
+fechamento das 5.000 combinações: 4.586 excluídas e 414 aprovadas, com o funil
+anterior aprovando 4.409 apenas como comparação interna. Passaram 503 testes
+Python, 32 JavaScript, 18 Chrome e 5 integrados (3 aprovados e 2 ignorados por
+dependerem do PostgreSQL local). A Etapa 18-D está encerrada; commit e push
+dependem de autorização específica. Evidência em
+`MSen/tests/TESTE_ITEM_18_D_7.md`.
+
+
 ### Etapa 19 — mecanismo de backtest sem informação futura
 
 Objetivo: avaliar se os critérios teriam preservado resultados reais ainda

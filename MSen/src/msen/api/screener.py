@@ -4,7 +4,6 @@ from flask import Blueprint, current_app, jsonify, request
 
 from msen.screener import (
     ErroConfiguracaoScreener,
-    gerar_quadro_screener,
     validar_limite_raridade,
 )
 
@@ -12,30 +11,9 @@ from msen.screener import (
 screener_api = Blueprint("screener_api", __name__)
 
 
-@screener_api.get("/api/screener/quadro")
+@screener_api.post("/api/screener/quadro")
 def obter_quadro_screener():
-    """Executa a amostra protegida e retorna quadro e casos de validação."""
-
-    bruto = request.args.get("limite_validacoes", "30")
-    try:
-        limite = int(bruto)
-    except (TypeError, ValueError):
-        return jsonify(erro={
-            "codigo": "LIMITE_VALIDACOES_INVALIDO",
-            "mensagem": "limite_validacoes deve ser um número inteiro",
-        }), 400
-    if not 1 <= limite <= 200:
-        return jsonify(erro={
-            "codigo": "LIMITE_VALIDACOES_INVALIDO",
-            "mensagem": "limite_validacoes deve estar entre 1 e 200",
-        }), 400
-    executor = current_app.config["GERAR_QUADRO_SCREENER"]
-    return jsonify(executor(limite))
-
-
-@screener_api.post("/api/screener/quadro-extensivel")
-def obter_quadro_screener_extensivel():
-    """Executa somente a amostra fixa do novo funil em três níveis."""
+    """Executa somente a amostra fixa do funil oficial em três níveis."""
 
     dados = request.get_json(silent=True)
     if dados is None and request.data:
@@ -59,7 +37,7 @@ def obter_quadro_screener_extensivel():
     except ErroConfiguracaoScreener as erro:
         return jsonify(erro={"codigo": erro.codigo, "mensagem": str(erro)}), 400
     try:
-        executor = current_app.config["GERAR_QUADRO_SCREENER_EXTENSIVEL"]
+        executor = current_app.config["GERAR_QUADRO_SCREENER"]
         return jsonify(executor(limite))
     except Exception as erro:
         codigo = getattr(erro, "codigo", "ENSAIO_EXTENSIVEL_INDISPONIVEL")

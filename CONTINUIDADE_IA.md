@@ -1764,3 +1764,125 @@ Próxima ação exata:
 - A Etapa 18-C está tecnicamente encerrada. Nenhum commit ou push foi feito.
 - Próxima ação: aguardar autorização específica para commit e push da Etapa
   18-C. As Etapas 19 e 20 continuam em espera por decisão do usuário.
+
+## Planejamento — 2026-10-29 — Etapa 18-D
+
+- Foi identificada a convivência de dois screeners acessíveis: o funil antigo de
+  oito filtros com validação humana provisória e o funil atual em três níveis.
+- A Etapa 18-D consolidará o funil em três níveis como único `Screener` oficial
+  e removerá da interface a validação humana provisória.
+- Será criado o item de menu e a página vazia `Validação e auditoria`, sem
+  cálculos, API ou persistência. Os métodos continuam reservados para a Etapa 20.
+- A etapa foi dividida em 18-D.1 a 18-D.7, sempre com autorização separada.
+- Próxima ação: aguardar autorização para a subetapa 18-D.1, inventário e
+  contrato definitivo de consolidação.
+
+## Conclusão — 2026-10-29 — subetapa 18-D.1
+
+- O inventário confirmou três interfaces: screener antigo, protótipo fictício e
+  funil real em três níveis.
+- O conteúdo do funil em três níveis será migrado para `/screener.html`; nomes,
+  links, API e testes transitórios serão consolidados posteriormente.
+- A tela antiga, sua validação humana local, `quadro_ativo.py` e o protótipo não
+  são necessários ao funcionamento do screener atual.
+- Os adaptadores, políticas e executor básico do primeiro funil ainda são usados
+  internamente pelo serviço atual para comparar os dois resultados na mesma
+  amostra. Esse núcleo deve permanecer sem interface pública.
+- A página futura `/auditoria.html` não reutilizará a validação provisória.
+- Nenhum arquivo de produção, rota, banco ou comportamento foi modificado.
+- Relatório: `MSen/tests/TESTE_ITEM_18_D_1.md`.
+- Próxima ação: aguardar autorização para a subetapa 18-D.2, tornar o funil em
+  três níveis a página oficial `/screener.html`.
+
+## Conclusão — 2026-10-29 — subetapa 18-D.2
+
+- `/screener.html` passou a servir diretamente a interface real do funil em
+  três níveis.
+- A página usa somente os nomes `Screener` e `Funil em três níveis`; os links
+  `Abrir novo funil` e `Screener atual` não aparecem mais no fluxo oficial.
+- A validação humana provisória saiu da página oficial, mas seus arquivos e API
+  ainda aguardam remoção segura nas subetapas 18-D.5 e 18-D.6.
+- Limite de raridade, execução de 5.000, resumo, detalhes e comparação foram
+  preservados.
+- Passaram 7 testes da API, 35 JavaScript, 18 fluxos Chrome e uma execução real
+  no Chrome com fechamento 5.000 = 4.586 + 414.
+- Relatório: `MSen/tests/TESTE_ITEM_18_D_2.md`.
+- Próxima ação: aguardar autorização para 18-D.3, estados coerentes dos botões
+  de detalhes e mensagens de execução.
+
+## Conclusão — 2026-10-29 — subetapa 18-D.3
+
+- `Abrir detalhes` e `Fechar detalhes` começam desabilitados e permanecem assim
+  durante a execução.
+- Após sucesso, os detalhes são habilitados; após falha inicial, continuam
+  indisponíveis.
+- Se uma repetição falhar, os detalhes do último resultado válido continuam
+  acessíveis.
+- A mensagem de falha passou a indicar claramente que a execução não foi
+  concluída e conserva a causa fornecida pela API.
+- Passaram 35 testes JavaScript e dois fluxos Chrome direcionados; o banco não
+  foi acessado.
+- Relatório: `MSen/tests/TESTE_ITEM_18_D_3.md`.
+- Próxima ação: aguardar autorização para 18-D.4, item de menu e página vazia
+  de `Validação e auditoria`.
+
+## Conclusão — 2026-10-29 — subetapa 18-D.4
+
+- As páginas oficiais receberam o item horizontal `Validação e auditoria`.
+- `/auditoria.html` possui navegação comum, botão Voltar, título e aviso de que
+  a funcionalidade será desenvolvida na Etapa 20.
+- A página usa CSS próprio e permanece compacta inclusive com 700 px de largura.
+- Nenhum formulário, tabela, função, API ou persistência de auditoria foi
+  antecipado.
+- Passaram 36 testes JavaScript e 11 fluxos Chrome do conjunto principal; o
+  banco não foi acessado.
+- Relatório: `MSen/tests/TESTE_ITEM_18_D_4.md`.
+- Próxima ação: aguardar autorização para 18-D.5, remoção da validação humana
+  provisória e de seus dados antigos.
+
+## Conclusão — 2026-10-29 — subetapa 18-D.5
+
+- O mecanismo provisório de validação humana foi retirado do montador legado,
+  da resposta da API antiga e do JavaScript antigo.
+- A rota temporária `/api/screener/quadro` permanece somente até a retirada do
+  screener legado na 18-D.6, mas não recebe `limite_validacoes` nem devolve
+  `validacoes`.
+- A futura página `Validação e auditoria`, reservada à Etapa 20, permaneceu
+  vazia e não foi afetada.
+- Passaram 505 testes Python, 36 testes JavaScript e 19 fluxos Chrome.
+- Relatório: `MSen/tests/TESTE_ITEM_18_D_5.md`.
+- Próxima ação: aguardar autorização para 18-D.6, retirada segura do screener
+  legado e do protótipo fictício.
+
+## Conclusão — 2026-10-29 — subetapa 18-D.6
+
+- O Screener possui uma única página pública: `/screener.html`.
+- A API pública foi consolidada em `POST /api/screener/quadro`; a antiga rota
+  GET e o nome transitório `/api/screener/quadro-extensivel` foram retirados.
+- Foram removidos a página duplicada `screener-extensivel.html`, o protótipo
+  fictício, seus dados e testes, `screener.js`, `quadro_ativo.py` e seus testes.
+- O núcleo do funil anterior foi mantido porque o relatório oficial ainda o
+  utiliza na comparação interna `anterior x atual`.
+- Passaram 503 testes Python, 32 JavaScript, 18 Chrome e 5 integrados, dos quais
+  3 foram aprovados e 2 ignorados por dependerem do PostgreSQL local.
+- Relatório: `MSen/tests/TESTE_ITEM_18_D_6.md`.
+- Próxima ação: aguardar autorização para 18-D.7, regressão documental e
+  fechamento da consolidação.
+
+## Conclusão — 2026-10-29 — subetapa 18-D.7 e Etapa 18-D
+
+- A documentação atual aponta somente para `/screener.html` e
+  `POST /api/screener/quadro` como contratos públicos do Screener.
+- O protótipo é apenas histórico; registros duplicados das subetapas 18-D.5 e
+  18-D.6 foram removidos da documentação corrente.
+- Funcionalidades, decisões, ideias, plano geral e critérios de seleção foram
+  reconciliados com o estado implementado.
+- O ensaio real no Chrome confirmou 5.000 analisadas, 4.586 excluídas, 414
+  aprovadas e fechamento correto; o comparativo interno anterior aprovou 4.409.
+- Passaram 503 testes Python, 32 JavaScript, 18 Chrome e 5 integrados, dos quais
+  3 foram aprovados e 2 ignorados por dependerem do PostgreSQL local.
+- Relatório: `MSen/tests/TESTE_ITEM_18_D_7.md`.
+- A Etapa 18-D está concluída. Backtest continua expressamente adiado e a página
+  de auditoria continua vazia, aguardando planejamento/autorização posterior.
+- Próxima ação permitida: commit e push da Etapa 18-D somente com autorização
+  específica do usuário, ou novo planejamento solicitado por ele.

@@ -96,6 +96,12 @@ aprovação e priorização antes da implementação.
 - [x] Mostrar código e nome legível do padrão e do grupo no relatório.
 - [x] Executar amostra protegida e reproduzível de 5.000 combinações, mantendo
   bloqueado o processamento integral.
+- [x] Reunir estatística, geometria e padrões em um único funil oficial de três
+  níveis, acessível por `/screener.html`.
+- [x] Expor uma única execução pública em `POST /api/screener/quadro` e retirar
+  as telas antigas e o protótipo fictício.
+- [x] Preservar internamente o primeiro funil somente para a comparação exibida
+  no relatório oficial.
 
 ## Auditoria do screener e dos backtests
 

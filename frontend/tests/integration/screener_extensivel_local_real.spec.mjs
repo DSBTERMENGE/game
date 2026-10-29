@@ -6,8 +6,8 @@ test.skip(
   "Executado somente contra um servidor local real autorizado.",
 );
 
-test("Chrome executa e reconcilia a amostra real do novo funil", async ({ page }) => {
-  await page.goto("/screener-extensivel.html");
+test("Chrome executa e reconcilia a amostra real do funil oficial", async ({ page }) => {
+  await page.goto("/screener.html");
   await page.locator("#botao-executar-extensivel").click();
 
   await expect(page.locator(".prototipo-nivel")).toHaveCount(3, { timeout: 30_000 });

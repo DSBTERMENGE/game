@@ -1,8 +1,9 @@
-# Interface do screener extensível
+# Interface oficial do Screener
 
-A página `screener-extensivel.html` consome diretamente o formato serializado do
+A página `screener.html` consome diretamente o formato serializado do
 quadro consolidado. Ela não contém números fictícios. Desde a subetapa 18.8, o
-botão chama a API protegida para executar exatamente 5.000 combinações.
+botão chama `POST /api/screener/quadro` para executar exatamente 5.000
+combinações.
 
 ## Organização
 

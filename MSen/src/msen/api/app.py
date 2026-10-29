@@ -35,7 +35,6 @@ from .perfis_padroes import (
     perfis_padroes_api,
 )
 from .distribuicoes import calcular_distribuicoes_no_banco, distribuicoes_api
-from msen.screener import gerar_quadro_screener
 from .screener_extensivel_service import gerar_quadro_screener_extensivel
 
 
@@ -65,8 +64,7 @@ def criar_app(configuracao: Mapping[str, Any] | None = None) -> Flask:
         EDITAR_GRUPO_PADRAO=editar_grupo_padrao_no_banco,
         EXCLUIR_GRUPO_PADRAO=excluir_grupo_padrao_no_banco,
         LISTAR_GRUPOS_PADROES=listar_grupos_padroes_do_banco,
-        GERAR_QUADRO_SCREENER=gerar_quadro_screener,
-        GERAR_QUADRO_SCREENER_EXTENSIVEL=gerar_quadro_screener_extensivel,
+        GERAR_QUADRO_SCREENER=gerar_quadro_screener_extensivel,
         CALCULAR_PERFIL_PADROES=calcular_perfil_no_banco,
         CALCULAR_DISTRIBUICOES=calcular_distribuicoes_no_banco,
     )

@@ -63,15 +63,18 @@ test("contrato aceita somente quadro reconciliado nas três famílias", () => {
 });
 
 test("interface explica que cadastro não substitui função Python", async () => {
-  const html = await readFile(new URL("../screener-extensivel.html", import.meta.url), "utf8");
+  const html = await readFile(new URL("../screener.html", import.meta.url), "utf8");
   const javascript = await readFile(new URL("../js/screener-extensivel.js", import.meta.url), "utf8");
 
   assert.match(html, /Cadastrar um padrão não cria seu filtro/);
   assert.match(html, /função Python, testes e integração validada/);
   assert.match(html, /Executar 5\.000/);
   assert.match(html, /id="limite-raridade-extensivel"/);
+  assert.match(html, /id="botao-abrir-todos"[^>]*disabled/);
+  assert.match(html, /id="botao-fechar-todos"[^>]*disabled/);
   assert.doesNotMatch(html, /dados inteiramente fictícios/i);
   assert.match(javascript, /Função Python validada/);
-  assert.match(javascript, /fetch\s*\("\/api\/screener\/quadro-extensivel"/);
+  assert.match(javascript, /fetch\s*\("\/api\/screener\/quadro"/);
   assert.match(javascript, /limite_raridade/);
+  assert.match(javascript, /detalhesDisponiveis/);
 });

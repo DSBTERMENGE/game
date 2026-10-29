@@ -23,48 +23,42 @@
       </details>
       <a class="navegacao-link" href="/distribuicoes.html">Distribuições</a>
       <a class="navegacao-link" href="/screener.html" aria-current="page">Screener</a>
-      <strong class="navegacao-pagina">Avaliação do screener</strong>
+      <a class="navegacao-link" href="/auditoria.html">Validação e auditoria</a>
+      <strong class="navegacao-pagina">Funil em três níveis</strong>
     </header>
 
-    <main class="pagina-conteudo screener-pagina">
-      <section class="screener-topo">
-        <h1>Funil experimental</h1>
-        <button id="botao-executar-screener" type="button">Executar 5.000 combinações</button>
-        <a class="botao-link" href="/screener-extensivel.html">Abrir novo funil</a>
-        <p id="mensagem-screener" role="status" aria-live="polite">Pronto para executar.</p>
-      </section>
-
-      <section class="screener-resumo" aria-label="Resumo do ensaio">
-        <output>Total: <strong id="total-recebido">—</strong></output>
-        <output>Aprovadas: <strong id="total-aprovado">—</strong></output>
-        <output>Excluídas: <strong id="total-excluido">—</strong></output>
-        <output>Tempo: <strong id="duracao-screener">—</strong></output>
-      </section>
-
-      <section class="screener-bloco">
-        <h2>Quadro de exclusões</h2>
-        <div class="screener-grade" tabindex="0">
-          <table>
-            <thead><tr><th>Ordem</th><th>Critério</th><th>Avaliações</th><th>Exclusões</th><th>% inicial</th><th>Saldo</th></tr></thead>
-            <tbody id="corpo-quadro-screener"></tbody>
-          </table>
+    <main class="pagina-conteudo prototipo-pagina">
+      <section class="prototipo-topo">
+        <div>
+          <h1>Screener</h1>
+          <p id="mensagem-extensivel" role="status">Pronto para executar somente a amostra protegida de 5.000 combinações.</p>
+          <p class="aviso-integracao">Cadastrar um padrão não cria seu filtro: cada grupo precisa de função Python, testes e integração validada.</p>
         </div>
+        <label class="controle-raridade">Limite de raridade (%)
+          <input id="limite-raridade-extensivel" type="number" min="0" max="100" step="0.000001" value="10" required>
+        </label>
+        <button id="botao-executar-extensivel" type="button">Executar 5.000</button>
+        <button id="botao-abrir-todos" type="button" disabled>Abrir detalhes</button>
+        <button id="botao-fechar-todos" type="button" disabled>Fechar detalhes</button>
+      </section>
+      <p id="extensivel-raridade-usada" class="prototipo-politica">Limite ainda não executado.</p>
+
+      <section class="prototipo-resumo" aria-label="Resumo real do funil">
+        <output><span>Universo possível</span><strong id="extensivel-total-universo">—</strong><small>Analisadas: <b id="extensivel-total-analisado">—</b></small></output>
+        <output class="prototipo-resumo--excluido"><span>Total excluído</span><strong id="extensivel-total-excluido">—</strong><small id="extensivel-percentual-excluido">—</small></output>
+        <output class="prototipo-resumo--aprovado"><span>Combinações aprovadas</span><strong id="extensivel-total-aprovado">—</strong><small id="extensivel-percentual-aprovado">—</small></output>
       </section>
 
-      <section class="screener-bloco screener-validacao">
-        <header>
-          <h2>Validação humana</h2>
-          <p>Informe o resultado esperado; a conformidade é calculada somente nesta tela.</p>
-        </header>
-        <div class="screener-grade" tabindex="0">
-          <table>
-            <thead><tr><th>Combinação</th><th>Esperado</th><th>Obtido</th><th>Critério/motivo</th><th>Conformidade</th></tr></thead>
-            <tbody id="corpo-validacoes-screener"></tbody>
-          </table>
-        </div>
+      <section id="extensivel-niveis" class="prototipo-niveis" aria-label="Famílias do funil">
+        <p class="estado-vazio">Nenhuma execução carregada. O processamento integral permanece bloqueado.</p>
       </section>
+      <p id="extensivel-comparacao" class="comparacao-screener">Comparação com o screener anterior aguardando execução.</p>
+      <footer class="prototipo-rodape">
+        <strong id="extensivel-reconciliacao">Aguardando execução protegida.</strong>
+        <span>Somente filtros com função Python validada podem participar do funil.</span>
+      </footer>
     </main>
-    <script type="module" src="js/screener.js"></script>
+    <script type="module" src="js/screener-extensivel.js"></script>
     <script type="module" src="js/navegacao.js"></script>
   </body>
 </html>

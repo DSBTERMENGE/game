@@ -1,6 +1,6 @@
-# Contrato extensível do novo funil
+# Contrato extensível do funil oficial
 
-O novo screener é composto por famílias ordenadas. Cada família contém qualquer
+O Screener oficial é composto por famílias ordenadas. Cada família contém qualquer
 quantidade de filtros também ordenados. As famílias iniciais são:
 
 1. valores estatísticos;

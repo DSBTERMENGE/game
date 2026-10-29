@@ -1,5 +1,8 @@
 # Protótipo do screener em três níveis
 
+Estado: **documento histórico**. O protótipo fictício foi retirado na subetapa
+18-D.6 depois de ser substituído pelo Screener oficial em `/screener.html`.
+
 A subetapa 18.0 apresenta apenas uma proposta visual, com números fictícios.
 Ela não chama API, não grava banco e não modifica o funcionamento do screener
 experimental de 5.000 combinações.

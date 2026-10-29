@@ -11,7 +11,7 @@ let servidor;
 test.beforeAll(async () => {
   servidor = http.createServer(async (requisicao, resposta) => {
     const arquivos = {
-      "/screener-extensivel.html": ["screener-extensivel.html", "text/html; charset=utf-8"],
+      "/screener.html": ["screener.html", "text/html; charset=utf-8"],
       "/css/style.css": ["css/style.css", "text/css; charset=utf-8"],
       "/css/navegacao.css": ["css/navegacao.css", "text/css; charset=utf-8"],
       "/css/screener.css": ["css/screener.css", "text/css; charset=utf-8"],
@@ -89,8 +89,9 @@ const dados = {
 test("renderiza contrato real em blocos expansíveis e compactos", async ({ page }) => {
   let limiteRecebido;
   await page.setViewportSize({ width: 1280, height: 820 });
-  await page.route("**/api/screener/quadro-extensivel", (rota) => {
+  await page.route("**/api/screener/quadro", async (rota) => {
     limiteRecebido = rota.request().postDataJSON().limite_raridade;
+    await new Promise((resolver) => setTimeout(resolver, 150));
     const respostaDados = structuredClone(dados);
     const limiteFormatado = Number(limiteRecebido).toFixed(6);
     respostaDados.configuracao_raridade.limite_percentual = limiteFormatado;
@@ -108,9 +109,14 @@ test("renderiza contrato real em blocos expansíveis e compactos", async ({ page
       }),
     });
   });
-  await page.goto("http://127.0.0.1:4175/screener-extensivel.html");
+  await page.goto("http://127.0.0.1:4175/screener.html");
+  await expect(page.locator("#botao-abrir-todos")).toBeDisabled();
+  await expect(page.locator("#botao-fechar-todos")).toBeDisabled();
   await page.locator("#limite-raridade-extensivel").fill("7.5");
   await page.locator("#botao-executar-extensivel").click();
+  await expect(page.locator("#mensagem-extensivel")).toContainText("Executando 5.000");
+  await expect(page.locator("#botao-executar-extensivel")).toBeDisabled();
+  await expect(page.locator("#botao-abrir-todos")).toBeDisabled();
   expect(limiteRecebido).toBe("7.5");
 
   await expect(page.locator(".prototipo-nivel")).toHaveCount(3);
@@ -119,6 +125,8 @@ test("renderiza contrato real em blocos expansíveis e compactos", async ({ page
   await expect(page.locator("#extensivel-reconciliacao")).toContainText("Fechamento correto");
   await expect(page.locator("#extensivel-comparacao")).toContainText("anterior: 4.409");
   await expect(page.locator(".prototipo-nivel[open]")).toHaveCount(0);
+  await expect(page.locator("#botao-abrir-todos")).toBeEnabled();
+  await expect(page.locator("#botao-fechar-todos")).toBeEnabled();
   await page.locator("#botao-abrir-todos").click();
   await expect(page.locator(".prototipo-nivel[open]")).toHaveCount(3);
   await expect(page.locator(".prototipo-detalhes > table > tbody > tr")).toHaveCount(13);
@@ -132,6 +140,16 @@ test("renderiza contrato real em blocos expansíveis e compactos", async ({ page
   await expect(page.locator("#extensivel-raridade-usada")).toContainText("PD_002, PD_003, PD_005, PD_006, PD_009");
   await expect(page.locator("#extensivel-raridade-usada")).toContainText("7,500000%");
   expect(await page.evaluate(() => localStorage.getItem("msen.screener.limiteRaridade"))).toBe("7.500000");
+  await page.unroute("**/api/screener/quadro");
+  await page.route("**/api/screener/quadro", (rota) => rota.fulfill({
+    status: 503,
+    contentType: "application/json",
+    body: JSON.stringify({ erro: { mensagem: "Falha posterior controlada." } }),
+  }));
+  await page.locator("#botao-executar-extensivel").click();
+  await expect(page.locator("#mensagem-extensivel")).toContainText("Falha posterior controlada");
+  await expect(page.locator("#botao-abrir-todos")).toBeEnabled();
+  await expect(page.locator("#botao-fechar-todos")).toBeEnabled();
   const medidas = await page.locator("#extensivel-niveis").evaluate((elemento) => ({
     direita: elemento.getBoundingClientRect().right,
     inferior: elemento.getBoundingClientRect().bottom,
@@ -140,4 +158,21 @@ test("renderiza contrato real em blocos expansíveis e compactos", async ({ page
   }));
   expect(medidas.direita).toBeLessThanOrEqual(medidas.largura + 1);
   expect(medidas.inferior).toBeLessThanOrEqual(medidas.altura + 1);
+});
+
+test("falha mantém detalhes indisponíveis quando não existe execução carregada", async ({ page }) => {
+  await page.route("**/api/screener/quadro", (rota) => rota.fulfill({
+    status: 503,
+    contentType: "application/json",
+    body: JSON.stringify({ erro: { mensagem: "Serviço temporariamente indisponível." } }),
+  }));
+  await page.goto("http://127.0.0.1:4175/screener.html");
+  await page.locator("#botao-executar-extensivel").click();
+  await expect(page.locator("#mensagem-extensivel")).toContainText(
+    "Não foi possível concluir a execução: Serviço temporariamente indisponível.",
+  );
+  await expect(page.locator("#botao-executar-extensivel")).toBeEnabled();
+  await expect(page.locator("#limite-raridade-extensivel")).toBeEnabled();
+  await expect(page.locator("#botao-abrir-todos")).toBeDisabled();
+  await expect(page.locator("#botao-fechar-todos")).toBeDisabled();
 });

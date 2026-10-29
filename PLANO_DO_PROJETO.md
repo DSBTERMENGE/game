@@ -129,13 +129,14 @@ O desenvolvimento seguinte será dividido em seis etapas funcionais:
 
 1. classificar cada resultado real por grupo e subgrupo de padrões;
 2. construir perfis estatísticos e geométricos por intervalo histórico;
-3. adaptar o screener para os três níveis e seus subtotais;
+3. adaptar o screener para os três níveis e seus subtotais — concluído;
 4. executar backtests sem utilizar informações futuras;
 5. produzir relatórios auditáveis de entradas, cálculos e decisões;
 6. medir capacidade antes de qualquer liberação das 50.063.860 combinações.
 
-Antes da construção definitiva do novo screener e da auditoria, serão
-apresentados protótipos visuais estáticos no Chrome. O backtest foi adiado até
+O Screener definitivo de três níveis substituiu os protótipos e está disponível
+em uma única página. A auditoria ainda será desenvolvida na página já reservada
+para ela. O backtest foi adiado até
 que as demais partes do sistema estejam operacionais. A auditoria manual poderá
 ser desenvolvida antes dele e guardar revisões parciais para continuação em
 outra sessão.

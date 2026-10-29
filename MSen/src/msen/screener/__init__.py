@@ -58,7 +58,6 @@ from .comparacao_ordens import (
     ResultadoOrdemFiltros,
     comparar_ordens_filtros,
 )
-from .quadro_ativo import gerar_quadro_screener
 from .politicas_geometricas import (
     PoliticaExtensaoAtiva,
     PoliticaExtensaoSombra,
@@ -174,7 +173,6 @@ __all__ = [
     "ORDENS_EXPERIMENTAIS",
     "ResultadoOrdemFiltros",
     "comparar_ordens_filtros",
-    "gerar_quadro_screener",
     "PoliticaMediaSombra",
     "PoliticaMediaAtiva",
     "PoliticaMedianaSombra",

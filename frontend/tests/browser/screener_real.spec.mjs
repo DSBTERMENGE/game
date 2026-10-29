@@ -43,18 +43,10 @@ test.afterAll(async () => {
 });
 
 
-test("Chrome exibe o quadro real das 5.000 combinações", async ({ page }) => {
+test("Chrome serve o Screener oficial em três níveis", async ({ page }) => {
   await page.goto("http://127.0.0.1:4174/screener.html");
-  await page.locator("#botao-executar-screener").click();
-  await expect(page.locator("#corpo-quadro-screener tr")).toHaveCount(8);
-  await expect(page.locator("#corpo-validacoes-screener tr")).toHaveCount(30);
-  await expect(page.locator("#total-recebido")).toHaveText("5.000");
-  await expect(page.locator("#total-aprovado")).toHaveText("4.409");
-  await expect(page.locator("#total-excluido")).toHaveText("591");
-
-  const excluido = page.locator("#corpo-validacoes-screener tr").filter({
-    has: page.locator("td:nth-child(3)", { hasText: "excluir" }),
-  }).first();
-  await excluido.locator("select").selectOption("excluir");
-  await expect(excluido.locator("td").last()).toHaveText("Conforme");
+  await expect(page.locator("h1")).toHaveText("Screener");
+  await expect(page.locator(".navegacao-pagina")).toHaveText("Funil em três níveis");
+  await expect(page.locator("#botao-executar-extensivel")).toBeEnabled();
+  await expect(page.locator("#corpo-validacoes-screener")).toHaveCount(0);
 });

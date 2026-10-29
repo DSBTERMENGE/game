@@ -153,7 +153,18 @@ export function renderizarQuadroExtensivel(dados) {
 }
 
 const botaoExecutar = document.querySelector("#botao-executar-extensivel");
+const botaoAbrirTodos = document.querySelector("#botao-abrir-todos");
+const botaoFecharTodos = document.querySelector("#botao-fechar-todos");
 const limiteRaridade = document.querySelector("#limite-raridade-extensivel");
+let detalhesDisponiveis = false;
+
+function atualizarControles(processando = false) {
+  botaoExecutar.disabled = processando;
+  limiteRaridade.disabled = processando;
+  botaoAbrirTodos.disabled = processando || !detalhesDisponiveis;
+  botaoFecharTodos.disabled = processando || !detalhesDisponiveis;
+}
+
 const limiteMemorizado = localStorage.getItem(CHAVE_LIMITE_RARIDADE);
 if (limiteMemorizado !== null) {
   limiteRaridade.value = limiteMemorizado;
@@ -166,11 +177,10 @@ async function executarAmostra() {
     texto("#mensagem-extensivel", "Informe um limite de raridade entre 0% e 100%.");
     return;
   }
-  botaoExecutar.disabled = true;
-  limiteRaridade.disabled = true;
+  atualizarControles(true);
   texto("#mensagem-extensivel", "Executando 5.000 combinações e comparando os funis...");
   try {
-    const resposta = await fetch("/api/screener/quadro-extensivel", {
+    const resposta = await fetch("/api/screener/quadro", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ limite_raridade: limiteRaridade.value }),
@@ -178,18 +188,19 @@ async function executarAmostra() {
     const dados = await resposta.json();
     if (!resposta.ok) throw new Error(dados.erro?.mensagem || "Falha no novo screener.");
     renderizarQuadroExtensivel(dados);
+    detalhesDisponiveis = true;
   } catch (erro) {
-    texto("#mensagem-extensivel", erro.message);
+    texto("#mensagem-extensivel", `Não foi possível concluir a execução: ${erro.message}`);
   } finally {
-    botaoExecutar.disabled = false;
-    limiteRaridade.disabled = false;
+    atualizarControles(false);
   }
 }
 
-document.querySelector("#botao-abrir-todos").addEventListener("click", () => {
+botaoAbrirTodos.addEventListener("click", () => {
   document.querySelectorAll(".prototipo-nivel").forEach((item) => { item.open = true; });
 });
-document.querySelector("#botao-fechar-todos").addEventListener("click", () => {
+botaoFecharTodos.addEventListener("click", () => {
   document.querySelectorAll(".prototipo-nivel").forEach((item) => { item.open = false; });
 });
 botaoExecutar.addEventListener("click", executarAmostra);
+atualizarControles(false);
