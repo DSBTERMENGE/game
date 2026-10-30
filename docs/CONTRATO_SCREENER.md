@@ -1,5 +1,8 @@
 # Contrato do gerador e screener experimental
 
+> Contrato histórico da fase experimental. O Screener oficial e sua trava de
+> homologação estão descritos em `docs/funcionamento.md`.
+
 ## Finalidade desta fase
 
 O screener receberá combinações de seis dezenas distintas, entre 01 e 60,
@@ -45,14 +48,15 @@ somente nas etapas posteriores.
 O Item 14.4 implementou essa estrutura. Cada critério possui um código único e
 devolve uma decisão com aprovação/reprovação, o mesmo código e os valores que
 embasaram a resposta. O relatório registra quantas combinações chegaram a cada
-critério, quantas ele excluiu e o saldo resultante. Sem critérios, todas as
-combinações passam. Os critérios reais continuam desativados.
+critério, quantas ele excluiu e o saldo resultante. Naquela fase, sem critérios,
+todas as combinações passavam e os critérios reais estavam desativados.
 
 O Item 14.5 separou os adaptadores de padrões históricos, medidas estatísticas
 e medidas geométricas. Cada um repassa combinação e tolerâncias para sua futura
 função e transforma a resposta em decisão padronizada. Um adaptador inativo
 não chama a função; um ativo exige uma função que devolva o contrato correto.
-As funções reais e suas regras de exclusão ainda não foram conectadas.
+Na etapa 14, as funções reais ainda não estavam conectadas; esse estado foi
+substituído pelo funil oficial descrito em `docs/funcionamento.md`.
 
 ## Tolerâncias e segurança
 

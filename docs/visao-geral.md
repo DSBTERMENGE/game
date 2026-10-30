@@ -2,17 +2,16 @@
 
 ## Objetivo
 
-O MSen será uma aplicação para importar, organizar e analisar históricos de
-resultados da Mega-Sena. O escopo será refinado conforme as funcionalidades
-forem definidas.
+O MSen é uma aplicação local para importar, organizar e analisar históricos de
+resultados da Mega-Sena, homologar suas funções matemáticas e executar um
+Screener protegido em três famílias.
 
 ## Organização do repositório
 
 - `MSen`: aplicação Python, testes e dados utilizados por ela;
 - `docs`: documentação estável sobre o produto e sua arquitetura;
 - `notas`: ideias, pendências e decisões ainda em elaboração;
-- `frontend`: interface HTML, JavaScript e folhas de estilo, ainda não integrada
-  à aplicação Python;
+- `frontend`: interface HTML, JavaScript e CSS integrada à API Flask;
 
 ## Princípios iniciais
 
@@ -22,5 +21,5 @@ forem definidas.
 4. Registrar decisões que afetem a arquitetura ou o formato dos dados.
 
 O fluxo funcional detalhado está documentado em `docs/funcionamento.md`.
-O planejamento consolidado e legível como texto simples está em
-`docs/PLANO_FUNCIONALIDADES.txt`.
+O índice dos documentos vigentes está em `docs/INDICE_DOCUMENTACAO.md`.
+O planejamento operacional vigente está em `PLANO_ETAPAS_E_TESTES.md`.

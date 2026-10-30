@@ -1,11 +1,11 @@
-# Funcionalidades planejadas
+# Funcionalidades vigentes e pendentes
 
-Este arquivo descreve o que o produto deverá fazer. Os itens ainda precisam de
-aprovação e priorização antes da implementação.
+Itens marcados foram confirmados por implementação e testes. Itens sem marca
+continuam pendentes ou pertencem a ciclos posteriores.
 
 ## Dados e importação
 
-- [ ] Importar a planilha de resultados sem modificar o arquivo original.
+- [x] Importar a planilha de resultados sem modificar o arquivo original.
 - [x] Reconhecer as colunas `Concurso`, `Data` e `bola 1` a `bola 6`.
 - [x] Validar concurso, data e dezenas antes de gravar.
 - [x] Atualizar o histórico sem duplicar concursos já existentes.
@@ -24,29 +24,30 @@ aprovação e priorização antes da implementação.
 
 ## Análises
 
-- [ ] Calcular e armazenar a soma dos seis resultados de cada linha.
-- [ ] Calcular e armazenar a média aritmética dos seis resultados de cada linha.
-- [ ] Calcular e armazenar a mediana dos seis resultados de cada linha.
-- [ ] Calcular e armazenar o desvio-padrão dos resultados em relação à média.
-- [ ] Calcular a frequência de cada número de 01 a 60 em todo o histórico ou em
+- [x] Calcular e armazenar a soma dos seis resultados de cada linha.
+- [x] Calcular e armazenar a média aritmética dos seis resultados de cada linha.
+- [x] Calcular e armazenar a mediana dos seis resultados de cada linha.
+- [x] Calcular e armazenar o desvio-padrão populacional dos resultados.
+- [x] Calcular a frequência de cada número de 01 a 60 em todo o histórico ou em
   um período.
-- [ ] Calcular os intervalos entre as ocorrências de cada número de 01 a 60.
-- [ ] Calcular o intervalo médio de ocorrência de cada número.
-- [ ] Calcular o desvio-padrão dos intervalos de ocorrência de cada número.
+- [x] Calcular os intervalos entre as ocorrências de cada número de 01 a 60.
+- [x] Calcular o intervalo médio de ocorrência de cada número.
+- [x] Calcular o desvio-padrão dos intervalos de ocorrência de cada número.
 - [ ] Comparar uma combinação de seis dezenas com concursos anteriores.
-- [ ] Apresentar estatísticas descritivas sem tratá-las como previsão de sorteio.
+- [x] Apresentar estatísticas descritivas sem tratá-las como promessa de previsão
+  de sorteio.
 
 ## Representações gráficas
 
-- [ ] Plotar um resultado colocando um círculo verde-claro sobre cada número
+- [x] Plotar um resultado colocando um círculo verde-claro sobre cada número
   ocorrido, preservando a leitura do número abaixo da marca.
-- [ ] Plotar a média do resultado na mesma escala visual de 01 a 60.
-- [ ] Calcular a média das coordenadas dos seis pontos sem arredondamento,
+- [x] Plotar a média do resultado na mesma escala visual de 01 a 60.
+- [x] Calcular a média das coordenadas dos seis pontos sem arredondamento,
   admitindo posições decimais como `(2; 4,33)`.
-- [ ] Usar o centro de `01` como `(0; 0)` e o centro de `60` como `(9; 5)`.
-- [ ] Converter coordenadas lógicas em pixels usando as distâncias reais entre
+- [x] Usar o centro de `01` como `(0; 0)` e o centro de `60` como `(9; 5)`.
+- [x] Converter coordenadas lógicas em pixels usando as distâncias reais entre
   os centros das células.
-- [ ] Animar os resultados individualmente em intervalos de 0,5 segundo,
+- [x] Animar os resultados individualmente em intervalos de 0,5 segundo,
   limpando as marcas antes de desenhar o próximo.
 - [x] Plotar todos os resultados como pequenos círculos, inicialmente com cerca
   de 3 mm de diâmetro, dentro do retângulo correspondente a cada número.
@@ -64,11 +65,11 @@ aprovação e priorização antes da implementação.
 - [x] Implementar no frontend a marcação das seis dezenas e da média espacial.
 - [x] Implementar controles de resultado anterior, seguinte e seleção direta.
 - [x] Implementar os modos visuais voo dos pássaros e mancha acumulada.
-- [ ] Implementar na API a leitura do Excel, os cálculos e o armazenamento.
-- [ ] Integrar a interface HTML/JavaScript à API Python.
-- [ ] Exibir filtros, resultados e mensagens de validação.
+- [x] Implementar na API a leitura do Excel, os cálculos e o armazenamento.
+- [x] Integrar a interface HTML/JavaScript à API Python.
+- [x] Exibir filtros, resultados e mensagens de validação.
 - [ ] Funcionar com PostgreSQL local e no PythonAnywhere.
-- [ ] Executar somente migrações pendentes, preservando os dados existentes.
+- [x] Executar somente migrações pendentes, preservando os dados existentes.
 - [ ] Permitir diagnóstico da versão do aplicativo e do esquema do banco.
 
 ## Organização de padrões concluída
@@ -105,10 +106,37 @@ aprovação e priorização antes da implementação.
 
 ## Auditoria do screener e dos backtests
 
-- [ ] Selecionar um sorteio histórico ou uma combinação experimental para
-  auditoria.
-- [ ] Mostrar as seis dezenas, origem, intervalo histórico, configuração e
-  versões das funções usadas.
+- [x] Mostrar somente os estados globais `Algoritmo de seleção de combinações
+  atualizado` e `Algoritmo de seleção de combinações desatualizado`.
+- [x] Após cada importação, atualizar os perfis atuais com todos os resultados
+  sem repetir as 200 avaliações das funções cujas assinaturas não mudaram.
+- [x] Bloquear o Screener quando o perfil tiver sido calculado para uma
+  quantidade anterior de resultados.
+- [x] Verificar que o Screener carregou todos os filtros estatísticos e
+  geométricos aprovados e somente os padrões aprovados eleitos pela incidência.
+- [x] Relacionar por FK os primeiros 200 registros de `resultados` às amostras
+  de validação, sem copiar as seis dezenas, e permitir novas amostras.
+- [x] Relacionar cada amostra a cada função estatística, geométrica ou
+  classificadora, com esperado, calculado e aprovação `S/N`. A categoria
+  estatística está concluída com 800 de 800 aprovações e a geométrica com 1.200
+  de 1.200; os padrões também estão concluídos com 1.800 de 1.800.
+- [x] Manter referências independentes protegidas e comparar com valores
+  produzidos pelas funções reais do sistema. A proteção e as 3.800 referências
+  iniciais estão concluídas e foram comparadas com as funções reais.
+- [x] Sincronizar critérios novos ou alterados e remover critérios excluídos com
+  seus dados associados.
+- [x] Preservar esperados quando somente a implementação mudar e invalidá-los
+  quando mudar a regra matemática do critério.
+- [x] Bloquear no Screener toda função nova, alterada, pendente ou com qualquer
+  divergência; liberar somente a assinatura aprovada em todas as amostras.
+- [x] Mostrar nomes legíveis de função, grupo e subgrupos esperado/calculado.
+- [x] Recalcular valores obtidos sem sobrescrever os resultados esperados.
+- [x] Mostrar modal com operação, etapa, progresso real, duração e erro durante
+  ações demoradas. Implementado primeiro na Validação e auditoria; reutilização
+  no Screener permanece para etapa posterior.
+- [ ] Selecionar uma das amostras relacionadas ou acrescentar uma nova
+  combinação de teste.
+- [ ] Mostrar as seis dezenas, função, assinatura executada e precisão usada.
 - [ ] Detalhar fórmulas, valores substituídos e resultados intermediários de
   cada critério estatístico.
 - [ ] Permitir confirmar manualmente operações como a soma das seis dezenas.
@@ -118,14 +146,32 @@ aprovação e priorização antes da implementação.
   grupo de padrões.
 - [ ] Exibir a ordem percorrida no funil e marcar os estágios posteriores como
   não avaliados quando houver exclusão anterior.
-- [ ] Registrar resultado esperado, resultado obtido, conformidade, observação
+- [x] Registrar resultado esperado, resultado obtido, conformidade, observação
   e revisor humano, IA ou teste automatizado.
-- [ ] Disponibilizar visão resumida e abertura dos detalhes dos três níveis.
-- [ ] Exportar futuramente a auditoria em JSON, CSV ou planilha.
-- [ ] Garantir que o relatório seja reproduzível com os mesmos dados,
-  configurações, versões e intervalo histórico.
+- [x] Disponibilizar visão resumida e abertura dos detalhes da validação.
+- [x] Relatar por função os totais aprovados, divergentes e pendentes e listar
+  combinação, função/filtro, esperado e calculado para cada `N`.
+- [x] Permitir análise diagnóstica da divergência pela IA sem alteração
+  automática do gabarito, da função ou da aprovação.
+- [x] Exportar a auditoria em JSON técnico e CSV seguro para planilha.
+- [x] Garantir que o relatório seja reproduzível com as mesmas amostras,
+  referências, assinaturas das funções e precisões.
 - [ ] Mostrar no cadastro de grupos se existe função Python classificadora,
   sua versão e se os testes de integração foram aprovados.
+
+## Frequência das dezenas em construção
+
+- [x] Criar estrutura, configuração, motor acumulado, carga incremental e API.
+- [x] Criar item de menu e página própria com estado da base, configuração
+  gravada, configuração a calcular, prévia, simulação, gravação e cancelamento.
+- [x] Manter `Salvar dados` marcado inicialmente e exigir confirmação explícita
+  antes de persistir.
+- [x] Criar gráficos de colunas da fotografia atual das 60 dezenas, selecionando
+  ocorrência simples, 2VS ou 3VS e preservando unidades e valores nulos.
+- [x] Criar gráfico histórico por dezena, tipo de evento e período, separando
+  evolução dos intervalos da faixa prevista e sobrepondo ocorrências reais.
+- [x] Avaliar a assertividade das faixas contra ocorrências futuras, com acertos,
+  erros, censura, erro absoluto e erro percentual pelo intervalo real.
 
 ## Fora do escopo inicial
 

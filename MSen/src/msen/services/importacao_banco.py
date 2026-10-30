@@ -15,8 +15,10 @@ from msen.database import RepositorioFrequencias, RepositorioResultados
 from msen.importacao import StatusImportacao, comparar_importacao_excel
 from msen.modelos import ResultadoEntrada
 
-from .padroes import recalcular_padroes_iniciais
-from .analise_geometrica import recalcular_analises_geometricas
+from .perfis_operacionais import (
+    atualizar_perfis_operacionais_atuais,
+    marcar_perfis_operacionais_desatualizados,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,6 +68,9 @@ def importar_planilha_no_banco(
     alteradas = comparacao.com_status(StatusImportacao.ALTERADA)
     invalidas = comparacao.com_status(StatusImportacao.INVALIDA)
 
+    if novas:
+        marcar_perfis_operacionais_desatualizados(conexao)
+
     with conexao.transaction():
         for linha in novas:
             assert linha.importado is not None
@@ -74,8 +79,8 @@ def importar_planilha_no_banco(
         todos = repositorio.listar(limite=10_000)
         frequencias = calcular_frequencias(_como_entrada(item.resultado) for item in todos)
         RepositorioFrequencias(conexao).atualizar_todas(frequencias)
-        recalcular_padroes_iniciais(conexao)
-        recalcular_analises_geometricas(conexao)
+        if novas:
+            atualizar_perfis_operacionais_atuais(conexao)
 
     depois = repositorio.contar()
     fim = datetime.now(timezone.utc)

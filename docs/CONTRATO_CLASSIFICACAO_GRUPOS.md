@@ -3,8 +3,10 @@
 > Correção vigente desde 29/10/2026: as propostas históricas abaixo que tratam
 > a diferença até 100% como uma classe estão revogadas. Somente ocorrências de
 > padrões reais são persistidas. Um resultado que não atenda aos padrões
-> estudados não gera linha nem percentual próprio. Cada percentual usa como
-> denominador todos os sorteios da amostra.
+> estudados não gera linha nem percentual próprio. O estado homônimo usado em
+> `avaliacoes_validacao` é outro contexto: resultado válido de um classificador
+> sem subgrupo identificado.
+> Cada percentual usa como denominador todos os sorteios da amostra.
 
 Data: 28/10/2026
 Subetapa: 16.1

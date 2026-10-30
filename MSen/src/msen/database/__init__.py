@@ -30,6 +30,16 @@ from .analise_geometrica_repository import (
     RepositorioAnaliseGeometrica,
 )
 from .classificacoes_padrao_repository import RepositorioClassificacoesPadrao
+from .validacao_repository import (
+    AmostraValidacao,
+    AvaliacaoValidacaoDetalhada,
+    RepositorioValidacao,
+)
+from .configuracao_frequencia_repository import (
+    ConfiguracaoFrequenciaPersistida,
+    ErroRepositorioConfiguracaoFrequencia,
+    RepositorioConfiguracaoFrequencia,
+)
 
 __all__ = [
     "ErroConexaoBanco", "InformacaoConexao", "abrir_conexao", "verificar_conexao",
@@ -42,4 +52,7 @@ __all__ = [
     "ErroRepositorioPadrao", "PadraoPersistido", "RepositorioPadroes",
     "AnaliseGeometricaPersistida", "RepositorioAnaliseGeometrica",
     "RepositorioClassificacoesPadrao",
+    "AmostraValidacao", "AvaliacaoValidacaoDetalhada", "RepositorioValidacao",
+    "ConfiguracaoFrequenciaPersistida", "ErroRepositorioConfiguracaoFrequencia",
+    "RepositorioConfiguracaoFrequencia",
 ]

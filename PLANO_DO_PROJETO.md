@@ -1,146 +1,65 @@
-# Plano do projeto Game / MSen
+# Projeto Game / MSen — visão vigente
 
-> A execução detalhada, com autorização item a item e testes obrigatórios, está
-> em `PLANO_ETAPAS_E_TESTES.md`. Esse documento é o roteiro operacional vigente.
+Atualizado em 2026-10-30.
+
+O roteiro operacional, com autorização por subetapa, está em
+`PLANO_ETAPAS_E_TESTES.md`. O funcionamento implementado está em
+`docs/funcionamento.md` e o mapa documental em `docs/INDICE_DOCUMENTACAO.md`.
 
 ## Finalidade
 
-O MSen será uma aplicação para importar, armazenar, consultar e analisar o
-histórico de concursos da Mega-Sena. O sistema deverá funcionar no ambiente
-local e, posteriormente, no PythonAnywhere usando PostgreSQL.
+Importar, armazenar e analisar resultados da Mega-Sena; construir perfis
+estatísticos, geométricos e de padrões; homologar independentemente todas as
+funções usadas; e selecionar combinações somente quando o conjunto estiver
+integralmente aprovado e reconciliado.
 
-Este documento é o roteiro principal do projeto. Detalhes estáveis ficam em
-`docs`, ideias ainda não aprovadas ficam em `notas/ideias.md` e o ponto de
-continuidade entre sessões fica em `CONTINUIDADE_IA.md`.
+## Arquitetura atual
 
-## Regras de trabalho
+- frontend HTML/CSS/JavaScript em `frontend/`;
+- API Flask e regras Python em `MSen/src/msen/`;
+- PostgreSQL versionado por `database/schema_postgresql.sql` e migrações;
+- configuração por variáveis de ambiente, sem credenciais no repositório;
+- testes Python, Node, Chromium e PostgreSQL temporário.
 
-1. O FinCtl é somente uma referência externa. Nenhum arquivo, dado, histórico
-   Git ou credencial dele deve ser incorporado ao Game.
-2. Nenhuma senha deve ser gravada no repositório. A configuração deve vir de
-   variáveis de ambiente.
-3. O arquivo original de resultados é uma entrada e não deve ser alterado.
-4. Alterações no banco devem ser versionadas por migrações SQL.
-5. Cada etapa só será considerada concluída depois de testes e registro em
-   `CONTINUIDADE_IA.md`.
-6. Ideias não aprovadas não são requisitos e não devem ser implementadas
-   automaticamente.
+## Capacidades concluídas
 
-## Arquitetura planejada
+- importação incremental de `.xlsx`, inclusão, edição e consulta;
+- cálculos estatísticos por resultado e análise geométrica;
+- painel gráfico, voo, mancha e configuração visual;
+- CRUD de grupos e padrões;
+- classificação e incidência histórica de nove padrões em três grupos;
+- perfis estatísticos e geométricos atuais;
+- Screener oficial em três famílias com amostra protegida de 5.000;
+- Validação e auditoria com 200 amostras e 19 critérios;
+- referências independentes, comparação `S/N`, relatório e exportação;
+- trava do Screener por homologação, perfis, assinaturas e cobertura.
+- módulo de frequência das dezenas com histórico concurso a concurso, eventos
+  simples/2VS/3VS, gráficos, simulação e avaliação de assertividade.
 
-```text
-Interface HTML/JavaScript
-          |
-          v
-API Python
-          |
-          +-- serviços e regras de negócio
-          +-- importação e validação da planilha
-          +-- consultas e análises
-          |
-          v
-PostgreSQL (banco games)
-```
+## Estado operacional
 
-O pacote Python continuará em `MSen/src/msen`. A interface fica separada em
-`frontend`, com CSS em `frontend/css` e JavaScript em `frontend/js`. Ela não
-acessará o banco diretamente: toda leitura ou gravação passará pela API e pelas
-regras Python.
+No banco local `games`, existem 3.069 resultados, 19 critérios, 3.800
+avaliações aprovadas e dez perfis atuais. O estado global continua bloqueado
+por `HOMOLOGACAO_CONCLUIDA_AGUARDANDO_COBERTURA`; o Screener real deve recusar a
+execução enquanto o flag não for liberado por procedimento controlado.
 
-## Etapas
+## Limites e próximos ciclos
 
-### Etapa 1 — Documentação e decisões
+- processamento integral de 50.063.860 combinações permanece bloqueado;
+- o backtest geral do Screener ainda será construído; o estudo de frequência já
+  preserva cortes sem informação futura e avalia retornos posteriores;
+- publicação no PythonAnywhere continua adiada;
+- modal de andamento no Screener é etapa posterior;
+- commit e push somente mediante autorização específica.
 
-- [x] Definir a finalidade inicial do produto.
-- [x] Criar o plano geral, o catálogo de funcionalidades, o arquivo de ideias e
-  o documento de continuidade.
-- [ ] Confirmar com o usuário o primeiro conjunto de funcionalidades.
-- [ ] Registrar decisões pendentes em `notas/decisoes.md`.
+## Regras permanentes
 
-### Etapa 2 — Banco de dados PostgreSQL
-
-- [x] Aprovar o modelo inicial da tabela `resultados` descrito em
-  `docs/banco-de-dados.md`.
-- [x] Criar a pasta `database` e o DDL inicial.
-- [ ] Criar tabela de controle de migrações.
-- [x] Criar as restrições e o índice inicialmente aprovados.
-- [ ] Preparar configuração por variáveis de ambiente.
-- [ ] Testar criação em um banco local vazio.
-- [ ] Testar uma segunda execução sem perda ou duplicação de dados.
-- [ ] Documentar a preparação do banco no PythonAnywhere.
-
-### Etapa 3 — Código Python de infraestrutura
-
-- [ ] Adicionar o driver PostgreSQL às dependências.
-- [ ] Criar módulo de configuração e conexão.
-- [ ] Criar executor de migrações pendentes.
-- [ ] Criar repositórios de persistência sem SQL espalhado pela interface.
-- [ ] Criar tratamento de transações, rollback e erros.
-- [ ] Criar testes unitários e de integração.
-
-### Etapa 4 — Importação dos resultados
-
-- [ ] Ler a planilha sem modificá-la.
-- [ ] Localizar e validar o cabeçalho real.
-- [ ] Converter número do concurso, data e seis dezenas.
-- [ ] Recusar concursos inválidos e dezenas repetidas ou fora de 1 a 60.
-- [ ] Importar de forma idempotente, sem duplicar concursos existentes.
-- [ ] Gerar relatório com registros importados, ignorados e rejeitados.
-
-### Etapa 5 — Consultas e análises
-
-- [ ] Consultar um concurso pelo número.
-- [ ] Consultar concursos por período.
-- [ ] Calcular frequência histórica das dezenas.
-- [ ] Calcular intervalos, intervalo médio e desvio-padrão dos intervalos para
-  cada número de 01 a 60.
-- [ ] Calcular médias móveis quando solicitadas.
-- [ ] Comparar combinações informadas com resultados anteriores.
-- [ ] Definir consultas ou views adicionais somente conforme necessidade real.
-
-### Etapa 6 — API e interface
-
-- [ ] Escolher e registrar o framework web Python.
-- [ ] Definir contratos de entrada e saída da API.
-- [ ] Integrar os arquivos HTML, CSS e JavaScript existentes.
-- [ ] Plotar um resultado e sua média na grade de 01 a 60.
-- [ ] Plotar o histórico como manchas formadas por pequenos círculos.
-- [ ] Exibir erros de validação de maneira clara.
-- [ ] Testar os principais fluxos da interface até o PostgreSQL.
-
-### Etapa 7 — PythonAnywhere
-
-- [ ] Criar ou identificar o banco PostgreSQL `games` no serviço.
-- [ ] Configurar variáveis de ambiente no WSGI sem expor segredos.
-- [ ] Aplicar as migrações antes de liberar a nova versão.
-- [ ] Não executar todo o DDL destrutivamente a cada carregamento do WSGI.
-- [ ] Fazer validação pós-migração e teste funcional.
-- [ ] Definir backup e procedimento de reversão.
-
-## Critérios de conclusão
-
-Uma funcionalidade estará pronta quando tiver comportamento definido,
-implementação, teste correspondente, documentação atualizada e nenhuma
-credencial ou dado temporário incluído no Git.
-
-## Próximo ciclo aprovado para planejamento
-
-O desenvolvimento seguinte será dividido em seis etapas funcionais:
-
-1. classificar cada resultado real por grupo e subgrupo de padrões;
-2. construir perfis estatísticos e geométricos por intervalo histórico;
-3. adaptar o screener para os três níveis e seus subtotais — concluído;
-4. executar backtests sem utilizar informações futuras;
-5. produzir relatórios auditáveis de entradas, cálculos e decisões;
-6. medir capacidade antes de qualquer liberação das 50.063.860 combinações.
-
-O Screener definitivo de três níveis substituiu os protótipos e está disponível
-em uma única página. A auditoria ainda será desenvolvida na página já reservada
-para ela. O backtest foi adiado até
-que as demais partes do sistema estejam operacionais. A auditoria manual poderá
-ser desenvolvida antes dele e guardar revisões parciais para continuação em
-outra sessão.
-
-O detalhamento operacional está nas Etapas 16 a 21 de
-`PLANO_ETAPAS_E_TESTES.md`. Cada subetapa exige autorização separada e teste
-antes do avanço. A publicação no PythonAnywhere continua adiada.
+1. O arquivo de entrada não é alterado.
+2. O frontend nunca acessa diretamente o banco.
+3. Campos derivados são calculados pelo Python de produção.
+4. Toda alteração de banco recebe migração nova.
+5. Função nova ou alterada não entra no Screener sem 200 aprovações.
+6. Perfis correntes usam todos os resultados; corte temporal pertence ao
+   backtest.
+7. Nenhuma credencial, backup ou dado temporário deve entrar no Git.
+8. Cada subetapa exige autorização, teste, evidência e continuidade.

@@ -232,3 +232,354 @@
 - O cálculo do primeiro funil permanece apenas como referência interna da
   comparação `anterior x atual`; não possui tela nem API própria.
 - A página `/auditoria.html` permanece vazia e reservada à Etapa 20.
+
+## 2026-10-29 — Homologação das funções e comunicação de operações demoradas
+
+- `amostras_validacao` relacionará por FK os primeiros 200 registros de
+  `resultados`, ordenados por `numero_ap`, sem repetir as seis dezenas.
+- `id_resultado` será PK/FK e usará `ON DELETE CASCADE`; as amostras são uma base
+  de teste, não um arquivo histórico independente.
+- O catálogo de critérios crescerá por sincronização com o registro das funções
+  Python realmente executáveis; cadastro textual sem função não será incluído.
+- Cada avaliação relacionará amostra e função, com esperado independente,
+  calculado pela função real e aprovação `S/N`.
+- Critérios de padrões relacionarão grupo e subgrupos esperado/calculado; a tela
+  mostrará códigos e nomes legíveis por `JOIN`.
+- O recálculo nunca sobrescreverá o esperado. Mudança apenas da implementação
+  preserva esperados; mudança da regra matemática exige novas referências.
+- Critérios excluídos serão removidos com suas avaliações por cascata.
+- Critério ou padrão novo/alterado exige função Python e testes locais no VS
+  Code antes de ser reconhecido pelo botão de sincronização e recálculo.
+- A assinatura da implementação será automática. Função nova, alterada,
+  pendente ou com qualquer `N` ficará bloqueada no Screener; somente a função
+  que acertar todas as amostras ativas poderá ser utilizada.
+- O relatório resumirá a homologação por função e detalhará cada divergência; a
+  IA poderá propor diagnóstico sem corrigir ou aprovar automaticamente.
+- A publicação na nuvem ocorrerá somente depois da validação local.
+- A Validação e auditoria será a primeira área a usar modal com progresso real.
+- O mesmo conceito será levado ao Screener em etapa posterior e separadamente
+  autorizada.
+
+## 2026-10-29 — Documentação canônica e reconciliação por etapa
+
+- `docs/funcionamento.md` será a descrição funcional vigente de ponta a ponta.
+- `docs/INDICE_DOCUMENTACAO.md` indicará onde localizar plano, decisões,
+  funcionamento, continuidade, banco, contratos e evidências.
+- Cada subetapa continuará registrando plano, teste e continuidade.
+- Toda etapa funcional terminará com revisão integral do funcionamento e dos
+  documentos de banco/API afetados; na Etapa 20 isso será a subetapa 20.17.
+- Documento antigo divergente deverá ser atualizado ou identificado como
+  histórico; não poderá continuar parecendo uma regra vigente.
+
+## 2026-10-29 — Homologação estável e perfis operacionais atuais
+
+- As 200 avaliações serão refeitas quando mudar implementação, fórmula,
+  precisão ou significado da função, conforme a natureza da alteração.
+- A importação de resultados não invalida uma função inalterada. Ela recalcula
+  grandezas, classificações, incidências e perfis estatísticos e geométricos
+  atuais usando todos os resultados válidos disponíveis.
+- Perfis operacionais anteriores não serão preservados como versões. O backtest
+  reconstruirá os valores aplicáveis ao corte por concurso ou data.
+- O usuário verá somente `Algoritmo de seleção de combinações atualizado` ou
+  `Algoritmo de seleção de combinações desatualizado`. Perfil incompleto,
+  quantidade divergente ou validação pendente bloqueará o Screener.
+- O Screener carregará todos os filtros estatísticos e geométricos aprovados e
+  somente os padrões aprovados selecionados pela incidência inferior ao limite.
+  Diferença entre filtros esperados e carregados bloqueará a API.
+
+## 2026-10-30 — Oráculo geométrico independente da subetapa 20.7
+
+- Shapely 2.2.0/GEOS será dependência somente de desenvolvimento/teste.
+- As 1.200 referências geométricas iniciais foram produzidas sem importar ou
+  chamar as funções geométricas de produção.
+- O Shapely não será usado pelo Screener; as funções reais continuarão sendo o
+  objeto da aferição contra as referências protegidas.
+
+## 2026-10-30 — Execução estatística da subetapa 20.8
+
+- A execução recusa catálogo divergente, assinatura desatualizada ou referência
+  pendente antes de gravar resultados.
+- O cálculo pode atualizar somente os campos calculados e de comparação; os
+  campos do esperado permanecem protegidos e tiveram seu hash conferido.
+- Um critério recebe `APROVADO` somente com `S` em todas as amostras ativas.
+- A aprovação de uma categoria não libera o algoritmo geral enquanto houver
+  outra categoria pendente.
+
+## 2026-10-30 — Precisão da homologação geométrica na subetapa 20.9
+
+- A decisão `S/N` de critérios decimais respeitará `precisao_decimal` cadastrada
+  e usará `ROUND_HALF_UP` em esperado e calculado.
+- O arredondamento será aplicado somente para comparação; o valor bruto da
+  função real permanecerá armazenado para auditoria.
+- Diferenças além da precisão declarada não reprovam uma função; diferenças que
+  atinjam a precisão declarada continuam produzindo `N`.
+
+## 2026-10-30 — Execução dos padrões na subetapa 20.10
+
+- Cada critério de padrão continuará ligado ao grupo e ao subgrupo `PD_xxx`
+  correspondente; retorno verdadeiro grava esse `id_padrao` e retorno falso
+  grava ausência de correspondência.
+- Estado e identificador calculados devem coincidir com a referência para gerar
+  `S`; nomes legíveis serão obtidos por `JOIN` com grupo e subgrupo.
+- A aprovação dos 19 critérios não libera isoladamente o algoritmo geral; a
+  reconciliação completa continuará pertencendo às subetapas seguintes.
+
+## 2026-10-30 — Motor integrado da subetapa 20.11
+
+- Sincronização, criação de pares faltantes, três famílias de execução e
+  consolidação formarão uma única transação lógica.
+- Uma função com qualquer referência pendente ficará inteiramente `PENDENTE`,
+  sem impedir o recálculo de outras funções completas.
+- Uma única divergência marca a função `REPROVADO`; aprovação exige `S` em todas
+  as amostras ativas.
+- Homologação completa grava
+  `HOMOLOGACAO_CONCLUIDA_AGUARDANDO_COBERTURA`, não `atualizado = TRUE`.
+
+## 2026-10-30 — Andamento assíncrono da subetapa 20.12
+
+- A execução de validação terá identificador e estado consultável por API; o
+  percentual será derivado de etapas reais, nunca de animação temporal.
+- Somente uma execução poderá ficar ativa; nova tentativa receberá conflito.
+- O modal reutilizável não poderá fechar durante a tarefa e exibirá eventual
+  erro terminal. Cancelamento só será acrescentado quando houver interrupção
+  transacional segura.
+- O componente estreia na Validação e auditoria; sua adoção pelo Screener exige
+  autorização posterior.
+
+## 2026-10-30 — Página de Validação e auditoria da subetapa 20.13
+
+- A grade será paginada no servidor e limitada a 100 linhas por consulta.
+- Dezenas, grupos e subgrupos continuarão obtidos por `JOIN`; a interface não
+  criará cópia desses dados.
+- Os filtros oficiais serão categoria, função, grupo, subgrupo e situação.
+- O botão de atualização aparecerá quando o estado global estiver desatualizado
+  e reutilizará o motor e o modal já aprovados.
+
+## 2026-10-30 — Relatório de divergências da subetapa 20.14
+
+- O fechamento será calculado diretamente das avaliações ativas e deverá
+  satisfazer `exigidas = aprovadas + divergentes + pendentes`.
+- Inclusões, exclusões e mudanças detectadas pertencem ao resultado da última
+  atualização; o estado persistente por função continua vindo do catálogo.
+- A hipótese diagnóstica da IA é texto explicativo determinístico e não tem
+  permissão para alterar esperado, calculado, implementação ou aprovação.
+
+## 2026-10-30 — Exportação reproduzível da subetapa 20.15
+
+- O identificador do conjunto é o SHA-256 do JSON canônico dos registros e não
+  inclui o horário da exportação.
+- O JSON é o formato técnico reabrível e verificável; o CSV é uma projeção
+  tabular para conferência humana e repete o identificador em cada linha.
+- Toda célula CSV com prefixo interpretável como fórmula será precedida por
+  apóstrofo. A importação do JSON nunca executará conteúdo armazenado.
+
+## 2026-10-30 — Trava operacional do Screener da subetapa 20.16
+
+- Estado global desatualizado bloqueia antes da construção dos adaptadores;
+  aprovação das 200 amostras, isoladamente, não libera o Screener.
+- O catálogo ativo deve coincidir com o registro Python de produção, inclusive
+  assinaturas de função e regra.
+- Todos os filtros estatísticos e geométricos devem estar cobertos; para padrões,
+  a cobertura executável contém exatamente os selecionados pelo limite vigente.
+- Perfis operacionais devem conter os dez códigos esperados e a mesma quantidade
+  de resultados do estado global e da tabela `resultados`.
+- A regressão não alteraá artificialmente o flag do banco `games` para obter
+  sucesso; enquanto faltar confirmação de cobertura, a recusa é obrigatória.
+
+## 2026-10-30 — Fechamento documental da Etapa 20
+
+- `docs/funcionamento.md` é a narrativa funcional canônica; planos antigos
+  preservados como histórico não definem o comportamento atual.
+- `SEM_CORRESPONDENCIA` continua removido da classificação histórica, mas é um
+  estado válido e distinto nas avaliações de classificadores da validação.
+- O estado real bloqueado do Screener deve constar da documentação; 3.800
+  aprovações não autorizam forçar o flag global.
+- Commit e push permanecem operações separadas e exigem autorização explícita.
+
+## 2026-10-30 — Contrato matemático da frequência das dezenas
+
+- Cada fotografia usa somente concursos até seu próprio corte, sem consultar o
+  futuro.
+- Ocorrência simples é representada pelo concurso em que a dezena apareceu.
+- Um evento 2VS termina no segundo concurso consecutivo e um evento 3VS termina
+  no terceiro.
+- As sequências usam janelas consecutivas sobrepostas: três concursos seguidos
+  produzem dois eventos 2VS e um 3VS; quatro produzem três 2VS e dois 3VS.
+- Intervalos são diferenças entre concursos de conclusão do mesmo tipo de
+  evento; tipos diferentes nunca são misturados.
+- Média, mediana e desvio populacional são calculados sobre os intervalos e
+  permanecem na unidade concurso.
+- Sem intervalo, as estatísticas são `NULL`; com um único intervalo, o desvio é
+  zero.
+- A faixa inicial é a última conclusão mais a média, com mais ou menos um
+  desvio-padrão. Limites inteiros são inclusivos e arredondados para fora.
+- Percentuais continuam fora desta etapa e serão estudados em Distribuições.
+- O contrato completo está em `docs/CONTRATO_FREQUENCIA_DEZENAS.md`.
+
+## 2026-10-30 — Configuração reproduzível da frequência das dezenas
+
+- A configuração gravada é uma linha ativa única, comparada com a configuração
+  calculada antes de qualquer substituição futura.
+- A configuração inicial usa concurso 1, tamanho 500, início fixo e final
+  expansivo.
+- `TODOS` representa o cálculo conjunto de ocorrências simples, 2VS e 3VS;
+  também são aceitos os três tipos individualmente para experiências futuras.
+- Método, parâmetro, unidade e arredondamento são campos distintos e explícitos.
+- O parâmetro inicial é `1.000000` na unidade
+  `MULTIPLICADOR_DESVIO_PADRAO`; percentual permanece recusado até o estudo em
+  Distribuições.
+- A assinatura é o SHA-256 do JSON canônico de todos os campos funcionais. A
+  comparação também lista campo e valores divergentes para interpretação do
+  usuário.
+
+## 2026-10-30 — Estrutura histórica da frequência das dezenas
+
+- Fotografias pertencem a uma geração; uma geração provisória pode ser
+  construída sem retirar a anterior antes da conclusão.
+- Apenas uma geração pode estar ativa.
+- Cada geração preserva assinatura e JSON canônico da configuração.
+- A chave funcional da fotografia é geração, concurso, dezena e tipo de evento.
+- Limites decimais exatos e concursos inteiros operacionais são distintos.
+- A tabela não repete as seis dezenas de `resultados` e não possui FK que apague
+  apenas um corte quando um resultado antigo mudar; a reconstrução integral
+  pertence às etapas posteriores.
+- `ON DELETE CASCADE` existe somente da geração para suas fotografias.
+
+## 2026-10-30 — Motor acumulado da frequência das dezenas
+
+- O motor recebe concursos estritamente consecutivos; lacuna ou retrocesso
+  interrompem o cálculo para não produzir uma série falsa.
+- Cada concurso é incorporado antes de sua fotografia ser emitida.
+- 2VS começa no segundo concurso seguido e 3VS no terceiro; sequências maiores
+  continuam gerando janelas sobrepostas.
+- O estado incremental mantém somente dados conhecidos até o corte atual.
+- Média e desvio são calculados com precisão interna elevada; o armazenamento
+  recebe seis casas decimais com `ROUND_HALF_UP`.
+- O multiplicador do desvio é adimensional. Nenhum valor de desvio em concursos
+  é reinterpretado como percentual.
+- Carga integral e processamento parcelado devem produzir fotografias idênticas.
+
+## 2026-10-30 — Carga e atualização do histórico de frequência
+
+- Cada geração guarda assinatura e quantidade dos resultados que a originaram.
+- A atualização compara a assinatura do prefixo já processado; concursos novos
+  não invalidam esse prefixo.
+- No acréscimo incremental, os concursos antigos apenas recompõem o estado do
+  motor em memória; somente os novos cortes são calculados para saída e gravados.
+- Mudança antiga, lacuna, origem encurtada ou incompatibilidade impedem
+  acréscimo silencioso e exigem reconstrução.
+- A geração provisória e todas as suas linhas pertencem à mesma transação. A
+  geração antiga só é retirada no instante da troca bem-sucedida.
+- Depois da troca, somente a geração detalhada nova é mantida.
+- O benchmark inicial com 3.069 resultados produziu 462.600 linhas em cerca de
+  150 segundos e ocupou aproximadamente 122 MiB; otimizações serão avaliadas a
+  partir dessa referência, sem alterar previamente a regra matemática.
+
+## 2026-10-30 — Confirmação e simulação da frequência das dezenas
+
+- `Salvar dados` inicia marcado em cada abertura, sem ser memorizado
+  silenciosamente.
+- A gravação depende de confirmação tanto na interface quanto no serviço do
+  servidor; uma requisição sem confirmação é recusada.
+- A simulação executa o mesmo motor, mas não cria geração, não substitui
+  configuração e não insere fotografias.
+- A prévia lista concursos novos na atualização incremental e campos com valores
+  gravado/calculado quando a configuração divergir.
+- Cancelamento ocorre somente entre unidades seguras de trabalho. Como toda a
+  gravação pertence a uma transação, linhas parciais são revertidas.
+- Somente uma operação de frequência pode executar por vez.
+
+## 2026-10-30 — API da frequência das dezenas
+
+- A fotografia atual sempre representa as 60 dezenas da geração ativa.
+- Cada consulta de série histórica aceita uma dezena, um tipo de evento e um
+  período máximo de 5.000 concursos; a API não envia séries alheias ao gráfico
+  solicitado nem repete as seis dezenas de `resultados`.
+- Valores decimais são enviados como texto para preservar a precisão do banco.
+- A configuração recebida deve conter exatamente todos os campos funcionais;
+  campos ausentes, extras ou valores fora do contrato são recusados.
+- Uma solicitação que grave dados é recusada antes de criar a tarefa se não
+  trouxer confirmação explícita.
+- A execução é assíncrona, tem progresso consultável e cancelamento
+  cooperativo; somente uma execução pode permanecer ativa.
+- Falha de conexão nas consultas síncronas é devolvida de forma controlada com
+  HTTP 503, em vez de uma página HTML interpretada incorretamente como JSON.
+
+## 2026-10-30 — Página da frequência das dezenas
+
+- `Frequência das dezenas` é um item próprio da navegação comum e abre
+  `/frequencias.html`.
+- A página separa visualmente a configuração gravada da configuração que será
+  usada no próximo cálculo; qualquer alteração invalida a prévia anterior.
+- `Salvar dados` inicia marcado em cada abertura. A execução calcula a prévia e
+  exige a confirmação aprovada antes de solicitar gravação ao servidor.
+- Com `Salvar dados` desmarcado, o mesmo fluxo executa simulação sem persistir.
+- Progresso, resultado, erro e cancelamento usam o modal compartilhado.
+- Os gráficos não foram antecipados: fotografia atual e histórico continuam
+  reservados às subetapas 22.9 e 22.10.
+- Em janelas de até 50 rem, a navegação comum passa a ter rolagem horizontal
+  própria, sem alargar o documento.
+
+## 2026-10-30 — Gráficos da fotografia atual das dezenas
+
+- A fotografia dos gráficos vem do último concurso da geração ativa, inclusive
+  para ocorrências simples; assim, todos os tipos usam o mesmo corte temporal.
+- A API devolve as 60 dezenas de um único tipo por chamada: `SIMPLES`, `2VS` ou
+  `3VS`. Não são feitas 60 consultas HTTP individuais.
+- São exibidos seis gráficos: ocorrências, intervalo mínimo, intervalo máximo,
+  média, mediana e desvio-padrão dos intervalos.
+- Número de ocorrências usa unidade `ocorrências`; todas as medidas de intervalo
+  usam `concursos`. Desvio-padrão não é apresentado como percentual.
+- Medidas sem intervalos suficientes continuam nulas e são identificadas como
+  ausência de amostra, sem conversão indevida para zero.
+- Cada barra identifica dezena, valor e quantidade de intervalos; o cabeçalho
+  informa corte, total de intervalos e atualização.
+
+## 2026-10-30 — Gráfico histórico por dezena
+
+- A série histórica aceita uma dezena, um tipo de evento e até 5.000 concursos
+  por consulta; não serão sobrepostas as 60 dezenas no mesmo gráfico.
+- O eixo horizontal é sempre `numero_do_concurso`.
+- Intervalos e números previstos de concursos possuem escalas diferentes e são
+  exibidos em dois gráficos sincronizados, sem mistura de unidades.
+- O primeiro gráfico apresenta intervalo mínimo, médio e máximo na unidade
+  concurso. O segundo apresenta faixa inferior, previsão central, faixa
+  superior e pontos de ocorrência real na escala dos números dos concursos.
+- Ocorrências reais vêm diretamente de `resultados`: presença no concurso para
+  `SIMPLES`, presença também no concurso imediatamente anterior para `2VS` e
+  presença nos dois concursos imediatamente anteriores para `3VS`.
+- Os pontos reais não são copiados para a tabela histórica nem usados para
+  refazer cálculos de cortes passados; servem somente como sobreposição visual.
+- Contagem formal de acertos, erros e percentuais continua pertencendo à 22.11.
+
+## 2026-10-30 — Avaliação da assertividade da frequência
+
+- Cada fotografia prevê o primeiro evento real estritamente posterior ao seu
+  corte. O evento no próprio corte é a última informação conhecida, não o
+  retorno futuro avaliado.
+- Acerto significa ocorrência real dentro dos limites inteiros inclusivos.
+  Falhas são separadas em abaixo e acima da faixa.
+- Erro absoluto é `abs(concurso_real - previsao_central)` em concursos.
+- Erro percentual é o erro absoluto dividido pelo intervalo real entre o último
+  evento conhecido e o próximo evento, multiplicado por 100. O número absoluto
+  do concurso não é usado como denominador.
+- Sem evento anterior, sem estatística completa ou sem próximo evento conhecido,
+  a previsão é censurada e fica fora dos totais de acertos e erros.
+- A página apresenta totais e médias e lista somente previsões avaliáveis que
+  ficaram fora da faixa; censurados permanecem contabilizados no resumo.
+- A avaliação é calculada sobre a série e os resultados existentes, sem gravar
+  resultado de avaliação nem modificar fotografias históricas.
+
+## 2026-10-30 — Fechamento e desempenho da frequência das dezenas
+
+- A referência local com 3.069 resultados gerou 2.570 cortes e 462.600 linhas.
+- A carga completa mediu 146,761 s e o acréscimo de um concurso, com 180 linhas,
+  mediu 0,189 s.
+- As três fotografias atuais mediram juntas 0,003 s. Uma série de 2.571 pontos,
+  incluindo assertividade, mediu 0,057 s.
+- Tabela e índices ocuparam 127.811.584 bytes; os índices responderam por
+  71.688.192 bytes.
+- As medições são referência do equipamento e banco locais, não compromisso de
+  desempenho em outro ambiente.
+- A Etapa 22 termina sem ativar o módulo como filtro do Screener e sem executar
+  commit ou push.

@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/navegacao.css">
     <link rel="stylesheet" href="css/auditoria.css">
+    <link rel="stylesheet" href="css/modal-andamento.css">
   </head>
   <body>
     <header class="barra-navegacao">
@@ -24,16 +25,50 @@
       <a class="navegacao-link" href="/distribuicoes.html">Distribuições</a>
       <a class="navegacao-link" href="/screener.html">Screener</a>
       <a class="navegacao-link" href="/auditoria.html" aria-current="page">Validação e auditoria</a>
+      <a class="navegacao-link" href="/frequencias.html">Frequência das dezenas</a>
       <strong class="navegacao-pagina">Validação e auditoria</strong>
     </header>
 
     <main class="pagina-conteudo auditoria-pagina">
-      <h1>Validação e auditoria</h1>
-      <section class="auditoria-aviso" aria-label="Estado da funcionalidade">
-        <strong>Funcionalidade em construção.</strong>
-        <p>Os métodos de validação e auditoria serão desenvolvidos posteriormente na Etapa 20.</p>
+      <section class="auditoria-cabecalho">
+        <div><h1>Validação e auditoria</h1><p id="estado-motivo">Consultando o estado atual…</p></div>
+        <div class="auditoria-estado-acoes">
+          <strong id="estado-algoritmo" class="auditoria-estado" aria-live="polite">Carregando…</strong>
+          <button id="botao-atualizar-validacao" type="button" hidden>Atualizar Validação e auditoria</button>
+        </div>
+      </section>
+      <section class="auditoria-resumo" aria-label="Resumo das avaliações">
+        <article><span>Total</span><strong id="resumo-total">—</strong></article>
+        <article class="resumo-aprovado"><span>Aprovadas</span><strong id="resumo-aprovadas">—</strong></article>
+        <article class="resumo-reprovado"><span>Reprovadas</span><strong id="resumo-reprovadas">—</strong></article>
+        <article class="resumo-pendente"><span>Pendentes</span><strong id="resumo-pendentes">—</strong></article>
+      </section>
+      <form id="filtros-auditoria" class="auditoria-filtros">
+        <label>Categoria<select id="filtro-categoria" name="categoria"><option value="">Todas</option><option value="ESTATISTICA">Estatística</option><option value="GEOMETRIA">Geometria</option><option value="PADRAO">Padrão</option></select></label>
+        <label>Função<select id="filtro-criterio" name="criterio"><option value="">Todas</option></select></label>
+        <label>Grupo<select id="filtro-grupo" name="grupo"><option value="">Todos</option></select></label>
+        <label>Subgrupo<select id="filtro-subgrupo" name="subgrupo"><option value="">Todos</option></select></label>
+        <label>Situação<select id="filtro-situacao" name="situacao"><option value="">Todas</option><option value="S">Aprovada (S)</option><option value="N">Reprovada (N)</option><option value="PENDENTE">Pendente</option></select></label>
+        <button type="submit">Aplicar</button><button id="botao-limpar-filtros" type="button">Limpar</button>
+      </form>
+      <details class="auditoria-relatorio">
+        <summary>Relatório por função <strong id="relatorio-fechamento">Carregando…</strong></summary>
+        <div class="auditoria-relatorio-conteudo">
+          <p id="relatorio-sincronizacao">Nenhuma sincronização executada nesta sessão.</p>
+          <nav class="auditoria-exportacoes" aria-label="Exportar auditoria"><a href="/api/validacao/exportacao?formato=json" download>Exportar JSON técnico</a><a href="/api/validacao/exportacao?formato=csv" download>Exportar tabela CSV segura</a></nav>
+          <div class="auditoria-relatorio-tabela"><table><thead><tr><th>Função</th><th>Estado</th><th>Exigidas</th><th>Executadas</th><th>S</th><th>N</th><th>Pendentes</th><th>Catálogo</th></tr></thead><tbody id="corpo-relatorio-criterios"></tbody></table></div>
+          <section aria-labelledby="titulo-divergencias"><h2 id="titulo-divergencias">Divergências</h2><p id="relatorio-sem-divergencias">Nenhuma divergência encontrada.</p><div id="lista-divergencias" class="auditoria-divergencias"></div></section>
+        </div>
+      </details>
+      <section class="auditoria-grade" aria-label="Avaliações de validação">
+        <div class="auditoria-tabela-rolagem">
+          <table><thead><tr><th>Concurso</th><th>Dezenas</th><th>Categoria</th><th>Função / filtro</th><th>Grupo</th><th>Esperado</th><th>Calculado</th><th>S/N</th></tr></thead><tbody id="corpo-avaliacoes"></tbody></table>
+          <p id="auditoria-vazia" hidden>Nenhuma avaliação corresponde aos filtros.</p>
+        </div>
+        <footer class="auditoria-paginacao"><span id="estado-consulta" role="status" aria-live="polite"></span><div><button id="pagina-anterior" type="button">← Anterior</button><strong id="pagina-atual">Página —</strong><button id="pagina-seguinte" type="button">Seguinte →</button></div></footer>
       </section>
     </main>
     <script type="module" src="js/navegacao.js"></script>
+    <script type="module" src="js/auditoria.js"></script>
   </body>
 </html>

@@ -30,6 +30,9 @@ from msen.screener.configuracao import (
 )
 from msen.padroes import criar_registro_detectores_aprovados
 from msen.services.selecao_padroes import SelecaoPadroesRaros
+from msen.services.homologacao_screener import (
+    consultar_homologacao_screener_no_banco, validar_homologacao_screener,
+)
 
 from .distribuicoes import calcular_distribuicoes_no_banco
 from .perfis_padroes import (
@@ -215,6 +218,19 @@ def gerar_quadro_screener_extensivel(
     selecao_padroes = selecionar_padroes_raros_no_banco(
         limite_efetivo,
         perfil_padroes.total_resultados,
+    )
+    codigos_padroes_selecionados = {
+        f"PAD_{item.padrao_cod}" for item in selecao_padroes.padroes
+    }
+    codigos_carregados = {
+        "EST_SOMA", "EST_MEDIA", "EST_MEDIANA", "EST_DESVIO_PADRAO",
+        "GEO_EXTENSAO", "GEO_PERIMETRO", "GEO_REGIOES", "GEO_AREA",
+        "GEO_CENTRO_X", "GEO_CENTRO_Y",
+        *codigos_padroes_selecionados,
+    }
+    validar_homologacao_screener(
+        consultar_homologacao_screener_no_banco(), codigos_carregados=codigos_carregados,
+        codigos_padroes_selecionados=codigos_padroes_selecionados,
     )
     grupos_padroes = _grupos_raros_fotografados(perfil_padroes, selecao_padroes)
 

@@ -16,10 +16,12 @@ class MigracaoRemoverSemCorrespondenciaDDLTestCase(unittest.TestCase):
         cls.sql = cls.caminho.read_text(encoding="utf-8")
         cls.esquema = ESQUEMA.read_text(encoding="utf-8")
 
-    def test_010_e_a_ultima_migracao(self):
+    def test_010_antecede_a_011(self):
         migracoes = descobrir_migracoes(MIGRACOES)
-        self.assertEqual("010", migracoes[-1].versao)
-        self.assertEqual(self.caminho, migracoes[-1].caminho)
+        migracao_010 = next(item for item in migracoes if item.versao == "010")
+        migracao_011 = next(item for item in migracoes if item.versao == "011")
+        self.assertEqual(self.caminho, migracao_010.caminho)
+        self.assertLess(migracoes.index(migracao_010), migracoes.index(migracao_011))
 
     def test_remove_linhas_e_contrato_antigo(self):
         self.assertIn("DELETE FROM resultado_classificacao_padrao", self.sql)

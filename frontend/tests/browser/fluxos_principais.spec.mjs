@@ -387,7 +387,8 @@ test("menu horizontal navega entre Painel e páginas de Cadastros", async ({ pag
   await page.locator('a[href="/auditoria.html"]').click();
   await expect(page).toHaveURL(/auditoria\.html$/);
   await expect(page.locator(".navegacao-pagina")).toHaveText("Validação e auditoria");
-  await expect(page.locator(".auditoria-aviso")).toContainText("Funcionalidade em construção");
+  await expect(page.getByRole("heading", { name: "Validação e auditoria" })).toBeVisible();
+  await expect(page.getByText("Relatório por função")).toBeVisible();
   await page.setViewportSize({ width: 700, height: 600 });
   const larguraAuditoria = await page.evaluate(() => ({
     documento: document.documentElement.scrollWidth,

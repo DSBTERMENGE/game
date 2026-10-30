@@ -2455,138 +2455,535 @@ antes da Etapa 19.
 
 ### Etapa 20 — relatório de auditoria detalhado
 
-Objetivo: permitir que o usuário e a IA confiram entradas, fórmulas, valores
-intermediários e decisões para um sorteio ou combinação.
+Objetivo: certificar que cada função estatística, geométrica ou classificadora
+de padrões devolve o valor correto para todas as amostras de validação antes de
+poder ser utilizada pelo Screener.
 
-Decisão de 28/10/2026: a primeira versão começará pela digitação intencional de
-uma combinação, por exemplo `02 04 06 08 10 12`. O sistema executará vários
-testes independentes e permitirá que a conferência seja salva aos poucos, de
-acordo com o tempo e o cansaço do usuário.
+Decisão inicial de 28/10/2026, posteriormente substituída: a primeira versão
+começaria pela digitação intencional de combinações. A decisão consolidada em
+29/10/2026 passou a usar como conjunto inicial os primeiros 200 registros de
+`resultados`, sem impedir a inclusão posterior de outras combinações de teste.
 
-Decisão obrigatória de 28/10/2026: os valores mostrados pela auditoria serão
-produzidos pelas mesmas funções de produção usadas pelo sistema e pelo screener.
-Não serão criadas fórmulas duplicadas no frontend nem funções paralelas somente
-para montar o relatório. A auditoria exibirá o resultado e as evidências
-estruturadas devolvidas pela execução real.
+Decisão obrigatória de 28/10/2026: os valores calculados mostrados pela auditoria
+serão produzidos pelas mesmas funções de produção usadas pelo sistema e pelo
+Screener. Não serão criadas fórmulas duplicadas no frontend nem funções paralelas
+para montar o relatório. Detalhes diagnósticos poderão ser exibidos quando forem
+úteis, mas não constituem colunas obrigatórias do gabarito.
 
-#### 20.0 — Protótipo visual da auditoria manual
+Decisão consolidada em 29/10/2026: a validação usará um gabarito permanente por
+amostra e critério. Cada valor esperado será calculado independentemente pela IA
+ou pelo usuário, conferido e protegido. As funções reais preencherão somente o
+valor calculado. A comparação produzirá aprovação `S` ou `N`.
 
-- Criar esboço com caixa para seis dezenas e botão `Calcular testes`.
-- Mostrar lista compacta de testes com nome, resultado, demonstração do cálculo,
-  estado da revisão e observação.
-- Usar exemplos simples de soma e média antes de integrar todos os testes.
-- Identificar os valores do protótipo como meramente ilustrativos; eles servem
-  somente para aprovar o leiaute e não contam como auditoria ou validação.
-- Apresentar no Chrome para aprovação sem banco e sem API definitiva.
+As amostras não repetirão as dezenas. Elas relacionarão `id_resultado` com a
+tabela `resultados`, cuja leitura fornecerá `res_01` a `res_06`. O conjunto
+inicial terá os primeiros 200 resultados em ordem de `numero_ap`. Não se trata
+de preservar história: são combinações escolhidas como base estável de teste e
+outras poderão ser acrescentadas. O número de verificações será `amostras x
+critérios` e crescerá sem exigir novas colunas.
 
-#### 20.1 — Contrato do relatório
+Os valores usados para selecionar combinações não serão fotografias permanentes
+dos 3.069 resultados iniciais. Após cada importação, as grandezas das novas
+linhas e os perfis atuais estatísticos, geométricos e de padrões serão
+recalculados sobre todos os resultados então existentes. A simples chegada de
+novos resultados não invalida as 200 provas matemáticas de uma função cuja
+implementação não mudou; ela exige apenas atualizar com sucesso os perfis atuais.
+Somente o futuro backtest reconstruirá perfis com corte por `numero_ap` ou data.
 
-- Definir identificação, origem, dezenas, intervalo, configuração e versões.
-- Definir estados: aprovado, excluído e não avaliado por exclusão anterior.
-- Separar a definição do teste, a execução para uma combinação e a revisão
-  humana do resultado.
-- Teste: documento JSON de exemplo aprovado pelo usuário.
+#### 20.0 — Contrato do gabarito e aprovação do modelo
 
-#### 20.1.1 — Modelo persistente dos testes e revisões
+- Fechar nomes, campos, estados, tipos de valor e regras de comparação.
+- Separar amostra, catálogo de critérios e avaliação por amostra/critério.
+- Relacionar cada critério à função Python e, quando for classificador, ao grupo
+  de padrões e aos subgrupos esperado e calculado.
+- Determinar que referência aprovada nunca será sobrescrita pelo recálculo.
+- Definir igualdade exata para inteiros, códigos e S/N e precisão explícita para
+  decimais.
+- Definir que `aprovado` será `NULL` enquanto pendente, `S` quando esperado e
+  calculado coincidirem e `N` quando divergirem.
+- Definir que nenhuma função nova, alterada, pendente ou com algum `N` poderá ser
+  usada pelo Screener.
+- Teste: exemplos em tabela apresentados ao usuário antes de criar o banco.
 
-Usar três entidades, evitando repetir nome e descrição do teste em cada
-combinação:
+Estado: concluída em 2026-10-29 somente em documentação. O contrato aprovado
+está em `docs/CONTRATO_HOMOLOGACAO_FUNCOES.md` e a evidência em
+`MSen/tests/TESTE_ITEM_20_0.md`. Nenhum DDL, código ou banco foi alterado. A
+subetapa 20.1 depende de autorização separada.
 
-1. `testes_auditoria`: catálogo com `id_teste`, código, nome, categoria,
-   descrição, função e estado ativo;
-2. `auditoria_execucao`: combinação digitada, origem, data, configuração e
-   versões;
-3. `auditoria_resultado_teste`: liga execução e teste, guardando valores,
-   demonstração, resultado obtido, revisão, observação e datas.
+#### 20.1 — DDL das amostras de validação
 
-Para preservar a ideia de aprovação S/N sem confundir falta de revisão com
-erro confirmado, guardar dois estados:
+- Criar `amostras_validacao` com `id_resultado` como chave primária e também
+  chave estrangeira para `resultados(id_resultado)`, além de ordem e estado ativo.
+- Não copiar `res_01` a `res_06`; obtê-los por `INNER JOIN` com `resultados`.
+- Usar `ON DELETE CASCADE`, pois a amostra não é arquivo histórico independente.
+- Teste: integridade da FK, ausência de duplicidade, leitura das seis dezenas e
+  cascata controlada em banco temporário.
 
-- `testado`: S/N, inicialmente N;
-- `aprovado`: S/N, inicialmente N e somente significativo quando `testado = S`.
+Estado: concluída em 2026-10-29. A migração
+`011_criar_amostras_validacao.sql` e o esquema consolidado criam somente
+`amostras_validacao`, sem duplicar as dezenas. PostgreSQL temporário confirmou
+restrições, `INNER JOIN`, cascata e idempotência; o database efêmero foi removido.
+Passaram 508 testes Python. Evidência em `MSen/tests/TESTE_ITEM_20_1.md`. O banco
+local `games` não foi alterado e a subetapa 20.2 depende de autorização separada.
 
-Na interface, o estado principal será mostrado como:
+#### 20.2 — DDL do catálogo e do gabarito
 
-- PENDENTE: `testado = N`;
-- APROVADO: `testado = S` e `aprovado = S`;
-- DIVERGENTE: `testado = S` e `aprovado = N`.
+- Criar `criterios_validacao` com código estável, nome legível, categoria
+  `ESTATISTICA`, `GEOMETRIA` ou `PADRAO`, função Python, tipo, precisão,
+  assinatura automática da implementação, estado e `id_grupo` opcional.
+- Criar `avaliacoes_validacao`, relacionando `id_resultado` e `id_criterio`, com
+  valor esperado, valor calculado, `id_padrao_esperado` e
+  `id_padrao_calculado` opcionais, aprovação `S/N`, data e diferença aplicável.
+- Usar chave única por amostra/critério. Para padrões, relacionar grupo e os dois
+  subgrupos às tabelas existentes e apresentar códigos e nomes por `JOIN`.
+- Usar `ON DELETE CASCADE` das amostras e critérios para suas avaliações.
+- Teste: integridade referencial, tipos de critério, uma avaliação por
+  amostra/critério e cascatas em banco temporário.
 
-Isso permite interromper a auditoria, retornar outro dia e saber exatamente
-quais testes ainda não foram conferidos.
+Estado: concluída em 2026-10-29. A migração
+`012_criar_catalogo_avaliacoes_validacao.sql` criou o catálogo e as avaliações
+com restrições para categorias, tipos, precisão, assinatura, estados, grupos,
+subgrupos e aprovação `NULL/S/N`. PostgreSQL temporário confirmou casos
+numéricos, padrões, `SEM_CORRESPONDENCIA`, rejeições e cascatas; o database foi
+removido. Passaram 514 testes Python. Evidência em
+`MSen/tests/TESTE_ITEM_20_2.md`. `games` não foi alterado e a subetapa 20.3
+foi precedida pela nova subetapa 20.2-A, que depende de autorização separada.
 
-#### 20.2 — Evidências estatísticas
+#### 20.2-A — Estado global do algoritmo de seleção
 
-- Fazer as funções estatísticas de produção devolverem resultado e evidência
-  estruturada da mesma execução.
-- Registrar fórmula, substituição dos valores, resultado, referências, limites
-  e decisão sem recalcular nada na camada de auditoria.
-- Mostrar operações completas, como `04 + 09 + ... + 52 = 127`.
-- Teste: confirmar que o valor auditado é o mesmo objeto/resultado consumido
-  pelo screener e recalcular manualmente exemplos conhecidos.
+- Criar DDL complementar para uma única linha de estado do algoritmo, iniciada
+  como desatualizada e sem controle manual direto pelo usuário.
+- Apresentar somente dois textos funcionais: `Algoritmo de seleção de combinações
+  atualizado` e `Algoritmo de seleção de combinações desatualizado`.
+- Guardar internamente o booleano, motivo, datas, assinatura homologada e
+  quantidade/identificação do conjunto atual de resultados.
+- Marcar como desatualizado quando mudar função, regra, precisão, grupo,
+  subgrupo, configuração de seleção ou quando novos resultados aguardarem
+  atualização dos perfis atuais.
+- Permitir retorno a atualizado somente quando funções estiverem homologadas,
+  perfis atuais reconciliados e cobertura de filtros do Screener confirmada.
+- Teste: estados, linha única, bloqueio de alteração inválida e transições em
+  PostgreSQL temporário. Não aplicar ao `games` nesta subetapa.
 
-#### 20.3 — Evidências geométricas
+Estado: concluída em 2026-10-30. A migração
+`013_criar_estado_algoritmo_selecao.sql` cria a linha única inicialmente
+desatualizada, guarda assinaturas, quantidade de resultados e datas das três
+confirmações, e impede liberação incompleta, segunda linha, quantidade negativa
+ou exclusão. PostgreSQL temporário confirmou aplicação isolada da 013,
+idempotência e transições; o database efêmero foi removido. Passaram 520 testes
+Python. Evidência em `MSen/tests/TESTE_ITEM_20_2_A.md`. `games` não foi alterado
+e a subetapa 20.3 depende de autorização separada.
 
-- Instrumentar as funções geométricas de produção para devolver coordenadas,
-  segmentos, comprimentos, áreas parciais, perímetro e centro de gravidade como
-  evidência da mesma execução.
-- Relacionar cada valor ao desenho exibido.
-- Proibir recálculo geométrico em JavaScript para fins de auditoria.
-- Teste: figuras simples com valores exatos e igualdade com o valor usado pelo
-  filtro de produção.
+#### 20.3 — Migração e aplicação local
 
-#### 20.4 — Evidências dos grupos de padrões
+- Acrescentar as migrações 011, 012 e a complementar da 20.2-A ao conjunto de
+  DDL executado na inicialização.
+- Aplicar primeiro em banco temporário e depois no PostgreSQL local.
+- Teste: primeira aplicação, repetição sem erro e preservação das tabelas atuais.
 
-- Executar os classificadores de produção e usar diretamente a classificação
-  consumida pelo funil.
-- Registrar ocorrências encontradas, classificação, percentual histórico,
-  padrões excludentes e decisão devolvidos pela mesma execução.
-- Registrar denominador, limite de raridade, operador e motivo pelo qual o
-  padrão foi ou não selecionado para exclusão.
-- Teste: sequências e colunas aprovadas manualmente e igualdade entre auditoria,
-  classificação persistida e decisão do screener.
+Estado: concluída em 2026-10-30. Foi criado e validado backup customizado do
+`games`; o estado inicial possuía somente 001–010. A primeira execução aplicou
+exclusivamente 011, 012 e 013 e a segunda não reaplicou nenhuma. Permaneceram
+inalterados 3.069 resultados, 3 grupos, 9 subgrupos e 1.289 classificações. As
+tabelas de amostras, critérios e avaliações ficaram vazias; a linha global foi
+iniciada como desatualizada. Passaram 520 testes Python. Evidência em
+`MSen/tests/TESTE_ITEM_20_3.md`. PythonAnywhere não foi alterado e a subetapa
+20.4 depende de autorização separada.
 
-#### 20.5 — Trilha completa do funil
+#### 20.4 — Repositório das amostras e avaliações
 
-- Mostrar a ordem aplicada e destacar o primeiro critério excludente.
-- Marcar explicitamente os estágios posteriores como não avaliados.
-- Teste: nenhuma ausência poderá ser interpretada como aprovação.
-- Teste de integração: executar uma combinação uma vez e provar que quadro do
-  screener e relatório de auditoria usam as mesmas decisões e evidências.
+- Implementar inclusão, consulta e desativação de amostras por `id_resultado`.
+- Ao incluir uma amostra, criar uma avaliação pendente para cada critério ativo.
+- Ao incluir um critério, criar uma avaliação pendente para cada amostra ativa.
+- Consultar combinação, função, grupo e subgrupos com nomes legíveis, sem
+  duplicar dezenas ou nomes nas avaliações.
+- Teste: sincronização incremental no banco temporário sem destruir avaliações
+  ou valores esperados existentes.
 
-#### 20.6 — Revisão humana e pela IA
+Estado: concluída em 2026-10-30. Foi criado `RepositorioValidacao`, com inclusão
+transacional de amostra, criação dos pares ativos faltantes, sincronização
+idempotente, desativação sem exclusão e consultas detalhadas por `JOIN`. O
+PostgreSQL temporário confirmou que referências existentes são preservadas e
+que critério novo alcança somente amostras ativas; o database efêmero foi
+removido. Passaram 526 testes Python. Evidência em
+`MSen/tests/TESTE_ITEM_20_4.md`. Nenhuma amostra ou critério foi carregado no
+`games`; a subetapa 20.5 depende de autorização separada.
 
-- Registrar esperado, obtido, conformidade, observação, revisor e data.
-- Permitir salvar uma revisão por vez sem exigir que todos os testes sejam
-  concluídos na mesma sessão.
-- Mostrar quantidade total, pendente, aprovada e divergente.
-- Criar pendência quando houver divergência, sem corrigir automaticamente.
-- Teste: fluxo pendente, conforme e divergente.
+#### 20.5 — Registro único e sincronização dos critérios
 
-#### 20.7 — Tela de auditoria
+- Criar registro Python dos critérios executáveis de produção.
+- Sincronizar automaticamente cálculos estatísticos, geométricos e detectores de
+  padrões com `criterios_validacao`.
+- Critério novo entra pendente e recebe avaliações para todas as amostras.
+- Critério excluído do registro será removido do catálogo após confirmação; suas
+  avaliações serão removidas por cascata.
+- Alteração somente da implementação preservará os resultados esperados, limpará
+  calculados/aprovações e bloqueará a função até nova execução integral.
+- Alteração da regra matemática ou do significado do critério invalidará também
+  os esperados, que deverão ser recalculados independentemente e conferidos.
+- Detectar alteração pela assinatura automática da implementação, sem exigir que
+  o usuário administre manualmente números de versão.
+- O cadastro textual de um padrão sem função Python não cria critério executável.
+- Teste: incluir, alterar implementação, alterar definição e excluir sem
+  duplicidade nem perda indevida de referências.
 
-- Digitar seis dezenas ou selecionar futuramente um sorteio existente.
-- Validar exatamente seis números distintos entre 01 e 60.
-- Mostrar resumo dos três níveis e detalhes expansíveis.
-- Permitir salvar e retomar a conferência parcial.
-- Preservar espaço vertical e horizontal com rolagens internas.
-- Teste: Chrome com um relatório grande.
+Estado: concluída em 2026-10-30. O registro único contém 19 critérios atuais: 4
+estatísticos, 6 geométricos e 9 detectores de padrões. A migração 014 acrescentou
+assinatura automática da regra, separada da implementação. A sincronização
+incremental preserva esperados em mudança somente de código, invalida-os em
+mudança da regra e exige confirmação para exclusão; alterações estruturais sob o
+mesmo código são recusadas. PostgreSQL temporário aprovou todos os fluxos. Após
+backup validado, somente a 014 foi aplicada ao `games` e os 19 critérios foram
+incluídos como pendentes; não há avaliações porque as amostras continuam vazias.
+Passaram 531 testes Python. Evidência em `MSen/tests/TESTE_ITEM_20_5.md`. A
+subetapa 20.5-A depende de autorização separada.
 
-#### 20.8 — Exportação JSON
+#### 20.5-A — Atualização dos perfis atuais após importação
 
-- Exportar a trilha técnica completa e reproduzível.
-- Incluir checksum da configuração e versões.
-- Teste: exportar e reabrir sem perda.
+- Integrar a importação de resultados ao recálculo das grandezas, classificações,
+  incidências de padrões e perfis estatísticos/geométricos atuais.
+- Usar todos os resultados disponíveis no banco operacional, sem conservar
+  versões anteriores dos perfis para a execução normal.
+- Guardar ou calcular o resumo atual de modo reproduzível, incluindo quantidade
+  de resultados considerada e instante do recálculo.
+- Não repetir as 200 avaliações quando somente chegaram novos resultados e as
+  assinaturas das funções permaneceram iguais.
+- Manter o algoritmo desatualizado durante o recálculo ou quando a quantidade do
+  perfil não coincidir com a quantidade válida de `resultados`.
+- Depois do recálculo bem-sucedido, preservar a homologação das funções e liberar
+  o estado somente se as demais condições também estiverem satisfeitas.
+- Reservar ao backtest o recálculo com corte por concurso ou data.
+- Teste: importar resultado novo, alterar os perfis atuais, preservar as 200
+  aprovações e recusar perfil incompleto ou calculado para quantidade antiga.
 
-#### 20.9 — Exportação tabular
+Estado: concluída em 2026-10-30. A migração 015 criou a tabela substitutiva
+`perfis_operacionais_atuais`. A importação com novidades agora bloqueia o
+algoritmo antes do recálculo e atualiza derivados, incidências dos nove padrões,
+classificação sequencial, quatro perfis estatísticos e seis geométricos sobre
+todos os resultados. Quantidade e assinatura do conjunto são persistidas sem
+alterar avaliações de homologação. PostgreSQL temporário confirmou a passagem
+de três para quatro resultados e preservou uma avaliação aprovada. Após backup,
+somente a 015 foi aplicada ao `games`; os 10 perfis e os nove padrões foram
+reconciliados com os 3.069 resultados. Passaram 533 testes Python. Evidência em
+`MSen/tests/TESTE_ITEM_20_5_A.md`. A subetapa 20.6 depende de autorização
+separada.
 
-- Criar CSV ou planilha para conferência humana.
-- Proteger contra fórmulas injetadas em células exportadas.
-- Teste: reabertura e comparação dos valores.
+#### 20.6 — Carga dos 200 resultados iniciais
 
-#### 20.10 — Regressão e fechamento da auditoria
+- Relacionar os primeiros 200 resultados por `numero_ap`, sem copiar as dezenas.
+- Conferir quantidade, ordem, FKs, dezenas obtidas por `JOIN` e ausência de
+  duplicidade.
+- Permitir acrescentar posteriormente combinações especiais de fronteira, sem
+  alterar o conjunto inicial.
+- Teste: comparar as amostras com `resultados` registro a registro.
 
-- Executar testes Python, banco temporário, API, exportação e Chrome.
-- Preparar commit somente mediante autorização.
+Estado: concluída em 2026-10-30. Foi criado carregador idempotente que valida as
+posições existentes, recusa divergências e preserva amostras adicionais. O
+PostgreSQL temporário confirmou 200 amostras, 3.800 avaliações pendentes,
+dezenas somente por `JOIN` e repetição sem alteração. Após backup validado, o
+`games` recebeu os concursos 1–200 nas ordens 1–200 e a matriz 200 × 19; nenhum
+esperado, calculado ou aprovado foi preenchido. Passaram 533 testes Python.
+Evidência em `MSen/tests/TESTE_ITEM_20_6.md`. A subetapa 20.7 depende de
+autorização separada.
+
+#### 20.7 — Construção e aprovação dos valores de referência
+
+- A IA ou o usuário calculará independentemente cada resultado esperado; uma
+  demonstração poderá ser apresentada no relatório sem ser coluna obrigatória.
+- O usuário poderá aprovar aos poucos; somente uma referência aprovada será
+  considerada fiel para comparação.
+- Proibir que as funções de produção preencham ou sobrescrevam a referência.
+- Teste: referência pendente não aprova nem reprova a função.
+
+Estado: concluída em 2026-10-30. A migração 016 e o serviço de
+aprovação registram valor ou ausência legítima, origem, revisor, observação e
+data, protegendo referências conferidas contra sobrescrita. PostgreSQL
+temporário aprovou referências numéricas e de padrões, inclusive rejeições. Um
+oráculo que não importa as funções aferidas produziu e conferiu no `games` 800
+referências estatísticas e 1.800 de padrões. O Shapely 2.2.0/GEOS, usado somente
+como oráculo de teste, produziu e conferiu as 1.200 referências geométricas sem
+importar as funções de produção. O total é 3.800 referências conferidas, sem
+pendências, valores ausentes ou metadados inválidos. Passaram 541 testes Python.
+Evidência em `MSen/tests/TESTE_ITEM_20_7.md`. A subetapa 20.8 depende de
+autorização separada.
+
+#### 20.8 — Adaptadores dos critérios estatísticos
+
+- Usar as funções reais de produção para soma, média, mediana, desvio e futuros
+  critérios registrados.
+- Gravar o valor calculado pela função real sem alterar o esperado.
+- Teste: comparação com as referências aprovadas e exemplos manuais.
+
+Estado: concluída em 2026-10-30. Um executor numérico transacional valida o
+catálogo, a assinatura atual e a conferência das referências antes de chamar as
+funções reais. Soma, média, mediana e desvio-padrão foram executados nas 200
+amostras: 800 comparações `S`, nenhuma `N`. O hash das referências protegidas
+permaneceu idêntico antes e depois. Os quatro critérios estatísticos estão
+`APROVADO`, mas o algoritmo geral permanece desatualizado enquanto geometria e
+padrões não forem executados. Passaram 545 testes Python. Evidência em
+`MSen/tests/TESTE_ITEM_20_8.md`. A 20.9 depende de autorização separada.
+
+#### 20.9 — Adaptadores dos critérios geométricos
+
+- Usar as funções reais para extensão, perímetro, regiões, área e centro de
+  gravidade.
+- Registrar o valor calculado e a precisão usada na comparação.
+- Teste: igualdade conforme a precisão aprovada.
+
+Estado: concluída em 2026-10-30. O adaptador entrega às funções geométricas a
+tupla das seis dezenas e preserva o modelo usado pelas estatísticas. Extensão,
+perímetro, regiões, área e as duas coordenadas do centro foram executados nas
+200 amostras: 1.200 comparações `S`, nenhuma `N`. O comparador aplica a precisão
+de 12 casas com `ROUND_HALF_UP` somente na decisão, mantendo o valor bruto para
+auditoria. O hash das referências ficou idêntico antes e depois. Os seis
+critérios geométricos estão `APROVADO`; o algoritmo geral continua
+desatualizado até executar os padrões. Passaram 547 testes Python. Evidência em
+`MSen/tests/TESTE_ITEM_20_9.md`. A 20.10 depende de autorização separada.
+
+#### 20.10 — Adaptadores dos padrões
+
+- Executar os classificadores reais por grupo e registrar o subgrupo calculado.
+- Comparar `id_padrao_calculado` com `id_padrao_esperado`; mostrar também os
+  nomes legíveis de grupo e subgrupo no relatório.
+- Incluir novos detectores pelo registro sincronizado, sem nova coluna no banco.
+- Teste: casos positivos, negativos e classificação pelo maior bloco aplicável.
+
+Estado: concluída em 2026-10-30. O executor valida catálogo, assinatura, grupo e
+referência antes de traduzir o retorno booleano de cada detector em padrão
+identificado ou ausência de correspondência. Os nove detectores foram executados
+nas 200 amostras: 1.800 comparações `S`, nenhuma `N`. O hash das referências
+ficou idêntico antes e depois, e os nove critérios estão `APROVADO`. Com as
+subetapas 20.8 a 20.10, os 19 critérios atuais acertaram todas as 3.800
+avaliações. O estado geral permanece bloqueado até a reconciliação prevista nas
+subetapas seguintes. Passaram 549 testes Python. Evidência em
+`MSen/tests/TESTE_ITEM_20_10.md`. A 20.11 depende de autorização separada.
+
+#### 20.11 — Motor de recálculo e comparação
+
+- O botão `Atualizar critérios e recalcular` sincronizará o catálogo e executará
+  novamente todos os critérios ativos sobre todas as amostras ativas.
+- A sincronização só reconhecerá funções Python já implementadas, registradas e
+  aprovadas nos testes locais.
+- Atualizar somente valor calculado, assinatura executada, data, diferença e
+  aprovação `S/N`.
+- Nunca alterar automaticamente valores de referência aprovados.
+- Para critério novo ou com regra alterada, deixar a referência pendente; o
+  botão não usará a própria função aferida para fabricar seu gabarito.
+- Consolidar a função como aprovada somente quando todas as amostras ativas
+  tiverem esperado conferido, cálculo executado e aprovação `S`.
+- Teste: uma única divergência ou pendência mantém a função bloqueada.
+
+Fluxo obrigatório para padrão ou critério novo/alterado:
+
+1. abrir o projeto no VS Code;
+2. criar ou alterar a função Python e sua descrição;
+3. criar/atualizar os testes automatizados;
+4. executar e aprovar os testes localmente;
+5. registrar a função no catálogo executável;
+6. acionar `Atualizar critérios e recalcular`;
+7. conferir o relatório antes de qualquer publicação na nuvem.
+
+O Screener consultará a homologação da assinatura atual antes de montar seus
+critérios. Ausência, alteração, pendência ou qualquer `N` produzirá bloqueio
+explícito; a falha da consulta nunca será interpretada como aprovação.
+
+Antes de executar, o Screener também comparará os filtros esperados com os
+adaptadores realmente carregados. O conjunto esperado conterá todos os filtros
+estatísticos e geométricos aprovados e os filtros de padrões aprovados que a
+consulta selecionar por incidência inferior ao limite configurado. Filtro
+esperado ausente, filtro extra ou perfil atual desatualizado bloqueará toda a
+execução. A interrupção normal após uma exclusão não significa filtro ausente:
+o filtro precisa estar no plano e será alcançado pelas combinações sobreviventes.
+
+Estado: concluída em 2026-10-30. O motor transacional sincroniza o catálogo,
+completa a matriz, executa estatística, geometria e padrões e consolida o
+resultado. Critério com referência pendente fica `PENDENTE` sem impedir o
+recálculo dos demais; qualquer `N` deixa a função `REPROVADO`. No `games`, a
+sincronização foi idempotente e o ciclo confirmou 19 critérios e 3.800
+avaliações aprovadas, preservando o hash das referências. Cenários forçados e
+revertidos confirmaram que uma única divergência ou pendência bloqueia a função.
+O estado global permanece desatualizado com motivo
+`HOMOLOGACAO_CONCLUIDA_AGUARDANDO_COBERTURA`, pois homologação matemática não
+substitui cobertura operacional. Passaram 550 testes Python. Evidência em
+`MSen/tests/TESTE_ITEM_20_11.md`. A 20.12 depende de autorização separada.
+
+#### 20.12 — Modal reutilizável de andamento
+
+- Criar modal que bloqueie duplo clique e informe operação, etapa atual,
+  quantidade concluída/total, percentual, duração e eventual erro.
+- A API iniciará uma execução identificada e a interface consultará seu estado;
+  não será apresentado percentual fictício baseado apenas em animação.
+- Permitir fechar o modal somente ao terminar ou após cancelamento seguro, quando
+  este existir.
+- Teste: sucesso, falha, atualização progressiva e prevenção de execução dupla.
+
+Estado: concluída em 2026-10-30. Um gerenciador assíncrono com trava inicia
+execuções identificadas e publica etapa, quantidades, percentual calculado,
+duração, resultado e erro por POST/GET. O motor emite progresso real em quatro
+etapas. O componente JavaScript reutilizável impede duplo clique e fechamento
+durante a execução; a página reservada recebeu somente o botão de acionamento,
+mantendo a construção completa para 20.13. Passaram 554 testes Python, 35 testes
+Node e um fluxo Chromium que observou 50%, 100% e bloqueio de fechamento.
+Evidência em `MSen/tests/TESTE_ITEM_20_12.md`. A 20.13 depende de autorização
+separada.
+
+#### 20.13 — Página de Validação e auditoria
+
+- Mostrar em destaque um dos dois estados globais do algoritmo e, quando
+  desatualizado, o botão `Atualizar Validação e auditoria`.
+- Exibir as dezenas obtidas de `resultados`, função e nome legível do critério,
+  grupo/subgrupos quando aplicáveis, esperado, calculado e aprovação `S/N`.
+- Oferecer filtros por categoria, função, grupo, subgrupo e situação.
+- Oferecer `Atualizar critérios e recalcular`, resumo e detalhes da divergência.
+- Preservar espaço com cabeçalho compacto e rolagens internas.
+- Teste: Chrome em largura normal e estreita, inclusive durante execução.
+
+Estado: concluída em 2026-10-30. A API somente leitura entrega estado global,
+resumo, opções de filtro e avaliações paginadas com dezenas, nomes e subgrupos
+obtidos por `JOIN`. A página compacta mostra os dois estados globais, motivo,
+botão quando desatualizado, quatro contadores, cinco filtros, grade rolável e
+paginação de 50 linhas; após o modal, recarrega os dados. Consulta real confirmou
+3.800 `S`, 19 critérios, 3 grupos e 9 subgrupos. Passaram 557 testes Python, 36
+Node e dois fluxos Chromium em 1280×800 e 390×844. A skill Sites orientou o
+trabalho local e o teste responsivo, sem publicação externa. Evidência em
+`MSen/tests/TESTE_ITEM_20_13.md`. A 20.14 depende de autorização separada.
+
+#### 20.14 — Relatório de divergências
+
+- Informar por função total exigido, executado, aprovado, divergente e pendente,
+  além de critérios novos, excluídos ou cuja implementação mudou.
+- Para cada `N`, mostrar combinação, função, filtro, grupo/subgrupo, esperado,
+  calculado, diferença e assinatura executada.
+- Permitir que a IA analise a divergência e apresente uma hipótese diagnóstica,
+  sem alterar automaticamente referência, função ou aprovação.
+- Teste: relatório fecha com o total de verificações.
+
+Estado: concluído em 2026-10-30. A API e a página apresentam, por função,
+exigidas, executadas, `S`, `N`, pendentes e estado do catálogo. Cada `N` expõe
+combinação, critério, grupo/subgrupo, esperado, calculado, diferença,
+assinaturas e hipótese diagnóstica sem alterar a homologação. O banco `games`
+fechou 3.800 verificações `S` em 19 critérios. Evidência em
+`MSen/tests/TESTE_ITEM_20_14.md`.
+
+#### 20.15 — Exportação e reprodução
+
+- Exportar JSON técnico e formato tabular seguro para conferência humana.
+- Incluir assinaturas, precisão e identificação do conjunto de referências.
+- Teste: exportar e reabrir sem perda ou execução de fórmula injetada.
+
+Estado: concluído em 2026-10-30. `GET /api/validacao/exportacao` entrega JSON
+técnico reproduzível ou CSV UTF-8 seguro. Ambos incluem identificação SHA-256
+do conjunto, assinaturas da função, regra e execução, precisão, proveniência
+das referências e resultados esperado/calculado. O CSV neutraliza prefixos de
+fórmula; o JSON reaberto é validado contra o hash. No `games`, foram exportados
+3.800 registros com identificador
+`aa4b253bedb2107535ce5ffc0ffaf43621605d63d808b87d5c53c8609bb6c8b4`.
+Passaram 563 testes Python, 37 Node e dois fluxos Chromium. Evidência em
+`MSen/tests/TESTE_ITEM_20_15.md`. A 20.16 depende de autorização separada.
+
+#### 20.16 — Regressão técnica da validação
+
+- Executar testes Python, banco temporário, API, JavaScript e Google Chrome.
+- Confirmar que todos os valores calculados vieram das funções de produção.
+- Confirmar que o Screener recusa função nova, alterada, pendente ou com algum
+  `N` e aceita somente a assinatura integralmente aprovada.
+- Confirmar que importação nova atualiza os perfis correntes sem refazer as 200
+  provas quando nenhuma função mudou.
+- Confirmar que o Screener carrega todos os filtros estatísticos e geométricos
+  aprovados e exatamente os padrões aprovados selecionados pelo limite vigente.
+- Confirmar bloqueio por filtro ausente/extra, perfil antigo ou estado global
+  desatualizado.
+- Teste: repetir os fluxos de atualização, aprovação, divergência e bloqueio sem
+  depender somente da interface.
+
+Estado: concluído em 2026-10-30. O Screener passou a consultar a homologação
+antes de criar o plano executável e bloqueia estado global desatualizado,
+catálogo novo/divergente, função pendente ou reprovada, assinatura antiga,
+perfil antigo e cobertura com filtro ausente/extra. A cobertura exige todos os
+critérios estatísticos e geométricos e exatamente os padrões homologados
+selecionados pela incidência. Dois bancos temporários confirmaram 200 amostras,
+3.800 avaliações e a incorporação de resultado novo nos dez perfis sem alterar
+a homologação. No `games`, 19 critérios, 10 perfis e 3.069 resultados estão
+coerentes, mas o estado continua deliberadamente bloqueado por
+`HOMOLOGACAO_CONCLUIDA_AGUARDANDO_COBERTURA`. Passaram 567 testes Python, 37
+Node e 20 fluxos Chromium. Evidência em `MSen/tests/TESTE_ITEM_20_16.md`. A
+20.17 depende de autorização separada.
+
+#### 20.17 — Funcionamento vigente, índice e fechamento documental
+
+- Atualizar `docs/funcionamento.md` para explicar o fluxo completo realmente
+  implementado: entrada de resultados, recálculo dos perfis atuais, homologação
+  das funções, atualização da Validação e auditoria e trava do Screener.
+- Explicar separadamente validação matemática, construção dos filtros e uso dos
+  filtros nas três famílias: estatística, geometria e padrões.
+- Registrar que perfis operacionais usam todos os resultados disponíveis no
+  momento e que somente o backtest aplica corte por concurso ou data.
+- Conferir nomes reais de tabelas, páginas, APIs, arquivos de configuração e
+  funções; remover ou identificar claramente descrições substituídas.
+- Reconciliar `PLANO_DO_PROJETO.md`, `notas/decisoes.md`,
+  `notas/funcionalidades.md`, documentos de banco/API afetados e
+  `docs/INDICE_DOCUMENTACAO.md`.
+- Teste: buscas por nomes e contratos revogados, links/caminhos existentes e
+  comparação da narrativa com código, DDL, API e testes atuais.
+- Preparar commit e push somente mediante autorização específica.
+
+Estado: concluído em 2026-10-30, sem commit ou push. `docs/funcionamento.md`
+foi reescrito como descrição canônica do fluxo implementado; a versão anterior
+e o plano inicial foram preservados como históricos. Foram reconciliados plano
+do projeto, visão geral, arquitetura, organização Python, decisões,
+funcionalidades, contrato de homologação, API da validação e índice. Contratos
+substituídos foram rotulados, inclusive os dois contextos distintos de
+`SEM_CORRESPONDENCIA`. Passaram 571 testes Python, 37 Node e 20 fluxos
+Chromium. Evidência em `MSen/tests/TESTE_ITEM_20_17.md`.
+
+#### 20.18 — Fechamento da atualização e alerta de bloqueio no Screener
+
+Objetivo: tornar inequívoco para o usuário o resultado da execução da
+Validação e auditoria e o consequente bloqueio do Screener quando os critérios
+de seleção ainda não estiverem integralmente aprovados.
+
+- Manter separadas a conclusão do processamento e a aprovação da validação:
+  atingir 100% significa que a execução terminou, não necessariamente que foi
+  aprovada.
+- Ao final do modal de atualização, apresentar o diagnóstico consolidado com
+  total, aprovadas, reprovadas e pendentes.
+- Quando todas as avaliações estiverem aprovadas, informar explicitamente que
+  a Validação e auditoria foi concluída e aprovada.
+- Quando houver qualquer `N` ou pendência, informar que o processamento foi
+  concluído, mas a validação não foi aprovada, e orientar o usuário a usar o
+  filtro `Situação` para localizar as ocorrências.
+- Tratar erro técnico ou interrupção como resultado diferente de execução
+  concluída com reprovações ou pendências.
+- Bloquear a execução do Screener enquanto existir critério novo, alterado,
+  pendente ou reprovado na Validação e auditoria.
+- Exibir no Screener, para qualquer um desses impedimentos, somente a mensagem
+  acordada: **"Screener bloqueado: há pendências na Validação e auditoria dos
+  critérios de seleção."**
+- Não confundir no modal o resultado da validação matemática com outras
+  condições operacionais posteriores do Screener.
+- Preservar os resultados esperados, calculados, aprovações e assinaturas; esta
+  subetapa altera comunicação e bloqueio, não as fórmulas homologadas.
+- Testar os cenários: tudo aprovado; uma reprovação; uma pendência; critério
+  novo; critério alterado; erro técnico; atualização da tela após o fechamento
+  do modal; e tentativa de executar o Screener bloqueado.
+
+Estado: concluído em 2026-10-30. O modal agora diferencia processamento
+concluído, validação aprovada, validação com reprovações ou pendências e falha
+técnica. O cabeçalho da página passou a mostrar o diagnóstico da validação,
+sem confundi-lo com o estado operacional posterior do Screener. O Screener
+consulta o relatório antes de habilitar a execução e, para
+critério novo, alterado, pendente ou reprovado, permanece desabilitado com a
+mensagem única acordada. Nenhuma fórmula ou avaliação persistida foi alterada.
+Passaram 572 testes Python, 37 Node e 24 fluxos Chromium. Evidência em
+`MSen/tests/TESTE_ITEM_20_18.md`.
+
+#### Etapa posterior — modal de andamento no Screener
+
+- Reutilizar o componente aprovado na Validação e auditoria para a execução das
+  5.000 combinações.
+- Exibir progresso real pelas três famílias e pelo filtro em execução.
+- Planejar e executar somente após o modal ser validado na Etapa 20; esta nota
+  não autoriza alteração imediata no Screener.
 
 
 ### Etapa 21 — capacidade e decisão sobre o universo integral
@@ -2613,3 +3010,364 @@ liberá-la automaticamente.
 
 - Revisar backtests, falsos descartes, auditorias, desempenho e armazenamento.
 - Manter trava integral até autorização explícita final.
+
+
+### Etapa 22 — Frequência das dezenas e evolução concurso a concurso
+
+Objetivo: criar um módulo independente para estudar frequência, intervalos de
+retorno e sequências de ocorrência das dezenas, preservando o que teria sido
+calculado em cada momento histórico e permitindo avaliar posteriormente a
+assertividade do método. O módulo terá item próprio no menu e página
+`Frequência das dezenas`.
+
+Premissas aprovadas para o primeiro estudo:
+
+- a tabela atual `frequencia_de_resultado` continua sendo a fotografia
+  acumulada do concurso 1 até o último resultado armazenado;
+- a série histórica começa no concurso 500;
+- a primeira fotografia usa exclusivamente os concursos 1 a 500;
+- cada fotografia seguinte acrescenta um concurso: 1 a 501, 1 a 502 e assim
+  sucessivamente;
+- nenhum resultado posterior ao concurso da fotografia participa de seu
+  cálculo;
+- resultados posteriores serão usados somente na etapa separada de avaliação
+  da assertividade;
+- o eixo horizontal dos gráficos históricos será `numero_do_concurso`;
+- a tabela histórica não repetirá `ultima_ocorrencia_conhecida` nem armazenará
+  antecipadamente acerto, erro ou próxima ocorrência real;
+- a primeira faixa estatística preservará unidades: média dos intervalos
+  mais ou menos um desvio-padrão populacional dos intervalos;
+- configuração percentual e aplicação global, por grupo ou individual serão
+  estudadas posteriormente na página de Distribuições, sem conversão implícita
+  entre unidades e percentuais nesta etapa;
+- o tick `Salvar dados` virá marcado por padrão, mas toda gravação exigirá
+  confirmação explícita do usuário.
+
+#### 22.0 — Contrato matemático e casos-limite
+
+- Formalizar ocorrência simples, `2VS` e `3VS` a partir da ordem dos concursos.
+- Registrar os exemplos aprovados: uma dezena presente nos concursos 210 e 211
+  forma `2VS`; uma dezena presente em 615, 616 e 617 forma `3VS`.
+- Decidir antes do código como classificar sequências de quatro ou mais
+  concursos e se uma sequência `3VS` também gera um evento `2VS`, sem usar
+  informação futura no cálculo de uma fotografia.
+- Definir o concurso que representa a conclusão de cada evento e calcular os
+  intervalos entre eventos equivalentes.
+- Confirmar desvio-padrão populacional, quantidade mínima de eventos, estados
+  sem base estatística, limites inclusivos e arredondamento externo.
+- Teste: exemplos manuais pequenos, sequências interrompidas, sobrepostas e com
+  quatro ou mais ocorrências consecutivas.
+
+Estado: concluído em 2026-10-30. O contrato matemático foi formalizado em
+`docs/CONTRATO_FREQUENCIA_DEZENAS.md`: eventos 2VS e 3VS usam janelas
+consecutivas sobrepostas, o concurso final representa a conclusão do evento,
+sequências de quatro ou mais geram todas as janelas já concluídas, intervalos
+são calculados somente entre eventos equivalentes, o desvio é populacional na
+unidade concurso e a faixa inicial usa limites inclusivos com arredondamento
+externo. Nenhum código ou banco de dados foi alterado.
+
+#### 22.1 — Inventário e evolução da fotografia atual
+
+- Preservar as 60 linhas e os relacionamentos atuais de
+  `frequencia_de_resultado`.
+- Acrescentar, por migração segura, quantidade de intervalos, intervalo mínimo
+  e intervalo máximo para as ocorrências simples.
+- Manter `media_oco`, `mediana_oco` e `desv_padrao_oco` na unidade concurso e
+  melhorar somente os nomes apresentados ao usuário.
+- Reconciliar `60` dezenas, `sum(num_oco) = quantidade de resultados × 6` e os
+  valores recalculados diretamente da tabela `resultados`.
+- Teste: banco temporário, migração, idempotência e preservação dos dados
+  atuais.
+
+Estado: concluído em 2026-10-30. O inventário confirmou que a fotografia atual
+já calculava ocorrências, média, mediana e desvio-padrão populacional dos
+intervalos simples. A migração 017 acrescentou quantidade, mínimo e máximo e os
+preenche diretamente a partir das seis dezenas de `resultados`; cálculo e
+repositório passaram a manter esses campos. PostgreSQL efêmero confirmou 60
+linhas, reconciliação das ocorrências e os limites esperados, e 576 testes
+passaram. Evidência em `MSen/tests/TESTE_ITEM_22_1.md`. O database persistente
+`games` não foi alterado. A subetapa 22.2 depende de autorização separada.
+
+#### 22.2 — Configuração reproduzível do estudo
+
+- Criar configuração persistida com nome, concurso inicial, tamanho inicial,
+  regra de evolução da janela, tipo de evento, método da faixa, parâmetros,
+  arredondamento e versão de cálculo.
+- Configuração inicial: concurso inicial `1`, tamanho inicial `500`, início
+  fixo e final expansivo.
+- Gerar assinatura SHA-256 com todos os campos e versões capazes de alterar o
+  resultado.
+- Comparar a configuração calculada com a configuração gravada e informar
+  parâmetros divergentes, sem depender apenas da assinatura.
+- Não inferir unidade pelo valor numérico: método, parâmetro e unidade deverão
+  ser explícitos.
+- Teste: assinaturas estáveis, alteração de cada campo relevante e rejeição de
+  configurações ambíguas.
+
+Estado: concluído em 2026-10-30. A migração 018 criou a linha única da
+configuração ativa e sua semente `1 / 500 / início fixo / final expansivo`, com
+os três tipos de evento representados por `TODOS`. Método, parâmetro, unidade e
+arredondamento são explícitos; percentual é recusado nesta etapa. O Python gera
+SHA-256 de JSON canônico, confere a assinatura persistida e compara todos os
+campos, informando valores gravados e calculados divergentes. PostgreSQL
+efêmero confirmou semente, substituição, restrições e idempotência; 590 testes
+passaram. Evidência em `MSen/tests/TESTE_ITEM_22_2.md`. O database persistente
+`games` não foi alterado. A subetapa 22.3 depende de autorização separada.
+
+#### 22.3 — Estrutura histórica materializada
+
+- Criar tabela histórica normalizada por `numero_do_concurso`, dezena, tipo de
+  evento, configuração e versão do cálculo.
+- Armazenar quantidade de ocorrências, quantidade de intervalos, intervalo
+  mínimo, intervalo máximo, média, mediana, desvio-padrão, previsão central e
+  limites inferior e superior.
+- Não duplicar as seis dezenas dos resultados e não armazenar resultado futuro
+  na fotografia calculada.
+- Criar índice principal para consulta por dezena, tipo de evento e concurso.
+- Usar chaves, restrições de estado e precisão decimal compatíveis com o volume
+  previsto, inicialmente em torno de 150 mil linhas por tipo de evento.
+- Teste: DDL, FKs, unicidade, estados sem base e plano de consulta do gráfico.
+
+Estado: concluído em 2026-10-30. A migração 019 criou gerações isoladas e a
+tabela normalizada de fotografias por geração, concurso, dezena e evento. A
+geração preserva assinatura e JSON canônico da configuração e somente uma pode
+estar ativa. Cada fotografia guarda quantidades, estatísticas, previsão e
+limites exatos/operacionais, sem copiar as seis dezenas nem resultados futuros.
+Restrições distinguem ausência de base e base calculável; índices atendem séries
+por dezena/evento e cortes por concurso. PostgreSQL efêmero confirmou unicidade,
+precisão, estado, cascata e plano indexado; 597 testes passaram. Evidência em
+`MSen/tests/TESTE_ITEM_22_3.md`. O database persistente `games` não foi alterado.
+A subetapa 22.4 depende de autorização separada.
+
+#### 22.4 — Motor de cálculo acumulado
+
+- Calcular a fotografia 500 com os concursos 1 a 500 e avançar um concurso por
+  vez sem consultar resultados posteriores ao corte.
+- Calcular separadamente ocorrência simples, `2VS` e `3VS` conforme o contrato
+  aprovado na 22.0.
+- Preservar as unidades: média e desvio dos intervalos permanecem em concursos;
+  multiplicador de desvio permanece adimensional.
+- Construir limites iniciais por `média ± 1 desvio-padrão`, sem tratar o desvio
+  como percentual.
+- Produzir resultados determinísticos e reproduzíveis para carga completa e
+  atualização incremental.
+- Teste: oráculos manuais, comparação carga completa versus incremental e
+  garantia de ausência de vazamento de informação futura.
+
+Estado: concluído em 2026-10-30. Foi implementado o motor incremental que
+processa concursos estritamente em ordem, acumula eventos simples, 2VS e 3VS e
+emite 60 linhas por tipo somente a partir do primeiro corte. A configuração
+inicial produziu as 180 linhas esperadas no concurso 500. Média e desvio usam
+precisão interna elevada e permanecem em concursos; o multiplicador é
+adimensional e os limites inteiros usam arredondamento externo. Testes
+confirmaram janelas sobrepostas, interrupções, estados sem base, ausência de
+vazamento futuro, reconciliação com o cálculo simples existente e igualdade
+entre carga integral e incremental. Passaram 608 testes. Evidência em
+`MSen/tests/TESTE_ITEM_22_4.md`. Nenhum dado foi persistido e a subetapa 22.5
+depende de autorização separada.
+
+#### 22.5 — Primeira carga, substituição e atualização incremental
+
+- Primeira gravação: construir do concurso 500 até o último disponível.
+- Mesma configuração e somente concursos novos: inserir apenas as novas
+  fotografias, por exemplo 903, 904 e 905 após uma base encerrada em 902.
+- Configuração diferente: calcular uma geração provisória completa e substituir
+  a geração ativa somente depois de fechamento bem-sucedido.
+- Detectar lacuna, concurso antigo alterado, versão incompatível e contagem
+  divergente; nesses casos, impedir acréscimo silencioso e exigir reconstrução.
+- Manter a geração anterior intacta se houver falha ou cancelamento; depois da
+  troca bem-sucedida, conservar somente a nova geração detalhada.
+- Medir tempo, linhas, tamanho da tabela e custo dos índices antes de otimizar.
+- Teste: primeira carga, acréscimo, repetição idempotente, troca de configuração,
+  falha no meio e recuperação sem perda.
+
+Estado: concluído em 2026-10-30. A migração 020 passou a identificar a origem
+de cada geração por quantidade e SHA-256 dos resultados. O serviço cria e troca
+gerações atomicamente, mantém a ativa em qualquer falha, grava somente novos
+cortes quando configuração e prefixo coincidem e exige reconstrução diante de
+alteração antiga, lacuna ou incompatibilidade. Testes confirmaram primeira
+carga, repetição idempotente, acréscimo, troca, falhas integral/incremental e
+reconstrução sem conservar gerações antigas. Com 3.069 resultados reais em
+banco efêmero, foram geradas 462.600 linhas em 149,947 s, ocupando cerca de
+121,9 MiB, sendo 68,4 MiB de índices. Passaram 613 testes. Evidência em
+`MSen/tests/TESTE_ITEM_22_5.md`. O `games` foi somente lido no benchmark e não
+foi alterado. A subetapa 22.6 depende de autorização separada.
+
+#### 22.6 — Confirmação de gravação e simulação
+
+- Exibir `Salvar dados` marcado por padrão em cada abertura da página, sem
+  memorizar silenciosamente o tick.
+- Com o tick marcado, sempre pedir confirmação antes de iniciar a gravação.
+- Para configuração igual, informar os concursos que serão acrescentados.
+- Para configuração diferente, mostrar lado a lado a configuração existente e
+  a calculada e avisar que os dados detalhados serão reconstruídos e substituídos.
+- Com o tick desmarcado, calcular a experiência sem substituir a geração ativa.
+- Desabilitar dupla execução, permitir cancelamento seguro e apresentar
+  progresso real da operação.
+- Teste: confirmação, cancelamento, tick padrão, simulação e proteção contra
+  substituição involuntária.
+
+Estado: concluído em 2026-10-30. O estado inicial reutilizável mantém `Salvar
+dados` marcado sem persistência silenciosa. A prévia distingue primeira carga,
+incremental, sem alteração e reconstruções, lista concursos novos e mostra
+campos divergentes lado a lado. O servidor recusa gravação sem confirmação
+explícita; simulação usa o motor real sem escrever. Progresso corresponde aos
+concursos processados, cancelamento entre concursos reverte toda a transação e
+coordenadores no servidor/frontend impedem dupla execução. O modal compartilhado
+ganhou cancelamento opcional sem permitir fechamento durante a tarefa. Passaram
+615 testes Python e 42 JavaScript. Evidência em
+`MSen/tests/TESTE_ITEM_22_6.md`. O `games` não foi alterado. API e página
+permanecem nas subetapas 22.7 e 22.8; a 22.7 depende de autorização separada.
+
+#### 22.7 — API do módulo
+
+- Criar consultas para fotografia atual, configuração ativa, resumo da base,
+  pontos históricos por dezena/tipo/período e prévia de simulação.
+- Criar tarefa assíncrona para carga, simulação, substituição e acréscimo
+  incremental, com progresso consultável.
+- Limitar período e volume devolvido; os gráficos não receberão todas as dezenas
+  e tipos quando apenas uma série tiver sido solicitada.
+- Validar parâmetros, unidade, configuração e concorrência no servidor.
+- Teste: contratos JSON, erros previsíveis, paginação/séries e indisponibilidade
+  do banco.
+
+Estado: concluído em 2026-10-30. A API foi criada em
+`MSen/src/msen/api/frequencias.py`, registrada na aplicação e documentada em
+`docs/API_FREQUENCIAS.md`. Ela oferece estado, fotografia atual, uma série
+histórica filtrada, prévia e execução assíncrona com progresso e cancelamento.
+Cada consulta histórica devolve somente uma dezena e um tipo de evento, em
+período máximo de 5.000 concursos. Parâmetros desconhecidos ou incompletos são
+recusados, gravações exigem confirmação explícita e somente uma execução pode
+ficar ativa. A validação em PostgreSQL efêmero confirmou estado, 60 dezenas e
+série filtrada sem copiar as dezenas dos resultados. Passaram 626 testes Python
+e 42 JavaScript. Evidência em `MSen/tests/TESTE_ITEM_22_7.md`; o banco `games`
+não foi alterado. A 22.8 permanece pendente de autorização específica.
+
+#### 22.8 — Item de menu e página Frequência das dezenas
+
+- Acrescentar `Frequência das dezenas` à navegação comum sem retirar os itens
+  existentes.
+- Criar HTML, CSS e JavaScript separados nas pastas reservadas do frontend.
+- Apresentar configuração calculada e configuração gravada, estado da base,
+  último concurso processado, quantidade de linhas e ações de executar/salvar.
+- Manter a página funcional em larguras normal e estreita, com rolagem interna
+  das regiões densas.
+- Teste: navegação, acessibilidade, estado inicial, confirmação e layout no
+  Google Chrome.
+
+Estado: concluído em 2026-10-30. `Frequência das dezenas` foi acrescentada à
+navegação comum e a página `/frequencias.html` foi criada com HTML, CSS e
+JavaScript separados. Ela apresenta estado da base, concursos disponíveis,
+último concurso processado, linhas históricas, configuração gravada e
+configuração a calcular. A operação calcula a prévia antes de executar, inicia
+com `Salvar dados` marcado, exige a confirmação aprovada para gravação e usa o
+modal compartilhado para progresso e cancelamento. Com o tick desmarcado, faz
+simulação sem gravar. A barra comum ganhou rolagem a partir de 50 rem para
+acomodar o novo item sem alargar páginas estreitas. Passaram 626 testes Python,
+45 JavaScript e 27 fluxos no Google Chrome, incluindo a nova página em 1280 px
+e 520 px. Evidência em `MSen/tests/TESTE_ITEM_22_8.md`; o banco `games` não foi
+alterado. Os gráficos permanecem nas subetapas 22.9 e 22.10.
+
+#### 22.9 — Gráficos de colunas da fotografia atual
+
+- Criar um gráfico de colunas para cada medida comparável entre as 60 dezenas:
+  ocorrências, intervalo mínimo, máximo, médio, mediana e desvio-padrão.
+- Permitir selecionar ocorrência simples, `2VS` ou `3VS` quando os respectivos
+  dados estiverem disponíveis.
+- Exibir unidade, quantidade de intervalos, concurso inicial/final e data da
+  atualização sem rotular desvio em concursos como percentual.
+- Teste: 60 dezenas, escalas, valores nulos, responsividade e conferência com o
+  banco.
+
+Estado: concluído em 2026-10-30. A fotografia atual passou a ser lida da última
+linha da geração ativa em uma única consulta para as 60 dezenas, filtrada por
+`SIMPLES`, `2VS` ou `3VS`. A página apresenta seis gráficos de colunas: número
+de ocorrências, intervalo mínimo, máximo, médio, mediana e desvio-padrão. Cada
+cartão informa sua unidade; os tooltips mostram dezena, valor e quantidade de
+intervalos, e ausência de amostra suficiente permanece nula. O cabeçalho exibe
+período, total de intervalos, unidade e data de atualização. A API rejeita tipos
+inválidos e o PostgreSQL efêmero confirmou 60 dezenas em cada um dos três tipos.
+Passaram 627 testes Python, 47 JavaScript e 27 fluxos no Google Chrome, com 360
+barras e troca para 2VS conferidas. Evidência em
+`MSen/tests/TESTE_ITEM_22_9.md`; o banco `games` não foi alterado. O gráfico
+histórico permanece na 22.10.
+
+#### 22.10 — Gráfico histórico por dezena
+
+- Usar `numero_do_concurso` no eixo horizontal.
+- Desenhar as linhas de intervalo mínimo, média, intervalo máximo e a faixa
+  estatística configurada, com legenda inequívoca.
+- Obter os pontos de ocorrência real diretamente de `resultados`, sem gravá-los
+  como se fossem conhecidos pela fotografia histórica.
+- Permitir filtrar dezena, tipo de evento e intervalo de concursos, ampliando
+  uma série sem sobrepor 60 curvas ilegíveis.
+- Teste: concurso 500, avanço sucessivo, pontos reais, ausência de futuro nos
+  cálculos e desempenho da consulta indexada.
+
+Estado: concluído em 2026-10-30. A página recebeu filtros de dezena, tipo de
+evento e período, limitado pela API a 5.000 concursos. Para não misturar
+unidades, a visualização foi dividida em dois gráficos sincronizados pelo eixo
+`numero_do_concurso`: evolução do intervalo mínimo, médio e máximo; e faixa
+prevista com limite inferior, previsão central, limite superior e ocorrências
+reais. As ocorrências reais são consultadas diretamente em `resultados` e não
+alteram as fotografias: presença para `SIMPLES`, segunda ocorrência consecutiva
+para `2VS` e terceira para `3VS`. Os cálculos históricos continuam contendo
+somente informações disponíveis até cada corte. Passaram 627 testes Python, 50
+JavaScript e 27 fluxos no Google Chrome. O PostgreSQL efêmero confirmou as três
+regras de ocorrência e a série filtrada. Evidência em
+`MSen/tests/TESTE_ITEM_22_10.md`; o banco `games` não foi alterado. A avaliação
+de acertos e erros permanece na 22.11.
+
+#### 22.11 — Avaliação posterior da assertividade
+
+- Manter a construção da fotografia separada da avaliação do método.
+- Cruzar previsões armazenadas com ocorrências posteriores já existentes em
+  `resultados`, sem modificar as fotografias históricas.
+- Informar total avaliável, acertos, erros, percentual de acerto, erro absoluto
+  e erro percentual; previsões sem futuro suficiente não contam como erro.
+- Definir o denominador e a regra exata do erro percentual antes da
+  implementação desta subetapa.
+- Comparar configurações somente quando usarem o mesmo período e a mesma regra
+  de evento.
+- Teste: acerto nos limites, erro abaixo/acima, final censurado e ausência de
+  alteração na base calculada.
+
+Estado: concluído em 2026-10-30. Cada fotografia é comparada com o primeiro
+evento real posterior ao seu corte, mantendo cálculo e avaliação separados.
+Limites são inclusivos. O erro absoluto é a distância entre ocorrência real e
+previsão central; o percentual divide essa distância pelo intervalo real entre
+o último evento conhecido e o próximo. Casos sem evento anterior, estatística
+completa ou próximo evento conhecido são censurados e não entram no
+denominador. A página informa avaliáveis, acertos, erros, censurados, percentual
+de acerto, erro absoluto médio e erro percentual médio, além de relatório das
+previsões abaixo ou acima da faixa. A avaliação usa a mesma geração e período da
+série selecionada, sem alterar fotografias. Passaram 629 testes Python, 50
+JavaScript e 27 fluxos no Google Chrome. O PostgreSQL efêmero confirmou série,
+regras de evento e censura final. Evidência em
+`MSen/tests/TESTE_ITEM_22_11.md`; o banco `games` não foi alterado. A 22.12
+permanece pendente de autorização específica.
+
+#### 22.12 — Regressão, desempenho e documentação
+
+- Executar testes matemáticos, banco temporário, API, JavaScript e Chrome.
+- Confirmar que carga completa e incremental produzem o mesmo resultado final.
+- Medir custo da carga histórica, acréscimo de concurso, consulta dos gráficos
+  e tamanho real das tabelas/índices.
+- Atualizar funcionamento, arquitetura, banco de dados, API, decisões,
+  funcionalidades e índice de documentação.
+- Registrar separadamente o estudo futuro de percentuais na página de
+  Distribuições.
+- Preparar commit e push somente mediante autorização específica.
+
+Estado: concluído em 2026-10-30. Passaram os validadores PostgreSQL de carga,
+incremento, troca, rollback, simulação, cancelamento, API, três eventos,
+gráficos e assertividade. A regressão final confirmou 629 testes Python, 50
+JavaScript e 27 fluxos no Google Chrome. O benchmark local com 3.069 resultados
+produziu 462.600 linhas: carga completa em 146,761 s, um concurso incremental
+em 0,189 s, três fotografias em 0,003 s e série de 2.571 pontos em 0,057 s. A
+tabela com índices ocupou 127.811.584 bytes, sendo 71.688.192 bytes de índices.
+Funcionamento, visão do projeto, modelo PostgreSQL, código Python, API, índice,
+decisões, funcionalidades e continuidade foram reconciliados. Evidência em
+`MSen/tests/TESTE_ITEM_22_12.md`. Todos os databases temporários foram removidos,
+o `games` não foi alterado e nenhum commit ou push foi executado. Etapa 22
+concluída.

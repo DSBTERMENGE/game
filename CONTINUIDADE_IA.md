@@ -1886,3 +1886,413 @@ Próxima ação exata:
   de auditoria continua vazia, aguardando planejamento/autorização posterior.
 - Próxima ação permitida: commit e push da Etapa 18-D somente com autorização
   específica do usuário, ou novo planejamento solicitado por ele.
+
+## Planejamento — 2026-10-29 — Etapa 20 consolidada
+
+- `amostras_validacao` relacionará por `id_resultado` os primeiros 200 registros
+  de `resultados`, sem repetir `res_01` a `res_06`; outras amostras poderão ser
+  acrescentadas.
+- `criterios_validacao` identificará função, nome legível, categoria, precisão,
+  assinatura automática e grupo opcional. `avaliacoes_validacao` relacionará
+  amostra/critério e guardará esperado, calculado e aprovação `S/N`.
+- Para padrões, a avaliação guardará subgrupos esperado e calculado; o relatório
+  resolverá nomes de função, grupo e subgrupo pelas tabelas relacionadas.
+- A IA ou o usuário produzirá o esperado independentemente; a função real
+  preencherá somente o calculado. Uma única pendência ou divergência bloqueia a
+  assinatura atual no Screener.
+- A sincronização incremental incluirá amostras/critérios faltantes, excluirá
+  critérios removidos com cascata e nunca recriará toda a tabela.
+- Mudança apenas da implementação preservará esperados e limpará calculados e
+  aprovações. Mudança da regra matemática invalidará também os esperados.
+- O relatório resumirá cada função e detalhará todo `N`; a IA poderá analisar a
+  causa sem alterar automaticamente referência, código ou aprovação.
+- A Etapa 20 foi dividida em 20.0 a 20.16 para manter subetapas curtas e testáveis.
+- Um modal com progresso real será implementado primeiro na validação. Sua
+  adaptação ao Screener será uma etapa posterior e exige nova autorização.
+- Próxima ação: revisar o contrato consolidado da subetapa 20.0 e obter aprovação
+  antes de qualquer DDL ou código.
+
+## Conclusão — 2026-10-29 — subetapa 20.0
+
+- O contrato conceitual foi aprovado e registrado em
+  `docs/CONTRATO_HOMOLOGACAO_FUNCOES.md`.
+- Foram fechados entidades, campos conceituais, estados, comparações,
+  sincronização incremental, relatório e trava obrigatória do Screener.
+- `SEM_CORRESPONDENCIA` foi separado de referência pendente para não usar `NULL`
+  com dois significados.
+- Evidência: `MSen/tests/TESTE_ITEM_20_0.md`.
+- Nenhum DDL, código, frontend ou banco foi alterado.
+- Próxima ação: aguardar autorização específica para a subetapa 20.1, DDL de
+  `amostras_validacao`.
+
+## Conclusão — 2026-10-29 — subetapa 20.1
+
+- Foi criada a migração `011_criar_amostras_validacao.sql` com `id_resultado`
+  como PK/FK, ordem positiva/única, estado ativo, data e `ON DELETE CASCADE`.
+- O esquema consolidado e o README do banco foram atualizados.
+- Nenhuma dezena foi duplicada; o ensaio real confirmou a leitura por
+  `INNER JOIN` com `resultados`.
+- PostgreSQL temporário aprovou aplicação isolada da 011, repetição idempotente,
+  restrições e cascata. O database efêmero foi removido e a auditoria retornou
+  `[]`.
+- Passaram 508 testes Python. Evidência: `MSen/tests/TESTE_ITEM_20_1.md`.
+- `games`, PythonAnywhere, catálogo, avaliações e carga das 200 amostras não
+  foram alterados.
+- Próxima ação: aguardar autorização específica para a subetapa 20.2, DDL do
+  catálogo e das avaliações.
+
+## Conclusão — 2026-10-29 — subetapa 20.2
+
+- A migração `012_criar_catalogo_avaliacoes_validacao.sql` criou
+  `criterios_validacao` e `avaliacoes_validacao`.
+- O catálogo relaciona funções, categorias, tipos, precisão, assinatura e grupo
+  opcional; as avaliações relacionam amostra, critério, esperado, calculado,
+  grupo, subgrupos e aprovação `NULL/S/N`.
+- PostgreSQL temporário aprovou aplicação isolada da 012, repetição idempotente,
+  avaliações numéricas, padrões, `SEM_CORRESPONDENCIA`, rejeições estruturais e
+  cascatas. O database efêmero foi removido; auditoria final `[]`.
+- Passaram 514 testes Python. Evidência: `MSen/tests/TESTE_ITEM_20_2.md`.
+- `games`, PythonAnywhere, dados, repositório, API e frontend não foram alterados.
+- Próxima ação: aguardar autorização específica para a subetapa 20.2-A, estado
+  global do algoritmo. A 20.3 permanece posterior a ela.
+
+## Planejamento documental — 2026-10-29
+
+- Foi criado `docs/INDICE_DOCUMENTACAO.md` para identificar os documentos
+  canônicos e sua precedência.
+- A Etapa 20 recebeu a subetapa 20.17, destinada a reconciliar
+  `docs/funcionamento.md`, decisões, funcionalidades, banco, APIs e contratos
+  com o comportamento realmente implementado antes do fechamento.
+- A regressão técnica passou a ser 20.16; commit e push permanecem reservados ao
+  fechamento documental e dependem de autorização específica.
+
+## Replanejamento — 2026-10-29 — importações e perfis atuais
+
+- Importar novos resultados não repete as 200 provas quando as assinaturas das
+  funções permanecem iguais.
+- A importação recalculará grandezas, classificações, incidências e perfis
+  estatísticos e geométricos atuais sobre todos os resultados válidos.
+- Os perfis operacionais atuais substituem os anteriores. Somente o backtest
+  reconstruirá valores com corte por concurso ou data.
+- A subetapa 20.2-A foi inserida para persistir o estado global do algoritmo, e
+  a 20.5-A para integrar a importação à atualização dos perfis.
+- O Screener ficará bloqueado até o estado estar atualizado e até os filtros
+  esperados coincidirem exatamente com os adaptadores carregados.
+- Próxima ação: aguardar autorização específica para a subetapa 20.2-A. Não
+  executar a 20.3 antes dela.
+
+## Conclusão — 2026-10-30 — subetapa 20.2-A
+
+- Foi criada a migração `013_criar_estado_algoritmo_selecao.sql` com a linha
+  única `estado_algoritmo_selecao`, iniciada como desatualizada.
+- A linha guarda motivo técnico, assinaturas do catálogo homologado e do
+  conjunto de resultados, quantidade considerada e datas de homologação,
+  atualização dos perfis e confirmação da cobertura.
+- O DDL rejeita segunda linha, quantidade negativa, liberação sem todas as
+  evidências, exclusão e troca de identidade da linha.
+- PostgreSQL temporário aprovou aplicação somente da 013 após 001–012,
+  repetição idempotente, liberação completa e retorno a desatualizado. O
+  database efêmero foi removido.
+- Passaram 520 testes Python. Evidência:
+  `MSen/tests/TESTE_ITEM_20_2_A.md`.
+- `games`, PythonAnywhere, dados, API, frontend e Screener não foram alterados.
+- Próxima ação: aguardar autorização específica para a subetapa 20.3, aplicação
+  local controlada das migrações 011, 012 e 013.
+
+## Conclusão — 2026-10-30 — subetapa 20.3
+
+- Antes da alteração foi criado o backup customizado
+  `games_pre_validacao_20_3_20261030_034347.dump`, com 241.429 bytes e SHA-256
+  `8FB22487F55AD1EF39A19C0039B81E877713094184DDA5D5EA78074BF390DF51`.
+- O `games` possuía 001–010; a primeira execução aplicou somente 011, 012 e 013,
+  e a repetição não aplicou nenhuma migração.
+- Foram preservados 3.069 resultados, 3 grupos, 9 subgrupos e 1.289
+  classificações de padrões.
+- `amostras_validacao`, `criterios_validacao` e `avaliacoes_validacao` ficaram
+  vazias. `estado_algoritmo_selecao` possui somente a linha inicial bloqueada.
+- Passaram 520 testes Python. Evidência: `MSen/tests/TESTE_ITEM_20_3.md`.
+- PythonAnywhere, API, frontend, amostras e critérios não foram alterados.
+- Próxima ação: aguardar autorização específica para a subetapa 20.4,
+  repositório das amostras e avaliações.
+
+## Conclusão — 2026-10-30 — subetapa 20.4
+
+- Foi criado `RepositorioValidacao` para incluir, consultar e desativar amostras
+  e sincronizar avaliações pendentes incrementalmente.
+- A inclusão de uma amostra cria avaliações para os critérios ativos. A
+  sincronização geral cria apenas os pares faltantes de amostras e critérios
+  ativos por `ON CONFLICT DO NOTHING`.
+- A consulta resolve as seis dezenas, função, grupo e subgrupos com códigos e
+  nomes por `JOIN`, sem duplicar esses dados nas tabelas de validação.
+- PostgreSQL temporário confirmou idempotência, preservação do esperado,
+  desativação sem exclusão e inclusão de critério somente nas amostras ativas.
+- Passaram 526 testes Python. Evidência: `MSen/tests/TESTE_ITEM_20_4.md`.
+- O `games` permanece sem amostras, critérios ou avaliações; API, frontend e
+  PythonAnywhere não foram alterados.
+- Próxima ação: aguardar autorização específica para a subetapa 20.5, registro
+  único e sincronização dos critérios.
+
+## Conclusão — 2026-10-30 — subetapa 20.5
+
+- Foi criado o registro único com 19 critérios executáveis: 4 estatísticos, 6
+  geométricos e 9 detectores de padrões.
+- `assinatura_funcao` usa o código-fonte da função e dependências declaradas. A
+  migração 014 criou `assinatura_regra` para separar significado matemático de
+  implementação.
+- Mudança apenas da implementação preserva o esperado e limpa o calculado;
+  mudança de regra limpa ambos; mudança estrutural exige novo código estável.
+- Exclusão só ocorre com confirmação explícita e a repetição é idempotente.
+- Backup local: `games_pre_registro_criterios_20_5_20261030_035349.dump`,
+  264.601 bytes, SHA-256
+  `918D32E4E91EA33F71495BA6C1FAF327813441BD5A842ACF7D93877924C45740`.
+- Somente a 014 foi aplicada ao `games`; 19 critérios ficaram pendentes, zero
+  avaliações foram criadas e o algoritmo permanece desatualizado.
+- Passaram 531 testes Python. Evidência: `MSen/tests/TESTE_ITEM_20_5.md`.
+- Próxima ação: aguardar autorização específica para a subetapa 20.5-A,
+  atualização dos perfis atuais após importação.
+
+## Conclusão — 2026-10-30 — subetapa 20.5-A
+
+- A migração 015 criou `perfis_operacionais_atuais`, sem versões históricas,
+  para quatro grandezas estatísticas e seis geométricas.
+- Importações com novos resultados persistem primeiro o bloqueio e depois
+  reconciliam derivados, nove incidências, classificação sequencial, análises
+  geométricas e os dez perfis atuais.
+- O estado global guarda quantidade e assinatura SHA-256 do conjunto usado; as
+  avaliações de homologação não são refeitas nem alteradas.
+- PostgreSQL temporário confirmou atualização de três para quatro resultados e
+  preservação de uma avaliação aprovada.
+- Backup local: `games_pre_perfis_20_5a_20261030_040121.dump`, 267.404 bytes,
+  SHA-256 `19A0BDE10AC8D4E83B089835A15D3BB0B6B619F893BD28FAA4C586A8D1290D4B`.
+- Somente a 015 foi aplicada ao `games`; dez perfis e nove padrões usam os 3.069
+  resultados. O algoritmo continua bloqueado por homologação/cobertura pendente.
+- Passaram 533 testes Python. Evidência: `MSen/tests/TESTE_ITEM_20_5_A.md`.
+- Próxima ação: aguardar autorização específica para a subetapa 20.6, carga das
+  200 amostras iniciais.
+
+## Conclusão — 2026-10-30 — subetapa 20.6
+
+- Foi criado o carregador idempotente dos primeiros 200 resultados por
+  `numero_ap`, com validação das posições existentes e preservação de amostras
+  adicionais.
+- PostgreSQL temporário confirmou 200 amostras, 3.800 avaliações pendentes,
+  dezenas obtidas por `JOIN` e repetição sem alteração.
+- Backup local: `games_pre_amostras_20_6_20261030_040513.dump`, 271.325 bytes,
+  SHA-256 `43751385F36F41A0DBAAEE405CC5D766200836503AD67B948783E4E4961F68DD`.
+- O `games` possui agora os concursos 1–200 como amostras e 3.800 avaliações
+  totalmente pendentes. Nenhuma dezena foi duplicada.
+- O algoritmo permanece desatualizado com motivo
+  `AMOSTRAS_AGUARDANDO_REFERENCIAS_E_CALCULOS`.
+- Passaram 533 testes Python. Evidência: `MSen/tests/TESTE_ITEM_20_6.md`.
+- Próxima ação: aguardar autorização específica para a subetapa 20.7,
+  construção e aprovação dos valores de referência.
+
+## Conclusão — 2026-10-30 — subetapa 20.7
+
+- A migração 016 criou estados para valor numérico presente/ausente e metadados
+  obrigatórios de origem, revisor e data da referência.
+- O serviço rejeita sobrescrita de referência conferida e padrão incompatível
+  com o detector específico.
+- Backup pré-migração: `games_pre_referencias_20_7_20261030_041037.dump`,
+  SHA-256 `60E520113CD5962C4FC026B6566B1530A3F1022D20AF63AA7389CDAB4DC653B2`.
+- Um oráculo separado, sem importar funções aferidas, conferiu 800 referências
+  estatísticas e 1.800 de padrões.
+- Backup pré-carga parcial: `games_pre_gabarito_parcial_20_7_20261030_041205.dump`,
+  SHA-256 `3865F98AD3E240DF38250F72FD55B8E00974AEDB52EDCA0F3E0001AE9A188666`.
+- Com autorização do usuário, Shapely 2.2.0/GEOS foi instalado como dependência
+  de desenvolvimento/teste e produziu 1.200 referências geométricas sem chamar
+  as funções geométricas de produção.
+- Backup pré-carga geométrica:
+  `games_pre_gabarito_geometrico_20_7_20261030_042817.dump`, SHA-256
+  `BCECF35A18771BD07D20C3DDE860895C46A7741940A40F18D176F391798FCC43`.
+- O `games` contém 3.800 referências conferidas: 800 estatísticas, 1.200
+  geométricas e 1.800 de padrões; zero pendentes, sem valor ou metadados
+  inválidos.
+- Passaram 541 testes Python. Evidência: `MSen/tests/TESTE_ITEM_20_7.md`.
+- A 20.7 está concluída. Próxima ação: aguardar autorização específica para a
+  20.8; o algoritmo continua desatualizado até executar e comparar as funções
+  reais.
+
+## Conclusão — 2026-10-30 — subetapa 20.8
+
+- Foi criado executor transacional de critérios numéricos, com validação de
+  catálogo, assinatura da função e referências conferidas.
+- As funções reais de soma, média, mediana e desvio-padrão foram executadas nas
+  200 amostras: 800 aprovações e zero reprovações.
+- O hash dos campos protegidos das referências permaneceu
+  `8983C2BAB7252C7031F271A60323C41E9664CD3F5AB739BB57E9E5B375844228`
+  antes e depois.
+- Backup: `games_pre_execucao_estatistica_20_8_20261030_043252.dump`, SHA-256
+  `41E9DDB9098805F5E868765EE32DD8B666D471B1A4EBAF4DB83E01367689A794`.
+- Os quatro critérios estatísticos estão `APROVADO`. O algoritmo geral continua
+  desatualizado porque geometria e padrões permanecem sem execução.
+- Passaram 545 testes Python. Evidência: `MSen/tests/TESTE_ITEM_20_8.md`.
+- Próxima ação: aguardar autorização específica para a subetapa 20.9.
+
+## Conclusão — 2026-10-30 — subetapa 20.9
+
+- O executor adapta a entrada por família: modelo completo para estatística e
+  tupla das seis dezenas para geometria.
+- A comparação decimal usa a precisão registrada e `ROUND_HALF_UP`, preservando
+  o valor bruto calculado. Isso eliminou falsos `N` causados somente por dígitos
+  além das 12 casas contratadas.
+- As seis funções geométricas foram executadas nas 200 amostras: 1.200
+  aprovações e zero reprovações.
+- O hash protegido das referências permaneceu
+  `9C5D2D23E917E1579D33F64B58FDD8E7B62AC25132A9BA1BE2CA9DE3E3F3544C`.
+- Backup anterior à execução final:
+  `games_pre_execucao_geometrica_20_9_20261030_043559.dump`, SHA-256
+  `5C807FEC715552124DB0683DB16A301FC54858609C0B576F44D55D91468EC8F7`.
+- Os seis critérios geométricos estão `APROVADO`. O algoritmo continua
+  desatualizado porque os padrões ainda não foram executados.
+- Passaram 547 testes Python. Evidência: `MSen/tests/TESTE_ITEM_20_9.md`.
+- Próxima ação: aguardar autorização específica para a subetapa 20.10.
+
+## Conclusão — 2026-10-30 — subetapa 20.10
+
+- Foi criado executor transacional para os nove detectores de padrões, com
+  validação de catálogo, assinatura, grupo e referência.
+- Cada booleano é traduzido para `PADRAO_IDENTIFICADO` com o `id_padrao`
+  correspondente ou `SEM_CORRESPONDENCIA` com identificador nulo.
+- Os nove detectores foram executados nas 200 amostras: 1.800 aprovações e zero
+  reprovações.
+- O hash protegido das referências permaneceu
+  `B19954D3BC47CE3F2C75B0F44B422F336358C4F22CC09CFFD7658316D2543A70`.
+- Backup anterior à execução final:
+  `games_pre_execucao_padroes_20_10_20261030_043938.dump`, SHA-256
+  `7EACB1E1833B805C1C8889D768357DCF3A6740EA8DFC28B4410544BAA9B7F74E`.
+- Todos os 19 critérios e as 3.800 avaliações estão aprovados. O algoritmo geral
+  continua desatualizado até a reconciliação e liberação das próximas etapas.
+- Passaram 549 testes Python. Evidência: `MSen/tests/TESTE_ITEM_20_10.md`.
+- Próxima ação: aguardar autorização específica para a subetapa 20.11.
+
+## Conclusão — 2026-10-30 — subetapa 20.11
+
+- O motor `atualizar_validacao_e_auditoria` integra sincronização, criação de
+  pares faltantes, execução das três categorias e consolidação.
+- Critérios com referência pendente ficam bloqueados sem fabricar gabarito e sem
+  impedir o recálculo dos critérios completos.
+- No `games`, a sincronização não encontrou alterações e o motor confirmou 19
+  critérios e 3.800 avaliações aprovadas.
+- O hash protegido permaneceu
+  `2F87E7336BCEC9146DF36B165A599A11CAF7FE82EB22146438339A53C6FDED2E`.
+- Backup: `games_pre_motor_validacao_20_11_20261030_044222.dump`, SHA-256
+  `56C0837DED77EA89A1FC6F2926B7385D6C7727A459488B2B459A0D2CC7B9C638`.
+- Testes transacionais com rollback provaram que uma única divergência gera
+  `REPROVADO` e uma única referência ausente gera `PENDENTE`; o banco foi
+  restaurado a 3.800 `S` e 19 critérios aprovados.
+- A homologação está concluída, mas o algoritmo global permanece desatualizado
+  com `HOMOLOGACAO_CONCLUIDA_AGUARDANDO_COBERTURA`.
+- Passaram 550 testes Python. Evidência: `MSen/tests/TESTE_ITEM_20_11.md`.
+- Próxima ação: aguardar autorização específica para a subetapa 20.12.
+
+## Conclusão — 2026-10-30 — subetapa 20.12
+
+- Foi criado gerenciador assíncrono em memória com identificador, trava contra
+  execução dupla, progresso real, duração, resultado e erro consultável.
+- A API oferece POST para iniciar e GET para acompanhar; retorna 409 para outra
+  execução simultânea e 404 para identificador inexistente.
+- O motor informa sincronização, estatística, geometria, padrões e consolidação.
+- `modal-andamento.js` é reutilizável, acessível e impede fechamento durante a
+  tarefa. Não há cancelamento enquanto não existir interrupção transacional
+  segura.
+- A página reservada recebeu apenas o botão e o modal; filtros, grade e relatório
+  continuam pertencendo à 20.13. A skill Sites orientou a preservação da
+  estrutura local e a validação em navegador, sem publicação externa.
+- Passaram 554 testes Python, 35 Node e um fluxo Chromium. Evidência:
+  `MSen/tests/TESTE_ITEM_20_12.md`.
+- Próxima ação: aguardar autorização específica para a subetapa 20.13.
+
+## Conclusão — 2026-10-30 — subetapa 20.13
+
+- `GET /api/validacao/quadro` fornece estado, resumo, filtros e avaliações com
+  paginação máxima de 100 linhas.
+- A consulta filtra categoria, função, grupo, subgrupo e situação; dezenas e
+  nomes legíveis vêm dos `JOIN`, sem duplicação.
+- A página mostra estado global, motivo, botão condicional, quatro contadores,
+  cinco filtros, grade com esperado/calculado e `S/N`, paginação e estado vazio.
+- O botão reutiliza o modal e recarrega o quadro após a execução.
+- Consulta real confirmou 3.800 aprovações, 19 critérios, 3 grupos e 9
+  subgrupos; `PAD_PD_003` em `PG_001` retornou as 200 avaliações coerentes.
+- Passaram 557 testes Python, 36 Node e dois fluxos Chromium nas larguras normal
+  e estreita. A skill Sites foi usada apenas no fluxo local; nada foi publicado.
+- Evidência: `MSen/tests/TESTE_ITEM_20_13.md`.
+- Próxima ação: aguardar autorização específica para a subetapa 20.14.
+
+## Conclusão — 2026-10-30 — subetapa 20.14
+
+- O endpoint `GET /api/validacao/relatorio` resume cada função e detalha todos
+  os `N`, incluindo dados semânticos, diferença e assinaturas.
+- A página ganhou relatório recolhível, detalhes das divergências e resumo das
+  mudanças detectadas na última atualização.
+- A hipótese da IA não modifica nenhum dado de homologação.
+- No `games`, 19 critérios fecharam 3.800 exigidas, executadas e aprovadas, sem
+  divergência ou pendência.
+- Passaram 559 testes Python, 37 Node e dois fluxos Chromium. A skill Sites foi
+  usada somente para validação local; nada foi publicado.
+- Evidência: `MSen/tests/TESTE_ITEM_20_14.md`.
+- Próxima ação: aguardar autorização específica para a subetapa 20.15.
+
+## Conclusão — 2026-10-30 — subetapa 20.15
+
+- A API exporta os 3.800 registros em JSON técnico e CSV UTF-8 seguro.
+- O conjunto real recebeu SHA-256
+  `aa4b253bedb2107535ce5ffc0ffaf43621605d63d808b87d5c53c8609bb6c8b4`;
+  o JSON reaberto preservou integralmente os dados e validou o identificador.
+- Assinaturas, precisão, origem/revisor da referência, esperado, calculado e
+  decisão fazem parte dos dois formatos.
+- Prefixos perigosos de planilha são neutralizados no CSV sem avaliação de
+  fórmulas. A página oferece os dois downloads.
+- Passaram 563 testes Python, 37 Node e dois fluxos Chromium. A skill Sites foi
+  usada apenas na validação local; nada foi publicado.
+- Evidência: `MSen/tests/TESTE_ITEM_20_15.md`.
+- Próxima ação: aguardar autorização específica para a subetapa 20.16.
+
+## Conclusão — 2026-10-30 — subetapa 20.16
+
+- Foi implementada a trava do Screener contra estado global, catálogo,
+  assinaturas, aprovações, perfis e cobertura divergentes.
+- Os calculados continuam vindo do registro único de funções Python de produção.
+- Bancos temporários confirmaram a matriz 200×19 e que resultado novo atualiza
+  os dez perfis, classificações e incidências sem refazer a homologação.
+- No `games`, 19 critérios e 10 perfis correspondem a 3.069 resultados, mas o
+  flag segue falso por `HOMOLOGACAO_CONCLUIDA_AGUARDANDO_COBERTURA`; o bloqueio
+  real retornou `ALGORITMO_DESATUALIZADO`.
+- Passaram 567 testes Python, 37 Node e todos os 20 fluxos Chromium. A skill
+  Sites orientou somente o QA local; nada foi publicado.
+- Evidência: `MSen/tests/TESTE_ITEM_20_16.md`.
+- Próxima ação: aguardar autorização específica para a subetapa 20.17.
+
+## Conclusão — 2026-10-30 — subetapa 20.17 e Etapa 20
+
+- `docs/funcionamento.md` agora descreve o fluxo vigente de resultados, perfis,
+  homologação, três famílias, auditoria e trava do Screener.
+- O plano inicial e o funcionamento anterior foram preservados como históricos
+  claramente identificados.
+- Foram atualizados plano geral, índice, visão geral, arquitetura, código Python,
+  contrato de homologação, funcionalidades e decisões.
+- Foi criado `docs/API_VALIDACAO.md` e um teste que confere caminhos, rotas,
+  tabelas e frases revogadas.
+- Passaram 571 testes Python, 37 Node e 20 fluxos Chromium.
+- Evidência: `MSen/tests/TESTE_ITEM_20_17.md`.
+- Nenhum commit ou push foi executado. A Etapa 20 está concluída; a próxima
+  ação depende de nova orientação do usuário.
+
+## Conclusão — 2026-10-30 — Etapa 22
+
+- Foi concluído o módulo `Frequência das dezenas`, com configuração assinada,
+  gerações isoladas e fotografias por concurso, dezena e evento simples/2VS/3VS.
+- A carga é integral na primeira execução ou mudança de configuração e
+  incremental quando entram somente concursos novos. Simulação, confirmação,
+  progresso, cancelamento e rollback foram validados.
+- A página `/frequencias.html` possui estado, configuração, seis gráficos atuais
+  das 60 dezenas, histórico por dezena/evento/período e relatório de
+  assertividade.
+- A avaliação usa o próximo evento real, limites inclusivos e erro percentual
+  pelo intervalo real; casos sem futuro conhecido são censurados.
+- Benchmark local com 3.069 resultados: 462.600 linhas, carga completa 146,761 s,
+  incremento de um concurso 0,189 s, três fotografias 0,003 s, série de 2.571
+  pontos 0,057 s e 127.811.584 bytes de tabela e índices.
+- O database de benchmark foi removido e o `games` não foi alterado.
+- Nenhum commit ou push foi executado. A próxima ação depende de orientação do
+  usuário.

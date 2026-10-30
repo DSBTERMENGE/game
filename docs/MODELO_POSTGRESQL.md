@@ -116,6 +116,9 @@ Essas interpretações precisam de aprovação antes do DDL.
 | `prim_oco` | `INTEGER` | sim | `numero_ap` da primeira ocorrência |
 | `ult_oco` | `INTEGER` | sim | `numero_ap` da última ocorrência |
 | `num_oco` | `INTEGER` | não | quantidade total de ocorrências |
+| `qtd_intervalos` | `INTEGER` | não | quantidade de intervalos entre ocorrências simples |
+| `intervalo_minimo` | `INTEGER` | sim | menor intervalo simples observado |
+| `intervalo_maximo` | `INTEGER` | sim | maior intervalo simples observado |
 | `media_oco` | `NUMERIC(12,6)` | sim | média dos intervalos entre ocorrências |
 | `mediana_oco` | `NUMERIC(12,6)` | sim | mediana dos intervalos entre ocorrências |
 | `desv_padrao_oco` | `NUMERIC(12,6)` | sim | desvio-padrão populacional dos intervalos |
@@ -132,6 +135,41 @@ intervalo = numero_ap_atual - numero_ap_anterior
 ```
 
 `desv_padrao_oco` usará o desvio-padrão populacional dos intervalos observados.
+
+## 2.1. Configuração do estudo de frequência
+
+`configuracao_frequencia_dezenas` mantém uma única linha ativa com concurso
+inicial, tamanho inicial, regra de evolução da janela, tipos de evento, método
+da faixa, parâmetro, unidade, arredondamento e versão do cálculo. A assinatura
+SHA-256 corresponde ao JSON canônico desses campos e é conferida novamente na
+leitura pelo código Python.
+
+A configuração inicial é `1 / 500 / INICIO_FIXO_FINAL_EXPANSIVO / TODOS`, com
+faixa de média mais ou menos um desvio-padrão e limites externos. Nenhuma unidade
+é inferida pelo valor numérico.
+
+## 2.2. Histórico materializado da frequência
+
+`geracoes_frequencia_dezenas` identifica uma construção completa ou provisória,
+preserva assinatura e JSON da configuração, assinatura e quantidade dos
+resultados de origem e impede mais de uma geração ativa. A assinatura da origem
+permite distinguir concursos novos de alterações em concursos já processados.
+
+`historico_frequencia_dezenas` usa uma linha por geração, concurso, dezena e
+tipo de evento. Guarda quantidades, estatísticas, previsão e limites exatos e
+operacionais, sem repetir as seis dezenas de `resultados`. A exclusão de uma
+geração remove somente suas fotografias por cascata.
+
+O índice `(id_geracao, dezena, tipo_evento, numero_do_concurso)` atende a série
+dos gráficos. Com 3.069 resultados, a carga real do concurso 500 ao 3.069
+produziu 462.600 linhas para os três tipos. Tabela e índices ocuparam
+127.811.584 bytes, dos quais 71.688.192 bytes em índices, no benchmark local de
+2026-10-30.
+
+A carga completa levou 146,761 s; acrescentar um concurso gerou 180 linhas em
+0,189 s. Consultar as três fotografias atuais levou 0,003 s e uma série de 2.571
+pontos com assertividade levou 0,057 s. Esses números são referência local, não
+garantia para outro equipamento ou volume.
 
 Exemplo para ocorrências da dezena 02 nas apresentações 20, 35 e 50:
 

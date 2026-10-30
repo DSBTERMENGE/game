@@ -8,7 +8,8 @@ que não fariam parte de uma instalação real.
 
 - `msen.main`: ponto de entrada da aplicação;
 - `dados`: arquivos de entrada e recursos visuais;
-- `tests`: testes automatizados com pytest;
+- `tests`: testes automatizados principalmente com `unittest` e validadores
+  PostgreSQL temporários;
 - `frontend/index.html`: ponto de entrada da interface;
 - `frontend/css`: folhas de estilo;
 - `frontend/js`: comportamento JavaScript da interface.
@@ -20,7 +21,7 @@ teste local o fluxo que será usado por uma aplicação WSGI.
 
 O Cadastro de Padrões mantém responsabilidades separadas:
 
-- `frontend/index.html`: estrutura da grade e do formulário;
+- `frontend/padroes.html`: estrutura da grade e do formulário;
 - `frontend/css/padroes.css`: janela, tabela, cabeçalho fixo e rolagem;
 - `frontend/js/padroes.js`: consumo da API e operações CRUD;
 - `msen/api/padroes.py`: validação HTTP e proteção dos campos calculados;

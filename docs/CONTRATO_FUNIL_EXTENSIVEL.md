@@ -1,5 +1,9 @@
 # Contrato extensível do funil oficial
 
+> O contrato estrutural continua válido. Afirmações intermediárias de que
+> filtros reais ainda não estavam conectados são históricas; consulte
+> `docs/funcionamento.md` para o estado executável.
+
 O Screener oficial é composto por famílias ordenadas. Cada família contém qualquer
 quantidade de filtros também ordenados. As famílias iniciais são:
 
@@ -46,9 +50,9 @@ percentuais equivalentes. O relatório exige:
 
 ## Extensibilidade
 
-O quadro futuro deverá percorrer as famílias e filtros do relatório, nunca uma
+O quadro percorre as famílias e filtros do relatório, nunca uma
 lista fixa de nomes. Códigos duplicados, ordens ambíguas, decisões sem motivo ou
 decisões atribuídas ao filtro errado são rejeitados.
 
-Nesta subetapa o contrato foi validado com avaliadores controlados. Os filtros
-estatísticos, geométricos e de padrões reais ainda não foram conectados.
+Na subetapa original, o contrato foi validado com avaliadores controlados. A
+conexão posterior dos filtros reais está descrita em `docs/funcionamento.md`.

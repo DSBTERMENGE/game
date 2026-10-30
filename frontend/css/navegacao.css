@@ -134,7 +134,7 @@
   text-decoration: none;
 }
 
-@media (max-width: 36rem) {
+@media (max-width: 50rem) {
   .barra-navegacao {
     overflow-x: auto;
   }

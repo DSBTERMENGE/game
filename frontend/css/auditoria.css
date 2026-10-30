@@ -1,18 +1,46 @@
-.auditoria-pagina {
-  display: grid;
-  grid-template-rows: auto auto;
-  align-content: start;
-  gap: 0.75rem;
-  overflow: auto;
-}
-
-.auditoria-pagina h1 { margin: 0; }
-
-.auditoria-aviso {
-  padding: 1rem;
-  border: 1px dashed #aebbc0;
-  background: #fff;
-  color: #52616a;
-}
-
-.auditoria-aviso p { margin: 0.4rem 0 0; }
+.auditoria-pagina { display: grid; grid-template-rows: auto auto auto auto minmax(0, 1fr); gap: .65rem; overflow: hidden; }
+.auditoria-cabecalho,.auditoria-resumo,.auditoria-filtros,.auditoria-relatorio,.auditoria-grade { border: 1px solid #cdd9dd; background: #fff; }
+.auditoria-cabecalho { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .7rem .85rem; }
+.auditoria-cabecalho h1 { margin: 0; font-size: 1.3rem; }
+.auditoria-cabecalho p { margin: .2rem 0 0; color: #5d6c72; font-size: .82rem; }
+.auditoria-estado-acoes { display: flex; align-items: center; justify-content: flex-end; gap: .65rem; }
+.auditoria-estado { padding: .45rem .65rem; border-radius: .3rem; font-size: .82rem; }
+.auditoria-estado--atualizado { background: #e1f5e9; color: #176238; }
+.auditoria-estado--desatualizado { background: #fff0d8; color: #805000; }
+#botao-atualizar-validacao,.auditoria-filtros button,.auditoria-paginacao button { min-height: 2.1rem; border: 1px solid #1f5f73; border-radius: .3rem; background: #1f5f73; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+#botao-atualizar-validacao { padding: .45rem .7rem; }
+button:disabled { cursor: not-allowed; opacity: .55; }
+.auditoria-resumo { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); }
+.auditoria-resumo article { padding: .5rem .75rem; border-right: 1px solid #e1e8ea; }
+.auditoria-resumo article:last-child { border-right: 0; }
+.auditoria-resumo span { display: block; color: #65747a; font-size: .75rem; }
+.auditoria-resumo strong { font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+.resumo-aprovado strong { color: #176238; }.resumo-reprovado strong { color: #9b2c2c; }.resumo-pendente strong { color: #805000; }
+.auditoria-filtros { display: grid; grid-template-columns: repeat(5,minmax(7.5rem,1fr)) auto auto; align-items: end; gap: .45rem; padding: .55rem .65rem; }
+.auditoria-filtros label { color: #52616a; font-size: .72rem; font-weight: 700; }
+.auditoria-filtros select { width: 100%; height: 2rem; margin-top: .2rem; border: 1px solid #b9c7cc; background: #fff; }
+.auditoria-filtros button { padding: .35rem .6rem; }#botao-limpar-filtros { background: #fff; color: #1f5f73; }
+.auditoria-relatorio > summary { display:flex;justify-content:space-between;gap:1rem;padding:.5rem .7rem;cursor:pointer;color:#34464d; }
+.auditoria-relatorio > summary strong { color:#176238;font-size:.78rem; }
+.auditoria-relatorio-conteudo { display:grid;gap:.55rem;max-height:18rem;overflow:auto;padding:.55rem .7rem;border-top:1px solid #dce5e8; }
+.auditoria-relatorio-conteudo > p { margin:0;color:#5d6c72;font-size:.78rem; }
+.auditoria-exportacoes { display:flex;flex-wrap:wrap;gap:.45rem; }.auditoria-exportacoes a { padding:.35rem .55rem;border:1px solid #1f5f73;border-radius:.3rem;color:#1f5f73;font-size:.76rem;font-weight:700;text-decoration:none; }.auditoria-exportacoes a:hover,.auditoria-exportacoes a:focus-visible { background:#eaf1f3; }
+.auditoria-relatorio-tabela { overflow:auto; }.auditoria-relatorio table { width:100%;border-collapse:collapse;font-size:.75rem; }
+.auditoria-relatorio th,.auditoria-relatorio td { padding:.3rem .4rem;border-bottom:1px solid #edf1f2;text-align:left;white-space:nowrap; }
+.auditoria-relatorio h2 { margin:.2rem 0;font-size:1rem; }.auditoria-relatorio section > p { margin:.3rem 0;color:#5d6c72; }
+.auditoria-divergencias { display:grid;gap:.5rem; }.auditoria-divergencia { padding:.55rem;border:1px solid #e1b8b8;background:#fff7f7; }
+.auditoria-divergencia h3 { margin:0 0 .3rem;font-size:.88rem;color:#8b2828; }.auditoria-divergencia dl { display:grid;grid-template-columns:auto 1fr;gap:.2rem .55rem;margin:0;font-size:.76rem; }
+.auditoria-divergencia dt { font-weight:700; }.auditoria-divergencia dd { margin:0;overflow-wrap:anywhere; }.auditoria-divergencia .diagnostico { margin:.45rem 0 0;padding-top:.4rem;border-top:1px solid #eccccc;font-size:.78rem; }
+.auditoria-grade { display: grid; grid-template-rows: minmax(0,1fr) auto; min-height: 0; }
+.auditoria-tabela-rolagem { position: relative; overflow: auto; min-height: 0; }
+.auditoria-grade table { width: 100%; border-collapse: collapse; font-size: .78rem; }
+.auditoria-grade th { position: sticky; top: 0; z-index: 1; padding: .45rem; background: #eaf1f3; color: #34464d; text-align: left; white-space: nowrap; }
+.auditoria-grade td { padding: .38rem .45rem; border-top: 1px solid #edf1f2; vertical-align: top; }
+.auditoria-grade tbody tr:hover { background: #f5fafb; }.auditoria-dezenas { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.auditoria-valor { min-width: 8rem; overflow-wrap: anywhere; }.auditoria-situacao { text-align: center; font-weight: 800; }
+.auditoria-situacao--s { color: #176238; }.auditoria-situacao--n { color: #9b2c2c; }.auditoria-situacao--pendente { color: #805000; }
+#auditoria-vazia { margin: 1rem; text-align: center; color: #65747a; }
+.auditoria-paginacao { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .45rem .65rem; border-top: 1px solid #dce5e8; color: #5d6c72; font-size: .78rem; }
+.auditoria-paginacao div { display: flex; align-items: center; gap: .55rem; }.auditoria-paginacao button { padding: .3rem .55rem; }
+@media (max-width:64rem) { .auditoria-filtros { grid-template-columns: repeat(3,minmax(8rem,1fr)) auto auto; } }
+@media (max-width:42rem) { .auditoria-pagina { overflow:auto;grid-template-rows:auto auto auto auto minmax(22rem,1fr); }.auditoria-cabecalho,.auditoria-estado-acoes { align-items:stretch;flex-direction:column; }.auditoria-estado-acoes { width:100%; }.auditoria-resumo { grid-template-columns:repeat(2,1fr); }.auditoria-resumo article:nth-child(2) { border-right:0; }.auditoria-filtros { grid-template-columns:repeat(2,minmax(0,1fr)); }.auditoria-paginacao { align-items:stretch;flex-direction:column; }.auditoria-paginacao div { justify-content:space-between; }.auditoria-divergencia dl { grid-template-columns:1fr; }.auditoria-divergencia dd { margin-bottom:.25rem; } }

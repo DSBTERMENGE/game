@@ -44,6 +44,12 @@ test.afterAll(async () => {
 
 
 test("Chrome serve o Screener oficial em três níveis", async ({ page }) => {
+  await page.route("**/api/validacao/relatorio", (rota) => rota.fulfill({
+    status: 200, contentType: "application/json", body: JSON.stringify({
+      fechamento: { valido: true, divergentes: 0, pendentes: 0 },
+      criterios: [{ estado: "APROVADO", estado_catalogo: "ATUAL" }],
+    }),
+  }));
   await page.goto("http://127.0.0.1:4174/screener.html");
   await expect(page.locator("h1")).toHaveText("Screener");
   await expect(page.locator(".navegacao-pagina")).toHaveText("Funil em três níveis");

@@ -1,5 +1,8 @@
 # Interface oficial do Screener
 
+> Evidência da construção da interface. Para o comportamento funcional vigente
+> e a trava de homologação, consulte `docs/funcionamento.md`.
+
 A página `screener.html` consome diretamente o formato serializado do
 quadro consolidado. Ela não contém números fictícios. Desde a subetapa 18.8, o
 botão chama `POST /api/screener/quadro` para executar exatamente 5.000

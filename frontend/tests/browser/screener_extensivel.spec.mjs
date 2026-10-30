@@ -89,6 +89,12 @@ const dados = {
 test("renderiza contrato real em blocos expansíveis e compactos", async ({ page }) => {
   let limiteRecebido;
   await page.setViewportSize({ width: 1280, height: 820 });
+  await page.route("**/api/validacao/relatorio", (rota) => rota.fulfill({
+    status: 200, contentType: "application/json", body: JSON.stringify({
+      fechamento: { valido: true, divergentes: 0, pendentes: 0 },
+      criterios: [{ estado: "APROVADO", estado_catalogo: "ATUAL" }],
+    }),
+  }));
   await page.route("**/api/screener/quadro", async (rota) => {
     limiteRecebido = rota.request().postDataJSON().limite_raridade;
     await new Promise((resolver) => setTimeout(resolver, 150));
@@ -161,6 +167,12 @@ test("renderiza contrato real em blocos expansíveis e compactos", async ({ page
 });
 
 test("falha mantém detalhes indisponíveis quando não existe execução carregada", async ({ page }) => {
+  await page.route("**/api/validacao/relatorio", (rota) => rota.fulfill({
+    status: 200, contentType: "application/json", body: JSON.stringify({
+      fechamento: { valido: true, divergentes: 0, pendentes: 0 },
+      criterios: [{ estado: "APROVADO", estado_catalogo: "ATUAL" }],
+    }),
+  }));
   await page.route("**/api/screener/quadro", (rota) => rota.fulfill({
     status: 503,
     contentType: "application/json",
@@ -175,4 +187,41 @@ test("falha mantém detalhes indisponíveis quando não existe execução carreg
   await expect(page.locator("#limite-raridade-extensivel")).toBeEnabled();
   await expect(page.locator("#botao-abrir-todos")).toBeDisabled();
   await expect(page.locator("#botao-fechar-todos")).toBeDisabled();
+});
+
+test("bloqueia o Screener e exibe a mensagem única quando a validação possui pendências", async ({ page }) => {
+  await page.route("**/api/validacao/relatorio", (rota) => rota.fulfill({
+    status: 200, contentType: "application/json", body: JSON.stringify({
+      fechamento: { valido: true, divergentes: 0, pendentes: 1 },
+      criterios: [{ estado: "PENDENTE", estado_catalogo: "REFERENCIA_PENDENTE" }],
+    }),
+  }));
+  await page.goto("http://127.0.0.1:4175/screener.html");
+  await expect(page.locator("#mensagem-extensivel")).toHaveText(
+    "Screener bloqueado: há pendências na Validação e auditoria dos critérios de seleção.",
+  );
+  await expect(page.locator("#botao-executar-extensivel")).toBeDisabled();
+});
+
+test("a mesma trava cobre critério reprovado, novo e alterado", async ({ page }) => {
+  let criterio = { estado: "REPROVADO", estado_catalogo: "ATUAL" };
+  let divergentes = 1;
+  await page.route("**/api/validacao/relatorio", (rota) => rota.fulfill({
+    status: 200, contentType: "application/json", body: JSON.stringify({
+      fechamento: { valido: true, divergentes, pendentes: 0 }, criterios: [criterio],
+    }),
+  }));
+  for (const caso of [
+    { estado: "REPROVADO", estado_catalogo: "ATUAL", n: 1 },
+    { estado: "PENDENTE", estado_catalogo: "NOVO_OU_REGRA_ALTERADA", n: 0 },
+    { estado: "PENDENTE", estado_catalogo: "IMPLEMENTACAO_ALTERADA", n: 0 },
+  ]) {
+    criterio = { estado: caso.estado, estado_catalogo: caso.estado_catalogo };
+    divergentes = caso.n;
+    await page.goto("http://127.0.0.1:4175/screener.html");
+    await expect(page.locator("#mensagem-extensivel")).toHaveText(
+      "Screener bloqueado: há pendências na Validação e auditoria dos critérios de seleção.",
+    );
+    await expect(page.locator("#botao-executar-extensivel")).toBeDisabled();
+  }
 });

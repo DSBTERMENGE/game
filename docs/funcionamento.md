@@ -1,292 +1,257 @@
-# Funcionamento planejado do programa
+# Funcionamento vigente do Game / MSen
 
-## Objetivo analítico
+Atualizado em 2026-10-30, após a subetapa 20.16.
 
-O sistema tratará cada resultado como uma observação composta por seis valores.
-Para raciocinar sobre os padrões, esses valores podem ser imaginados como
-temperaturas medidas em seis pontos de um corpo. O interesse do projeto está na
-identificação e representação de padrões, e não apenas na listagem dos dados.
+Este é o documento funcional canônico. O comportamento confirmado pelo código,
+pelas migrações e pelos testes prevalece em caso de divergência.
 
-## Formas de entrada
+## 1. Finalidade e estado atual
 
-Os dados poderão entrar de duas maneiras:
+O MSen importa e armazena resultados da Mega-Sena, calcula grandezas
+estatísticas e geométricas, classifica padrões e executa um Screener protegido
+para estudar a eliminação de combinações.
 
-1. importação de várias linhas de uma planilha Excel;
-2. inclusão ou edição individual pela interface.
+O processamento integral das 50.063.860 combinações continua bloqueado. O
+Screener opera com amostra reproduzível de 5.000 combinações e somente poderá
+usar funções integralmente homologadas e perfis atuais.
 
-As duas formas deverão chamar exatamente as mesmas funções de validação e
-cálculo. Não haverá uma fórmula exclusiva da planilha e outra para o formulário.
+No banco local `games`, em 2026-10-30:
 
-A API de inclusão e edição individual já usa esse fluxo comum nas rotas
-`POST /api/resultados` e `PUT /api/resultados/<numero_ap>`. Os campos derivados
-nunca são aceitos como fonte: são recalculados pelo servidor antes da gravação.
+- existem 3.069 resultados;
+- a matriz de validação possui 200 amostras × 19 critérios = 3.800 provas;
+- as 3.800 provas estão aprovadas;
+- existem dez perfis operacionais atuais;
+- o estado global permanece desatualizado por
+  `HOMOLOGACAO_CONCLUIDA_AGUARDANDO_COBERTURA`;
+- consequentemente, o Screener real recusa a execução até a liberação
+  controlada da cobertura.
 
-## Processamento de uma linha
-
-Para cada linha, o programa deverá:
-
-1. receber data, número da apresentação e seis resultados;
-2. validar os campos de entrada;
-3. calcular soma, média aritmética, mediana e desvio-padrão em relação à média;
-4. gravar valores originais e calculados na mesma transação;
-5. se a linha estiver sendo editada, substituir os cálculos anteriores pelos
-   valores recalculados;
-6. confirmar a operação somente se todas as etapas terminarem corretamente.
-
-Na importação do Excel, esse fluxo será executado em laço para cada linha. No
-formulário, será executado quando o usuário clicar em Salvar.
-
-Uma planilha atualizada poderá substituir a anterior. O importador usará o
-número da apresentação/concurso para inserir somente linhas novas, ignorar as
-idênticas e separar divergências para conferência, sem criar duplicações.
-
-A leitura e a comparação em memória já foram implementadas e testadas. A fonte
-inicial contém 3.069 concursos válidos, de 1 a 3069, sem linhas inválidas. A
-gravação desses dados depende das etapas de persistência PostgreSQL e ainda não
-deve ser considerada concluída.
-
-## Painel de comandos
-
-A interface possui controles para:
-
-- selecionar uma planilha Excel;
-- solicitar importação, cálculos e armazenamento pela API Python;
-- selecionar diretamente um resultado carregado;
-- navegar para o resultado anterior ou seguinte;
-- configurar o tempo de apresentação;
-- iniciar ou pausar o voo dos pássaros;
-- desenhar a mancha acumulada;
-- limpar o gráfico.
-
-A navegação individual é circular quando existem dois ou mais resultados.
-Com apenas um, os botões Anterior, Próximo e Voo permanecem desabilitados; com
-zero, também ficam desabilitados o seletor e a mancha. O painel informa de forma
-explícita quando nenhum resultado foi carregado e a quantidade carregada nos
-demais casos.
-
-O frontend usa `POST /api/resultados/importar` para enviar o Excel e
-`GET /api/resultados` para carregar a série. As duas rotas estão implementadas.
-A importação aceita somente `.xlsx`, limita o envio a 10 MiB, usa arquivo
-temporário descartável e devolve o relatório incremental em JSON.
-Depois de recarregar os resultados, a interface preserva o resumo com as
-quantidades inseridas, iguais, alteradas e inválidas. O fluxo completo foi
-validado num database PostgreSQL efêmero: uma segunda importação da mesma fonte
-não criou duplicidades.
-
-## Funções de cálculo por linha
-
-- soma dos seis resultados;
-- média aritmética dos seis resultados;
-- mediana dos seis resultados;
-- desvio-padrão dos seis resultados em relação à média.
-
-A definição exata do desvio-padrão, populacional ou amostral, ainda precisa ser
-confirmada. Até essa decisão, nenhuma fórmula definitiva deverá ser codificada.
-
-## Estatísticas de ocorrência
-
-Para cada número inteiro de 01 a 60, o programa deverá obter:
-
-- frequência: quantidade total de ocorrências;
-- sequência dos intervalos entre ocorrências;
-- intervalo médio entre ocorrências;
-- desvio-padrão dos intervalos.
-
-Essas funções deverão aceitar, quando a funcionalidade exigir, todo o histórico
-ou um período selecionado. A ordem temporal deverá ser definida por data e pelo
-número da apresentação, com regra explícita para eventual empate.
-
-## Cálculos da linha e cálculos históricos
-
-Soma, média, mediana e desvio-padrão pertencem a uma única linha e serão
-armazenados com ela.
-
-Frequências, intervalos, médias móveis e outros cálculos históricos dependem de
-várias linhas. Inicialmente, serão produzidos quando a consulta ou o gráfico for
-solicitado. Se futuramente forem armazenados, qualquer inclusão ou alteração
-antiga deverá recalcular todas as posições históricas afetadas.
-
-As estatísticas dos padrões são derivadas do histórico e já ficam armazenadas.
-Após importação, inclusão ou edição de resultados, o sistema recalcula
-`num_oco`, `intervalo_medio` e `desv_padrao` dos padrões implementados dentro da
-mesma transação. Nome e descrição editados pelo usuário não são sobrescritos
-pelo recálculo.
-
-## Cadastro visual de padrões
-
-O botão **Cadastro de Padrões** abre uma grade sobre a tela principal. A grade
-possui cabeçalho fixo, rolagem vertical e horizontal e mantém vários registros
-visíveis para comparação. Nome e descrição são editáveis diretamente na linha;
-código, ocorrências, intervalo médio, desvio-padrão e situação da função Python
-são somente para leitura. Inclusão usa o formulário acima da grade e exclusão
-exige confirmação.
-
-## Gráfico de um resultado
-
-A interface possui uma grade de números de 01 a 60. Para apresentar um único
-resultado:
-
-- cada número ocorrido receberá um círculo sobreposto;
-- a cor inicial será verde-claro;
-- a marca deverá permitir que o número continue legível;
-- tamanho, opacidade, borda e cor deverão ficar configuráveis no código visual;
-- a média espacial também será marcada na escala, sem arredondamento para o
-  centro de uma dezena.
-
-### Coordenadas da matriz
-
-O centro da dezena `01` é a origem `(0; 0)`. Cada avanço até o centro da célula
-seguinte acrescenta uma unidade no eixo correspondente. O eixo horizontal
-cresce para a direita e o vertical cresce para baixo.
+## 2. Arquitetura executável
 
 ```text
-01 = (0; 0)     10 = (9; 0)
-11 = (0; 1)     20 = (9; 1)
-21 = (0; 2)     30 = (9; 2)
-31 = (0; 3)     40 = (9; 3)
-41 = (0; 4)     50 = (9; 4)
-51 = (0; 5)     60 = (9; 5)
+frontend HTML/CSS/JavaScript
+             |
+             v
+API Flask em MSen/src/msen/api
+             |
+             v
+serviços, cálculos, geometria, padrões, validação e screener
+             |
+             v
+PostgreSQL (database games)
 ```
 
-Para uma dezena inteira `n` entre 1 e 60:
+O frontend não acessa o banco diretamente. HTML fica em `frontend/`, CSS em
+`frontend/css/` e JavaScript em `frontend/js/`. O backend fica em
+`MSen/src/msen/`. O esquema consolidado está em `database/schema_postgresql.sql`
+e as alterações incrementais em `database/migrations/`.
 
-```text
-x = (n - 1) módulo 10
-y = parte inteira de ((n - 1) / 10)
-```
+## 3. Entrada e atualização de resultados
 
-Para um resultado com seis dezenas, a coordenada média será o centro geométrico
-dos seis pontos:
+Resultados entram por planilha `.xlsx` ou inclusão/edição individual. Todos
+passam pelas mesmas validações e funções Python. O servidor recebe concurso,
+data e seis dezenas; campos derivados nunca são aceitos como fonte externa.
 
-```text
-media_x = (x1 + x2 + x3 + x4 + x5 + x6) / 6
-media_y = (y1 + y2 + y3 + y4 + y5 + y6) / 6
-```
+Para cada resultado, o sistema calcula e persiste:
 
-As coordenadas normalmente serão decimais. Um ponto como `(2; 4,33)` deverá ser
-desenhado exatamente entre os centros das células, e não arredondado para uma
-dezena. No banco e nos cálculos será utilizado ponto decimal; a interface poderá
-apresentar vírgula conforme o idioma.
+- soma;
+- média aritmética;
+- mediana;
+- desvio-padrão populacional;
+- coordenada média;
+- análise geométrica, incluindo extensão aberta, perímetro fechado, regiões,
+  área e centro de gravidade;
+- ocorrências e classificações de padrões implementados.
 
-Para converter a coordenada lógica em posição na tela, o JavaScript medirá o
-centro real de `01`, a distância horizontal entre centros consecutivos e a
-distância vertical entre linhas:
+A importação é incremental: insere concursos novos, reconhece linhas iguais e
+separa divergências sem sobrescrever silenciosamente o histórico.
 
-```text
-pixel_x = centro_01_x + media_x * passo_horizontal
-pixel_y = centro_01_y + media_y * passo_vertical
-```
+Depois de uma mudança nos resultados, o sistema marca o algoritmo como
+desatualizado e recalcula os resumos operacionais sobre todos os resultados
+válidos. A chegada de um concurso novo não torna uma função matemática
+incorreta e não refaz as 200 provas se assinatura, regra e precisão não mudaram.
 
-Assim, a posição continuará correta se o tamanho das células ou o espaço entre
-elas mudar no CSS.
+Somente backtests futuros usarão corte por concurso ou data; os perfis correntes
+sempre representam todo o conjunto disponível.
 
-Essa geometria foi validada automaticamente para os quatro cantos da matriz,
-uma média inteira e o ponto decimal `(2; 4,33)`. Ao redimensionar a janela, a
-camada SVG e todas as marcas do resultado selecionado são recalculadas a partir
-dos novos centros. A marca verde usa transparência e não captura eventos do
-mouse, mantendo os números legíveis e os controles acessíveis.
+## 4. Padrões e classificação histórica
 
-### Modos de apresentação
+`padroes_grupo` guarda os grupos e `padroes_subgrupo` os padrões. Um padrão
+pertence a um grupo e seu código possui função Python registrada para se tornar
+executável. Cadastrar apenas nome e descrição não cria uma função.
 
-- `animação`: mostrar as seis dezenas e a média espacial de um resultado,
-  aguardar 0,5 segundo, limpar as marcas e avançar para o próximo;
-- `mancha`: avançar pelos resultados sem apagar as marcas anteriores, formando
-  uma composição acumulada.
+`resultado_classificacao_padrao` registra somente ocorrências reais de padrões.
+Desde a migração 010, a classificação histórica não grava uma linha artificial
+`SEM_CORRESPONDENCIA`.
 
-No voo, o intervalo pode variar entre 0,1 e 30 segundos e uma alteração passa a
-valer no passo seguinte. A pausa cancela o único temporizador ativo. O avanço é
-circular e, se a janela for redimensionada durante a animação, o resultado atual
-é redesenhado imediatamente sem interromper nem duplicar o temporizador.
+Isso não deve ser confundido com a matriz de validação. Nela,
+`SEM_CORRESPONDENCIA` é um estado legítimo do resultado esperado ou calculado:
+significa que o classificador foi executado corretamente e não identificou
+nenhum subgrupo naquela combinação.
 
-## Gráfico acumulado de todos os resultados
+As incidências usam as ocorrências reais e o total de sorteios. O Screener
+seleciona padrões aprovados cuja incidência seja estritamente menor que o limite
+configurado; o valor inicial configurado é 10%.
 
-Para representar o histórico completo:
+## 5. Três famílias do Screener
 
-- cada ocorrência adicionará um pequeno círculo dentro do retângulo do número;
-- o diâmetro inicial sugerido é de aproximadamente 3 mm;
-- os círculos serão posicionados lado a lado;
-- quando a largura disponível terminar, o preenchimento continuará na linha
-  seguinte, voltando ao início do retângulo;
-- o conjunto deverá formar uma mancha visual cuja densidade indique frequência;
-- a mesma abordagem será aplicada às médias.
+### 5.1 Estatística
 
-Quando a quantidade de círculos ultrapassa a capacidade da célula, o
-preenchimento retorna ao primeiro ponto e continua sobrepondo novos ciclos. A
-opacidade faz a sobreposição aumentar a densidade visual sem alterar o tamanho
-da grade. Cada resultado também produz uma pequena marca em sua coordenada média.
-O fluxo foi validado com 3.000 resultados, 18.000 marcas de dezenas e 3.000
-marcas de média.
+Soma, média, mediana e desvio-padrão possuem critérios de homologação. No
+funil, soma e média formam uma decisão única porque `média = soma / 6`; mediana
+e desvio formam decisões próprias. As faixas operacionais usam média e
+desvio-padrão dos 3.069 resultados atuais.
 
-## Organização das funções Python
+### 5.2 Geometria
 
-As responsabilidades serão separadas, conceitualmente, em:
+Extensão, perímetro, quantidade de regiões, área e coordenadas X/Y do centro
+de gravidade são homologadas separadamente. No funil, X e Y compõem uma única
+decisão de centro. As funções de produção usam a implementação interna; Shapely
+foi usado somente como oráculo independente para produzir e conferir
+referências de teste.
 
-```text
-ler_planilha
-validar_resultado
-calcular_estatisticas_da_linha
-salvar_resultado
-calcular_frequencias
-calcular_intervalos
-calcular_media_movel
-preparar_dados_do_grafico
-```
+### 5.3 Padrões
 
-Os nomes definitivos poderão mudar, mas importação, cálculos, persistência e
-representação visual não deverão ser misturados numa única função.
+Os nove padrões atuais, distribuídos em três grupos, são todos validados. Na
+execução do Screener, entram somente os padrões homologados selecionados pela
+consulta de raridade vigente. Uma combinação que corresponda a um desses
+padrões é eliminada; padrão não selecionado não elimina.
 
-## Grupos de padrões e navegação
+## 6. Homologação matemática
 
-Os padrões são organizados em grupos conceituais. Cada padrão pertence a um
-único grupo e conserva sua própria função detectora e suas estatísticas. Um
-grupo com padrões associados não pode ser excluído.
+As tabelas são:
 
-A aplicação possui páginas separadas para Painel, visão geral de Cadastros,
-Grupos de padrões e Padrões. Uma barra horizontal única oferece Voltar, Painel e
-submenu Cadastros. As grades mantêm cabeçalhos fixos e suas próprias rolagens,
-evitando consumir espaço vertical ou alargar a página.
+- `amostras_validacao`: relaciona as 200 combinações com `resultados` sem
+  duplicar as dezenas;
+- `criterios_validacao`: catálogo das funções, categorias, precisões e
+  assinaturas;
+- `avaliacoes_validacao`: um par amostra/critério com esperado, calculado,
+  assinatura executada, diferença e `S`, `N` ou pendente.
 
-Na página de padrões, o grupo é obrigatório na inclusão, pode ser alterado na
-edição e também funciona como filtro. Código e estatísticas permanecem somente
-para leitura.
+O esperado é produzido independentemente da função testada e registra origem,
+revisor e data. O calculado sempre vem da função real resolvida por
+`criar_registro_criterios_producao()`.
 
-## Padrões de dezenas na mesma linha
+Comparação:
 
-A matriz de 01 a 60 possui seis linhas de dez dezenas. Para cada resultado, o
-sistema conta quantas dezenas ocupam cada linha e usa a maior ocupação para uma
-classificação exclusiva, sem exigir que as dezenas sejam consecutivas:
+- inteiro: igualdade exata;
+- decimal: arredondamento na precisão contratada;
+- padrão: igualdade do estado e, quando identificado, do subgrupo;
+- referência ausente ou execução incompleta: pendente;
+- igualdade: `S`;
+- divergência: `N`.
 
-- `PD_007`: a maior ocupação é exatamente duas dezenas;
-- `PD_008`: a maior ocupação é exatamente três dezenas;
-- `PD_009`: a maior ocupação é superior a três dezenas.
+Uma função somente fica `APROVADO` com `S` nas 200 amostras ativas.
 
-No histórico local de 3.069 resultados, foram apuradas respectivamente 2.053,
-863 e 93 ocorrências. Cada detector está associado ao cadastro de seu padrão;
-nome e descrição podem ser revisados pelo usuário sem alterar a função Python
-nem as estatísticas calculadas.
+Sincronização do catálogo:
 
-## Desenho geométrico do resultado
+- função nova cria 200 avaliações pendentes;
+- mudança apenas da implementação preserva esperados e limpa calculados;
+- mudança de regra, tipo, precisão, grupo ou significado invalida também os
+  esperados;
+- exclusão deliberada remove as avaliações dependentes por cascata;
+- toda mudança bloqueia o Screener até nova reconciliação.
 
-Ao selecionar um resultado, as dezenas são ordenadas crescentemente e seus
-centros são unidos por uma linha verde. Um segmento tracejado fecha a figura.
-Cada centro recebe um ponto de aproximadamente 2 mm, e as regiões delimitadas
-por cruzamentos são preenchidas com transparência. Média espacial e centro de
-gravidade usam marcas diferentes.
+## 7. Perfis operacionais atuais
 
-O cabeçalho informa extensão aberta, perímetro fechado, área total e quantidade
-de regiões. Todos os elementos usam coordenadas lógicas da matriz e são
-reposicionados quando o tamanho da janela muda. Cores e demais preferências
-visuais são configuráveis pelo botão `Aparência`. O diálogo sobreposto permite
-alterar cores, espessura, diâmetro, transparência e visibilidade sem consumir
-espaço permanente do painel. As escolhas ficam memorizadas no navegador e
-podem ser restauradas aos padrões.
+`perfis_operacionais_atuais` possui dez linhas substituíveis: quatro grandezas
+estatísticas e seis geométricas. Cada linha guarda quantidade total,
+presentes/ausentes, média, desvio-padrão populacional, mínimo, máximo e data.
 
-Para não transportar a geometria de todos os 3.069 concursos a cada abertura,
-o painel carrega inicialmente apenas os dados numéricos. A geometria detalhada
-do concurso selecionado é solicitada sob demanda e guardada na sessão do
-navegador. A mancha continua usando a lista completa de resultados numéricos.
+`estado_algoritmo_selecao` é uma linha única com o flag global, motivo,
+quantidade e assinatura SHA-256 do conjunto de resultados, assinatura do
+catálogo homologado e datas de atualização/cobertura.
 
-No histórico atual, a área média é 9,577784 e a mediana 8,722222. Foram
-encontrados 729 resultados com uma região, 1.221 com duas, 872 com três e 247
-com quatro. Esses valores são descritivos; ainda não constituem regras de
-exclusão do futuro screener.
+## 8. Trava do Screener
+
+Antes de construir o plano executável, o Screener exige:
+
+1. estado global atualizado;
+2. catálogo ativo idêntico ao registro Python de produção;
+3. assinaturas de função e regra atuais;
+4. todas as avaliações conferidas, executadas e `S`;
+5. dez perfis calculados para a quantidade atual de resultados;
+6. todos os critérios estatísticos e geométricos cobertos;
+7. exatamente os padrões aprovados selecionados pelo limite vigente.
+
+Qualquer função nova, alterada, pendente ou com `N`, filtro ausente/extra,
+perfil antigo ou estado global falso bloqueia toda a API. Não existe aprovação
+por omissão.
+
+## 9. Página Validação e auditoria
+
+`frontend/auditoria.html` oferece:
+
+- estado global e motivo;
+- botão de atualização quando desatualizado;
+- modal com progresso real da tarefa;
+- totais, filtros e grade paginada de esperado/calculado;
+- relatório por função;
+- detalhes de cada `N` e hipótese diagnóstica não mutável;
+- exportação JSON técnica e CSV seguro.
+
+O JSON possui identificação SHA-256 reproduzível. O CSV neutraliza prefixos de
+fórmula de planilha. A IA pode sugerir uma causa para a divergência, mas não
+altera automaticamente referência, função ou aprovação.
+
+## 10. Frequência das dezenas
+
+O módulo independente de frequência preserva o que seria conhecido em cada
+corte histórico. A configuração inicial começa no concurso 1, forma a primeira
+fotografia no concurso 500 e expande o final um concurso por vez. Cada
+fotografia contém as 60 dezenas para ocorrência simples, 2VS e 3VS.
+
+`configuracao_frequencia_dezenas` guarda a configuração ativa e sua assinatura.
+`geracoes_frequencia_dezenas` isola uma construção completa e identifica a
+origem. `historico_frequencia_dezenas` guarda uma linha por geração, corte,
+dezena e tipo, sem copiar as seis dezenas de `resultados`.
+
+Atualização:
+
+- primeira carga ou mudança de configuração reconstrói uma geração;
+- concursos novos acrescentam somente novos cortes à geração ativa;
+- alteração antiga ou lacuna exige reconstrução explícita;
+- simulação usa o mesmo motor sem gravar;
+- confirmação, execução única, progresso e cancelamento seguro são obrigatórios.
+
+A página `frequencias.html` apresenta configuração gravada e calculada, estado
+da base, seis gráficos atuais das 60 dezenas e histórico filtrado por dezena,
+evento e período. Intervalos e números previstos de concursos usam gráficos
+separados para não misturar unidades.
+
+As ocorrências reais são consultadas diretamente em `resultados`. A avaliação
+considera o primeiro evento posterior ao corte, usa limites inclusivos e
+censura casos sem futuro conhecido. O erro percentual usa como denominador o
+intervalo real entre eventos, não o número absoluto do concurso. O estudo não
+ativa filtros do Screener e não promete prever sorteios aleatórios.
+
+## 11. Páginas e APIs vigentes
+
+Páginas: `index.html`, `cadastros.html`, `grupos-padroes.html`, `padroes.html`,
+`distribuicoes.html`, `screener.html`, `auditoria.html` e `frequencias.html`.
+
+Rotas centrais desta etapa:
+
+- `POST /api/screener/quadro`;
+- `GET /api/validacao/quadro`;
+- `GET /api/validacao/relatorio`;
+- `GET /api/validacao/exportacao?formato=json|csv`;
+- `POST /api/validacao/execucoes`;
+- `GET /api/validacao/execucoes/<identificador>`.
+- `GET /api/frequencias/estado`;
+- `GET /api/frequencias/fotografia-atual`;
+- `GET /api/frequencias/serie`;
+- `POST /api/frequencias/previa`;
+- `POST /api/frequencias/execucoes` e acompanhamento/cancelamento por
+  identificador.
+
+As demais APIs vigentes estão indexadas em `docs/INDICE_DOCUMENTACAO.md`.
+
+## 12. Limites atuais
+
+- processamento integral continua bloqueado;
+- PythonAnywhere continua adiado;
+- o estudo de assertividade das frequências existe, mas o backtest geral do
+  Screener ainda não foi implementado;
+- a liberação do flag global exige confirmação controlada de cobertura;
+- commit e push dependem de autorização específica.

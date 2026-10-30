@@ -34,6 +34,9 @@ class FrequenciaResultado:
     prim_oco: int | None
     ult_oco: int | None
     num_oco: int
+    qtd_intervalos: int
+    intervalo_minimo: int | None
+    intervalo_maximo: int | None
     media_oco: Decimal | None
     mediana_oco: Decimal | None
     desv_padrao_oco: Decimal | None
@@ -116,6 +119,9 @@ def _resumir_dezena(dezena: int, ocorrencias: Sequence[int]) -> FrequenciaResult
         prim_oco=ocorrencias_ordenadas[0] if ocorrencias_ordenadas else None,
         ult_oco=ocorrencias_ordenadas[-1] if ocorrencias_ordenadas else None,
         num_oco=len(ocorrencias_ordenadas),
+        qtd_intervalos=len(intervalos),
+        intervalo_minimo=min(intervalos) if intervalos else None,
+        intervalo_maximo=max(intervalos) if intervalos else None,
         media_oco=media,
         mediana_oco=mediana,
         desv_padrao_oco=desvio,

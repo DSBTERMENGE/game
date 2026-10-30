@@ -130,11 +130,11 @@ média e desvio-padrão dos três padrões.
 
 `database/padroes_repository.py` preserva o cadastro e permite que somente um
 objeto `EstatisticaPadrao` atualize os campos calculados. O serviço
-`services/padroes.py` recalcula os seis códigos aprovados dentro de uma única
+`services/padroes.py` recalcula os nove códigos aprovados dentro de uma única
 transação, sem recriar cadastros excluídos nem sobrescrever nome ou descrição
 editados pelo usuário. Importação, inclusão e edição de resultados chamam esse
 serviço na mesma transação que atualiza as frequências. O catálogo unificado em
-`padroes/catalogo.py` também permite que a API identifique os seis detectores.
+`padroes/catalogo.py` também permite que a API identifique os nove detectores.
 
 Os detectores puros de `padroes/mesma_linha.py` classificam pela maior ocupação
 entre as seis linhas, sem exigir dezenas sequenciais: exatamente duas,
@@ -155,6 +155,18 @@ carregamento seguro pelo WSGI. `MSen/wsgi.py` expõe a variável `application`
 esperada pelo servidor de produção. `GET /api/saude` confirma somente que o
 processo HTTP está respondendo; ele não consulta o PostgreSQL.
 
+## Frequência histórica das dezenas
+
+`services/configuracao_frequencia.py` valida e assina a configuração.
+`services/frequencia_historica.py` mantém o motor acumulado sem conhecimento do
+banco. `services/carga_historico_frequencia.py` coordena carga integral,
+incremental, simulação, troca de geração, progresso e cancelamento transacional.
+
+`api/frequencias.py` expõe estado, fotografias atuais, séries, prévia e tarefas
+assíncronas. A série também cruza as fotografias com ocorrências reais obtidas
+de `resultados` e calcula a assertividade sem modificar o histórico. O frontend
+mantém em módulos separados os controles, gráficos atuais e escalas históricas.
+
 # Geometria dos resultados
 
 O pacote `msen.geometria` mantém separados caminho, regiões e medidas. A
@@ -166,3 +178,18 @@ O repositório grava uma única análise por resultado com operação idempotent
 O serviço `analise_geometrica.py` coordena o cálculo individual e o recálculo
 do histórico. Inclusão, edição e importação chamam esse serviço dentro de suas
 transações, mantendo resultado e medidas derivados consistentes.
+
+## Validação, perfis e trava do Screener
+
+`validacao/registro.py` é o registro único dos 19 critérios e calcula
+assinaturas da implementação e da regra. `services/execucao_validacao.py`
+resolve os cálculos exclusivamente por esse registro.
+
+`services/sincronizacao_validacao.py`, `referencias_validacao.py`,
+`motor_validacao.py` e `perfis_operacionais.py` cuidam, respectivamente, do
+catálogo incremental, dos esperados independentes, da execução integrada e dos
+dez perfis atuais. `services/homologacao_screener.py` bloqueia o Screener quando
+estado, assinaturas, aprovações, perfis ou cobertura não reconciliam.
+
+`api/validacao.py` expõe quadro, relatório e exportação;
+`api/execucoes_validacao.py` gerencia a tarefa assíncrona e seu progresso.

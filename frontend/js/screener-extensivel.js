@@ -4,6 +4,17 @@ import { validarQuadroExtensivel } from "./screener-extensivel-contrato.js";
 const formato = new Intl.NumberFormat("pt-BR");
 const percentual = (valor) => `${String(valor).replace(".", ",")}%`;
 const CHAVE_LIMITE_RARIDADE = "msen.screener.limiteRaridade";
+export const MENSAGEM_VALIDACAO_PENDENTE = "Screener bloqueado: há pendências na Validação e auditoria dos critérios de seleção.";
+
+export function possuiPendenciasValidacao(relatorio) {
+  const fechamento = relatorio?.fechamento;
+  const criterios = relatorio?.criterios;
+  if (!fechamento || !Array.isArray(criterios) || criterios.length === 0) return true;
+  return !fechamento.valido
+    || Number(fechamento.divergentes || 0) > 0
+    || Number(fechamento.pendentes || 0) > 0
+    || criterios.some((item) => item.estado !== "APROVADO" || item.estado_catalogo !== "ATUAL");
+}
 
 function texto(seletor, valor, raiz = document) {
   raiz.querySelector(seletor).textContent = valor;
@@ -157,12 +168,25 @@ const botaoAbrirTodos = document.querySelector("#botao-abrir-todos");
 const botaoFecharTodos = document.querySelector("#botao-fechar-todos");
 const limiteRaridade = document.querySelector("#limite-raridade-extensivel");
 let detalhesDisponiveis = false;
+let bloqueadoPelaValidacao = true;
 
 function atualizarControles(processando = false) {
-  botaoExecutar.disabled = processando;
+  botaoExecutar.disabled = processando || bloqueadoPelaValidacao;
   limiteRaridade.disabled = processando;
   botaoAbrirTodos.disabled = processando || !detalhesDisponiveis;
   botaoFecharTodos.disabled = processando || !detalhesDisponiveis;
+}
+
+async function carregarEstadoValidacao() {
+  try {
+    const resposta = await fetch("/api/validacao/relatorio");
+    const dados = await resposta.json();
+    bloqueadoPelaValidacao = !resposta.ok || possuiPendenciasValidacao(dados);
+  } catch (_erro) {
+    bloqueadoPelaValidacao = true;
+  }
+  if (bloqueadoPelaValidacao) texto("#mensagem-extensivel", MENSAGEM_VALIDACAO_PENDENTE);
+  atualizarControles(false);
 }
 
 const limiteMemorizado = localStorage.getItem(CHAVE_LIMITE_RARIDADE);
@@ -172,6 +196,10 @@ if (limiteMemorizado !== null) {
 }
 
 async function executarAmostra() {
+  if (bloqueadoPelaValidacao) {
+    texto("#mensagem-extensivel", MENSAGEM_VALIDACAO_PENDENTE);
+    return;
+  }
   if (!limiteRaridade.checkValidity()) {
     limiteRaridade.reportValidity();
     texto("#mensagem-extensivel", "Informe um limite de raridade entre 0% e 100%.");
@@ -204,3 +232,4 @@ botaoFecharTodos.addEventListener("click", () => {
 });
 botaoExecutar.addEventListener("click", executarAmostra);
 atualizarControles(false);
+carregarEstadoValidacao();

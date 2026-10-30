@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Frequência das dezenas — Game Analysis</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/navegacao.css">
+    <link rel="stylesheet" href="css/modal-andamento.css">
+    <link rel="stylesheet" href="css/frequencias.css">
+  </head>
+  <body>
+    <header class="barra-navegacao">
+      <a class="marca marca--compacta" href="/" aria-label="Game Analysis">GA</a>
+      <button id="botao-voltar" class="navegacao-voltar" type="button" data-destino-voltar="/">← Voltar</button>
+      <a class="navegacao-link" href="/">Painel</a>
+      <details class="navegacao-menu">
+        <summary>Cadastros</summary>
+        <nav aria-label="Cadastros">
+          <a href="/cadastros.html">Visão geral</a>
+          <a href="/grupos-padroes.html">Grupos de padrões</a>
+          <a href="/padroes.html">Padrões</a>
+        </nav>
+      </details>
+      <a class="navegacao-link" href="/distribuicoes.html">Distribuições</a>
+      <a class="navegacao-link" href="/screener.html">Screener</a>
+      <a class="navegacao-link" href="/auditoria.html">Validação e auditoria</a>
+      <a class="navegacao-link" href="/frequencias.html" aria-current="page">Frequência das dezenas</a>
+      <strong class="navegacao-pagina">Frequência das dezenas</strong>
+    </header>
+
+    <main class="pagina-conteudo frequencias-pagina">
+      <section class="frequencias-topo" aria-labelledby="titulo-frequencias">
+        <div>
+          <h1 id="titulo-frequencias">Frequência das dezenas</h1>
+          <p id="mensagem-frequencias" role="status" aria-live="polite">Consultando o estado da base…</p>
+        </div>
+        <button id="botao-recarregar-frequencias" type="button">Recarregar estado</button>
+      </section>
+
+      <section class="frequencias-resumo" aria-label="Estado da base de frequência">
+        <output>Resultados: <strong id="resumo-resultados">—</strong></output>
+        <output>Concursos: <strong id="resumo-concursos">—</strong></output>
+        <output>Último processado: <strong id="resumo-ultimo-processado">—</strong></output>
+        <output>Linhas históricas: <strong id="resumo-linhas">—</strong></output>
+        <output>Estado: <strong id="resumo-estado">—</strong></output>
+      </section>
+
+      <div class="frequencias-configuracoes">
+        <section class="frequencias-cartao" aria-labelledby="titulo-configuracao-gravada">
+          <h2 id="titulo-configuracao-gravada">Configuração gravada</h2>
+          <dl id="configuracao-gravada" class="frequencias-lista"></dl>
+          <p id="assinatura-configuracao" class="frequencias-assinatura">Assinatura: —</p>
+        </section>
+
+        <section class="frequencias-cartao" aria-labelledby="titulo-configuracao-calculada">
+          <h2 id="titulo-configuracao-calculada">Configuração a calcular</h2>
+          <form id="form-configuracao-frequencia" class="frequencias-formulario">
+            <label>Nome
+              <input id="frequencia-nome" name="nome" type="text" required>
+            </label>
+            <label>Concurso inicial
+              <input id="frequencia-concurso-inicial" name="concurso_inicial" type="number" min="1" step="1" required>
+            </label>
+            <label>Tamanho inicial
+              <input id="frequencia-tamanho-inicial" name="tamanho_inicial" type="number" min="1" step="1" required>
+            </label>
+            <label>Eventos calculados
+              <select id="frequencia-tipo-evento" name="tipo_evento">
+                <option value="TODOS">Simples, 2VS e 3VS</option>
+                <option value="SIMPLES">Somente simples</option>
+                <option value="2VS">Somente 2VS</option>
+                <option value="3VS">Somente 3VS</option>
+              </select>
+            </label>
+            <label>Multiplicador do desvio-padrão
+              <input id="frequencia-parametro-faixa" name="parametro_faixa" type="number" min="0.000001" step="0.000001" required>
+            </label>
+            <label>Versão do cálculo
+              <input id="frequencia-versao-calculo" name="versao_calculo" type="number" min="1" step="1" required>
+            </label>
+          </form>
+          <p class="frequencias-regra">Janela: início fixo e final expansivo · faixa: média ± desvio-padrão · limites externos.</p>
+        </section>
+      </div>
+
+      <section class="frequencias-operacao" aria-labelledby="titulo-operacao-frequencia">
+        <div>
+          <h2 id="titulo-operacao-frequencia">Atualização do histórico</h2>
+          <p id="previa-frequencia">Calcule a prévia para verificar o que será processado.</p>
+        </div>
+        <label class="frequencias-check"><input id="frequencia-salvar-dados" type="checkbox" checked> Salvar dados</label>
+        <label class="frequencias-check"><input id="frequencia-reconstruir-origem" type="checkbox"> Permitir reconstrução se a origem mudou</label>
+        <button id="botao-calcular-previa-frequencia" type="button">Calcular prévia</button>
+        <button id="botao-executar-frequencia" type="button">Executar</button>
+      </section>
+
+      <section class="frequencias-graficos" aria-labelledby="titulo-graficos-frequencia">
+        <header class="frequencias-graficos-topo">
+          <div>
+            <h2 id="titulo-graficos-frequencia">Fotografia atual das 60 dezenas</h2>
+            <p id="mensagem-graficos-frequencia" role="status" aria-live="polite">Carregando fotografia atual…</p>
+          </div>
+          <label>Tipo de ocorrência
+            <select id="frequencia-tipo-grafico">
+              <option value="SIMPLES">Ocorrência simples</option>
+              <option value="2VS">Duas vezes seguidas — 2VS</option>
+              <option value="3VS">Três vezes seguidas — 3VS</option>
+            </select>
+          </label>
+          <dl class="frequencias-graficos-meta">
+            <div><dt>Concursos</dt><dd id="grafico-periodo">—</dd></div>
+            <div><dt>Intervalos</dt><dd id="grafico-intervalos">—</dd></div>
+            <div><dt>Unidade</dt><dd id="grafico-unidade">—</dd></div>
+            <div><dt>Atualizado</dt><dd id="grafico-atualizado">—</dd></div>
+          </dl>
+        </header>
+        <div id="grade-graficos-frequencia" class="grade-graficos-frequencia" tabindex="0"></div>
+      </section>
+
+      <section class="frequencias-historico" aria-labelledby="titulo-historico-frequencia">
+        <header class="frequencias-historico-topo">
+          <div>
+            <h2 id="titulo-historico-frequencia">Evolução histórica por dezena</h2>
+            <p id="mensagem-historico-frequencia" role="status" aria-live="polite">Selecione os filtros e consulte uma série.</p>
+          </div>
+          <form id="form-historico-frequencia" class="frequencias-historico-filtros">
+            <label>Dezena
+              <select id="historico-dezena"></select>
+            </label>
+            <label>Evento
+              <select id="historico-tipo-evento">
+                <option value="SIMPLES">Simples</option>
+                <option value="2VS">2VS</option>
+                <option value="3VS">3VS</option>
+              </select>
+            </label>
+            <label>Concurso inicial
+              <input id="historico-concurso-inicial" type="number" min="1" step="1" required>
+            </label>
+            <label>Concurso final
+              <input id="historico-concurso-final" type="number" min="1" step="1" required>
+            </label>
+            <button id="botao-consultar-historico" type="submit">Consultar série</button>
+          </form>
+        </header>
+        <div class="frequencias-historico-legenda" aria-label="Legenda do gráfico histórico">
+          <span><i class="legenda-minimo"></i>Mínimo</span>
+          <span><i class="legenda-media"></i>Média / previsão central</span>
+          <span><i class="legenda-maximo"></i>Máximo</span>
+          <span><i class="legenda-faixa"></i>Faixa estatística</span>
+          <span><i class="legenda-real"></i>Ocorrência real</span>
+        </div>
+        <section class="assertividade-resumo" aria-label="Resumo da assertividade">
+          <output>Avaliáveis: <strong id="assertividade-avaliaveis">—</strong></output>
+          <output>Acertos: <strong id="assertividade-acertos">—</strong></output>
+          <output>Erros: <strong id="assertividade-erros">—</strong></output>
+          <output>Censurados: <strong id="assertividade-censurados">—</strong></output>
+          <output>Acerto: <strong id="assertividade-percentual">—</strong></output>
+          <output>Erro absoluto médio: <strong id="assertividade-erro-absoluto">—</strong></output>
+          <output>Erro percentual médio: <strong id="assertividade-erro-percentual">—</strong></output>
+        </section>
+        <div id="grade-historico-frequencia" class="grade-historico-frequencia" tabindex="0"></div>
+        <details class="assertividade-relatorio">
+          <summary>Relatório das previsões que não acertaram a faixa</summary>
+          <div tabindex="0">
+            <table>
+              <thead><tr><th>Corte</th><th>Evento anterior</th><th>Faixa prevista</th><th>Ocorrência real</th><th>Situação</th><th>Erro absoluto</th><th>Erro %</th></tr></thead>
+              <tbody id="corpo-erros-assertividade"></tbody>
+            </table>
+          </div>
+          <p id="assertividade-sem-erros">Nenhuma previsão avaliável ficou fora da faixa.</p>
+        </details>
+      </section>
+    </main>
+
+    <script type="module" src="js/frequencias.js"></script>
+    <script type="module" src="js/navegacao.js"></script>
+  </body>
+</html>

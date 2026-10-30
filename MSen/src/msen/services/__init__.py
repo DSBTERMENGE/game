@@ -47,6 +47,65 @@ from .distribuicoes import (
     construir_distribuicao_visual,
 )
 from .selecao_padroes import SelecaoPadroesRaros, selecionar_padroes_raros
+from .sincronizacao_validacao import (
+    ExclusaoCriteriosNaoConfirmada,
+    ResultadoSincronizacaoCriterios,
+    sincronizar_criterios_validacao,
+)
+from .perfis_operacionais import (
+    RelatorioPerfisOperacionais,
+    atualizar_perfis_operacionais_atuais,
+    marcar_perfis_operacionais_desatualizados,
+)
+from .carga_amostras_validacao import (
+    RelatorioCargaAmostrasValidacao,
+    carregar_amostras_iniciais_validacao,
+)
+from .referencias_validacao import (
+    ErroReferenciaValidacao,
+    ReferenciaAprovada,
+    aprovar_referencia_numerica,
+    aprovar_referencia_padrao,
+)
+from .execucao_validacao import (
+    ErroExecucaoValidacao,
+    RelatorioExecucaoValidacao,
+    ResultadoExecucaoCriterio,
+    calcular_valor_criterio,
+    comparar_resultado_padrao,
+    comparar_resultado_numerico,
+    executar_criterios_padroes,
+    executar_criterios_numericos,
+)
+from .motor_validacao import RelatorioMotorValidacao, atualizar_validacao_e_auditoria
+from .configuracao_frequencia import (
+    ConfiguracaoFrequencia,
+    DivergenciaConfiguracaoFrequencia,
+    comparar_configuracoes_frequencia,
+    configuracao_frequencia_inicial,
+)
+from .frequencia_historica import (
+    ErroMotorFrequencia,
+    FotografiaFrequencia,
+    MotorFrequenciaAcumulada,
+    calcular_fotografias_acumuladas,
+)
+from .carga_historico_frequencia import (
+    ErroCargaHistoricoFrequencia,
+    OperacaoFrequenciaCancelada,
+    RelatorioCargaHistoricoFrequencia,
+    assinatura_resultados,
+    atualizar_historico_frequencia,
+)
+from .operacao_historico_frequencia import (
+    CoordenadorOperacaoFrequencia,
+    ExecucaoFrequenciaEmAndamento,
+    MENSAGEM_CONFIRMACAO,
+    PreviaOperacaoHistoricoFrequencia,
+    RelatorioSimulacaoHistoricoFrequencia,
+    preparar_operacao_historico_frequencia,
+    simular_historico_frequencia,
+)
 
 __all__ = [
     "RelatorioImportacaoBanco",
@@ -85,4 +144,46 @@ __all__ = [
     "construir_distribuicao_visual",
     "SelecaoPadroesRaros",
     "selecionar_padroes_raros",
+    "ExclusaoCriteriosNaoConfirmada",
+    "ResultadoSincronizacaoCriterios",
+    "sincronizar_criterios_validacao",
+    "RelatorioPerfisOperacionais",
+    "atualizar_perfis_operacionais_atuais",
+    "marcar_perfis_operacionais_desatualizados",
+    "RelatorioCargaAmostrasValidacao",
+    "carregar_amostras_iniciais_validacao",
+    "ErroReferenciaValidacao",
+    "ReferenciaAprovada",
+    "aprovar_referencia_numerica",
+    "aprovar_referencia_padrao",
+    "ErroExecucaoValidacao",
+    "RelatorioExecucaoValidacao",
+    "ResultadoExecucaoCriterio",
+    "calcular_valor_criterio",
+    "comparar_resultado_padrao",
+    "comparar_resultado_numerico",
+    "executar_criterios_padroes",
+    "executar_criterios_numericos",
+    "RelatorioMotorValidacao",
+    "atualizar_validacao_e_auditoria",
+    "ConfiguracaoFrequencia",
+    "DivergenciaConfiguracaoFrequencia",
+    "comparar_configuracoes_frequencia",
+    "configuracao_frequencia_inicial",
+    "ErroMotorFrequencia",
+    "FotografiaFrequencia",
+    "MotorFrequenciaAcumulada",
+    "calcular_fotografias_acumuladas",
+    "ErroCargaHistoricoFrequencia",
+    "OperacaoFrequenciaCancelada",
+    "RelatorioCargaHistoricoFrequencia",
+    "assinatura_resultados",
+    "atualizar_historico_frequencia",
+    "CoordenadorOperacaoFrequencia",
+    "ExecucaoFrequenciaEmAndamento",
+    "MENSAGEM_CONFIRMACAO",
+    "PreviaOperacaoHistoricoFrequencia",
+    "RelatorioSimulacaoHistoricoFrequencia",
+    "preparar_operacao_historico_frequencia",
+    "simular_historico_frequencia",
 ]

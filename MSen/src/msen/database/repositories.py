@@ -219,6 +219,7 @@ class RepositorioFrequencias:
         sql = """
             UPDATE frequencia_de_resultado SET
                 prim_oco = %s, ult_oco = %s, num_oco = %s,
+                qtd_intervalos = %s, intervalo_minimo = %s, intervalo_maximo = %s,
                 media_oco = %s, mediana_oco = %s, desv_padrao_oco = %s,
                 versao_calculo = %s, atualizado_em = CURRENT_TIMESTAMP
             WHERE dezena = %s
@@ -229,6 +230,8 @@ class RepositorioFrequencias:
                     for item in frequencias:
                         cursor.execute(sql, (
                             item.prim_oco, item.ult_oco, item.num_oco,
+                            item.qtd_intervalos, item.intervalo_minimo,
+                            item.intervalo_maximo,
                             item.media_oco, item.mediana_oco, item.desv_padrao_oco,
                             versao_calculo, item.dezena,
                         ))

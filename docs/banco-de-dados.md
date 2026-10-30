@@ -1,8 +1,8 @@
-# Plano do banco de dados PostgreSQL
+# HISTÓRICO — plano inicial do banco de dados PostgreSQL
 
-> O modelo revisado mais recente está em `docs/MODELO_POSTGRESQL.md`. O resumo
-> abaixo contém partes históricas e não deve ser usado para executar o DDL atual
-> antes da conclusão dos Itens 1.3 e 1.4.
+> Documento substituído. O banco `games` existe e está nas migrações 001–016.
+> Para instalação e estrutura vigentes, use `database/README.md`,
+> `database/schema_postgresql.sql` e `database/migrations/`.
 
 ## Situação atual
 

@@ -140,7 +140,7 @@ def executar() -> dict[str, object]:
             )
             catalogo = tuple(cursor.fetchall())
 
-    esperado_versoes = tuple(f"{numero:03d}" for numero in range(1, 11))
+    esperado_versoes = tuple(f"{numero:03d}" for numero in range(1, 13))
     esperado_contagens = {
         "PD_001": 1192,
         "PD_002": 92,

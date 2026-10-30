@@ -77,4 +77,7 @@ test("interface explica que cadastro não substitui função Python", async () =
   assert.match(javascript, /fetch\s*\("\/api\/screener\/quadro"/);
   assert.match(javascript, /limite_raridade/);
   assert.match(javascript, /detalhesDisponiveis/);
+  assert.match(javascript, /Screener bloqueado: há pendências na Validação e auditoria dos critérios de seleção\./);
+  assert.match(javascript, /\/api\/validacao\/relatorio/);
+  assert.match(javascript, /possuiPendenciasValidacao/);
 });
