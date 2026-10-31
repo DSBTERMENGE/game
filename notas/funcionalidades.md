@@ -174,6 +174,14 @@ continuam pendentes ou pertencem a ciclos posteriores.
   erros, censura, erro absoluto e erro percentual pelo intervalo real.
 - [x] Oferecer ajuda modal independente da API, explicando a página de cima para
   baixo, o fluxo recomendado, a finalidade do estudo e os cuidados operacionais.
+- [x] Exibir a prévia em diálogo momentâneo com situação atual, operação,
+  período, totais e gravação, exigindo `Prosseguir` antes de criar a tarefa.
+- [x] Navegar do bloco histórico para a página auxiliar e retornar ao mesmo
+  ponto, preservando dezena, evento e período sem persistência no banco.
+- [x] Abrir os gráficos históricos em página auxiliar, um por linha e em
+  largura ampliada, preservando filtros na ida e na volta ao bloco de origem.
+- [x] Alternar os gráficos históricos entre escala vertical automática e zoom
+  visual 10×, sem modificar valores e com aviso quando houver recorte.
 
 ## Fora do escopo inicial
 

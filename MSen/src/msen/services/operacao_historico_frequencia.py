@@ -37,6 +37,8 @@ class PreviaOperacaoHistoricoFrequencia:
     mensagem_confirmacao: str | None
     concurso_inicial: int
     concurso_final: int
+    quantidade_concursos: int
+    linhas_estimadas: int
     concursos_novos: tuple[int, ...]
     substitui_geracao: bool
     divergencias_configuracao: tuple[DivergenciaConfiguracaoFrequencia, ...]
@@ -152,6 +154,13 @@ def preparar_operacao_historico_frequencia(
             motivo = "Somente os concursos novos serão acrescentados."
 
     exige_confirmacao = salvar_dados and modo != "SEM_ALTERACAO"
+    quantidade_concursos = (
+        len(concursos_novos)
+        if modo == "INCREMENTAL"
+        else 0 if modo == "SEM_ALTERACAO"
+        else ultimo_concurso - primeiro_corte + 1
+    )
+    quantidade_eventos = 3 if configuracao.tipo_evento == "TODOS" else 1
     return PreviaOperacaoHistoricoFrequencia(
         modo=modo,
         salvar_dados=salvar_dados,
@@ -159,6 +168,8 @@ def preparar_operacao_historico_frequencia(
         mensagem_confirmacao=MENSAGEM_CONFIRMACAO if exige_confirmacao else None,
         concurso_inicial=primeiro_corte,
         concurso_final=ultimo_concurso,
+        quantidade_concursos=quantidade_concursos,
+        linhas_estimadas=quantidade_concursos * 60 * quantidade_eventos,
         concursos_novos=concursos_novos,
         substitui_geracao=substitui,
         divergencias_configuracao=divergencias,

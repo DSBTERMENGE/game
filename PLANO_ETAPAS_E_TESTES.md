@@ -3396,3 +3396,210 @@ e cuidados. O JavaScript da ajuda não consulta a API, permitindo orientação
 mesmo quando o banco estiver indisponível. Passaram 4 testes unitários
 específicos e 4 fluxos no Google Chrome, incluindo 1280 px e 520 px. Evidência
 em `MSen/tests/TESTE_ITEM_22_13.md`.
+
+### Etapa 22.14 — Prévia modal da atualização de frequências
+
+Objetivo: substituir a resposta textual discreta por uma confirmação modal
+momentânea, sem ocupar permanentemente a página e sem iniciar processamento
+antes da decisão explícita do usuário.
+
+#### 22.14.0 — Contrato funcional da prévia modal
+
+- `Calcular prévia` apenas consulta o servidor e abre o modal; não calcula o
+  histórico, não grava dados e não cria tarefa assíncrona.
+- O bloco `Situação atual` mostra quantidade e intervalo dos resultados,
+  último concurso processado, linhas históricas e última atualização da geração.
+  Sem geração ativa, os dois últimos dados temporais são apresentados como
+  `Não processado` e `Nunca`.
+- O bloco `O que será feito` traduz o modo técnico para uma destas situações:
+  `Primeira carga`, `Atualização incremental`, `Reconstrução por configuração`,
+  `Reconstrução por alteração da origem`, `Simulação` ou `Nenhuma alteração`.
+- O modal informa motivo, período a processar, quantidade de concursos e
+  quantidade estimada de linhas. Esses totais serão devolvidos pela API de
+  prévia; o frontend não duplicará a regra de multiplicação por dezenas e tipos
+  de evento.
+- O bloco `Gravação` informa inequivocamente `Os resultados serão gravados` ou
+  `Simulação: nenhum dado será gravado`, conforme o tick `Salvar dados` usado na
+  consulta.
+- `Cancelar` fecha o modal sem criar tarefa, executar cálculo ou gravar dados.
+- `Prosseguir` confirma a prévia exibida e inicia a operação pelo fluxo já
+  existente. Quando houver gravação, essa ação envia a confirmação explícita
+  exigida pela API; não haverá uma segunda caixa genérica de confirmação.
+- O botão separado `Executar` será removido para existir um único caminho:
+  `Calcular prévia` → conferir → `Cancelar` ou `Prosseguir`.
+- `Prosseguir` fica indisponível quando a prévia indicar `Nenhuma alteração`.
+- Alterar configuração, `Salvar dados` ou permissão de reconstrução invalida a
+  prévia anterior. A execução continuará revalidando a origem no servidor para
+  impedir uso de uma prévia tornada obsoleta.
+- Erro de validação ou indisponibilidade será mostrado dentro do modal, sem
+  iniciar o modal de progresso.
+- Após `Prosseguir`, o modal de prévia fecha e o modal de progresso existente
+  acompanha execução, cancelamento e resultado.
+
+Estado: concluído em 2026-10-31. O contrato foi reconciliado com os campos já
+existentes em `/api/frequencias/estado` e `/api/frequencias/previa`. Ficou
+definido que a última atualização é `geracao_ativa.concluida_em`, não a data de
+edição da configuração; sem geração, será exibido `Nunca`. Quantidade de
+concursos e linhas estimadas passarão a pertencer ao contrato da API para que a
+interface apenas apresente dados calculados pelo servidor. Nenhum código, API,
+banco ou comportamento da página foi alterado. Evidência em
+`MSen/tests/TESTE_ITEM_22_14_0.md`. A 22.14.1 depende de autorização específica.
+
+#### 22.14.1 — API e interface do modal de prévia
+
+- Ampliar a resposta da prévia com totais e período calculados no servidor.
+- Criar o diálogo acessível com os blocos aprovados na 22.14.0.
+- Substituir os botões separados pelo fluxo único de prévia e confirmação.
+- Integrar `Prosseguir` ao modal de andamento existente, preservando trava de
+  execução dupla, confirmação de gravação e cancelamento seguro.
+- Manter o diálogo utilizável em tela normal e estreita.
+
+Estado: concluído em 2026-10-31. O serviço de prévia passou a calcular e devolver
+`quantidade_concursos` e `linhas_estimadas`, respeitando primeira carga,
+incremento, reconstrução, ausência de alteração e a quantidade de tipos de
+evento. A página atualiza a situação antes de consultar a prévia e abre um
+diálogo com estado atual, última conclusão da geração, ação, motivo, período,
+totais e indicação inequívoca de gravação ou simulação. `Cancelar` não cria
+tarefa; `Prosseguir` é a confirmação explícita e abre o modal de andamento sem
+uma segunda caixa genérica. O botão separado `Executar` foi removido e ausência
+de alteração desabilita o prosseguimento. O servidor foi reiniciado na mesma e
+única porta 5050; a API real do `games` confirmou primeira carga de 500 a 3.069,
+2.570 concursos e 462.600 linhas sem iniciar tarefa ou gravação. Passaram 629
+testes Python, 51 de frontend, 5 fluxos Chrome e o validador PostgreSQL da
+operação. Evidência em `MSen/tests/TESTE_ITEM_22_14_1.md`. A 22.14.2 depende de
+autorização específica.
+
+#### 22.14.2 — Regressão, ajuda e documentação
+
+- Testar primeira carga, incremento, reconstruções, simulação, nenhuma
+  alteração, erro, cancelamento da prévia e confirmação de prosseguimento.
+- Confirmar que `Cancelar` e falhas da prévia não criam tarefa nem escrevem no
+  banco, e que somente uma execução pode começar.
+- Validar teclado, foco, leitura do modal e larguras normal e estreita no Chrome.
+- Atualizar a ajuda da página, funcionamento, decisões e evidência final.
+
+Estado: concluído em 2026-10-31. A ajuda passou a explicar o formulário modal,
+os dados apresentados, `Cancelar`, `Prosseguir` e o bloqueio quando não existe
+alteração. API, funcionamento, funcionalidades e decisões foram reconciliados
+com o fluxo único e com `quantidade_concursos`/`linhas_estimadas`. Os testes
+Chrome cobriram primeira carga, incremento, reconstruções por configuração e
+origem, simulação, ausência de alteração, erro dentro do modal, cancelamento,
+tecla `Esc`, foco, confirmação explícita única e larguras de 1.280 px e 520 px.
+A regressão final aprovou 629 testes Python, 51 JavaScript e 32 fluxos Chrome.
+Nenhuma carga histórica foi iniciada e nenhum dado de frequência foi gravado no
+`games`. Evidência em `MSen/tests/TESTE_ITEM_22_14_2.md`.
+
+### Etapa 22.16 — Visualização ampliada dos gráficos de frequência
+
+Objetivo: retirar da área reduzida da página principal a análise detalhada da
+evolução histórica e oferecer uma página auxiliar em que linhas, eixos e
+ocorrências possam ser examinados com clareza, sem modificar os cálculos nem os
+dados armazenados.
+
+#### 22.16.0 — Contrato visual e de navegação da página auxiliar
+
+- O bloco `Evolução histórica por dezena`, na página `Frequência das dezenas`,
+  terá o botão `Abrir gráficos`.
+- O botão abrirá uma página auxiliar denominada `Gráficos de frequência das
+  dezenas`, e não um modal sobre a página já carregada.
+- A página auxiliar terá o botão `Voltar para Frequência das dezenas`, que
+  retornará ao bloco `Evolução histórica por dezena`, e não à página de
+  Validação e auditoria.
+- A ida e a volta preservarão dezena, tipo de evento, concurso inicial e
+  concurso final. Esses valores formarão o estado de navegação; não serão
+  gravados como configuração permanente nem alterarão o banco.
+- A página auxiliar apresentará os dois gráficos históricos em linhas
+  separadas, cada um usando praticamente toda a largura disponível e altura
+  suficiente para leitura de eixos, legendas e curvas.
+- O primeiro gráfico continuará mostrando intervalo mínimo, médio e máximo. O
+  segundo continuará mostrando limite inferior, previsão central, limite
+  superior e ocorrência real. Não haverá mistura das unidades dos dois gráficos.
+- O eixo horizontal permanecerá linear e representará o número do concurso.
+  Escalas logarítmicas não fazem parte da primeira implementação; somente
+  poderão ser estudadas depois da avaliação da visualização ampliada.
+- A visualização oferecerá `Ampliação vertical 10×` e `Escala automática`.
+  A ampliação será um zoom visual do domínio vertical em torno do centro da
+  faixa exibida; não multiplicará os dados, não mudará os rótulos numéricos e
+  não alterará resultados estatísticos.
+- Se o zoom de 10× deixar parte de alguma série fora da área visível, a página
+  deverá informar o recorte e permitir o retorno imediato à escala automática;
+  não poderá aparentar que os pontos ausentes deixaram de existir.
+- A página auxiliar consultará a mesma API e a mesma geração usadas pela
+  página de frequências. Esta etapa não autoriza novo cálculo, persistência ou
+  mudança na regra matemática.
+
+Critérios de aceite das subetapas de implementação: navegação de ida e volta
+sem perda dos filtros; retorno posicionado no bloco de origem; um gráfico por
+linha; valores e unidades idênticos aos atuais; alternância entre escala
+automática e zoom vertical 10×; informação de eventual recorte; funcionamento
+em tela normal e estreita.
+
+Estado: concluído em 2026-10-31. Foi definido somente o contrato funcional e
+visual. Nenhum HTML, CSS, JavaScript, API, cálculo ou dado do banco foi alterado.
+Evidência em `MSen/tests/TESTE_ITEM_22_16_0.md`. A criação da página e da
+navegação depende de autorização específica para a 22.16.1.
+
+#### 22.16.1 — Página auxiliar e navegação
+
+- Criar a página auxiliar, o botão de abertura e o retorno ao bloco de origem.
+- Preservar os quatro filtros durante a navegação sem persistência no banco.
+
+Estado: concluído em 2026-10-31. Foi criada a página
+`graficos-frequencias.html`, acessível pelo botão `Abrir gráficos` no bloco
+histórico. Dezena, evento e concursos inicial/final seguem na URL, são exibidos
+na página auxiliar e retornam para os mesmos campos da página de frequências.
+O botão e o link de retorno apontam para a âncora
+`#evolucao-historica-dezena`. Parâmetros inválidos são rejeitados e não existe
+persistência no banco. A área dos gráficos informa explicitamente que sua
+implementação pertence à 22.16.2. Passaram 55 testes JavaScript e 9 fluxos no
+Google Chrome, incluindo larguras de 1.280 px e 520 px. Evidência em
+`MSen/tests/TESTE_ITEM_22_16_1.md`. A 22.16.2 depende de autorização específica.
+
+#### 22.16.2 — Gráficos ampliados
+
+- Apresentar um gráfico por linha, em largura total e com altura adequada.
+- Reaproveitar a API e manter valores, unidades, séries e ocorrências atuais.
+
+Estado: concluído em 2026-10-31. A página auxiliar consulta a mesma rota
+`/api/frequencias/serie` e desenha, em linhas separadas, `Evolução dos
+intervalos` e `Faixa prevista e ocorrências reais`. Cada SVG usa toda a largura
+do cartão, altura de 30 rem e `viewBox` de 1.440 por 500, com nove referências
+em cada eixo. Foram preservadas as séries, unidades, faixa estatística e
+ocorrências reais da página original. A seleção pode ser alterada e consultada
+novamente sem mudar o banco. Passaram 55 testes JavaScript e 9 fluxos no Google
+Chrome; o fluxo específico confirmou dois gráficos, altura mínima de 450 px,
+ocorrências reais e ausência de coordenadas `NaN`. Evidência em
+`MSen/tests/TESTE_ITEM_22_16_2.md`. A ampliação vertical permanece exclusiva da
+22.16.3 e depende de autorização específica.
+
+#### 22.16.3 — Escala automática e ampliação vertical 10×
+
+- Implementar a alternância de escala e a indicação de eventual recorte.
+- Validar se a ampliação melhora a separação visual sem adulterar os valores.
+
+Estado: concluído em 2026-10-31. A página auxiliar recebeu o seletor `Escala
+vertical`, com os modos `Automática` e `Ampliação 10×`. O modo ampliado mantém
+o centro do domínio automático e reduz sua amplitude a um décimo, sem
+multiplicar, substituir ou persistir valores. As séries são recortadas somente
+dentro da área de plotagem. Quando algum valor fica fora da janela, um aviso
+informa a quantidade e orienta o retorno à escala automática. A troca de escala
+redesenha os dados já consultados e não faz nova chamada à API. Passaram 57
+testes JavaScript e 9 fluxos no Google Chrome, cobrindo domínio 10×, contagem de
+recortes, aviso e restauração da escala completa. Evidência em
+`MSen/tests/TESTE_ITEM_22_16_3.md`. A 22.16.4 depende de autorização específica.
+
+#### 22.16.4 — Testes, ajuda e documentação
+
+- Cobrir navegação, preservação dos filtros, escalas e responsividade.
+- Atualizar a ajuda das páginas e a documentação do módulo.
+
+Estado: concluído em 2026-10-31. A ajuda principal passou a explicar `Abrir
+gráficos`, preservação dos filtros e escalas. A página auxiliar recebeu ajuda
+própria sobre finalidade, filtros, os dois gráficos, unidades, ampliação 10×,
+recorte, retorno e cuidados de interpretação. Funcionamento, arquitetura, API,
+decisões e funcionalidades foram reconciliados. A regressão final aprovou 629
+testes Python, 57 JavaScript e 34 fluxos no Google Chrome. A primeira tentativa
+Python usou o interpretador global sem o caminho `MSen/src` e falhou somente na
+importação do pacote; a repetição com os caminhos oficiais aprovou todos os 629
+testes. Nenhuma carga histórica foi iniciada e nenhum dado foi gravado no banco.
+Evidência em `MSen/tests/TESTE_ITEM_22_16_4.md`. Etapa 22.16 concluída.

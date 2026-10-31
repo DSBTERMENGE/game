@@ -214,16 +214,33 @@ Atualização:
 - simulação usa o mesmo motor sem gravar;
 - confirmação, execução única, progresso e cancelamento seguro são obrigatórios.
 
+O fluxo visual é único. `Calcular prévia` atualiza a situação e abre um
+diálogo com operação, motivo, período, concursos, linhas estimadas e efeito de
+gravação. `Cancelar` não cria tarefa. `Prosseguir` constitui a confirmação
+explícita e abre o acompanhamento da operação; não existe botão `Executar`
+separado. Uma prévia sem alteração mantém o prosseguimento desabilitado.
+
 A página `frequencias.html` apresenta configuração gravada e calculada, estado
 da base, seis gráficos atuais das 60 dezenas e histórico filtrado por dezena,
 evento e período. Intervalos e números previstos de concursos usam gráficos
 separados para não misturar unidades.
+
+O bloco histórico oferece `Abrir gráficos`, que leva a
+`graficos-frequencias.html` preservando dezena, evento e período. A página
+auxiliar apresenta um gráfico por linha, em largura total e maior altura, e
+retorna ao mesmo bloco com os filtros atuais. A escala vertical automática
+mostra todas as séries. A ampliação 10× reduz somente a janela visual ao redor
+do centro, sem alterar valores; eventual recorte é informado e pode ser
+desfeito imediatamente pela escala automática.
 
 O botão `Ajuda` abre um diálogo independente da API. O conteúdo acompanha a
 ordem visual da página e explica estado da base, configurações, prévia,
 gravação, reconstrução, fotografia atual, série histórica, assertividade, fluxo
 recomendado e cuidados. Assim, a orientação permanece acessível mesmo quando o
 banco ou o servidor de dados não estiver disponível.
+
+A página auxiliar também possui ajuda própria, cobrindo filtros, significado dos
+dois gráficos, unidades, escala automática, ampliação 10×, recorte e retorno.
 
 As ocorrências reais são consultadas diretamente em `resultados`. A avaliação
 considera o primeiro evento posterior ao corte, usa limites inclusivos e
@@ -234,7 +251,8 @@ ativa filtros do Screener e não promete prever sorteios aleatórios.
 ## 11. Páginas e APIs vigentes
 
 Páginas: `index.html`, `cadastros.html`, `grupos-padroes.html`, `padroes.html`,
-`distribuicoes.html`, `screener.html`, `auditoria.html` e `frequencias.html`.
+`distribuicoes.html`, `screener.html`, `auditoria.html`, `frequencias.html` e
+`graficos-frequencias.html`.
 
 Rotas centrais desta etapa:
 

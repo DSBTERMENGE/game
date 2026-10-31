@@ -1,7 +1,8 @@
-import { criarControleFrequencia, criarEstadoInicialFrequencia, descreverPreviaFrequencia } from "./frequencia-controles.js";
+import { criarEstadoInicialFrequencia } from "./frequencia-controles.js";
 import { criarModalAndamento } from "./modal-andamento.js";
 import { MEDICOES_FREQUENCIA, formatarMedicaoFrequencia, prepararBarrasFrequencia } from "./frequencia-graficos.js";
 import { caminhoHistorico, criarEscalasHistorico, dominioHistorico, poligonoFaixaHistorico } from "./frequencia-historico.js";
+import { filtrosGraficosDaUrl, urlGraficosFrequencias } from "./navegacao-graficos-frequencias.js";
 
 const CAMPOS_FIXOS = {
   regra_janela: "INICIO_FIXO_FINAL_EXPANSIVO",
@@ -38,7 +39,21 @@ const e = {
   reconstruir: document.querySelector("#frequencia-reconstruir-origem"),
   previa: document.querySelector("#previa-frequencia"),
   calcularPrevia: document.querySelector("#botao-calcular-previa-frequencia"),
-  executar: document.querySelector("#botao-executar-frequencia"),
+  dialogoPrevia: document.querySelector("#dialogo-previa-frequencia"),
+  erroPrevia: document.querySelector("#erro-previa-frequencia"),
+  previaResultados: document.querySelector("#previa-resultados"),
+  previaPeriodoDisponivel: document.querySelector("#previa-periodo-disponivel"),
+  previaUltimo: document.querySelector("#previa-ultimo-processado"),
+  previaLinhasAtuais: document.querySelector("#previa-linhas-atuais"),
+  previaAtualizacao: document.querySelector("#previa-ultima-atualizacao"),
+  previaOperacao: document.querySelector("#previa-operacao"),
+  previaMotivo: document.querySelector("#previa-motivo"),
+  previaPeriodoProcessar: document.querySelector("#previa-periodo-processar"),
+  previaQuantidadeConcursos: document.querySelector("#previa-quantidade-concursos"),
+  previaLinhasEstimadas: document.querySelector("#previa-linhas-estimadas"),
+  previaGravacaoBloco: document.querySelector("#previa-gravacao-bloco"),
+  previaGravacao: document.querySelector("#previa-gravacao"),
+  prosseguirPrevia: document.querySelector("#botao-prosseguir-previa-frequencia"),
   tipoGrafico: document.querySelector("#frequencia-tipo-grafico"),
   mensagemGraficos: document.querySelector("#mensagem-graficos-frequencia"),
   periodoGrafico: document.querySelector("#grafico-periodo"),
@@ -47,6 +62,7 @@ const e = {
   atualizadoGrafico: document.querySelector("#grafico-atualizado"),
   gradeGraficos: document.querySelector("#grade-graficos-frequencia"),
   formHistorico: document.querySelector("#form-historico-frequencia"),
+  abrirGraficosHistorico: document.querySelector("#botao-abrir-graficos-historico"),
   dezenaHistorico: document.querySelector("#historico-dezena"),
   tipoHistorico: document.querySelector("#historico-tipo-evento"),
   inicioHistorico: document.querySelector("#historico-concurso-inicial"),
@@ -66,6 +82,7 @@ const e = {
 
 let previaAtual = null;
 let solicitacaoAtual = null;
+let estadoAtual = null;
 
 async function respostaJson(resposta) {
   let dados;
@@ -114,7 +131,15 @@ function intervalo(resultados) {
   return `${resultados.concurso_inicial.toLocaleString("pt-BR")} a ${resultados.concurso_final.toLocaleString("pt-BR")}`;
 }
 
+function dataHora(texto) {
+  if (!texto) return "Nunca";
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short", timeStyle: "short",
+  }).format(new Date(texto));
+}
+
 function renderizarEstado(dados, preencher = false) {
+  estadoAtual = dados;
   const resultados = dados.resultados || {};
   const geracao = dados.geracao_ativa;
   e.resultados.textContent = Number(resultados.quantidade || 0).toLocaleString("pt-BR");
@@ -138,9 +163,11 @@ async function carregarEstado({ preencher = false } = {}) {
     renderizarEstado(dados, preencher);
     e.mensagem.textContent = "Estado da frequência carregado.";
     e.mensagem.dataset.tipo = "sucesso";
+    return dados;
   } catch (erro) {
     e.mensagem.textContent = erro.message;
     e.mensagem.dataset.tipo = "erro";
+    return null;
   }
 }
 
@@ -329,13 +356,58 @@ async function carregarHistorico() {
 async function calcularPrevia() {
   if (!e.formulario.reportValidity()) return null;
   e.previa.textContent = "Calculando prévia…";
+  const estado = await carregarEstado();
+  if (!estado) throw new Error("Não foi possível atualizar a situação atual.");
   const dados = await respostaJson(await fetch("/api/frequencias/previa", {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ configuracao: configuracaoCalculada(), salvar_dados: e.salvar.checked }),
   }));
   previaAtual = dados;
-  e.previa.textContent = descreverPreviaFrequencia(dados);
+  e.previa.textContent = "Prévia calculada. Confira o formulário aberto.";
   return dados;
+}
+
+const ROTULOS_OPERACAO = {
+  PRIMEIRA_CARGA: "Primeira carga",
+  INCREMENTAL: "Atualização incremental",
+  RECONSTRUCAO_CONFIGURACAO: "Reconstrução por configuração",
+  RECONSTRUCAO_ORIGEM: "Reconstrução por alteração da origem",
+  SEM_ALTERACAO: "Nenhuma alteração",
+};
+
+function abrirPrevia(dados) {
+  const resultados = estadoAtual?.resultados || {};
+  const geracao = estadoAtual?.geracao_ativa;
+  const simulacao = !dados.salvar_dados;
+  e.erroPrevia.hidden = true;
+  e.previaResultados.textContent = Number(resultados.quantidade || 0).toLocaleString("pt-BR");
+  e.previaPeriodoDisponivel.textContent = intervalo(resultados);
+  e.previaUltimo.textContent = geracao?.concurso_final?.toLocaleString("pt-BR") || "Não processado";
+  e.previaLinhasAtuais.textContent = Number(estadoAtual?.linhas_historicas || 0).toLocaleString("pt-BR");
+  e.previaAtualizacao.textContent = dataHora(geracao?.concluida_em);
+  const operacao = ROTULOS_OPERACAO[dados.modo] || dados.modo;
+  e.previaOperacao.textContent = simulacao && dados.modo !== "SEM_ALTERACAO"
+    ? `Simulação — ${operacao}` : operacao;
+  e.previaMotivo.textContent = dados.motivo;
+  e.previaPeriodoProcessar.textContent = dados.quantidade_concursos
+    ? `${Number(dados.concurso_inicial).toLocaleString("pt-BR")} a ${Number(dados.concurso_final).toLocaleString("pt-BR")}`
+    : "Nenhum concurso";
+  e.previaQuantidadeConcursos.textContent = Number(dados.quantidade_concursos || 0).toLocaleString("pt-BR");
+  e.previaLinhasEstimadas.textContent = Number(dados.linhas_estimadas || 0).toLocaleString("pt-BR");
+  e.previaGravacaoBloco.classList.toggle("previa-frequencia__gravacao--simulacao", simulacao);
+  e.previaGravacao.textContent = simulacao
+    ? "Simulação: nenhum dado será gravado."
+    : "Os resultados serão gravados após sua confirmação.";
+  e.prosseguirPrevia.disabled = dados.modo === "SEM_ALTERACAO";
+  e.dialogoPrevia.showModal();
+}
+
+function abrirErroPrevia(erro) {
+  previaAtual = null;
+  e.erroPrevia.textContent = erro.message;
+  e.erroPrevia.hidden = false;
+  e.prosseguirPrevia.disabled = true;
+  if (!e.dialogoPrevia.open) e.dialogoPrevia.showModal();
 }
 
 function corpoExecucao(confirmacaoGravacao) {
@@ -373,15 +445,10 @@ async function abrirExecucao(confirmacaoGravacao) {
   return final;
 }
 
-const controle = criarControleFrequencia({
-  confirmar: async (mensagem, detalhe) => window.confirm(`${mensagem}\n\n${detalhe}`),
-  salvar: async ({ confirmacao_gravacao }) => abrirExecucao(confirmacao_gravacao),
-  simular: async () => abrirExecucao(false),
-});
-
 function invalidarPrevia() {
   previaAtual = null;
-  e.previa.textContent = "A configuração mudou. Calcule novamente a prévia antes de executar.";
+  e.previa.textContent = "A configuração mudou. Calcule novamente a prévia.";
+  if (e.dialogoPrevia.open) e.dialogoPrevia.close();
 }
 
 e.formulario.addEventListener("input", invalidarPrevia);
@@ -389,29 +456,50 @@ e.salvar.addEventListener("change", invalidarPrevia);
 e.reconstruir.addEventListener("change", invalidarPrevia);
 e.calcularPrevia.addEventListener("click", async () => {
   e.calcularPrevia.disabled = true;
-  try { await calcularPrevia(); }
-  catch (erro) { e.previa.textContent = erro.message; }
+  try {
+    const previa = await calcularPrevia();
+    if (previa) abrirPrevia(previa);
+  } catch (erro) {
+    e.previa.textContent = erro.message;
+    abrirErroPrevia(erro);
+  }
   finally { e.calcularPrevia.disabled = false; }
 });
-e.executar.addEventListener("click", async () => {
-  if (controle.estaExecutando() || modal.estaExecutando()) return;
-  e.executar.disabled = true;
+e.prosseguirPrevia.addEventListener("click", async () => {
+  if (!previaAtual || previaAtual.modo === "SEM_ALTERACAO" || modal.estaExecutando()) return;
+  e.prosseguirPrevia.disabled = true;
+  e.dialogoPrevia.close();
   try {
-    const previa = previaAtual || await calcularPrevia();
-    if (previa) await controle.executar({ previa, salvarDados: e.salvar.checked });
+    await abrirExecucao(Boolean(previaAtual.salvar_dados));
   } catch (erro) {
     e.previa.textContent = erro.message;
   } finally {
-    e.executar.disabled = false;
+    e.prosseguirPrevia.disabled = false;
   }
 });
 e.recarregar.addEventListener("click", () => carregarEstado());
 e.tipoGrafico.addEventListener("change", carregarFotografia);
 e.formHistorico.addEventListener("submit", (evento) => { evento.preventDefault(); carregarHistorico(); });
+e.abrirGraficosHistorico.addEventListener("click", () => {
+  if (!e.formHistorico.reportValidity()) return;
+  window.location.assign(urlGraficosFrequencias({
+    dezena: e.dezenaHistorico.value,
+    tipo_evento: e.tipoHistorico.value,
+    concurso_inicial: e.inicioHistorico.value,
+    concurso_final: e.fimHistorico.value,
+  }));
+});
 
 const inicial = criarEstadoInicialFrequencia();
 e.salvar.checked = inicial.salvarDados;
 for (let dezena = 1; dezena <= 60; dezena += 1) {
   const opcao = document.createElement("option"); opcao.value = String(dezena); opcao.textContent = String(dezena).padStart(2, "0"); e.dezenaHistorico.append(opcao);
+}
+const filtrosRecebidos = filtrosGraficosDaUrl(window.location.search);
+if (filtrosRecebidos) {
+  e.dezenaHistorico.value = filtrosRecebidos.dezena;
+  e.tipoHistorico.value = filtrosRecebidos.tipo_evento;
+  e.inicioHistorico.value = filtrosRecebidos.concurso_inicial;
+  e.fimHistorico.value = filtrosRecebidos.concurso_final;
 }
 Promise.all([carregarEstado({ preencher: true }), carregarFotografia()]);

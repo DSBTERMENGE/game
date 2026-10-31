@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gráficos de frequência das dezenas — Game Analysis</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/navegacao.css">
+    <link rel="stylesheet" href="css/graficos-frequencias.css">
+  </head>
+  <body>
+    <header class="barra-navegacao">
+      <a class="marca marca--compacta" href="/" aria-label="Game Analysis">GA</a>
+      <a id="link-voltar-frequencias" class="navegacao-voltar" href="/frequencias.html#evolucao-historica-dezena">← Voltar para Frequência das dezenas</a>
+      <strong class="navegacao-pagina">Gráficos de frequência das dezenas</strong>
+    </header>
+
+    <main class="pagina-conteudo graficos-frequencias-pagina">
+      <header class="graficos-frequencias-topo">
+        <div>
+          <h1>Gráficos de frequência das dezenas</h1>
+          <p id="mensagem-graficos-auxiliares" role="status" aria-live="polite">Filtros recebidos da página de frequências.</p>
+        </div>
+        <div class="graficos-frequencias-acoes">
+          <button id="botao-ajuda-graficos" type="button">Ajuda</button>
+          <a id="botao-voltar-frequencias" class="botao-link" href="/frequencias.html#evolucao-historica-dezena">Voltar para Frequência das dezenas</a>
+        </div>
+      </header>
+
+      <section class="graficos-frequencias-filtros" aria-labelledby="titulo-filtros-graficos">
+        <h2 id="titulo-filtros-graficos">Seleção recebida</h2>
+        <form id="form-graficos-frequencias">
+          <label>Dezena
+            <select id="graficos-dezena"></select>
+          </label>
+          <label>Evento
+            <select id="graficos-tipo-evento">
+              <option value="SIMPLES">Simples</option>
+              <option value="2VS">2VS</option>
+              <option value="3VS">3VS</option>
+            </select>
+          </label>
+          <label>Concurso inicial
+            <input id="graficos-concurso-inicial" type="number" min="1" step="1" required>
+          </label>
+          <label>Concurso final
+            <input id="graficos-concurso-final" type="number" min="1" step="1" required>
+          </label>
+          <button id="botao-consultar-graficos" type="submit">Consultar gráficos</button>
+        </form>
+      </section>
+
+      <section class="graficos-frequencias-reserva" aria-labelledby="titulo-area-graficos">
+        <header>
+          <div>
+            <h2 id="titulo-area-graficos">Evolução histórica</h2>
+            <p id="estado-area-graficos" role="status" aria-live="polite">Consultando a série selecionada…</p>
+          </div>
+          <div class="graficos-frequencias-legenda" aria-label="Legenda dos gráficos">
+            <span><i class="legenda-minimo"></i>Mínimo</span>
+            <span><i class="legenda-media"></i>Média / previsão central</span>
+            <span><i class="legenda-maximo"></i>Máximo</span>
+            <span><i class="legenda-faixa"></i>Faixa estatística</span>
+            <span><i class="legenda-real"></i>Ocorrência real</span>
+          </div>
+          <label class="controle-escala-vertical">Escala vertical
+            <select id="escala-vertical-graficos">
+              <option value="AUTOMATICA">Automática</option>
+              <option value="AMPLIADA_10X">Ampliação 10×</option>
+            </select>
+          </label>
+        </header>
+        <p id="aviso-recorte-graficos" class="aviso-recorte-graficos" role="alert" hidden></p>
+        <div id="grade-graficos-historicos" class="grade-graficos-historicos" tabindex="0"></div>
+      </section>
+    </main>
+
+    <dialog id="dialogo-ajuda-graficos" class="ajuda-graficos" aria-labelledby="titulo-ajuda-graficos">
+      <form method="dialog">
+        <header>
+          <div>
+            <p>Ajuda da página</p>
+            <h2 id="titulo-ajuda-graficos">Como analisar os gráficos de frequência</h2>
+          </div>
+          <button type="submit" value="fechar" aria-label="Fechar ajuda">×</button>
+        </header>
+        <div class="ajuda-graficos-conteudo">
+          <section>
+            <h3>Finalidade</h3>
+            <p>Esta página amplia a série histórica de uma dezena para facilitar a leitura das curvas. Ela não recalcula nem grava frequências.</p>
+          </section>
+          <section>
+            <h3>1. Seleção recebida</h3>
+            <p>Dezena, evento e período vêm da página Frequência das dezenas. Eles podem ser alterados aqui; pressione <strong>Consultar gráficos</strong> para carregar a nova série.</p>
+          </section>
+          <section>
+            <h3>2. Evolução dos intervalos</h3>
+            <p>Mostra os intervalos mínimo, médio e máximo calculados em cada concurso de corte. O eixo vertical está em concursos.</p>
+          </section>
+          <section>
+            <h3>3. Faixa prevista e ocorrências reais</h3>
+            <p>Mostra limite inferior, previsão central, limite superior e os pontos em que o evento realmente ocorreu. O eixo vertical representa números de concursos.</p>
+          </section>
+          <section>
+            <h3>4. Escala vertical</h3>
+            <p><strong>Automática</strong> exibe todos os valores. <strong>Ampliação 10×</strong> aproxima a região central para separar visualmente linhas muito próximas, mas pode retirar valores da janela. Quando isso acontecer, um aviso informa o recorte. O zoom não altera os dados.</p>
+          </section>
+          <section>
+            <h3>5. Retorno</h3>
+            <p><strong>Voltar para Frequência das dezenas</strong> retorna ao bloco Evolução histórica e preserva os quatro filtros atuais.</p>
+          </section>
+          <section class="ajuda-graficos-cuidados">
+            <h3>Cuidados de interpretação</h3>
+            <ul>
+              <li>Use a escala automática para conferir o conjunto completo antes de ampliar.</li>
+              <li>Não interprete uma linha recortada como ausência de dados.</li>
+              <li>Os dois gráficos possuem unidades diferentes e não devem ser comparados como se compartilhassem o mesmo eixo vertical.</li>
+              <li>O estudo descreve o histórico; não garante ocorrências futuras.</li>
+            </ul>
+          </section>
+        </div>
+        <footer><button type="submit" value="fechar">Fechar</button></footer>
+      </form>
+    </dialog>
+
+    <script type="module" src="js/graficos-frequencias.js"></script>
+  </body>
+</html>

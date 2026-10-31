@@ -19,6 +19,12 @@ A fábrica Flask serve a API e o diretório `frontend` na mesma origem. A rota
 concentra as operações de dados. Isso evita configuração CORS e reproduz no
 teste local o fluxo que será usado por uma aplicação WSGI.
 
+No módulo de frequências, `frequencias.html` concentra configuração,
+processamento, fotografia e resumo histórico. `graficos-frequencias.html` é uma
+visualização auxiliar somente de leitura. As duas usam
+`frequencia-historico.js` para domínios e coordenadas e consultam a mesma rota
+`GET /api/frequencias/serie`; navegar ou trocar a escala não grava estado.
+
 O Cadastro de Padrões mantém responsabilidades separadas:
 
 - `frontend/padroes.html`: estrutura da grade e do formulário;

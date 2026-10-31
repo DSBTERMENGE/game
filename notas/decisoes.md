@@ -583,3 +583,55 @@
   desempenho em outro ambiente.
 - A Etapa 22 termina sem ativar o módulo como filtro do Screener e sem executar
   commit ou push.
+
+## 2026-10-31 — Contrato da prévia modal de frequências
+
+- A prévia é informação momentânea e será exibida em diálogo, não como quadro
+  permanente que ocupe a página.
+- Existe um único fluxo operacional: `Calcular prévia`, conferir a situação e
+  escolher `Cancelar` ou `Prosseguir`. O botão separado `Executar` será removido.
+- Calcular a prévia não cria tarefa nem grava dados. `Cancelar` também não produz
+  qualquer efeito persistente.
+- A situação atual informa resultados disponíveis, período, último concurso
+  processado, linhas históricas e conclusão da geração. Sem geração ativa, a
+  última atualização é `Nunca`; a edição da configuração não será apresentada
+  como se fosse atualização do histórico.
+- A ação prevista distingue primeira carga, incremento, reconstrução por
+  configuração, reconstrução por origem, simulação e ausência de alteração.
+- Período, quantidade de concursos e linhas estimadas pertencem à resposta da
+  API. O navegador não reproduz a regra de cálculo desses totais.
+- O modal declara se haverá gravação. `Prosseguir` constitui a confirmação
+  explícita e encaminha o fluxo ao modal de andamento, sem uma segunda caixa de
+  confirmação.
+- Prévia sem alteração não pode prosseguir. Mudança de campo ou tick invalida a
+  prévia, e o servidor continua responsável por revalidar a origem ao executar.
+- Implementação concluída com estimativas calculadas no servidor, atualização do
+  estado antes da prévia e reaproveitamento do modal de andamento depois de
+  `Prosseguir`. O botão separado `Executar` e a confirmação genérica foram
+  removidos da página.
+
+## 2026-10-31 — Página auxiliar para gráficos de frequência
+
+- A análise ampliada será feita em página auxiliar, acessada por `Abrir
+  gráficos` no bloco `Evolução histórica por dezena`.
+- O retorno será para o mesmo bloco da página `Frequência das dezenas`, com
+  dezena, evento e período preservados; não será para `Validação e auditoria`.
+- Os dois gráficos ficarão em linhas distintas, com largura total e maior
+  altura, mantendo separadas as unidades de intervalos e números de concursos.
+- O eixo horizontal continuará linear. Escala logarítmica fica fora da primeira
+  implementação e somente será reconsiderada após avaliação visual.
+- O zoom vertical 10× ampliará visualmente o domínio sem multiplicar ou
+  modificar valores. Haverá retorno à escala automática e aviso de recorte.
+- A definição não altera API, cálculos, geração ou banco de dados.
+- A navegação foi implementada com os quatro filtros na URL. Isso permite
+  retorno reproduzível ao bloco de origem sem criar estado permanente ou
+  depender do banco. A área gráfica permanece reservada até a 22.16.2.
+- A página auxiliar passou a exibir os dois gráficos em linhas separadas, com
+  altura de 30 rem e mais referências nos eixos. Ela reutiliza a mesma API e a
+  escala automática original; zoom 10× continua separado para a 22.16.3.
+- O zoom vertical 10× foi implementado como redução do domínio visual ao redor
+  do mesmo centro, sem alterar os dados. Valores recortados são contabilizados e
+  informados; a escala automática restaura imediatamente a visão completa.
+- As duas páginas possuem orientação contextual. A ajuda ampliada ressalta que
+  recorte não significa ausência de dados, que os gráficos têm unidades
+  diferentes e que a análise histórica não garante ocorrências futuras.

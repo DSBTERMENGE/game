@@ -95,7 +95,6 @@
         <label class="frequencias-check"><input id="frequencia-salvar-dados" type="checkbox" checked> Salvar dados</label>
         <label class="frequencias-check"><input id="frequencia-reconstruir-origem" type="checkbox"> Permitir reconstrução se a origem mudou</label>
         <button id="botao-calcular-previa-frequencia" type="button">Calcular prévia</button>
-        <button id="botao-executar-frequencia" type="button">Executar</button>
       </section>
 
       <section class="frequencias-graficos" aria-labelledby="titulo-graficos-frequencia">
@@ -121,7 +120,7 @@
         <div id="grade-graficos-frequencia" class="grade-graficos-frequencia" tabindex="0"></div>
       </section>
 
-      <section class="frequencias-historico" aria-labelledby="titulo-historico-frequencia">
+      <section id="evolucao-historica-dezena" class="frequencias-historico" aria-labelledby="titulo-historico-frequencia">
         <header class="frequencias-historico-topo">
           <div>
             <h2 id="titulo-historico-frequencia">Evolução histórica por dezena</h2>
@@ -145,6 +144,7 @@
               <input id="historico-concurso-final" type="number" min="1" step="1" required>
             </label>
             <button id="botao-consultar-historico" type="submit">Consultar série</button>
+            <button id="botao-abrir-graficos-historico" type="button">Abrir gráficos</button>
           </form>
         </header>
         <div class="frequencias-historico-legenda" aria-label="Legenda do gráfico histórico">
@@ -176,6 +176,49 @@
         </details>
       </section>
     </main>
+
+    <dialog id="dialogo-previa-frequencia" class="previa-frequencia" aria-labelledby="titulo-previa-frequencia">
+      <form method="dialog">
+        <header>
+          <div>
+            <p class="previa-frequencia__rotulo">Conferência antes do processamento</p>
+            <h2 id="titulo-previa-frequencia">Prévia da atualização</h2>
+          </div>
+          <button id="botao-fechar-previa-frequencia" type="submit" value="cancelar" aria-label="Fechar prévia">×</button>
+        </header>
+        <div class="previa-frequencia__conteudo">
+          <p id="erro-previa-frequencia" class="previa-frequencia__erro" role="alert" hidden></p>
+          <section aria-labelledby="titulo-situacao-previa">
+            <h3 id="titulo-situacao-previa">Situação atual</h3>
+            <dl>
+              <div><dt>Resultados disponíveis</dt><dd id="previa-resultados">—</dd></div>
+              <div><dt>Período disponível</dt><dd id="previa-periodo-disponivel">—</dd></div>
+              <div><dt>Último processado</dt><dd id="previa-ultimo-processado">—</dd></div>
+              <div><dt>Linhas históricas</dt><dd id="previa-linhas-atuais">—</dd></div>
+              <div><dt>Última atualização</dt><dd id="previa-ultima-atualizacao">—</dd></div>
+            </dl>
+          </section>
+          <section aria-labelledby="titulo-operacao-previa">
+            <h3 id="titulo-operacao-previa">O que será feito</h3>
+            <p id="previa-operacao" class="previa-frequencia__operacao">—</p>
+            <p id="previa-motivo">—</p>
+            <dl>
+              <div><dt>Período a processar</dt><dd id="previa-periodo-processar">—</dd></div>
+              <div><dt>Concursos</dt><dd id="previa-quantidade-concursos">—</dd></div>
+              <div><dt>Linhas estimadas</dt><dd id="previa-linhas-estimadas">—</dd></div>
+            </dl>
+          </section>
+          <section id="previa-gravacao-bloco" class="previa-frequencia__gravacao" aria-labelledby="titulo-gravacao-previa">
+            <h3 id="titulo-gravacao-previa">Gravação</h3>
+            <p id="previa-gravacao">—</p>
+          </section>
+        </div>
+        <footer>
+          <button id="botao-cancelar-previa-frequencia" type="submit" value="cancelar">Cancelar</button>
+          <button id="botao-prosseguir-previa-frequencia" type="button">Prosseguir</button>
+        </footer>
+      </form>
+    </dialog>
 
     <dialog id="dialogo-ajuda-frequencias" class="ajuda-frequencias" aria-labelledby="titulo-ajuda-frequencias">
       <form method="dialog">
@@ -227,10 +270,11 @@
 
           <section>
             <h3>4. Atualização do histórico</h3>
-            <p><strong>Calcular prévia</strong> é sempre o primeiro passo. A prévia informa se haverá primeira carga, acréscimo de concursos, nenhuma alteração ou reconstrução completa.</p>
+            <p><strong>Calcular prévia</strong> é sempre o primeiro passo. Um formulário modal mostra a situação atual, a operação prevista, o período, a quantidade de concursos e de linhas estimadas e informa se haverá gravação.</p>
             <p><strong>Salvar dados</strong> marcado grava o resultado. Antes da gravação, o sistema pede confirmação. Desmarcado, executa apenas uma simulação e preserva o histórico atual.</p>
             <p><strong>Permitir reconstrução se a origem mudou</strong> somente deve ser marcado quando resultados antigos ou a configuração mudaram e você decidiu substituir todo o histórico. Sem essa autorização, o sistema bloqueia a substituição.</p>
-            <p><strong>Executar</strong> inicia o processamento mostrado na prévia. Uma atualização comum acrescenta somente concursos novos; não recalcula tudo desde o começo.</p>
+            <p>No modal, <strong>Cancelar</strong> fecha a prévia sem criar tarefa. <strong>Prosseguir</strong> confirma o que foi exibido e abre o acompanhamento do processamento. Quando não há alteração, o prosseguimento permanece bloqueado.</p>
+            <p>Uma atualização comum acrescenta somente concursos novos; não recalcula tudo desde o começo.</p>
           </section>
 
           <section>
@@ -242,6 +286,7 @@
           <section>
             <h3>6. Evolução histórica por dezena</h3>
             <p>Escolha uma dezena, o evento e o período e pressione <strong>Consultar série</strong>. O primeiro gráfico mostra a evolução dos intervalos mínimo, médio e máximo. O segundo apresenta a previsão central, a faixa estatística e os pontos das ocorrências reais.</p>
+            <p>Use <strong>Abrir gráficos</strong> para analisar os dois gráficos em uma página maior. Dezena, evento e período são preservados na ida e na volta. Na página auxiliar, a escala automática mostra todos os valores e a ampliação 10× aproxima a região central, avisando quando houver recorte.</p>
             <p>Cada fotografia utiliza somente os concursos conhecidos até aquele corte. As ocorrências posteriores são acrescentadas apenas na avaliação, evitando que informação futura contamine o cálculo.</p>
           </section>
 
@@ -263,7 +308,7 @@
             <ol>
               <li>Confira o estado da base e a configuração gravada.</li>
               <li>Ajuste a configuração a calcular somente quando houver uma experiência planejada.</li>
-              <li>Pressione <strong>Calcular prévia</strong> e leia o diagnóstico completo.</li>
+              <li>Pressione <strong>Calcular prévia</strong> e leia o formulário completo antes de escolher <strong>Cancelar</strong> ou <strong>Prosseguir</strong>.</li>
               <li>Para experimentar sem substituir dados, desmarque <strong>Salvar dados</strong>.</li>
               <li>Para atualização normal, mantenha <strong>Salvar dados</strong> marcado e não autorize reconstrução.</li>
               <li>Depois do processamento, examine primeiro a fotografia das 60 dezenas e então aprofunde uma dezena na série histórica.</li>

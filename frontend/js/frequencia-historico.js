@@ -19,6 +19,30 @@ export function dominioHistorico(pontos, campos, adicionais = []) {
   return { minimo: minimo - margem, maximo: maximo + margem };
 }
 
+export function ampliarDominioHistorico(dominio, fator = 10) {
+  const ampliacao = Number(fator);
+  if (!dominio || !Number.isFinite(ampliacao) || ampliacao <= 1) return dominio;
+  const centro = (dominio.minimo + dominio.maximo) / 2;
+  const meiaAmplitude = (dominio.maximo - dominio.minimo) / (2 * ampliacao);
+  return { minimo: centro - meiaAmplitude, maximo: centro + meiaAmplitude };
+}
+
+export function contarValoresForaDominio(pontos, campos, dominio, adicionais = []) {
+  if (!dominio) return 0;
+  let total = 0;
+  for (const valorOriginal of adicionais) {
+    const valor = numero(valorOriginal);
+    if (valor !== null && (valor < dominio.minimo || valor > dominio.maximo)) total += 1;
+  }
+  for (const ponto of pontos) {
+    for (const campo of campos) {
+      const valor = numero(ponto[campo]);
+      if (valor !== null && (valor < dominio.minimo || valor > dominio.maximo)) total += 1;
+    }
+  }
+  return total;
+}
+
 export function criarEscalasHistorico(periodo, dominio, largura = 960, altura = 245) {
   const esquerda = 52, direita = largura - 15, topo = 14, inferior = altura - 30;
   const amplitudeX = Math.max(1, periodo.concurso_final - periodo.concurso_inicial);

@@ -18,7 +18,10 @@ const configuracao = {
 const estado = {
   configuracao_ativa: configuracao,
   resultados: { quantidade: 3069, concurso_inicial: 1, concurso_final: 3069 },
-  geracao_ativa: { estado: "ATIVA", concurso_inicial: 1, concurso_final: 3069 },
+  geracao_ativa: {
+    estado: "ATIVA", concurso_inicial: 1, concurso_final: 3069,
+    concluida_em: "2026-10-30T12:00:00+00:00",
+  },
   linhas_historicas: 462600,
 };
 const dezenas = Array.from({ length: 60 }, (_, indice) => ({
@@ -33,11 +36,15 @@ test.beforeAll(async () => {
   servidor = http.createServer(async (requisicao, resposta) => {
     const arquivos = {
       "/frequencias.html": ["frequencias.html", "text/html; charset=utf-8"],
+      "/graficos-frequencias.html": ["graficos-frequencias.html", "text/html; charset=utf-8"],
       "/css/style.css": ["css/style.css", "text/css; charset=utf-8"],
       "/css/navegacao.css": ["css/navegacao.css", "text/css; charset=utf-8"],
       "/css/modal-andamento.css": ["css/modal-andamento.css", "text/css; charset=utf-8"],
       "/css/frequencias.css": ["css/frequencias.css", "text/css; charset=utf-8"],
+      "/css/graficos-frequencias.css": ["css/graficos-frequencias.css", "text/css; charset=utf-8"],
       "/js/frequencias.js": ["js/frequencias.js", "text/javascript; charset=utf-8"],
+      "/js/graficos-frequencias.js": ["js/graficos-frequencias.js", "text/javascript; charset=utf-8"],
+      "/js/navegacao-graficos-frequencias.js": ["js/navegacao-graficos-frequencias.js", "text/javascript; charset=utf-8"],
       "/js/ajuda-frequencias.js": ["js/ajuda-frequencias.js", "text/javascript; charset=utf-8"],
       "/js/frequencia-graficos.js": ["js/frequencia-graficos.js", "text/javascript; charset=utf-8"],
       "/js/frequencia-historico.js": ["js/frequencia-historico.js", "text/javascript; charset=utf-8"],
@@ -66,7 +73,12 @@ async function preparar(page) {
   }));
   await page.route("**/api/frequencias/previa", (rota) => rota.fulfill({
     status: 200, contentType: "application/json",
-    body: JSON.stringify({ modo: "SEM_ALTERACAO", concursos_novos: [], divergencias_configuracao: [] }),
+    body: JSON.stringify({
+      modo: "SEM_ALTERACAO", motivo: "A geração já está atualizada.",
+      salvar_dados: true, concurso_inicial: 500, concurso_final: 3069,
+      quantidade_concursos: 0, linhas_estimadas: 0,
+      concursos_novos: [], divergencias_configuracao: [],
+    }),
   }));
   await page.route("**/api/frequencias/fotografia-atual?*", (rota) => {
     const tipo = new URL(rota.request().url()).searchParams.get("tipo_evento");
@@ -124,7 +136,7 @@ async function preparar(page) {
   await expect(page.locator("#mensagem-frequencias")).toHaveText("Estado da frequência carregado.");
 }
 
-test("carrega estado, configurações e executa simulação com progresso", async ({ page }) => {
+test("carrega estado, abre prévia e executa simulação com progresso", async ({ page }) => {
   await preparar(page);
   await expect(page.locator("#resumo-resultados")).toHaveText("3.069");
   await expect(page.locator("#resumo-ultimo-processado")).toHaveText("3.069");
@@ -145,6 +157,15 @@ test("carrega estado, configurações e executa simulação com progresso", asyn
   await expect(page.locator("#corpo-erros-assertividade tr")).toHaveCount(1);
 
   await page.locator("#frequencia-salvar-dados").uncheck();
+  await page.route("**/api/frequencias/previa", (rota) => rota.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({
+      modo: "PRIMEIRA_CARGA", motivo: "Ainda não existe geração histórica ativa.",
+      salvar_dados: false, concurso_inicial: 500, concurso_final: 3069,
+      quantidade_concursos: 2570, linhas_estimadas: 462600,
+      concursos_novos: [], divergencias_configuracao: [],
+    }),
+  }));
   await page.route("**/api/frequencias/execucoes", (rota) => rota.fulfill({
     status: 202, contentType: "application/json",
     body: JSON.stringify({ id: "teste", estado: "AGUARDANDO", etapa: "Aguardando", concluido: 0, total: 1, percentual: 0 }),
@@ -153,8 +174,152 @@ test("carrega estado, configurações e executa simulação com progresso", asyn
     status: 200, contentType: "application/json",
     body: JSON.stringify({ id: "teste", estado: "CONCLUIDA", etapa: "Concluída", concluido: 1, total: 1, percentual: 100, resultado: { tipo: "SIMULACAO", linhas_calculadas: 462600 } }),
   }));
-  await page.locator("#botao-executar-frequencia").click();
+  await page.locator("#botao-calcular-previa-frequencia").click();
+  await expect(page.locator("#dialogo-previa-frequencia")).toBeVisible();
+  await expect(page.locator("#previa-operacao")).toHaveText("Simulação — Primeira carga");
+  await expect(page.locator("#previa-linhas-estimadas")).toHaveText("462.600");
+  await expect(page.locator("#previa-gravacao")).toHaveText("Simulação: nenhum dado será gravado.");
+  await page.locator("#botao-prosseguir-previa-frequencia").click();
   await expect(page.locator(".modal-andamento__resultado")).toContainText("Simulação concluída sem gravação");
+});
+
+test("abre a página auxiliar e retorna ao bloco histórico preservando filtros", async ({ page }) => {
+  await preparar(page);
+  await page.locator("#historico-dezena").selectOption("17");
+  await page.locator("#historico-tipo-evento").selectOption("3VS");
+  await page.locator("#historico-concurso-inicial").fill("500");
+  await page.locator("#historico-concurso-final").fill("700");
+  await page.locator("#botao-abrir-graficos-historico").click();
+
+  await expect(page).toHaveURL(/graficos-frequencias\.html\?dezena=17&tipo_evento=3VS&concurso_inicial=500&concurso_final=700/);
+  await expect(page.locator("#graficos-dezena")).toHaveValue("17");
+  await expect(page.locator("#graficos-tipo-evento")).toHaveValue("3VS");
+  await expect(page.locator("#graficos-concurso-inicial")).toHaveValue("500");
+  await expect(page.locator("#graficos-concurso-final")).toHaveValue("700");
+  await expect(page.locator(".historico-cartao-ampliado")).toHaveCount(2);
+  await expect(page.locator(".grafico-historico-ampliado")).toHaveCount(2);
+  await expect(page.locator("#estado-area-graficos")).toContainText("201 pontos");
+  await expect(page.locator(".historico-ocorrencia")).toHaveCount(2);
+  const alturas = await page.locator(".grafico-historico-ampliado").evaluateAll((graficos) => graficos.map((grafico) => grafico.getBoundingClientRect().height));
+  expect(alturas.every((altura) => altura >= 450)).toBeTruthy();
+  const coordenadasInvalidas = await page.locator(".grafico-historico-ampliado path, .grafico-historico-ampliado circle").evaluateAll((elementos) => elementos.some((elemento) => elemento.outerHTML.includes("NaN")));
+  expect(coordenadasInvalidas).toBeFalsy();
+  await expect(page.locator("#aviso-recorte-graficos")).toBeHidden();
+  await page.locator("#escala-vertical-graficos").selectOption("AMPLIADA_10X");
+  await expect(page.locator("#aviso-recorte-graficos")).toBeVisible();
+  await expect(page.locator("#aviso-recorte-graficos")).toContainText("valores ficaram fora da área visível");
+  await expect(page.locator(".grafico-historico-ampliado clipPath")).toHaveCount(2);
+  await page.locator("#escala-vertical-graficos").selectOption("AUTOMATICA");
+  await expect(page.locator("#aviso-recorte-graficos")).toBeHidden();
+  await page.locator("#botao-ajuda-graficos").click();
+  await expect(page.locator("#dialogo-ajuda-graficos")).toBeVisible();
+  await expect(page.locator("#dialogo-ajuda-graficos")).toContainText("Ampliação 10×");
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#dialogo-ajuda-graficos")).toBeHidden();
+
+  await page.locator("#botao-voltar-frequencias").click();
+  await expect(page).toHaveURL(/frequencias\.html\?dezena=17&tipo_evento=3VS&concurso_inicial=500&concurso_final=700#evolucao-historica-dezena/);
+  await expect(page.locator("#historico-dezena")).toHaveValue("17");
+  await expect(page.locator("#historico-tipo-evento")).toHaveValue("3VS");
+  await expect(page.locator("#historico-concurso-inicial")).toHaveValue("500");
+  await expect(page.locator("#historico-concurso-final")).toHaveValue("700");
+});
+
+test("prévia atualizada não permite prosseguir nem criar execução", async ({ page }) => {
+  let execucoes = 0;
+  await page.route("**/api/frequencias/execucoes", (rota) => {
+    execucoes += 1;
+    return rota.abort();
+  });
+  await preparar(page);
+  await page.locator("#botao-calcular-previa-frequencia").click();
+  await expect(page.locator("#dialogo-previa-frequencia")).toBeVisible();
+  await expect(page.locator("#previa-operacao")).toHaveText("Nenhuma alteração");
+  await expect(page.locator("#botao-prosseguir-previa-frequencia")).toBeDisabled();
+  await page.locator("#botao-cancelar-previa-frequencia").click();
+  await expect(page.locator("#dialogo-previa-frequencia")).not.toBeVisible();
+  expect(execucoes).toBe(0);
+});
+
+test("modal traduz incrementos e reconstruções e fecha por teclado", async ({ page }) => {
+  await preparar(page);
+  let modo = "INCREMENTAL";
+  const rotulos = {
+    INCREMENTAL: "Atualização incremental",
+    RECONSTRUCAO_CONFIGURACAO: "Reconstrução por configuração",
+    RECONSTRUCAO_ORIGEM: "Reconstrução por alteração da origem",
+  };
+  await page.route("**/api/frequencias/previa", (rota) => rota.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({
+      modo, motivo: `Motivo ${modo}`, salvar_dados: true,
+      concurso_inicial: 500, concurso_final: 3069,
+      quantidade_concursos: modo === "INCREMENTAL" ? 2 : 2570,
+      linhas_estimadas: modo === "INCREMENTAL" ? 360 : 462600,
+      concursos_novos: modo === "INCREMENTAL" ? [3068, 3069] : [],
+      divergencias_configuracao: [],
+    }),
+  }));
+  for (const [valor, rotulo] of Object.entries(rotulos)) {
+    modo = valor;
+    await page.locator("#botao-calcular-previa-frequencia").click();
+    await expect(page.locator("#previa-operacao")).toHaveText(rotulo);
+    await expect(page.locator("#previa-gravacao")).toContainText("serão gravados");
+    const focoNoDialogo = await page.evaluate(() => Boolean(
+      document.activeElement?.closest("#dialogo-previa-frequencia")
+    ));
+    expect(focoNoDialogo).toBeTruthy();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#dialogo-previa-frequencia")).not.toBeVisible();
+  }
+});
+
+test("erro de prévia aparece no modal e não cria execução", async ({ page }) => {
+  let execucoes = 0;
+  await preparar(page);
+  await page.route("**/api/frequencias/previa", (rota) => rota.fulfill({
+    status: 503, contentType: "application/json",
+    body: JSON.stringify({ erro: { codigo: "BANCO_INDISPONIVEL", mensagem: "Não foi possível consultar o banco." } }),
+  }));
+  await page.route("**/api/frequencias/execucoes", (rota) => {
+    execucoes += 1;
+    return rota.abort();
+  });
+  await page.locator("#botao-calcular-previa-frequencia").click();
+  await expect(page.locator("#dialogo-previa-frequencia")).toBeVisible();
+  await expect(page.locator("#erro-previa-frequencia")).toHaveText("Não foi possível consultar o banco.");
+  await expect(page.locator("#botao-prosseguir-previa-frequencia")).toBeDisabled();
+  expect(execucoes).toBe(0);
+});
+
+test("prosseguir com gravação envia confirmação explícita uma única vez", async ({ page }) => {
+  let solicitacao;
+  await preparar(page);
+  await page.route("**/api/frequencias/previa", (rota) => rota.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({
+      modo: "PRIMEIRA_CARGA", motivo: "Primeira geração.", salvar_dados: true,
+      concurso_inicial: 500, concurso_final: 3069,
+      quantidade_concursos: 2570, linhas_estimadas: 462600,
+      concursos_novos: [], divergencias_configuracao: [],
+    }),
+  }));
+  await page.route("**/api/frequencias/execucoes", async (rota) => {
+    solicitacao = rota.request().postDataJSON();
+    return rota.fulfill({
+      status: 202, contentType: "application/json",
+      body: JSON.stringify({ id: "gravar", estado: "AGUARDANDO", etapa: "Aguardando", concluido: 0, total: 1, percentual: 0 }),
+    });
+  });
+  await page.route("**/api/frequencias/execucoes/gravar", (rota) => rota.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({ id: "gravar", estado: "CONCLUIDA", etapa: "Concluída", concluido: 1, total: 1, percentual: 100, resultado: { tipo: "GRAVACAO", linhas_calculadas: 462600 } }),
+  }));
+  await page.locator("#botao-calcular-previa-frequencia").click();
+  await page.locator("#botao-prosseguir-previa-frequencia").click();
+  await expect(page.locator(".modal-andamento__resultado")).toContainText("Dados gravados");
+  expect(solicitacao.confirmacao_gravacao).toBe(true);
+  expect(solicitacao.salvar_dados).toBe(true);
 });
 
 test("abre e fecha a ajuda completa da página", async ({ page }) => {
@@ -182,6 +347,24 @@ for (const largura of [1280, 520]) {
     }));
     expect(medidas.direita).toBeLessThanOrEqual(medidas.largura + 1);
     expect(medidas.rolagemPagina).toBeTruthy();
-    await expect(page.locator("#botao-executar-frequencia")).toBeVisible();
+    await expect(page.locator("#botao-calcular-previa-frequencia")).toBeVisible();
   });
 }
+
+test("página auxiliar mantém os gráficos roláveis sem alargar a janela estreita", async ({ page }) => {
+  await page.setViewportSize({ width: 520, height: 800 });
+  await preparar(page);
+  await page.locator("#historico-concurso-inicial").fill("500");
+  await page.locator("#historico-concurso-final").fill("510");
+  await page.locator("#botao-abrir-graficos-historico").click();
+  await expect(page.locator(".historico-cartao-ampliado")).toHaveCount(2);
+  const medidas = await page.evaluate(() => ({
+    pagina: document.documentElement.scrollWidth,
+    janela: document.documentElement.clientWidth,
+  }));
+  expect(medidas.pagina).toBeLessThanOrEqual(medidas.janela + 1);
+  const cartaoRolavel = await page.locator(".historico-cartao-ampliado").first().evaluate((elemento) => elemento.scrollWidth > elemento.clientWidth);
+  expect(cartaoRolavel).toBeTruthy();
+  await page.locator("#botao-ajuda-graficos").click();
+  await expect(page.locator("#dialogo-ajuda-graficos")).toBeVisible();
+});

@@ -120,6 +120,39 @@
 #mensagem-frequencias[data-tipo="erro"] { color: #a02626; }
 #mensagem-frequencias[data-tipo="sucesso"] { color: #246b3c; }
 
+.previa-frequencia {
+  width: min(48rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  padding: 0;
+  border: 1px solid #78949c;
+  border-radius: 0.45rem;
+  background: #fff;
+  color: #17252b;
+}
+.previa-frequencia::backdrop { background: rgb(17 34 40 / 58%); }
+.previa-frequencia form { display: grid; max-height: calc(100vh - 2rem); grid-template-rows: auto minmax(0, 1fr) auto; }
+.previa-frequencia header,
+.previa-frequencia footer { display: flex; align-items: center; gap: 0.65rem; padding: 0.8rem 1rem; background: #eef5f6; }
+.previa-frequencia header { border-bottom: 1px solid #c8d6da; }
+.previa-frequencia footer { justify-content: flex-end; border-top: 1px solid #c8d6da; }
+.previa-frequencia header > div { margin-right: auto; }
+.previa-frequencia header button { min-width: 2.3rem; padding: 0.25rem 0.5rem; font-size: 1.25rem; line-height: 1; }
+.previa-frequencia h2 { margin: 0.1rem 0 0; font-size: 1.2rem; }
+.previa-frequencia__rotulo { margin: 0; color: #52616a; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.previa-frequencia__conteudo { overflow: auto; padding: 0.3rem 1rem 1rem; }
+.previa-frequencia__conteudo section { padding: 0.75rem 0; border-bottom: 1px solid #e0e7e9; }
+.previa-frequencia__conteudo h3 { margin: 0 0 0.45rem; color: #1e5d68; font-size: 1rem; }
+.previa-frequencia__conteudo p { margin: 0.4rem 0; line-height: 1.45; }
+.previa-frequencia__conteudo dl { display: grid; grid-template-columns: repeat(2, minmax(12rem, 1fr)); gap: 0.4rem 0.8rem; margin: 0.5rem 0 0; }
+.previa-frequencia__conteudo dl div { padding: 0.4rem 0.5rem; border: 1px solid #dbe4e7; border-radius: 0.25rem; background: #f8fbfb; }
+.previa-frequencia__conteudo dt { color: #52616a; font-size: 0.7rem; }
+.previa-frequencia__conteudo dd { margin: 0.15rem 0 0; font-weight: 700; }
+.previa-frequencia__operacao { font-size: 1rem; font-weight: 700; }
+.previa-frequencia__gravacao { margin-top: 0.35rem; padding: 0.75rem !important; border: 1px solid #d2b96c !important; border-radius: 0.35rem; background: #fff8e5; }
+.previa-frequencia__gravacao--simulacao { border-color: #83afb6 !important; background: #eef8f9; }
+.previa-frequencia__erro { padding: 0.7rem; border: 1px solid #d99b9b; border-radius: 0.35rem; background: #fff0f0; color: #8f2020; }
+.previa-frequencia footer button { min-width: 7rem; }
+
 .ajuda-frequencias {
   width: min(58rem, calc(100vw - 2rem));
   max-height: calc(100vh - 2rem);
@@ -173,6 +206,7 @@
   .frequencias-topo-acoes button { flex: 1; }
   .frequencias-formulario { grid-template-columns: 1fr; }
   .frequencias-operacao { align-items: flex-start; flex-direction: column; }
+  .previa-frequencia__conteudo dl { grid-template-columns: 1fr; }
   .ajuda-frequencias__conteudo dl { grid-template-columns: 1fr; }
   .ajuda-frequencias__conteudo dt { padding-bottom: 0.1rem; border-bottom: 0; }
   .ajuda-frequencias__conteudo dd { padding-top: 0.1rem; }

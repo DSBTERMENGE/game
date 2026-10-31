@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
-  caminhoHistorico, criarEscalasHistorico, dominioHistorico, poligonoFaixaHistorico,
+  ampliarDominioHistorico, caminhoHistorico, contarValoresForaDominio,
+  criarEscalasHistorico, dominioHistorico, poligonoFaixaHistorico,
 } from "../js/frequencia-historico.js";
 
 const pontos = [
@@ -31,4 +32,19 @@ test("faixa estatística gera polígono somente com pontos completos", () => {
   const escalas = criarEscalasHistorico({ concurso_inicial: 500, concurso_final: 502 }, dominio);
   const poligono = poligonoFaixaHistorico(pontos, "limite_inferior_exato", "limite_superior_exato", escalas);
   assert.equal(poligono.split(" ").length, 4);
+});
+
+test("ampliação 10x reduz o domínio ao redor do mesmo centro sem alterar valores", () => {
+  const dominio = { minimo: 0, maximo: 100 };
+  const ampliado = ampliarDominioHistorico(dominio, 10);
+  assert.deepEqual(ampliado, { minimo: 45, maximo: 55 });
+  assert.deepEqual(dominio, { minimo: 0, maximo: 100 });
+});
+
+test("conta valores recortados pelo domínio ampliado", () => {
+  const total = contarValoresForaDominio(
+    [{ valor: 10 }, { valor: 50 }, { valor: 90 }, { valor: null }],
+    ["valor"], { minimo: 45, maximo: 55 }, [44, 51, 56],
+  );
+  assert.equal(total, 4);
 });

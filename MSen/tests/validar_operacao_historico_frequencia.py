@@ -69,6 +69,8 @@ def executar() -> None:
                 raise AssertionError("Prévia gravável não exigiu confirmação.")
             if previa.modo != "PRIMEIRA_CARGA" or not previa.substitui_geracao:
                 raise AssertionError("Prévia inicial incorreta.")
+            if (previa.quantidade_concursos, previa.linhas_estimadas) != (3, 540):
+                raise AssertionError("Estimativa da primeira carga divergiu.")
             previa_simulacao = preparar_operacao_historico_frequencia(
                 conexao, config, salvar_dados=False
             )
@@ -103,6 +105,8 @@ def executar() -> None:
             incremental = preparar_operacao_historico_frequencia(conexao, config)
             if incremental.modo != "INCREMENTAL" or incremental.concursos_novos != (6, 7):
                 raise AssertionError("Prévia incremental não listou os concursos 6 e 7.")
+            if (incremental.quantidade_concursos, incremental.linhas_estimadas) != (2, 360):
+                raise AssertionError("Estimativa incremental divergiu.")
             simulada_incremental = simular_historico_frequencia(conexao, config)
             if simulada_incremental.linhas_calculadas != 360 or contar(conexao) != (1, 540):
                 raise AssertionError("Simulação incremental alterou a geração.")

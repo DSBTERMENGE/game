@@ -1,5 +1,10 @@
 # API — Frequência das dezenas
 
+As páginas `frequencias.html` e `graficos-frequencias.html` consomem as mesmas
+rotas. A página auxiliar reutiliza `GET /api/frequencias/serie`; ampliação
+vertical, recorte e retorno são operações exclusivamente visuais e não criam
+novos parâmetros nem persistência.
+
 Base: `/api/frequencias`.
 
 ## Consultas
@@ -50,7 +55,15 @@ Recebe:
 
 Informa primeira carga, ausência de alteração, incremental ou reconstrução.
 Quando incremental, lista os concursos novos. Quando a configuração diverge,
-lista campo, valor gravado e valor calculado.
+lista campo, valor gravado e valor calculado. A resposta também inclui:
+
+- `concurso_inicial` e `concurso_final`: período abrangido pela operação;
+- `quantidade_concursos`: cortes que efetivamente serão calculados;
+- `linhas_estimadas`: fotografias previstas para dezenas e tipos de evento;
+- `motivo`: explicação da decisão;
+- `salvar_dados`, `exige_confirmacao` e `substitui_geracao`: efeitos da operação.
+
+A prévia é somente leitura: não cria tarefa e não grava histórico.
 
 ## Execuções assíncronas
 
