@@ -35,7 +35,10 @@
           <h1 id="titulo-frequencias">Frequência das dezenas</h1>
           <p id="mensagem-frequencias" role="status" aria-live="polite">Consultando o estado da base…</p>
         </div>
-        <button id="botao-recarregar-frequencias" type="button">Recarregar estado</button>
+        <div class="frequencias-topo-acoes">
+          <button id="botao-ajuda-frequencias" type="button">Ajuda</button>
+          <button id="botao-recarregar-frequencias" type="button">Recarregar estado</button>
+        </div>
       </section>
 
       <section class="frequencias-resumo" aria-label="Estado da base de frequência">
@@ -174,7 +177,119 @@
       </section>
     </main>
 
+    <dialog id="dialogo-ajuda-frequencias" class="ajuda-frequencias" aria-labelledby="titulo-ajuda-frequencias">
+      <form method="dialog">
+        <header>
+          <div>
+            <p class="ajuda-frequencias__rotulo">Ajuda da página</p>
+            <h2 id="titulo-ajuda-frequencias">Como usar Frequência das dezenas</h2>
+          </div>
+          <button class="ajuda-frequencias__fechar ajuda-frequencias__fechar--icone" type="submit" value="fechar" aria-label="Fechar ajuda">×</button>
+        </header>
+
+        <div class="ajuda-frequencias__conteudo">
+          <section>
+            <h3>Finalidade da página</h3>
+            <p>Este módulo estuda o comportamento dos intervalos entre ocorrências de cada uma das 60 dezenas. Ele cria fotografias sucessivas do conhecimento disponível em cada concurso, sem usar resultados futuros no cálculo, e depois compara as previsões com os resultados que realmente ocorreram.</p>
+            <p>O estudo não garante o próximo resultado. Seu propósito é medir regularidades, testar configurações e fornecer evidências para decisões posteriores do sistema.</p>
+          </section>
+
+          <section>
+            <h3>1. Estado da base</h3>
+            <p>A faixa superior resume o que existe no banco:</p>
+            <dl>
+              <dt>Resultados</dt><dd>Quantidade de concursos disponíveis para análise.</dd>
+              <dt>Concursos</dt><dd>Primeiro e último concurso existentes na origem.</dd>
+              <dt>Último processado</dt><dd>Concurso mais recente já materializado no histórico de frequências.</dd>
+              <dt>Linhas históricas</dt><dd>Total de fotografias armazenadas para dezenas e tipos de evento.</dd>
+              <dt>Estado</dt><dd>Situação da geração histórica atualmente gravada.</dd>
+            </dl>
+            <p><strong>Recarregar estado</strong> consulta novamente o servidor e atualiza todos os blocos sem refazer os cálculos.</p>
+          </section>
+
+          <section>
+            <h3>2. Configuração gravada</h3>
+            <p>Mostra as regras usadas para produzir o histórico que está salvo. A assinatura identifica de forma segura o conjunto dessas regras. Ela serve para detectar mudanças e impedir que resultados de configurações diferentes sejam misturados silenciosamente.</p>
+          </section>
+
+          <section>
+            <h3>3. Configuração a calcular</h3>
+            <dl>
+              <dt>Nome</dt><dd>Identificação legível da experiência.</dd>
+              <dt>Concurso inicial</dt><dd>Primeiro concurso considerado pela janela acumulada.</dd>
+              <dt>Tamanho inicial</dt><dd>Quantidade mínima de concursos usada na primeira fotografia. Com início 1 e tamanho 500, a primeira fotografia é a do concurso 500.</dd>
+              <dt>Eventos calculados</dt><dd><strong>Simples</strong> é a ocorrência normal; <strong>2VS</strong> indica a dezena em dois concursos seguidos; <strong>3VS</strong>, em três concursos seguidos.</dd>
+              <dt>Multiplicador do desvio-padrão</dt><dd>Define a largura da faixa prevista. O valor 1 usa média ± 1 desvio-padrão. O desvio permanece na unidade de concursos, não em percentual.</dd>
+              <dt>Versão do cálculo</dt><dd>Identifica formalmente a regra matemática usada. Deve mudar quando o algoritmo mudar.</dd>
+            </dl>
+            <p>A regra atual usa início fixo, final expansivo e limites externos: a cada novo concurso, todo o passado disponível desde o início definido participa do cálculo.</p>
+          </section>
+
+          <section>
+            <h3>4. Atualização do histórico</h3>
+            <p><strong>Calcular prévia</strong> é sempre o primeiro passo. A prévia informa se haverá primeira carga, acréscimo de concursos, nenhuma alteração ou reconstrução completa.</p>
+            <p><strong>Salvar dados</strong> marcado grava o resultado. Antes da gravação, o sistema pede confirmação. Desmarcado, executa apenas uma simulação e preserva o histórico atual.</p>
+            <p><strong>Permitir reconstrução se a origem mudou</strong> somente deve ser marcado quando resultados antigos ou a configuração mudaram e você decidiu substituir todo o histórico. Sem essa autorização, o sistema bloqueia a substituição.</p>
+            <p><strong>Executar</strong> inicia o processamento mostrado na prévia. Uma atualização comum acrescenta somente concursos novos; não recalcula tudo desde o começo.</p>
+          </section>
+
+          <section>
+            <h3>5. Fotografia atual das 60 dezenas</h3>
+            <p>Compara as 60 dezenas no último concurso processado. Selecione ocorrência simples, 2VS ou 3VS para ver gráficos de quantidade de ocorrências, intervalo mínimo, máximo, médio, mediana e desvio-padrão.</p>
+            <p>Os intervalos são medidos em concursos. Campos sem amostra suficiente permanecem vazios; zero não é usado para representar dado inexistente.</p>
+          </section>
+
+          <section>
+            <h3>6. Evolução histórica por dezena</h3>
+            <p>Escolha uma dezena, o evento e o período e pressione <strong>Consultar série</strong>. O primeiro gráfico mostra a evolução dos intervalos mínimo, médio e máximo. O segundo apresenta a previsão central, a faixa estatística e os pontos das ocorrências reais.</p>
+            <p>Cada fotografia utiliza somente os concursos conhecidos até aquele corte. As ocorrências posteriores são acrescentadas apenas na avaliação, evitando que informação futura contamine o cálculo.</p>
+          </section>
+
+          <section>
+            <h3>7. Assertividade e relatório de falhas</h3>
+            <dl>
+              <dt>Avaliáveis</dt><dd>Previsões para as quais já existe uma ocorrência posterior conhecida.</dd>
+              <dt>Acertos</dt><dd>Ocorrências reais que ficaram dentro dos limites previstos, inclusive sobre os limites.</dd>
+              <dt>Erros</dt><dd>Ocorrências abaixo ou acima da faixa prevista.</dd>
+              <dt>Censurados</dt><dd>Casos no final da série que ainda não possuem resultado futuro suficiente; não são contados como erro.</dd>
+              <dt>Erro absoluto médio</dt><dd>Distância média, em concursos, entre a previsão central e a ocorrência real.</dd>
+              <dt>Erro percentual médio</dt><dd>Erro relativo ao intervalo real entre eventos, usado para comparar intervalos de tamanhos diferentes.</dd>
+            </dl>
+            <p>Abra o relatório ao final do bloco para localizar cada previsão que não acertou a faixa.</p>
+          </section>
+
+          <section class="ajuda-frequencias__recomendacoes">
+            <h3>Fluxo recomendado</h3>
+            <ol>
+              <li>Confira o estado da base e a configuração gravada.</li>
+              <li>Ajuste a configuração a calcular somente quando houver uma experiência planejada.</li>
+              <li>Pressione <strong>Calcular prévia</strong> e leia o diagnóstico completo.</li>
+              <li>Para experimentar sem substituir dados, desmarque <strong>Salvar dados</strong>.</li>
+              <li>Para atualização normal, mantenha <strong>Salvar dados</strong> marcado e não autorize reconstrução.</li>
+              <li>Depois do processamento, examine primeiro a fotografia das 60 dezenas e então aprofunde uma dezena na série histórica.</li>
+            </ol>
+          </section>
+
+          <section class="ajuda-frequencias__cuidados">
+            <h3>Cuidados importantes</h3>
+            <ul>
+              <li>Não altere a versão do cálculo apenas para nomear uma experiência.</li>
+              <li>Não confunda desvio-padrão em concursos com percentual.</li>
+              <li>Autorize reconstrução somente depois de conferir as diferenças apresentadas na prévia.</li>
+              <li>Não interprete casos censurados como falhas do método.</li>
+              <li>Compare experiências usando o mesmo período e o mesmo tipo de evento.</li>
+            </ul>
+          </section>
+        </div>
+
+        <footer>
+          <button class="ajuda-frequencias__fechar" type="submit" value="fechar">Fechar</button>
+        </footer>
+      </form>
+    </dialog>
+
     <script type="module" src="js/frequencias.js"></script>
+    <script type="module" src="js/ajuda-frequencias.js"></script>
     <script type="module" src="js/navegacao.js"></script>
   </body>
 </html>

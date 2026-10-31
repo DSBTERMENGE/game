@@ -38,6 +38,7 @@ test.beforeAll(async () => {
       "/css/modal-andamento.css": ["css/modal-andamento.css", "text/css; charset=utf-8"],
       "/css/frequencias.css": ["css/frequencias.css", "text/css; charset=utf-8"],
       "/js/frequencias.js": ["js/frequencias.js", "text/javascript; charset=utf-8"],
+      "/js/ajuda-frequencias.js": ["js/ajuda-frequencias.js", "text/javascript; charset=utf-8"],
       "/js/frequencia-graficos.js": ["js/frequencia-graficos.js", "text/javascript; charset=utf-8"],
       "/js/frequencia-historico.js": ["js/frequencia-historico.js", "text/javascript; charset=utf-8"],
       "/js/frequencia-controles.js": ["js/frequencia-controles.js", "text/javascript; charset=utf-8"],
@@ -154,6 +155,20 @@ test("carrega estado, configurações e executa simulação com progresso", asyn
   }));
   await page.locator("#botao-executar-frequencia").click();
   await expect(page.locator(".modal-andamento__resultado")).toContainText("Simulação concluída sem gravação");
+});
+
+test("abre e fecha a ajuda completa da página", async ({ page }) => {
+  await preparar(page);
+  const dialogo = page.locator("#dialogo-ajuda-frequencias");
+  await expect(dialogo).not.toBeVisible();
+  await page.locator("#botao-ajuda-frequencias").click();
+  await expect(dialogo).toBeVisible();
+  await expect(dialogo.getByRole("heading", { name: "Como usar Frequência das dezenas" })).toBeVisible();
+  await expect(dialogo.getByRole("heading", { name: "4. Atualização do histórico" })).toBeVisible();
+  await expect(dialogo.getByRole("heading", { name: "Fluxo recomendado" })).toBeVisible();
+  await expect(dialogo).toContainText("Autorize reconstrução somente depois");
+  await dialogo.getByRole("button", { name: "Fechar", exact: true }).click();
+  await expect(dialogo).not.toBeVisible();
 });
 
 for (const largura of [1280, 520]) {

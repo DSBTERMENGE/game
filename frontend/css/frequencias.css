@@ -15,6 +15,7 @@
 }
 
 .frequencias-topo > div { min-width: 0; margin-right: auto; }
+.frequencias-topo-acoes { display: flex; gap: 0.45rem; margin-right: 0 !important; }
 .frequencias-topo h1 { font-size: 1.15rem; }
 .frequencias-topo p,
 .frequencias-operacao p,
@@ -119,6 +120,41 @@
 #mensagem-frequencias[data-tipo="erro"] { color: #a02626; }
 #mensagem-frequencias[data-tipo="sucesso"] { color: #246b3c; }
 
+.ajuda-frequencias {
+  width: min(58rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  padding: 0;
+  border: 1px solid #8da3aa;
+  border-radius: 0.45rem;
+  background: #fff;
+  color: #17252b;
+}
+.ajuda-frequencias::backdrop { background: rgb(17 34 40 / 58%); }
+.ajuda-frequencias form { display: grid; max-height: calc(100vh - 2rem); grid-template-rows: auto minmax(0, 1fr) auto; }
+.ajuda-frequencias header,
+.ajuda-frequencias footer { display: flex; align-items: center; gap: 0.75rem; padding: 0.8rem 1rem; background: #eef5f6; }
+.ajuda-frequencias header { border-bottom: 1px solid #c8d6da; }
+.ajuda-frequencias footer { justify-content: flex-end; border-top: 1px solid #c8d6da; }
+.ajuda-frequencias header > div { margin-right: auto; }
+.ajuda-frequencias h2 { margin: 0.1rem 0 0; font-size: 1.2rem; }
+.ajuda-frequencias__rotulo { margin: 0; color: #52616a; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.ajuda-frequencias__conteudo { overflow: auto; padding: 0.3rem 1rem 1rem; }
+.ajuda-frequencias__conteudo section { padding: 0.8rem 0; border-bottom: 1px solid #e0e7e9; }
+.ajuda-frequencias__conteudo section:last-child { border-bottom: 0; }
+.ajuda-frequencias__conteudo h3 { margin: 0 0 0.45rem; color: #1e5d68; font-size: 1rem; }
+.ajuda-frequencias__conteudo p { margin: 0.4rem 0; line-height: 1.5; }
+.ajuda-frequencias__conteudo dl { display: grid; grid-template-columns: minmax(9rem, 0.35fr) minmax(15rem, 1fr); margin: 0.5rem 0; }
+.ajuda-frequencias__conteudo dt,
+.ajuda-frequencias__conteudo dd { margin: 0; padding: 0.4rem 0.5rem; border-bottom: 1px solid #e4eaec; line-height: 1.4; }
+.ajuda-frequencias__conteudo dt { font-weight: 700; }
+.ajuda-frequencias__conteudo ol,
+.ajuda-frequencias__conteudo ul { margin: 0.4rem 0 0; padding-left: 1.4rem; }
+.ajuda-frequencias__conteudo li { margin: 0.35rem 0; line-height: 1.4; }
+.ajuda-frequencias__recomendacoes { margin-top: 0.5rem; padding: 0.8rem !important; border: 1px solid #b9d1d5 !important; border-radius: 0.35rem; background: #f1f8f8; }
+.ajuda-frequencias__cuidados { margin-top: 0.7rem; padding: 0.8rem !important; border: 1px solid #e3c681 !important; border-radius: 0.35rem; background: #fff9e9; }
+.ajuda-frequencias__fechar { min-width: 6rem; }
+.ajuda-frequencias__fechar--icone { min-width: 2.3rem; padding: 0.25rem 0.5rem; font-size: 1.25rem; line-height: 1; }
+
 @media (max-width: 900px) {
   .frequencias-pagina { overflow: auto; }
   .frequencias-configuracoes { grid-template-columns: 1fr; overflow: visible; }
@@ -133,6 +169,11 @@
 
 @media (max-width: 560px) {
   .frequencias-topo { align-items: flex-start; flex-wrap: wrap; }
+  .frequencias-topo-acoes { width: 100%; }
+  .frequencias-topo-acoes button { flex: 1; }
   .frequencias-formulario { grid-template-columns: 1fr; }
   .frequencias-operacao { align-items: flex-start; flex-direction: column; }
+  .ajuda-frequencias__conteudo dl { grid-template-columns: 1fr; }
+  .ajuda-frequencias__conteudo dt { padding-bottom: 0.1rem; border-bottom: 0; }
+  .ajuda-frequencias__conteudo dd { padding-top: 0.1rem; }
 }

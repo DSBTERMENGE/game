@@ -172,6 +172,8 @@ continuam pendentes ou pertencem a ciclos posteriores.
   evolução dos intervalos da faixa prevista e sobrepondo ocorrências reais.
 - [x] Avaliar a assertividade das faixas contra ocorrências futuras, com acertos,
   erros, censura, erro absoluto e erro percentual pelo intervalo real.
+- [x] Oferecer ajuda modal independente da API, explicando a página de cima para
+  baixo, o fluxo recomendado, a finalidade do estudo e os cuidados operacionais.
 
 ## Fora do escopo inicial
 

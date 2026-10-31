@@ -3371,3 +3371,28 @@ decisões, funcionalidades e continuidade foram reconciliados. Evidência em
 `MSen/tests/TESTE_ITEM_22_12.md`. Todos os databases temporários foram removidos,
 o `games` não foi alterado e nenhum commit ou push foi executado. Etapa 22
 concluída.
+
+#### 22.13 — Ajuda contextual da página Frequência das dezenas
+
+- Acrescentar botão `Ajuda` no topo da página sem depender do estado da API.
+- Abrir formulário modal acessível, com fechamento explícito, por `Esc` e pela
+  área externa.
+- Explicar os blocos na mesma ordem em que aparecem: estado, configuração
+  gravada, configuração a calcular, atualização, fotografia, histórico e
+  assertividade.
+- Encerrar com finalidade do estudo, fluxo recomendado e cuidados para evitar
+  reconstrução involuntária, mistura de unidades e interpretação incorreta de
+  casos censurados.
+- Manter o diálogo utilizável em telas normais e estreitas.
+- Teste: conteúdo mínimo, independência da API, abertura/fechamento no Chrome e
+  responsividade.
+
+Estado: concluído em 2026-10-30. A página recebeu o botão `Ajuda` e um diálogo
+com rolagem própria, fechamento pelo cabeçalho, rodapé, tecla `Esc` ou área
+externa. A orientação segue os sete blocos da interface e inclui finalidade,
+conceitos de Simples/2VS/3VS, unidade do desvio-padrão, prévia, simulação,
+gravação, reconstrução, leitura dos gráficos, assertividade, fluxo recomendado
+e cuidados. O JavaScript da ajuda não consulta a API, permitindo orientação
+mesmo quando o banco estiver indisponível. Passaram 4 testes unitários
+específicos e 4 fluxos no Google Chrome, incluindo 1280 px e 520 px. Evidência
+em `MSen/tests/TESTE_ITEM_22_13.md`.

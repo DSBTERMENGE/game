@@ -5,6 +5,7 @@ import test from "node:test";
 const html = await readFile(new URL("../frequencias.html", import.meta.url), "utf8");
 const css = await readFile(new URL("../css/frequencias.css", import.meta.url), "utf8");
 const javascript = await readFile(new URL("../js/frequencias.js", import.meta.url), "utf8");
+const ajuda = await readFile(new URL("../js/ajuda-frequencias.js", import.meta.url), "utf8");
 
 test("página expõe estado, configurações gravada e calculada e ações", () => {
   for (const id of [
@@ -21,6 +22,21 @@ test("página expõe estado, configurações gravada e calculada e ações", () 
   assert.match(html, /id="grade-historico-frequencia"/);
   assert.match(html, /id="assertividade-percentual"/);
   assert.match(html, /id="corpo-erros-assertividade"/);
+});
+
+test("ajuda explica a página bloco a bloco e funciona sem depender da API", () => {
+  assert.match(html, /id="botao-ajuda-frequencias"/);
+  assert.match(html, /<dialog id="dialogo-ajuda-frequencias"/);
+  for (const titulo of [
+    "Finalidade da página", "1. Estado da base", "2. Configuração gravada",
+    "3. Configuração a calcular", "4. Atualização do histórico",
+    "5. Fotografia atual das 60 dezenas", "6. Evolução histórica por dezena",
+    "7. Assertividade e relatório de falhas", "Fluxo recomendado",
+    "Cuidados importantes",
+  ]) assert.match(html, new RegExp(titulo.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.match(ajuda, /showModal\(\)/);
+  assert.match(ajuda, /dialogo\.close\(\)/);
+  assert.doesNotMatch(ajuda, /fetch\(/);
 });
 
 test("página usa API, prévia, confirmação, progresso e cancelamento", () => {

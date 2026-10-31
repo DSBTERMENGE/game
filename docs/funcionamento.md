@@ -219,6 +219,12 @@ da base, seis gráficos atuais das 60 dezenas e histórico filtrado por dezena,
 evento e período. Intervalos e números previstos de concursos usam gráficos
 separados para não misturar unidades.
 
+O botão `Ajuda` abre um diálogo independente da API. O conteúdo acompanha a
+ordem visual da página e explica estado da base, configurações, prévia,
+gravação, reconstrução, fotografia atual, série histórica, assertividade, fluxo
+recomendado e cuidados. Assim, a orientação permanece acessível mesmo quando o
+banco ou o servidor de dados não estiver disponível.
+
 As ocorrências reais são consultadas diretamente em `resultados`. A avaliação
 considera o primeiro evento posterior ao corte, usa limites inclusivos e
 censura casos sem futuro conhecido. O erro percentual usa como denominador o
