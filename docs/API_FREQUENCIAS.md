@@ -1,9 +1,9 @@
 # API — Frequência das dezenas
 
 As páginas `frequencias.html` e `graficos-frequencias.html` consomem as mesmas
-rotas. A página auxiliar reutiliza `GET /api/frequencias/serie`; ampliação
-vertical, recorte e retorno são operações exclusivamente visuais e não criam
-novos parâmetros nem persistência.
+rotas. A página auxiliar reutiliza `GET /api/frequencias/serie`; escalas X/Y,
+marcações de centenas, degraus e retorno são operações exclusivamente visuais
+e não criam novos parâmetros nem persistência.
 
 Base: `/api/frequencias`.
 
@@ -34,11 +34,26 @@ contém somente os números dos concursos em que o evento selecionado terminou,
 consultados diretamente de `resultados`: presença para `SIMPLES`, segunda
 presença consecutiva para `2VS` e terceira para `3VS`.
 
-`assertividade` avalia cada fotografia contra o próximo evento conhecido. Os
-limites são inclusivos. O erro absoluto é a distância entre ocorrência real e
-previsão central; o erro percentual divide essa distância pelo intervalo real
-entre o evento anterior e o próximo. Casos sem evento anterior, estatística
-completa ou próximo evento conhecido são censurados e ficam fora do denominador.
+`intervalos_individuais` relaciona ocorrências consecutivas cujo segmento
+intercepta o período consultado. Isso inclui o intervalo que atravessa o limite
+inicial e, quando já concluído no histórico, o que atravessa o limite final.
+Cada item contém `concurso_anterior`, `numero_do_concurso`, `intervalo`,
+`concurso_inicial_visivel` e `concurso_final_visivel`. Os dois últimos campos
+são o recorte para desenho; os concursos reais permanecem inalterados. Nenhum
+retorno futuro é inventado e nenhuma nova estatística é persistida.
+
+Os campos históricos `media_intervalos` e `desvio_padrao_intervalos` são
+acumulados desde o primeiro intervalo efetivamente formado entre duas
+ocorrências. Não existe intervalo artificial a partir do concurso zero. O
+recorte visual de `intervalos_individuais` não modifica esses campos.
+
+`assertividade` avalia cada fotografia somente quando o limite superior da
+faixa está coberto pelo histórico disponível. Os limites são inclusivos. Ao
+encontrar a primeira faixa que ultrapassa o último concurso armazenado, o
+backtest encerra aquela dezena; pontos posteriores não são avaliados. A resposta
+informa `intervalo_backtest` e `aguardando_historico`. Faixa observável com
+retorno dentro dos limites é acerto; retorno anterior, posterior ou ausência de
+retorno dentro da faixa é erro.
 
 ## Prévia
 

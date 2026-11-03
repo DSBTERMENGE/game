@@ -19,6 +19,10 @@ rascunhos, protótipos e relatórios antigos como descrição atual do sistema.
 | API da Validação e auditoria | `docs/API_VALIDACAO.md` |
 | API da Frequência das dezenas | `docs/API_FREQUENCIAS.md` |
 | Contrato da Frequência das dezenas | `docs/CONTRATO_FREQUENCIA_DEZENAS.md` |
+| Contrato da Seleção de dezenas | `docs/CONTRATO_SELECAO_DEZENAS.md` |
+| Contrato do backtest da Seleção de dezenas | `docs/CONTRATO_BACKTEST_SELECAO_DEZENAS.md` |
+| Quantidade de dezenas e formação de jogos | `docs/CONTRATO_QUANTIDADE_COMBINACOES.md` |
+| Modelo das pesquisas da Seleção de dezenas | `docs/MODELO_PESQUISA_SELECAO_DEZENAS.md` |
 
 ## Documentos técnicos especializados
 

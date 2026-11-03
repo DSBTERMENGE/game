@@ -80,13 +80,34 @@ def _consultar_ocorrencias_reais(
     return [linha[0] for linha in cursor.fetchall()]
 
 
+def _intervalos_individuais(
+    ocorrencias: list[int], *, inicio: int, fim: int
+) -> list[dict[str, int]]:
+    """Devolve intervalos concluídos cujos segmentos interceptam o período."""
+    return [
+        {
+            "concurso_anterior": anterior,
+            "numero_do_concurso": atual,
+            "intervalo": atual - anterior,
+            "concurso_inicial_visivel": max(anterior, inicio),
+            "concurso_final_visivel": min(atual, fim),
+        }
+        for anterior, atual in zip(ocorrencias, ocorrencias[1:])
+        if atual >= inicio and anterior <= fim
+    ]
+
+
 def avaliar_assertividade_frequencia(
-    pontos: list[dict[str, object]], ocorrencias_reais: list[int]
+    pontos: list[dict[str, object]], ocorrencias_reais: list[int], *,
+    ultimo_concurso: int,
 ) -> dict[str, object]:
     avaliacoes = []
-    acertos = erros = censurados = 0
+    acertos = erros = 0
     soma_absoluta = Decimal("0")
     soma_percentual = Decimal("0")
+    distancias_calculaveis = 0
+    aguardando_historico = None
+    primeiro_avaliado = ultimo_avaliado = None
     for ponto in pontos:
         corte = int(ponto["numero_do_concurso"])
         posicao = bisect_right(ocorrencias_reais, corte)
@@ -95,31 +116,36 @@ def avaliar_assertividade_frequencia(
         inferior = ponto.get("concurso_limite_inferior")
         superior = ponto.get("concurso_limite_superior")
         central_texto = ponto.get("previsao_central")
-        if None in (anterior, proxima, inferior, superior, central_texto):
-            censurados += 1
-            avaliacoes.append({
-                "numero_do_concurso": corte, "estado": "CENSURADO",
-                "concurso_anterior": anterior, "concurso_real": proxima,
-                "limite_inferior": inferior, "limite_superior": superior,
-                "previsao_central": central_texto,
-                "erro_absoluto": None, "erro_percentual": None,
-            })
+        if None in (anterior, inferior, superior, central_texto):
             continue
+        if superior > ultimo_concurso:
+            aguardando_historico = {
+                "numero_do_concurso": corte,
+                "limite_superior": superior,
+                "ultimo_concurso_disponivel": ultimo_concurso,
+            }
+            break
+        if primeiro_avaliado is None:
+            primeiro_avaliado = corte
+        ultimo_avaliado = corte
         central = Decimal(str(central_texto))
-        erro_absoluto = abs(Decimal(proxima) - central)
-        intervalo_real = Decimal(proxima - anterior)
-        erro_percentual = erro_absoluto * Decimal("100") / intervalo_real
-        if inferior <= proxima <= superior:
+        erro_absoluto = erro_percentual = None
+        if proxima is not None:
+            erro_absoluto = abs(Decimal(proxima) - central)
+            intervalo_real = Decimal(proxima - anterior)
+            erro_percentual = erro_absoluto * Decimal("100") / intervalo_real
+            soma_absoluta += erro_absoluto
+            soma_percentual += erro_percentual
+            distancias_calculaveis += 1
+        if proxima is not None and inferior <= proxima <= superior:
             estado = "ACERTO"
             acertos += 1
-        elif proxima < inferior:
+        elif proxima is not None and proxima < inferior:
             estado = "ERRO_ABAIXO"
             erros += 1
         else:
             estado = "ERRO_ACIMA"
             erros += 1
-        soma_absoluta += erro_absoluto
-        soma_percentual += erro_percentual
         avaliacoes.append({
             "numero_do_concurso": corte, "estado": estado,
             "concurso_anterior": anterior, "concurso_real": proxima,
@@ -129,19 +155,27 @@ def avaliar_assertividade_frequencia(
             "erro_percentual": _decimal_texto(erro_percentual),
         })
     avaliaveis = acertos + erros
+    censurados = len(pontos) - avaliaveis
     return {
         "regra_denominador": "INTERVALO_REAL_ENTRE_EVENTOS",
         "limites_inclusivos": True,
-        "total": len(avaliacoes), "avaliaveis": avaliaveis,
+        "regra_janela_avaliavel": "LIMITE_SUPERIOR_COBERTO_PELO_HISTORICO",
+        "total": len(pontos), "avaliaveis": avaliaveis,
         "acertos": acertos, "erros": erros, "censurados": censurados,
+        "intervalo_backtest": {
+            "concurso_inicial": primeiro_avaliado,
+            "concurso_final": ultimo_avaliado,
+            "quantidade_concursos": avaliaveis,
+        },
+        "aguardando_historico": aguardando_historico,
         "percentual_acerto": None if not avaliaveis else _decimal_texto(
             Decimal(acertos) * Decimal("100") / Decimal(avaliaveis)
         ),
-        "erro_absoluto_medio": None if not avaliaveis else _decimal_texto(
-            soma_absoluta / Decimal(avaliaveis)
+        "erro_absoluto_medio": None if not distancias_calculaveis else _decimal_texto(
+            soma_absoluta / Decimal(distancias_calculaveis)
         ),
-        "erro_percentual_medio": None if not avaliaveis else _decimal_texto(
-            soma_percentual / Decimal(avaliaveis)
+        "erro_percentual_medio": None if not distancias_calculaveis else _decimal_texto(
+            soma_percentual / Decimal(distancias_calculaveis)
         ),
         "avaliacoes": avaliacoes,
     }
@@ -297,7 +331,8 @@ def consultar_serie_frequencia(
         geracao = cursor.fetchone()
         if geracao is None:
             return {"dezena": dezena, "tipo_evento": tipo_evento, "pontos": [],
-                    "ocorrencias_reais": [], "total": 0, "geracao": None}
+                    "ocorrencias_reais": [], "intervalos_individuais": [],
+                    "total": 0, "geracao": None}
         inicio = geracao[1] if concurso_inicial is None else concurso_inicial
         fim = geracao[2] if concurso_final is None else concurso_final
         if inicio > fim:
@@ -343,7 +378,12 @@ def consultar_serie_frequencia(
                     "concurso_final": geracao[2]},
         "periodo": {"concurso_inicial": inicio, "concurso_final": fim},
         "ocorrencias_reais": ocorrencias_reais,
-        "assertividade": avaliar_assertividade_frequencia(pontos, todas_ocorrencias),
+        "intervalos_individuais": _intervalos_individuais(
+            todas_ocorrencias, inicio=inicio, fim=fim
+        ),
+        "assertividade": avaliar_assertividade_frequencia(
+            pontos, todas_ocorrencias, ultimo_concurso=geracao[2]
+        ),
         "pontos": pontos,
     }
 

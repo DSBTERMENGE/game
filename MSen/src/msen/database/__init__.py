@@ -40,6 +40,19 @@ from .configuracao_frequencia_repository import (
     ErroRepositorioConfiguracaoFrequencia,
     RepositorioConfiguracaoFrequencia,
 )
+from .pesquisa_selecao_repository import (
+    AlvoPesquisaEntrada,
+    AlvoPesquisaPersistido,
+    AvaliacaoDezenaPesquisaEntrada,
+    ConfiguracaoSelecaoPersistida,
+    ErroRepositorioPesquisaSelecao,
+    ExecucaoSelecaoPersistida,
+    RepositorioPesquisaSelecao,
+)
+from .fonte_selecao_dezenas_repository import (
+    ErroFonteSelecaoDezenas,
+    RepositorioFonteSelecaoDezenas,
+)
 
 __all__ = [
     "ErroConexaoBanco", "InformacaoConexao", "abrir_conexao", "verificar_conexao",
@@ -55,4 +68,9 @@ __all__ = [
     "AmostraValidacao", "AvaliacaoValidacaoDetalhada", "RepositorioValidacao",
     "ConfiguracaoFrequenciaPersistida", "ErroRepositorioConfiguracaoFrequencia",
     "RepositorioConfiguracaoFrequencia",
+    "AlvoPesquisaEntrada", "AlvoPesquisaPersistido",
+    "AvaliacaoDezenaPesquisaEntrada", "ConfiguracaoSelecaoPersistida",
+    "ErroRepositorioPesquisaSelecao", "ExecucaoSelecaoPersistida",
+    "RepositorioPesquisaSelecao",
+    "ErroFonteSelecaoDezenas", "RepositorioFonteSelecaoDezenas",
 ]

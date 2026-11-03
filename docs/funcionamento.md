@@ -221,17 +221,31 @@ explícita e abre o acompanhamento da operação; não existe botão `Executar`
 separado. Uma prévia sem alteração mantém o prosseguimento desabilitado.
 
 A página `frequencias.html` apresenta configuração gravada e calculada, estado
-da base, seis gráficos atuais das 60 dezenas e histórico filtrado por dezena,
-evento e período. Intervalos e números previstos de concursos usam gráficos
-separados para não misturar unidades.
+da base, seis gráficos atuais das 60 dezenas e análise histórica filtrada por
+dezena, evento e período. O bloco histórico mantém consulta, assertividade e
+relatório, mas não repete os gráficos. `Consultar dezena` apresenta a fotografia
+numérica final e um quadro **Backtest** com intervalo efetivamente avaliado,
+concursos avaliados, acertos, erros e percentual de acerto.
 
 O bloco histórico oferece `Abrir gráficos`, que leva a
 `graficos-frequencias.html` preservando dezena, evento e período. A página
-auxiliar apresenta um gráfico por linha, em largura total e maior altura, e
-retorna ao mesmo bloco com os filtros atuais. A escala vertical automática
-mostra todas as séries. A ampliação 10× reduz somente a janela visual ao redor
-do centro, sem alterar valores; eventual recorte é informado e pode ser
-desfeito imediatamente pela escala automática.
+auxiliar apresenta um gráfico por linha e retorna ao mesmo bloco com os filtros
+atuais. Os eixos X e Y usam escalas independentes calculadas para mostrar todas
+as séries. O eixo horizontal identifica os extremos e intervalos de 100
+concursos. A altura se adapta à janela para manter cada gráfico integralmente
+visível. No gráfico dos intervalos, cada par de ocorrências consecutivas forma
+um patamar horizontal: o trecho ocupa os dois concursos reais e sua ordenada é
+a diferença entre eles. A mudança de valor usa ligação vertical tracejada;
+intervalos consecutivos iguais permanecem contínuos. Mínimo e máximo não são
+mais desenhados. A média e as linhas `média − desvio-padrão` e
+`média + desvio-padrão` são acumuladas desde o primeiro intervalo real e ficam
+na unidade de concursos.
+
+Se o período começa no concurso 500, o primeiro patamar é o intervalo real que
+liga a última ocorrência anterior a 500 à primeira ocorrência igual ou
+posterior, recortado somente na apresentação. Patamares projetados com menos de
+8 pixels recebem losango e haste tracejada; mouse, foco ou clique mostram os
+concursos reais e o intervalo sem alterar as coordenadas matemáticas.
 
 O botão `Ajuda` abre um diálogo independente da API. O conteúdo acompanha a
 ordem visual da página e explica estado da base, configurações, prévia,
@@ -239,14 +253,65 @@ gravação, reconstrução, fotografia atual, série histórica, assertividade, 
 recomendado e cuidados. Assim, a orientação permanece acessível mesmo quando o
 banco ou o servidor de dados não estiver disponível.
 
-A página auxiliar também possui ajuda própria, cobrindo filtros, significado dos
-dois gráficos, unidades, escala automática, ampliação 10×, recorte e retorno.
+A página auxiliar também possui ajuda própria, cobrindo filtros, significado
+dos gráficos principais, unidades, intervalos individuais em patamares,
+recorte inicial, média acumulada, marcadores de trechos curtos, escalas
+independentes, gráficos auxiliares e retorno.
+
+### 10.1. Leitura dos gráficos de intervalos
+
+O cartão **Evolução dos intervalos** reúne três formas complementares de
+examinar os mesmos intervalos históricos da dezena e do tipo de evento
+selecionados. Cada gráfico possui um botão `Ajuda`; os dois gráficos auxiliares
+abrem, um por vez, no mesmo diálogo reutilizável.
+
+**Evolução dos intervalos** mostra o comportamento ao longo do tempo:
+
+- o eixo horizontal é o número do concurso;
+- o eixo vertical é a duração do intervalo, em concursos;
+- cada patamar representa a distância entre duas ocorrências consecutivas;
+- a média é acumulada com os intervalos conhecidos até cada momento;
+- as linhas `média − desvio-padrão` e `média + desvio-padrão` mostram a
+  dispersão na mesma unidade da média;
+- losango e haste tracejada identificam um intervalo curto demais para ficar
+  claramente visível na escala horizontal.
+
+Mouse, foco ou clique no marcador informam os concursos inicial e final e a
+duração exata. O gráfico descreve o histórico; média e desvio mudam quando um
+novo intervalo termina e não determinam a próxima ocorrência.
+
+**Curva de distribuição** resume quantas vezes cada duração ocorreu. O eixo X
+é a duração em concursos e o eixo Y é o percentual das ocorrências com aquela
+duração. A distribuição observada é comparada com uma curva normal teórica de
+mesma média e mesmo desvio-padrão. Linhas verticais indicam a média e um desvio
+abaixo e acima dela. A curva normal é somente uma referência: intervalos são
+inteiros e sua distribuição pode ser assimétrica e concentrada em valores
+pequenos. Selecionar um ponto informa duração, quantidade e percentual exatos.
+
+**Ocorrências em ordem crescente** ordena todos os intervalos do menor para o
+maior, sem eliminar repetições. Os dois eixos vão de 0% a 100%:
+
+- `X(i) = i / N × 100` é o percentual acumulado da ocorrência de ordem `i`
+  entre os `N` intervalos;
+- `Y(i) = intervalo(i) / maior_intervalo × 100` é a duração relativa ao maior
+  intervalo observado.
+
+O quadriculado de 5% serve apenas como referência, e os pontos mantêm seus
+percentuais exatos. Durações repetidas formam patamares; um salto mostra que
+certas durações intermediárias não ocorreram. O último ponto é sempre
+`(100%, 100%)`. Ao selecionar um ponto, a página informa ordem, percentual
+acumulado, duração real e percentual do maior intervalo.
+
+Os três gráficos descrevem concentração, dispersão e evolução do histórico.
+Eles não classificam automaticamente as dezenas, não alteram filtros do
+Screener e não garantem maior probabilidade no concurso seguinte.
 
 As ocorrências reais são consultadas diretamente em `resultados`. A avaliação
-considera o primeiro evento posterior ao corte, usa limites inclusivos e
-censura casos sem futuro conhecido. O erro percentual usa como denominador o
-intervalo real entre eventos, não o número absoluto do concurso. O estudo não
-ativa filtros do Screener e não promete prever sorteios aleatórios.
+considera o primeiro evento posterior ao corte e usa limites inclusivos. Uma
+previsão só entra no backtest quando seu limite superior já está coberto pelo
+histórico. A primeira faixa que ultrapassa o último concurso encerra a avaliação
+daquela dezena; a próxima dezena é independente. O estudo não ativa filtros do
+Screener e não promete prever sorteios aleatórios.
 
 ## 11. Páginas e APIs vigentes
 

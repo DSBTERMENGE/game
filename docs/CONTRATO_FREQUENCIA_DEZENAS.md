@@ -147,3 +147,78 @@ anteceder nem coincidir com o evento que originou a previsão.
 - fórmula definitiva do percentual de erro da avaliação posterior.
 
 Esses assuntos permanecem nas subetapas seguintes da Etapa 22.
+
+## 10. Contrato técnico dos gráficos implementados
+
+Esta seção registra o contrato consolidado nas subetapas posteriores da Etapa
+22. Ela não altera as fórmulas estatísticas das seções anteriores.
+
+### 10.1. Base comum
+
+Os três gráficos usam a lista `I` de intervalos reais do tipo de evento, dezena
+e período selecionados. Repetições são dados válidos e não são eliminadas. Os
+valores permanecem na unidade **concurso**, exceto quando o gráfico declara
+explicitamente uma normalização percentual.
+
+### 10.2. Evolução dos intervalos
+
+Cada intervalo `Ik = ek - e(k-1)` é desenhado como um patamar horizontal entre
+os concursos reais `e(k-1)` e `ek`, na ordenada `Ik`. A ligação entre patamares
+de valores diferentes é vertical e tracejada. Intervalos consecutivos iguais
+formam continuidade horizontal.
+
+Para cada corte são calculados, sobre os intervalos já concluídos, a média
+acumulada `μ` e o desvio-padrão populacional `σ`. As três referências são:
+
+```text
+μ
+μ - σ
+μ + σ
+```
+
+Todas permanecem em concursos. Se o período visível começar depois do primeiro
+evento, os cálculos continuam usando o histórico anterior permitido; apenas o
+desenho é recortado. Patamares cuja largura projetada seja inferior a 8 pixels
+recebem marcador em losango e haste tracejada, sem alterar suas coordenadas.
+
+### 10.3. Curva de distribuição
+
+Para cada duração inteira `d`, sejam `contagem(d)` sua quantidade e `N` o total
+de intervalos:
+
+```text
+frequencia_percentual(d) = contagem(d) / N × 100
+```
+
+O eixo X usa `d`, em concursos, e o eixo Y usa
+`frequencia_percentual(d)`. A curva normal sobreposta é uma referência teórica
+com a mesma média e o mesmo desvio-padrão da amostra observada; ela não
+substitui nem corrige a distribuição empírica. As referências verticais são
+`μ`, `μ - σ` e `μ + σ`.
+
+### 10.4. Ocorrências em ordem crescente
+
+Seja `J = sort(I)` a lista crescente com todas as repetições preservadas,
+`N = |J|`, `M = max(J)` e `i` uma posição iniciada em 1. Cada ponto é:
+
+```text
+X(i) = i / N × 100
+Y(i) = J(i) / M × 100
+```
+
+Os eixos são percentuais de 0% a 100%, com linhas de referência a cada 5%. Os
+pontos não são ajustados às linhas do quadriculado. Todos têm espaçamento
+horizontal uniforme por ordem; valores repetidos formam patamares. O último
+ponto deve ser `(100%, 100%)`. Um salto vertical pode decorrer da ausência de
+durações intermediárias e não caracteriza, isoladamente, falha de ordenação.
+
+### 10.5. Interação e limites
+
+Os gráficos auxiliares compartilham um único diálogo reutilizável e são
+exibidos um por vez. A ajuda contextual também reutiliza um único diálogo e não
+modifica consulta, filtros nem dados desenhados. Mouse, foco ou clique expõem
+os valores exatos associados ao elemento selecionado.
+
+Essas visualizações têm finalidade descritiva. Nenhuma delas, isoladamente,
+estabelece causalidade, classifica automaticamente uma dezena ou garante sua
+ocorrência futura.

@@ -78,6 +78,20 @@ def executar() -> None:
                 raise AssertionError("Ocorrências 2VS reais incorretas no corte solicitado.")
             if serie_3vs["ocorrencias_reais"] != [3, 4, 5]:
                 raise AssertionError("Ocorrências 3VS reais incorretas no corte solicitado.")
+            intervalos_esperados = [
+                {"concurso_anterior": 2, "numero_do_concurso": 3, "intervalo": 1,
+                 "concurso_inicial_visivel": 3, "concurso_final_visivel": 3},
+                {"concurso_anterior": 3, "numero_do_concurso": 4, "intervalo": 1,
+                 "concurso_inicial_visivel": 3, "concurso_final_visivel": 4},
+                {"concurso_anterior": 4, "numero_do_concurso": 5, "intervalo": 1,
+                 "concurso_inicial_visivel": 4, "concurso_final_visivel": 5},
+            ]
+            if serie["intervalos_individuais"] != intervalos_esperados:
+                raise AssertionError("Intervalos individuais simples incorretos.")
+            if serie_2vs["intervalos_individuais"] != intervalos_esperados:
+                raise AssertionError("Intervalos individuais 2VS incorretos.")
+            if serie_3vs["intervalos_individuais"] != intervalos_esperados[1:]:
+                raise AssertionError("Intervalos individuais 3VS incorretos.")
             if serie["assertividade"]["total"] != 3:
                 raise AssertionError("Assertividade não cobriu todos os cortes da série.")
             if serie["assertividade"]["censurados"] < 1:

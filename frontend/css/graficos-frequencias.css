@@ -34,28 +34,85 @@
 .graficos-frequencias-legenda { display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.75rem; }
 .graficos-frequencias-legenda span { display: flex; align-items: center; gap: 0.25rem; }
 .graficos-frequencias-legenda i { display: inline-block; width: 1.5rem; height: 0.22rem; }
-.controle-escala-vertical { display: grid; gap: 0.15rem; min-width: 10rem; font-size: 0.75rem; font-weight: 650; }
-.controle-escala-vertical select { padding: 0.35rem; }
-.aviso-recorte-graficos { margin: 0.75rem 0 0; padding: 0.6rem 0.75rem; border: 1px solid #d4ad52; border-radius: 0.3rem; background: #fff7df; color: #76520a !important; font-weight: 650; }
-.legenda-minimo { background: #397780; }
+.escala-integral { max-width: 17rem; margin: 0 !important; color: #314c54 !important; font-size: 0.72rem; font-weight: 650; text-align: right; }
+.legenda-minimo { background: #16834b; }
+.legenda-desvio-inferior { border-top: 0.2rem dashed #168c9b; background: transparent; }
 .legenda-media { background: #c45b3f; }
-.legenda-maximo { background: #4c568c; }
+.legenda-desvio-superior { border-top: 0.2rem dashed #9b3f87; background: transparent; }
+.legenda-maximo { background: #234fb5; }
+.legenda-intervalo { border-top: 0.22rem solid #a02626; background: transparent; }
 .legenda-faixa { height: 0.65rem !important; background: rgb(212 175 55 / 35%); }
-.legenda-real { width: 0.6rem !important; height: 0.6rem !important; border-radius: 50%; background: #a02626; }
+.legenda-real { width: 0.6rem !important; height: 0.6rem !important; border-radius: 50%; background: #6c2f7d; }
 .grade-graficos-historicos { display: grid; min-width: 0; gap: 0.9rem; margin-top: 0.75rem; }
 .historico-cartao-ampliado { min-width: 0; padding: 0.65rem; border: 1px solid #d6dee1; border-radius: 0.3rem; overflow: auto; }
 .historico-cartao-ampliado header { display: flex; align-items: baseline; min-width: 52rem; margin-bottom: 0.3rem; }
 .historico-cartao-ampliado h3 { margin: 0; font-size: 0.95rem; }
 .historico-cartao-ampliado header span { margin-left: auto; color: #52616a; font-size: 0.75rem; }
-.grafico-historico-ampliado { display: block; width: 100%; min-width: 52rem; height: 30rem; background: #fbfdfd; }
+.grafico-historico-ampliado { display: block; width: 100%; min-width: 52rem; height: clamp(20rem, calc(100vh - 26rem), 26rem); background: #fbfdfd; }
 .historico-eixo { stroke: #718085; stroke-width: 1; }
 .historico-rotulo { fill: #52616a; font-size: 12px; }
+.historico-rotulo--concurso { font-size: 10px; }
+.historico-rotulo--degrau { fill: #654f11; font-size: 10px; font-weight: 700; }
+.historico-titulo-eixo { fill: #314c54; font-size: 12px; font-weight: 700; }
+.historico-grade-horizontal { stroke: #dce4e6; stroke-width: 0.8; }
+.historico-marca-degrau { stroke: #b29032; stroke-width: 0.8; stroke-dasharray: 4 4; }
 .historico-linha { stroke-width: 2; vector-effect: non-scaling-stroke; }
-.historico-linha--minimo { stroke: #397780; }
-.historico-linha--media { stroke: #c45b3f; }
-.historico-linha--maximo { stroke: #4c568c; }
+.historico-linha--minimo { stroke: #16834b; stroke-width: 2.4; }
+.historico-linha--desvio-inferior { stroke: #168c9b; stroke-width: 1.8; stroke-dasharray: 5 4; }
+.historico-linha--media { stroke: #d44f2e; stroke-width: 2.1; }
+.historico-linha--desvio-superior { stroke: #9b3f87; stroke-width: 1.8; stroke-dasharray: 5 4; }
+.historico-linha--maximo { stroke: #234fb5; stroke-width: 2.4; stroke-dasharray: 7 3; }
 .historico-faixa { fill: rgb(212 175 55 / 28%); stroke: #b18a16; stroke-width: 1; }
-.historico-ocorrencia { fill: #a02626; stroke: #fff; stroke-width: 1; }
+.historico-intervalo-degrau { fill: none; stroke: #a02626; stroke-width: 2.4; vector-effect: non-scaling-stroke; }
+.historico-intervalo-transicao { fill: none; stroke: #a02626; stroke-width: 1.5; stroke-dasharray: 5 4; vector-effect: non-scaling-stroke; }
+.historico-intervalo-curto { cursor: pointer; }
+.historico-intervalo-curto__haste { fill: none; stroke: #6f1c1c; stroke-width: 1.4; stroke-dasharray: 3 2; vector-effect: non-scaling-stroke; }
+.historico-intervalo-curto__marca { fill: #a02626; stroke: #fff; stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.historico-intervalo-curto:focus .historico-intervalo-curto__marca { stroke: #111; stroke-width: 2; }
+.historico-detalhe-intervalo-curto { min-width: 52rem; margin: 0.35rem 0 0; color: #52616a; font-size: 0.75rem; }
+.historico-acoes-auxiliares { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.5rem; min-width: 52rem; margin: 0.45rem 0; }
+.historico-ocorrencia { fill: #6c2f7d; stroke: #fff; stroke-width: 1; }
+.distribuicao-grade { stroke: #dce4e6; stroke-width: 0.8; }
+.distribuicao-eixo { stroke: #718085; stroke-width: 1; }
+.distribuicao-rotulo { fill: #52616a; font-size: 12px; }
+.distribuicao-titulo-eixo { fill: #314c54; font-size: 13px; font-weight: 700; }
+.distribuicao-curva-real { fill: none; stroke: #a02626; stroke-width: 2.5; vector-effect: non-scaling-stroke; }
+.distribuicao-curva-normal { fill: none; stroke: #276b9a; stroke-width: 2; stroke-dasharray: 7 4; vector-effect: non-scaling-stroke; }
+.distribuicao-ponto-real { fill: #a02626; stroke: #fff; stroke-width: 1; cursor: pointer; vector-effect: non-scaling-stroke; }
+.distribuicao-ponto-real:focus { stroke: #111; stroke-width: 2; }
+.distribuicao-marcador { stroke-width: 1.7; vector-effect: non-scaling-stroke; }
+.distribuicao-marcador--media { stroke: #d44f2e; }
+.distribuicao-marcador--desvio-inferior,
+.distribuicao-marcador--desvio-superior { stroke: #7c3b86; stroke-dasharray: 6 4; }
+.ordenado-grade { stroke: #e0e7e9; stroke-width: 0.7; }
+.ordenado-eixo { stroke: #718085; stroke-width: 1; }
+.ordenado-rotulo { fill: #52616a; font-size: 10px; }
+.ordenado-titulo-eixo { fill: #314c54; font-size: 13px; font-weight: 700; }
+.ordenado-curva { fill: none; stroke: #275f8d; stroke-width: 2.2; vector-effect: non-scaling-stroke; }
+.ordenado-ponto { fill: #a02626; stroke: #fff; stroke-width: 0.9; cursor: pointer; vector-effect: non-scaling-stroke; }
+.ordenado-ponto:focus { stroke: #111; stroke-width: 2; }
+.grafico-auxiliar-modal { width: min(96rem, calc(100vw - 2rem)); max-width: none; max-height: calc(100vh - 2rem); padding: 0; border: 1px solid #8da3aa; border-radius: 0.45rem; background: #fff; color: #17252b; }
+.grafico-auxiliar-modal::backdrop { background: rgb(17 34 40 / 68%); }
+.grafico-auxiliar-modal form { display: grid; max-height: calc(100vh - 2rem); grid-template-rows: auto minmax(0, 1fr) auto; }
+.grafico-auxiliar-modal header,
+.grafico-auxiliar-modal footer { display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 1rem; background: #eef5f6; }
+.grafico-auxiliar-modal header { border-bottom: 1px solid #c8d6da; }
+.grafico-auxiliar-modal footer { justify-content: flex-end; border-top: 1px solid #c8d6da; }
+.grafico-auxiliar-modal header > div { margin-right: auto; }
+.grafico-auxiliar-modal header p { margin: 0; color: #52616a; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.grafico-auxiliar-modal h2 { margin: 0.1rem 0 0; font-size: 1.15rem; }
+.grafico-auxiliar-conteudo { min-height: 0; overflow: auto; padding: 0.65rem 1rem; }
+.grafico-auxiliar-legenda { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.85rem; min-width: 52rem; margin-bottom: 0.4rem; font-size: 0.78rem; }
+.grafico-auxiliar-legenda span { display: flex; align-items: center; gap: 0.3rem; }
+.grafico-auxiliar-legenda i { display: inline-block; width: 1.6rem; height: 0.22rem; }
+.auxiliar-legenda-real { background: #a02626; }
+.auxiliar-legenda-normal { border-top: 0.2rem dashed #276b9a; }
+.auxiliar-legenda-media { background: #d44f2e; }
+.auxiliar-legenda-desvio { border-top: 0.2rem dashed #7c3b86; }
+.auxiliar-legenda-ordenada { background: #275f8d; }
+.grafico-auxiliar-svg { display: block; width: 100%; min-width: 52rem; height: min(68vh, 42rem); background: #fbfdfd; }
+.grafico-auxiliar-detalhe { min-width: 52rem; margin: 0.4rem 0 0; color: #52616a; font-size: 0.8rem; }
+.ajuda-grafico-contextual { z-index: 3; }
 .ajuda-graficos { width: min(58rem, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); padding: 0; border: 1px solid #8da3aa; border-radius: 0.45rem; background: #fff; color: #17252b; }
 .ajuda-graficos::backdrop { background: rgb(17 34 40 / 58%); }
 .ajuda-graficos form { display: grid; max-height: calc(100vh - 2rem); grid-template-rows: auto minmax(0, 1fr) auto; }

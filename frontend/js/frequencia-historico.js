@@ -19,32 +19,23 @@ export function dominioHistorico(pontos, campos, adicionais = []) {
   return { minimo: minimo - margem, maximo: maximo + margem };
 }
 
-export function ampliarDominioHistorico(dominio, fator = 10) {
-  const ampliacao = Number(fator);
-  if (!dominio || !Number.isFinite(ampliacao) || ampliacao <= 1) return dominio;
-  const centro = (dominio.minimo + dominio.maximo) / 2;
-  const meiaAmplitude = (dominio.maximo - dominio.minimo) / (2 * ampliacao);
-  return { minimo: centro - meiaAmplitude, maximo: centro + meiaAmplitude };
+export function adicionarFaixaDesvioPadrao(pontos) {
+  return pontos.map((ponto) => {
+    const media = numero(ponto.media_intervalos);
+    const desvio = numero(ponto.desvio_padrao_intervalos);
+    return {
+      ...ponto,
+      media_menos_desvio: media === null || desvio === null ? null : media - desvio,
+      media_mais_desvio: media === null || desvio === null ? null : media + desvio,
+    };
+  });
 }
 
-export function contarValoresForaDominio(pontos, campos, dominio, adicionais = []) {
-  if (!dominio) return 0;
-  let total = 0;
-  for (const valorOriginal of adicionais) {
-    const valor = numero(valorOriginal);
-    if (valor !== null && (valor < dominio.minimo || valor > dominio.maximo)) total += 1;
-  }
-  for (const ponto of pontos) {
-    for (const campo of campos) {
-      const valor = numero(ponto[campo]);
-      if (valor !== null && (valor < dominio.minimo || valor > dominio.maximo)) total += 1;
-    }
-  }
-  return total;
-}
-
-export function criarEscalasHistorico(periodo, dominio, largura = 960, altura = 245) {
-  const esquerda = 52, direita = largura - 15, topo = 14, inferior = altura - 30;
+export function criarEscalasHistorico(periodo, dominio, largura = 960, altura = 245, margens = {}) {
+  const esquerda = margens.esquerda ?? 52;
+  const direita = largura - (margens.direita ?? 15);
+  const topo = margens.topo ?? 14;
+  const inferior = altura - (margens.inferior ?? 30);
   const amplitudeX = Math.max(1, periodo.concurso_final - periodo.concurso_inicial);
   const amplitudeY = dominio.maximo - dominio.minimo;
   return {
@@ -52,6 +43,23 @@ export function criarEscalasHistorico(periodo, dominio, largura = 960, altura = 
     y: (valor) => inferior - (valor - dominio.minimo) * (inferior - topo) / amplitudeY,
     esquerda, direita, topo, inferior, largura, altura,
   };
+}
+
+export function marcasEixoConcursos(periodo, pontos = [], camposDegrau = []) {
+  const regulares = new Set([periodo.concurso_inicial, periodo.concurso_final]);
+  const primeiroMultiplo = Math.ceil(periodo.concurso_inicial / 100) * 100;
+  for (let concurso = primeiroMultiplo; concurso <= periodo.concurso_final; concurso += 100) regulares.add(concurso);
+  const degraus = new Set();
+  for (const campo of camposDegrau) {
+    let anterior = null;
+    for (const ponto of pontos) {
+      const atual = numero(ponto[campo]);
+      if (atual === null) continue;
+      if (anterior !== null && atual !== anterior) degraus.add(Number(ponto.numero_do_concurso));
+      anterior = atual;
+    }
+  }
+  return { regulares: [...regulares].sort((a, b) => a - b), degraus: [...degraus].sort((a, b) => a - b) };
 }
 
 export function caminhoHistorico(pontos, campo, escalas) {
@@ -63,6 +71,39 @@ export function caminhoHistorico(pontos, campo, escalas) {
     desenhando = true;
   }
   return caminho;
+}
+
+export function segmentosDegrausIntervalos(intervalos, escalas) {
+  const horizontais = [];
+  const transicoes = [];
+  const validos = intervalos.filter((item) =>
+    numero(item.concurso_anterior) !== null
+    && numero(item.numero_do_concurso) !== null
+    && numero(item.intervalo) !== null
+    && numero(item.concurso_inicial_visivel) !== null
+    && numero(item.concurso_final_visivel) !== null
+  );
+  for (const item of validos) {
+    const xInicial = escalas.x(numero(item.concurso_inicial_visivel));
+    const xFinal = escalas.x(numero(item.concurso_final_visivel));
+    const y = escalas.y(numero(item.intervalo));
+    horizontais.push({
+      item,
+      larguraProjetada: Math.abs(xFinal - xInicial),
+      caminho: `M${xInicial.toFixed(2)},${y.toFixed(2)} L${xFinal.toFixed(2)},${y.toFixed(2)}`,
+    });
+  }
+  for (let indice = 0; indice < validos.length - 1; indice += 1) {
+    const anterior = validos[indice], seguinte = validos[indice + 1];
+    if (numero(anterior.numero_do_concurso) !== numero(seguinte.concurso_anterior)
+        || numero(anterior.intervalo) === numero(seguinte.intervalo)) continue;
+    const x = escalas.x(numero(anterior.numero_do_concurso));
+    transicoes.push({
+      concurso: numero(anterior.numero_do_concurso), anterior, seguinte,
+      caminho: `M${x.toFixed(2)},${escalas.y(numero(anterior.intervalo)).toFixed(2)} L${x.toFixed(2)},${escalas.y(numero(seguinte.intervalo)).toFixed(2)}`,
+    });
+  }
+  return { horizontais, transicoes };
 }
 
 export function poligonoFaixaHistorico(pontos, campoInferior, campoSuperior, escalas) {

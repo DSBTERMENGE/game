@@ -56,24 +56,50 @@
             <h2 id="titulo-area-graficos">Evolução histórica</h2>
             <p id="estado-area-graficos" role="status" aria-live="polite">Consultando a série selecionada…</p>
           </div>
-          <div class="graficos-frequencias-legenda" aria-label="Legenda dos gráficos">
-            <span><i class="legenda-minimo"></i>Mínimo</span>
-            <span><i class="legenda-media"></i>Média / previsão central</span>
-            <span><i class="legenda-maximo"></i>Máximo</span>
-            <span><i class="legenda-faixa"></i>Faixa estatística</span>
-            <span><i class="legenda-real"></i>Ocorrência real</span>
+          <div class="graficos-frequencias-legenda" aria-label="Legenda da evolução dos intervalos">
+            <span><i class="legenda-media"></i>Média dos intervalos</span>
+            <span><i class="legenda-desvio-inferior"></i>Média dos intervalos − desvio-padrão</span>
+            <span><i class="legenda-desvio-superior"></i>Média dos intervalos + desvio-padrão</span>
+            <span><i class="legenda-intervalo"></i>Intervalos</span>
           </div>
-          <label class="controle-escala-vertical">Escala vertical
-            <select id="escala-vertical-graficos">
-              <option value="AUTOMATICA">Automática</option>
-              <option value="AMPLIADA_10X">Ampliação 10×</option>
-            </select>
-          </label>
+          <p class="escala-integral">Escalas X e Y independentes · ajuste integral automático</p>
         </header>
-        <p id="aviso-recorte-graficos" class="aviso-recorte-graficos" role="alert" hidden></p>
         <div id="grade-graficos-historicos" class="grade-graficos-historicos" tabindex="0"></div>
       </section>
     </main>
+
+    <dialog id="dialogo-grafico-auxiliar" class="grafico-auxiliar-modal" aria-labelledby="titulo-grafico-auxiliar">
+      <form method="dialog">
+        <header>
+          <div>
+            <p>Estudo dos intervalos</p>
+            <h2 id="titulo-grafico-auxiliar">Gráfico auxiliar</h2>
+          </div>
+          <button id="botao-ajuda-grafico-auxiliar" type="button">Ajuda</button>
+          <button type="submit" value="encerrar" aria-label="Encerrar gráfico auxiliar">×</button>
+        </header>
+        <div class="grafico-auxiliar-conteudo">
+          <div id="legenda-grafico-auxiliar" class="grafico-auxiliar-legenda" aria-label="Legenda do gráfico"></div>
+          <svg id="svg-grafico-auxiliar" class="grafico-auxiliar-svg"></svg>
+          <p id="detalhe-grafico-auxiliar" class="grafico-auxiliar-detalhe" role="status" aria-live="polite"></p>
+        </div>
+        <footer><button type="submit" value="encerrar">Encerrar</button></footer>
+      </form>
+    </dialog>
+
+    <dialog id="dialogo-ajuda-grafico" class="ajuda-graficos ajuda-grafico-contextual" aria-labelledby="titulo-ajuda-grafico">
+      <form method="dialog">
+        <header>
+          <div>
+            <p>Ajuda do gráfico</p>
+            <h2 id="titulo-ajuda-grafico">Como interpretar o gráfico</h2>
+          </div>
+          <button type="submit" value="fechar" aria-label="Fechar ajuda do gráfico">×</button>
+        </header>
+        <div id="conteudo-ajuda-grafico" class="ajuda-graficos-conteudo"></div>
+        <footer><button type="submit" value="fechar">Fechar</button></footer>
+      </form>
+    </dialog>
 
     <dialog id="dialogo-ajuda-graficos" class="ajuda-graficos" aria-labelledby="titulo-ajuda-graficos">
       <form method="dialog">
@@ -95,7 +121,8 @@
           </section>
           <section>
             <h3>2. Evolução dos intervalos</h3>
-            <p>Mostra os intervalos mínimo, médio e máximo calculados em cada concurso de corte. O eixo vertical está em concursos.</p>
+            <p>A linha vermelha em patamares mostra cada intervalo individual entre duas ocorrências consecutivas. O trecho horizontal começa na ocorrência anterior, termina na seguinte e sua altura é o número de concursos entre elas; a passagem para outro valor usa linha vertical tracejada. A média e as duas linhas de média mais ou menos um desvio-padrão são acumuladas desde o primeiro intervalo real. Embora a consulta visual comece normalmente no concurso 500, o primeiro patamar é o intervalo verdadeiro que atravessa esse limite, apenas recortado para a tela.</p>
+            <p>Um losango com haste tracejada identifica patamares estreitos demais para leitura direta. Passe o mouse, use o foco do teclado ou clique no marcador para ver os dois concursos reais e o valor do intervalo abaixo do gráfico.</p>
           </section>
           <section>
             <h3>3. Faixa prevista e ocorrências reais</h3>
@@ -103,7 +130,7 @@
           </section>
           <section>
             <h3>4. Escala vertical</h3>
-            <p><strong>Automática</strong> exibe todos os valores. <strong>Ampliação 10×</strong> aproxima a região central para separar visualmente linhas muito próximas, mas pode retirar valores da janela. Quando isso acontecer, um aviso informa o recorte. O zoom não altera os dados.</p>
+            <p>Os eixos X e Y são calculados separadamente para que todos os valores apareçam. O eixo horizontal marca os concursos de 100 em 100. Os marcadores de intervalos curtos não alteram a escala nem deslocam os concursos reais.</p>
           </section>
           <section>
             <h3>5. Retorno</h3>
@@ -112,8 +139,7 @@
           <section class="ajuda-graficos-cuidados">
             <h3>Cuidados de interpretação</h3>
             <ul>
-              <li>Use a escala automática para conferir o conjunto completo antes de ampliar.</li>
-              <li>Não interprete uma linha recortada como ausência de dados.</li>
+              <li>Todos os valores devem permanecer dentro da área do gráfico; uma linha ausente não deve ser interpretada como zero.</li>
               <li>Os dois gráficos possuem unidades diferentes e não devem ser comparados como se compartilhassem o mesmo eixo vertical.</li>
               <li>O estudo descreve o histórico; não garante ocorrências futuras.</li>
             </ul>

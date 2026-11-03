@@ -67,6 +67,11 @@ class FrequenciaHistoricaTestCase(unittest.TestCase):
             fotografias,
             calcular_fotografias_acumuladas(serie, config),
         )
+        simples = localizar(fotografias, 500, 10, "SIMPLES")
+        self.assertEqual(100, simples.quantidade_ocorrencias)
+        self.assertEqual(99, simples.quantidade_intervalos)
+        self.assertEqual(Decimal("5.000000"), simples.media_intervalos)
+        self.assertEqual(Decimal("0.000000"), simples.desvio_padrao_intervalos)
 
     def test_janelas_sobrepostas_de_2vs_e_3vs(self) -> None:
         fotografias = calcular_fotografias_acumuladas(self.serie, self.config)

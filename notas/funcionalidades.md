@@ -180,8 +180,21 @@ continuam pendentes ou pertencem a ciclos posteriores.
   ponto, preservando dezena, evento e período sem persistência no banco.
 - [x] Abrir os gráficos históricos em página auxiliar, um por linha e em
   largura ampliada, preservando filtros na ida e na volta ao bloco de origem.
-- [x] Alternar os gráficos históricos entre escala vertical automática e zoom
-  visual 10×, sem modificar valores e com aviso quando houver recorte.
+- [x] Ajustar X e Y independentemente para exibir todas as séries, marcar o eixo
+  horizontal de 100 em 100 e identificar mudanças de patamar.
+- [x] Representar os intervalos individuais por patamares entre ocorrências
+  consecutivas, com transição tracejada, recorte no período e marcador para
+  trechos visualmente curtos.
+- [x] Manter os gráficos históricos somente na página auxiliar, sem remover da
+  página principal os filtros, a assertividade ou o relatório de falhas.
+- [x] Restringir o backtest às faixas totalmente cobertas pelos concursos já
+  armazenados, encerrando cada dezena na primeira faixa incompleta.
+- [x] Exibir fotografia numérica da dezena e um **Backtest** simplificado com
+  intervalo, avaliações, acertos, erros e percentual de acerto.
+- [x] Mostrar no gráfico dos intervalos as curvas `média − desvio-padrão` e
+  `média + desvio-padrão` junto aos intervalos individuais observados.
+- [x] Remover mínimo e máximo do gráfico de evolução dos intervalos e manter
+  legenda única com média, limites de um desvio e intervalos.
 
 ## Fora do escopo inicial
 

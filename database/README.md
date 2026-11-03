@@ -40,8 +40,9 @@ confirmar o ambiente e o banco de destino.
   isoladas e fotografias por concurso, dezena e tipo de evento;
 - `migrations/020_identificar_origem_historico_frequencia.sql`: associa cada
   geração à assinatura e à quantidade dos resultados que a originaram;
-- `migrations/018_criar_configuracao_frequencia_dezenas.sql`: cria a configuração
-  ativa, tipada e assinada do estudo de frequência das dezenas;
+- `migrations/021_criar_pesquisas_selecao_dezenas.sql`: cria configurações
+  imutáveis, execuções reproduzíveis, alvos e as 60 avaliações de dezenas
+  de cada pesquisa do screener de dezenas;
 - `seeds/README.md`: regras para dados iniciais e importados.
 
 ## Regras

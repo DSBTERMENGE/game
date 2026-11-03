@@ -48,6 +48,9 @@ test.beforeAll(async () => {
       "/js/ajuda-frequencias.js": ["js/ajuda-frequencias.js", "text/javascript; charset=utf-8"],
       "/js/frequencia-graficos.js": ["js/frequencia-graficos.js", "text/javascript; charset=utf-8"],
       "/js/frequencia-historico.js": ["js/frequencia-historico.js", "text/javascript; charset=utf-8"],
+      "/js/frequencia-intervalos-auxiliares.js": ["js/frequencia-intervalos-auxiliares.js", "text/javascript; charset=utf-8"],
+      "/js/frequencia-grafico-distribuicao.js": ["js/frequencia-grafico-distribuicao.js", "text/javascript; charset=utf-8"],
+      "/js/frequencia-grafico-ordenado.js": ["js/frequencia-grafico-ordenado.js", "text/javascript; charset=utf-8"],
       "/js/frequencia-controles.js": ["js/frequencia-controles.js", "text/javascript; charset=utf-8"],
       "/js/modal-andamento.js": ["js/modal-andamento.js", "text/javascript; charset=utf-8"],
       "/js/navegacao.js": ["js/navegacao.js", "text/javascript; charset=utf-8"],
@@ -98,7 +101,7 @@ async function preparar(page) {
     const pontos = Array.from({ length: fim - inicio + 1 }, (_, indice) => ({
       numero_do_concurso: inicio + indice, quantidade_ocorrencias: 20 + indice,
       quantidade_intervalos: 19 + indice, intervalo_minimo: 2,
-      intervalo_maximo: 30, media_intervalos: "12.000000",
+      intervalo_maximo: indice < 3 ? 30 : 35, media_intervalos: "12.000000",
       mediana_intervalos: "11.000000", desvio_padrao_intervalos: "3.000000",
       previsao_central: String(inicio + indice + 12),
       limite_inferior_exato: String(inicio + indice + 9),
@@ -122,11 +125,20 @@ async function preparar(page) {
       body: JSON.stringify({
         dezena: Number(consulta.get("dezena")), tipo_evento: consulta.get("tipo_evento"),
         total: pontos.length, periodo: { concurso_inicial: inicio, concurso_final: fim },
-        ocorrencias_reais: [inicio + 1, inicio + 4], pontos,
+        ocorrencias_reais: [inicio + 1, inicio + 4],
+        intervalos_individuais: [
+          { concurso_anterior: inicio - 2, numero_do_concurso: inicio + 1, intervalo: 3, concurso_inicial_visivel: inicio, concurso_final_visivel: inicio + 1 },
+          { concurso_anterior: inicio + 1, numero_do_concurso: inicio + 4, intervalo: 3, concurso_inicial_visivel: inicio + 1, concurso_final_visivel: inicio + 4 },
+        ],
+        pontos,
         assertividade: {
           regra_denominador: "INTERVALO_REAL_ENTRE_EVENTOS", limites_inclusivos: true,
           total: pontos.length, avaliaveis: pontos.length - 1, acertos: pontos.length - 2,
           erros: 1, censurados: 1, percentual_acerto: "90",
+          intervalo_backtest: {
+            concurso_inicial: inicio, concurso_final: fim - 1,
+            quantidade_concursos: pontos.length - 1,
+          },
           erro_absoluto_medio: "0.8", erro_percentual_medio: "3.2", avaliacoes,
         },
       }),
@@ -149,12 +161,16 @@ test("carrega estado, abre prévia e executa simulação com progresso", async (
   await page.locator("#historico-concurso-inicial").fill("500");
   await page.locator("#historico-concurso-final").fill("510");
   await page.locator("#botao-consultar-historico").click();
-  await expect(page.locator(".historico-cartao")).toHaveCount(2);
-  await expect(page.locator(".historico-ocorrencia")).toHaveCount(2);
+  await expect(page.locator(".historico-cartao")).toHaveCount(0);
+  await expect(page.locator("#grade-historico-frequencia")).toHaveCount(0);
   await expect(page.locator("#mensagem-historico-frequencia")).toContainText("11 pontos");
   await expect(page.locator("#assertividade-avaliaveis")).toHaveText("10");
   await expect(page.locator("#assertividade-erros")).toHaveText("1");
+  await expect(page.locator("#backtest-intervalo")).toHaveText("500 a 509");
+  await expect(page.locator("#dezena-resumo-concurso")).toHaveText("510");
+  await expect(page.locator("#dezena-resumo-ocorrencias")).toHaveText("30");
   await expect(page.locator("#corpo-erros-assertividade tr")).toHaveCount(1);
+  await expect(page.locator("#corpo-erros-assertividade tr").first().locator("td")).toHaveCount(5);
 
   await page.locator("#frequencia-salvar-dados").uncheck();
   await page.route("**/api/frequencias/previa", (rota) => rota.fulfill({
@@ -198,22 +214,82 @@ test("abre a página auxiliar e retorna ao bloco histórico preservando filtros"
   await expect(page.locator("#graficos-concurso-final")).toHaveValue("700");
   await expect(page.locator(".historico-cartao-ampliado")).toHaveCount(2);
   await expect(page.locator(".grafico-historico-ampliado")).toHaveCount(2);
-  await expect(page.locator("#estado-area-graficos")).toContainText("201 pontos");
+  await expect(page.locator("#estado-area-graficos")).toHaveText("Dezena 17: 201 concursos · 2 ocorrências");
+  await expect(page.locator(".graficos-frequencias-legenda span")).toHaveCount(4);
   await expect(page.locator(".historico-ocorrencia")).toHaveCount(2);
+  await expect(page.locator(".historico-intervalo-degrau")).toHaveCount(2);
+  await expect(page.locator(".historico-intervalo-degrau title").first()).toHaveText(
+    "Concursos 498 a 501: intervalo 3",
+  );
   const alturas = await page.locator(".grafico-historico-ampliado").evaluateAll((graficos) => graficos.map((grafico) => grafico.getBoundingClientRect().height));
-  expect(alturas.every((altura) => altura >= 450)).toBeTruthy();
+  expect(alturas.every((altura) => altura >= 320 && altura <= 416)).toBeTruthy();
   const coordenadasInvalidas = await page.locator(".grafico-historico-ampliado path, .grafico-historico-ampliado circle").evaluateAll((elementos) => elementos.some((elemento) => elemento.outerHTML.includes("NaN")));
   expect(coordenadasInvalidas).toBeFalsy();
-  await expect(page.locator("#aviso-recorte-graficos")).toBeHidden();
-  await page.locator("#escala-vertical-graficos").selectOption("AMPLIADA_10X");
-  await expect(page.locator("#aviso-recorte-graficos")).toBeVisible();
-  await expect(page.locator("#aviso-recorte-graficos")).toContainText("valores ficaram fora da área visível");
+  await expect(page.locator(".historico-linha--minimo")).toHaveCount(0);
+  await expect(page.locator(".historico-linha--media")).toHaveCount(2);
+  await expect(page.locator(".historico-linha--desvio-inferior")).toHaveCount(1);
+  await expect(page.locator(".historico-linha--desvio-superior")).toHaveCount(1);
+  await expect(page.locator(".historico-linha--maximo")).toHaveCount(0);
+  await expect(page.locator(".historico-rotulo--concurso")).toHaveCount(6);
+  await expect(page.locator(".historico-intervalo-transicao")).toHaveCount(0);
+  await expect(page.locator(".historico-intervalo-curto")).toHaveCount(1);
+  await page.locator(".historico-intervalo-curto").click();
+  await expect(page.locator(".historico-detalhe-intervalo-curto")).toHaveText(
+    "Concursos 498 → 501 · intervalo 3",
+  );
+  await expect(page.locator(".historico-titulo-eixo")).toHaveCount(2);
   await expect(page.locator(".grafico-historico-ampliado clipPath")).toHaveCount(2);
-  await page.locator("#escala-vertical-graficos").selectOption("AUTOMATICA");
-  await expect(page.locator("#aviso-recorte-graficos")).toBeHidden();
+  await page.locator(".botao-ajuda-evolucao-intervalos").click();
+  await expect(page.locator("#dialogo-ajuda-grafico")).toBeVisible();
+  await expect(page.locator("#titulo-ajuda-grafico")).toHaveText("Ajuda — Evolução dos intervalos");
+  await expect(page.locator("#conteudo-ajuda-grafico")).toContainText("Concursos 1246 → 1261");
+  await page.locator("#dialogo-ajuda-grafico").getByRole("button", { name: "Fechar", exact: true }).click();
+  await expect(page.locator("#dialogo-ajuda-grafico")).toBeHidden();
+  await expect(page.locator(".botao-ajuda-evolucao-intervalos")).toBeFocused();
+  await expect(page.locator("#dialogo-grafico-auxiliar")).toHaveCount(1);
+  await page.getByRole("button", { name: "Curva de distribuição" }).click();
+  await expect(page.locator("#dialogo-grafico-auxiliar")).toBeVisible();
+  await expect(page.locator("#titulo-grafico-auxiliar")).toHaveText("Curva de distribuição dos intervalos");
+  await expect(page.locator("#svg-grafico-auxiliar .distribuicao-ponto-real")).toHaveCount(1);
+  await page.locator("#botao-ajuda-grafico-auxiliar").click();
+  await expect(page.locator("#titulo-ajuda-grafico")).toHaveText("Ajuda — Curva de distribuição");
+  await expect(page.locator("#conteudo-ajuda-grafico")).toContainText("Curva normal teórica");
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#dialogo-ajuda-grafico")).toBeHidden();
+  await expect(page.locator("#dialogo-grafico-auxiliar")).toBeVisible();
+  await expect(page.locator("#svg-grafico-auxiliar .distribuicao-ponto-real")).toHaveCount(1);
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#dialogo-grafico-auxiliar")).toBeHidden();
+  await expect(page.locator("#svg-grafico-auxiliar")).toBeEmpty();
+  await page.getByRole("button", { name: "Ocorrências em ordem crescente" }).click();
+  await expect(page.locator("#titulo-grafico-auxiliar")).toHaveText("Ocorrências em ordem crescente");
+  await expect(page.locator("#svg-grafico-auxiliar .ordenado-ponto")).toHaveCount(2);
+  await expect(page.locator("#svg-grafico-auxiliar .ordenado-grade")).toHaveCount(42);
+  await expect(page.locator("#svg-grafico-auxiliar .ordenado-rotulo")).toHaveCount(42);
+  await expect(page.locator("#svg-grafico-auxiliar .ordenado-titulo-eixo").first()).toHaveText(
+    "Ocorrências ordenadas do menor para o maior (%)",
+  );
+  await expect(page.locator("#svg-grafico-auxiliar .ordenado-titulo-eixo").last()).toHaveText(
+    "Duração do intervalo (% do maior)",
+  );
+  const pontosPercentuais = await page.locator("#svg-grafico-auxiliar .ordenado-ponto").evaluateAll(
+    (pontos) => pontos.map((ponto) => ({
+      x: Number(ponto.getAttribute("cx")), y: Number(ponto.getAttribute("cy")),
+    })),
+  );
+  expect(pontosPercentuais).toEqual([{ x: 750, y: 36 }, { x: 1412, y: 36 }]);
+  await page.locator("#botao-ajuda-grafico-auxiliar").click();
+  await expect(page.locator("#titulo-ajuda-grafico")).toHaveText("Ajuda — Ocorrências em ordem crescente");
+  await expect(page.locator("#conteudo-ajuda-grafico")).toContainText("Cada ponto vermelho");
+  await expect(page.locator("#conteudo-ajuda-grafico")).not.toContainText("Curva normal teórica");
+  await page.locator("#dialogo-ajuda-grafico").getByRole("button", { name: "Fechar", exact: true }).click();
+  await expect(page.locator("#botao-ajuda-grafico-auxiliar")).toBeFocused();
+  await page.getByRole("button", { name: "Encerrar", exact: true }).click();
+  await expect(page.locator("#dialogo-grafico-auxiliar")).toBeHidden();
+  await expect(page.locator("#svg-grafico-auxiliar")).toBeEmpty();
   await page.locator("#botao-ajuda-graficos").click();
   await expect(page.locator("#dialogo-ajuda-graficos")).toBeVisible();
-  await expect(page.locator("#dialogo-ajuda-graficos")).toContainText("Ampliação 10×");
+  await expect(page.locator("#dialogo-ajuda-graficos")).toContainText("100 em 100");
   await page.keyboard.press("Escape");
   await expect(page.locator("#dialogo-ajuda-graficos")).toBeHidden();
 

@@ -8,6 +8,7 @@ import psycopg
 from msen.api import criar_app
 from msen.api.frequencias import (
     GerenciadorExecucoesFrequencia,
+    _intervalos_individuais,
     avaliar_assertividade_frequencia,
 )
 from msen.services import OperacaoFrequenciaCancelada, configuracao_frequencia_inicial
@@ -203,24 +204,101 @@ class AssertividadeFrequenciasTestCase(unittest.TestCase):
             {"numero_do_concurso": 140, "previsao_central": "150",
              "concurso_limite_inferior": 145, "concurso_limite_superior": 155},
         ]
-        resultado = avaliar_assertividade_frequencia(pontos, [90, 110, 140])
+        resultado = avaliar_assertividade_frequencia(
+            pontos, [90, 110, 140], ultimo_concurso=140
+        )
         self.assertEqual((2, 1, 1, 2), (
             resultado["avaliaveis"], resultado["acertos"],
             resultado["erros"], resultado["censurados"],
         ))
         self.assertEqual("50", resultado["percentual_acerto"])
-        self.assertEqual("10", resultado["avaliacoes"][1]["erro_percentual"])
-        self.assertEqual("ERRO_ACIMA", resultado["avaliacoes"][2]["estado"])
+        self.assertEqual("10", resultado["avaliacoes"][0]["erro_percentual"])
+        self.assertEqual("ERRO_ACIMA", resultado["avaliacoes"][1]["estado"])
         self.assertEqual("66.66666666666666666666666667",
-                         resultado["avaliacoes"][2]["erro_percentual"])
+                         resultado["avaliacoes"][1]["erro_percentual"])
+        self.assertEqual({
+            "concurso_inicial": 100,
+            "concurso_final": 110,
+            "quantidade_concursos": 2,
+        }, resultado["intervalo_backtest"])
+        self.assertEqual({
+            "numero_do_concurso": 140,
+            "limite_superior": 155,
+            "ultimo_concurso_disponivel": 140,
+        }, resultado["aguardando_historico"])
 
     def test_limites_sao_inclusivos(self) -> None:
         pontos = [{
             "numero_do_concurso": 10, "previsao_central": "20",
             "concurso_limite_inferior": 20, "concurso_limite_superior": 25,
         }]
-        resultado = avaliar_assertividade_frequencia(pontos, [5, 20])
+        resultado = avaliar_assertividade_frequencia(
+            pontos, [5, 20], ultimo_concurso=25
+        )
         self.assertEqual("ACERTO", resultado["avaliacoes"][0]["estado"])
+
+    def test_encerra_na_primeira_faixa_sem_historico_futuro(self) -> None:
+        pontos = [
+            {"numero_do_concurso": 100, "previsao_central": "110",
+             "concurso_limite_inferior": 105, "concurso_limite_superior": 115},
+            {"numero_do_concurso": 101, "previsao_central": "112",
+             "concurso_limite_inferior": 106, "concurso_limite_superior": 121},
+            {"numero_do_concurso": 102, "previsao_central": "111",
+             "concurso_limite_inferior": 106, "concurso_limite_superior": 114},
+        ]
+        resultado = avaliar_assertividade_frequencia(
+            pontos, [90, 110], ultimo_concurso=120
+        )
+        self.assertEqual(1, resultado["avaliaveis"])
+        self.assertEqual(2, resultado["censurados"])
+        self.assertEqual(101, resultado["aguardando_historico"]["numero_do_concurso"])
+        self.assertEqual([100], [x["numero_do_concurso"] for x in resultado["avaliacoes"]])
+
+    def test_faixa_totalmente_observada_sem_retorno_e_erro(self) -> None:
+        pontos = [{
+            "numero_do_concurso": 100, "previsao_central": "110",
+            "concurso_limite_inferior": 105, "concurso_limite_superior": 115,
+        }]
+        resultado = avaliar_assertividade_frequencia(
+            pontos, [90], ultimo_concurso=120
+        )
+        self.assertEqual(1, resultado["erros"])
+        self.assertEqual("ERRO_ACIMA", resultado["avaliacoes"][0]["estado"])
+        self.assertIsNone(resultado["avaliacoes"][0]["concurso_real"])
+
+
+class IntervalosIndividuaisTestCase(unittest.TestCase):
+    def test_segmentos_interceptam_os_dois_limites_visuais(self) -> None:
+        resultado = _intervalos_individuais(
+            [480, 492, 507, 520, 545], inicio=500, fim=530
+        )
+        self.assertEqual([
+            {
+                "concurso_anterior": 492,
+                "numero_do_concurso": 507,
+                "intervalo": 15,
+                "concurso_inicial_visivel": 500,
+                "concurso_final_visivel": 507,
+            },
+            {
+                "concurso_anterior": 507,
+                "numero_do_concurso": 520,
+                "intervalo": 13,
+                "concurso_inicial_visivel": 507,
+                "concurso_final_visivel": 520,
+            },
+            {
+                "concurso_anterior": 520,
+                "numero_do_concurso": 545,
+                "intervalo": 25,
+                "concurso_inicial_visivel": 520,
+                "concurso_final_visivel": 530,
+            },
+        ], resultado)
+
+    def test_nao_inventa_intervalo_sem_ocorrencia_seguinte(self) -> None:
+        resultado = _intervalos_individuais([492], inicio=500, fim=530)
+        self.assertEqual([], resultado)
 
 
 if __name__ == "__main__":

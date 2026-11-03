@@ -1,7 +1,6 @@
 import { criarEstadoInicialFrequencia } from "./frequencia-controles.js";
 import { criarModalAndamento } from "./modal-andamento.js";
 import { MEDICOES_FREQUENCIA, formatarMedicaoFrequencia, prepararBarrasFrequencia } from "./frequencia-graficos.js";
-import { caminhoHistorico, criarEscalasHistorico, dominioHistorico, poligonoFaixaHistorico } from "./frequencia-historico.js";
 import { filtrosGraficosDaUrl, urlGraficosFrequencias } from "./navegacao-graficos-frequencias.js";
 
 const CAMPOS_FIXOS = {
@@ -68,14 +67,19 @@ const e = {
   inicioHistorico: document.querySelector("#historico-concurso-inicial"),
   fimHistorico: document.querySelector("#historico-concurso-final"),
   mensagemHistorico: document.querySelector("#mensagem-historico-frequencia"),
-  gradeHistorico: document.querySelector("#grade-historico-frequencia"),
+  resumoConcurso: document.querySelector("#dezena-resumo-concurso"),
+  resumoOcorrencias: document.querySelector("#dezena-resumo-ocorrencias"),
+  resumoIntervalos: document.querySelector("#dezena-resumo-intervalos"),
+  resumoMinimo: document.querySelector("#dezena-resumo-minimo"),
+  resumoMaximo: document.querySelector("#dezena-resumo-maximo"),
+  resumoMedia: document.querySelector("#dezena-resumo-media"),
+  resumoMediana: document.querySelector("#dezena-resumo-mediana"),
+  resumoDesvio: document.querySelector("#dezena-resumo-desvio"),
+  intervaloBacktest: document.querySelector("#backtest-intervalo"),
   avaliaveis: document.querySelector("#assertividade-avaliaveis"),
   acertos: document.querySelector("#assertividade-acertos"),
   erros: document.querySelector("#assertividade-erros"),
-  censurados: document.querySelector("#assertividade-censurados"),
   percentualAcerto: document.querySelector("#assertividade-percentual"),
-  erroAbsoluto: document.querySelector("#assertividade-erro-absoluto"),
-  erroPercentual: document.querySelector("#assertividade-erro-percentual"),
   corpoErros: document.querySelector("#corpo-erros-assertividade"),
   semErros: document.querySelector("#assertividade-sem-erros"),
 };
@@ -243,36 +247,6 @@ async function carregarFotografia() {
   }
 }
 
-function caminhoSvg(svg, d, classe) {
-  if (!d) return;
-  svg.append(elementoSvg("path", { d, class: classe, fill: "none" }));
-}
-
-function eixosHistorico(svg, escalas, dominio, periodo) {
-  svg.append(elementoSvg("line", { x1: escalas.esquerda, y1: escalas.inferior, x2: escalas.direita, y2: escalas.inferior, class: "historico-eixo" }));
-  svg.append(elementoSvg("line", { x1: escalas.esquerda, y1: escalas.topo, x2: escalas.esquerda, y2: escalas.inferior, class: "historico-eixo" }));
-  for (let indice = 0; indice <= 4; indice += 1) {
-    const fracao = indice / 4;
-    const xValor = Math.round(periodo.concurso_inicial + fracao * (periodo.concurso_final - periodo.concurso_inicial));
-    const yValor = dominio.maximo - fracao * (dominio.maximo - dominio.minimo);
-    const xTexto = elementoSvg("text", { x: escalas.x(xValor), y: escalas.inferior + 18, class: "historico-rotulo", "text-anchor": "middle" });
-    xTexto.textContent = xValor.toLocaleString("pt-BR");
-    const yTexto = elementoSvg("text", { x: escalas.esquerda - 6, y: escalas.y(yValor) + 3, class: "historico-rotulo", "text-anchor": "end" });
-    yTexto.textContent = yValor.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
-    svg.append(xTexto, yTexto);
-  }
-}
-
-function cartaoHistorico(titulo, subtitulo) {
-  const artigo = document.createElement("article");
-  artigo.className = "historico-cartao";
-  const header = document.createElement("header"), h3 = document.createElement("h3"), span = document.createElement("span");
-  h3.textContent = titulo; span.textContent = subtitulo; header.append(h3, span);
-  const svg = elementoSvg("svg", { class: "grafico-historico", viewBox: "0 0 960 245", role: "img", "aria-label": titulo, preserveAspectRatio: "none" });
-  artigo.append(header, svg);
-  return { artigo, svg };
-}
-
 function textoDecimal(valor, sufixo = "") {
   if (valor === null || valor === undefined) return "—";
   return `${Number(valor).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}${sufixo}`;
@@ -283,13 +257,14 @@ function celulaAssertividade(texto) {
 }
 
 function renderizarAssertividade(assertividade) {
+  const intervalo = assertividade.intervalo_backtest || {};
+  e.intervaloBacktest.textContent = intervalo.concurso_inicial === null || intervalo.concurso_inicial === undefined
+    ? "—"
+    : `${Number(intervalo.concurso_inicial).toLocaleString("pt-BR")} a ${Number(intervalo.concurso_final).toLocaleString("pt-BR")}`;
   e.avaliaveis.textContent = Number(assertividade.avaliaveis).toLocaleString("pt-BR");
   e.acertos.textContent = Number(assertividade.acertos).toLocaleString("pt-BR");
   e.erros.textContent = Number(assertividade.erros).toLocaleString("pt-BR");
-  e.censurados.textContent = Number(assertividade.censurados).toLocaleString("pt-BR");
   e.percentualAcerto.textContent = textoDecimal(assertividade.percentual_acerto, "%");
-  e.erroAbsoluto.textContent = textoDecimal(assertividade.erro_absoluto_medio, " concursos");
-  e.erroPercentual.textContent = textoDecimal(assertividade.erro_percentual_medio, "%");
   const erros = assertividade.avaliacoes.filter((item) => item.estado.startsWith("ERRO_"));
   e.corpoErros.replaceChildren();
   for (const item of erros) {
@@ -299,45 +274,29 @@ function renderizarAssertividade(assertividade) {
       celulaAssertividade(`${item.limite_inferior} a ${item.limite_superior}`),
       celulaAssertividade(item.concurso_real),
       celulaAssertividade(item.estado === "ERRO_ABAIXO" ? "Abaixo da faixa" : "Acima da faixa"),
-      celulaAssertividade(textoDecimal(item.erro_absoluto)),
-      celulaAssertividade(textoDecimal(item.erro_percentual, "%")),
     );
     e.corpoErros.append(tr);
   }
   e.semErros.hidden = erros.length !== 0;
 }
 
+function renderizarResumoDezena(ponto) {
+  e.resumoConcurso.textContent = Number(ponto.numero_do_concurso).toLocaleString("pt-BR");
+  e.resumoOcorrencias.textContent = Number(ponto.quantidade_ocorrencias).toLocaleString("pt-BR");
+  e.resumoIntervalos.textContent = Number(ponto.quantidade_intervalos).toLocaleString("pt-BR");
+  e.resumoMinimo.textContent = textoDecimal(ponto.intervalo_minimo);
+  e.resumoMaximo.textContent = textoDecimal(ponto.intervalo_maximo);
+  e.resumoMedia.textContent = textoDecimal(ponto.media_intervalos);
+  e.resumoMediana.textContent = textoDecimal(ponto.mediana_intervalos);
+  e.resumoDesvio.textContent = textoDecimal(ponto.desvio_padrao_intervalos);
+}
+
 function renderizarHistorico(dados) {
-  e.gradeHistorico.replaceChildren();
   if (!dados.pontos?.length) {
     e.mensagemHistorico.textContent = "Não existem pontos históricos para os filtros selecionados.";
     return;
   }
-  const periodo = dados.periodo;
-  const intervalos = cartaoHistorico("Evolução dos intervalos", "eixo Y em concursos");
-  const dominioIntervalos = dominioHistorico(dados.pontos, ["intervalo_minimo", "media_intervalos", "intervalo_maximo"]);
-  if (dominioIntervalos) {
-    const escalas = criarEscalasHistorico(periodo, dominioIntervalos);
-    eixosHistorico(intervalos.svg, escalas, dominioIntervalos, periodo);
-    caminhoSvg(intervalos.svg, caminhoHistorico(dados.pontos, "intervalo_minimo", escalas), "historico-linha historico-linha--minimo");
-    caminhoSvg(intervalos.svg, caminhoHistorico(dados.pontos, "media_intervalos", escalas), "historico-linha historico-linha--media");
-    caminhoSvg(intervalos.svg, caminhoHistorico(dados.pontos, "intervalo_maximo", escalas), "historico-linha historico-linha--maximo");
-  }
-
-  const previsao = cartaoHistorico("Faixa prevista e ocorrências reais", "eixo Y: número do concurso");
-  const dominioPrevisao = dominioHistorico(dados.pontos, ["limite_inferior_exato", "previsao_central", "limite_superior_exato"], dados.ocorrencias_reais);
-  if (dominioPrevisao) {
-    const escalas = criarEscalasHistorico(periodo, dominioPrevisao);
-    eixosHistorico(previsao.svg, escalas, dominioPrevisao, periodo);
-    const faixa = poligonoFaixaHistorico(dados.pontos, "limite_inferior_exato", "limite_superior_exato", escalas);
-    if (faixa) previsao.svg.append(elementoSvg("polygon", { points: faixa, class: "historico-faixa" }));
-    caminhoSvg(previsao.svg, caminhoHistorico(dados.pontos, "previsao_central", escalas), "historico-linha historico-linha--media");
-    for (const concurso of dados.ocorrencias_reais || []) {
-      const circulo = elementoSvg("circle", { cx: escalas.x(concurso), cy: escalas.y(concurso), r: 3.2, class: "historico-ocorrencia" });
-      const titulo = elementoSvg("title"); titulo.textContent = `Ocorrência real no concurso ${concurso}`; circulo.append(titulo); previsao.svg.append(circulo);
-    }
-  }
-  e.gradeHistorico.append(intervalos.artigo, previsao.artigo);
+  renderizarResumoDezena(dados.pontos.at(-1));
   renderizarAssertividade(dados.assertividade);
   e.mensagemHistorico.textContent = `Dezena ${String(dados.dezena).padStart(2, "0")} · ${dados.tipo_evento} · ${dados.total.toLocaleString("pt-BR")} pontos · ${(dados.ocorrencias_reais || []).length.toLocaleString("pt-BR")} ocorrências reais.`;
 }
@@ -350,7 +309,7 @@ async function carregarHistorico() {
     concurso_inicial: e.inicioHistorico.value, concurso_final: e.fimHistorico.value,
   });
   try { renderizarHistorico(await respostaJson(await fetch(`/api/frequencias/serie?${parametros}`))); }
-  catch (erro) { e.gradeHistorico.replaceChildren(); e.mensagemHistorico.textContent = erro.message; }
+  catch (erro) { e.mensagemHistorico.textContent = erro.message; }
 }
 
 async function calcularPrevia() {

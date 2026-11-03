@@ -3603,3 +3603,1211 @@ Python usou o interpretador global sem o caminho `MSen/src` e falhou somente na
 importação do pacote; a repetição com os caminhos oficiais aprovou todos os 629
 testes. Nenhuma carga histórica foi iniciada e nenhum dado foi gravado no banco.
 Evidência em `MSen/tests/TESTE_ITEM_22_16_4.md`. Etapa 22.16 concluída.
+
+#### 22.16.5 — Escalas integrais, eixo horizontal e degraus
+
+- Substituir a ampliação que recortava dados por escalas X e Y independentes.
+- Ajustar a altura para que cada gráfico seja observado por inteiro.
+- Marcar o eixo horizontal de 100 em 100 concursos, incluindo os extremos.
+- Identificar os concursos em que mínimo ou máximo mudam de patamar.
+- Diferenciar as três séries por cores contrastantes e traçado.
+
+Estado: concluído em 2026-10-31. O modo 10× com recorte foi removido. Cada
+gráfico calcula fatores X e Y próprios e mantém mínimo e máximo dentro da área.
+A altura usa `clamp`, entre 320 e 416 px. O eixo X mostra concurso inicial,
+final e centenas; mudanças de mínimo ou máximo recebem linha e rótulo no topo.
+Mínimo usa verde, média laranja e máximo azul tracejado. O caso real da dezena
+15, evento simples, concursos 500–3.069 confirmou dois gráficos, as três séries,
+54 marcações regulares, três degraus e altura de 416 px. Passaram 56 testes
+JavaScript e 10 fluxos específicos no Chrome. Evidência em
+`MSen/tests/TESTE_ITEM_22_16_5.md`. Nenhum cálculo, API ou dado foi alterado.
+
+#### 22.16.6 — Intervalos individuais observados
+
+- Expor, para o período consultado, cada intervalo entre eventos consecutivos.
+- Plotar os intervalos como pontos no mesmo gráfico e escala das curvas
+  acumuladas de mínimo, média e máximo.
+- Informar no ponto o concurso atual, o anterior e o valor do intervalo.
+- Aplicar a regra aos eventos `SIMPLES`, `2VS` e `3VS`, sem alterar cálculos ou
+  dados persistidos.
+
+Estado: concluído em 2026-10-31. A API passou a devolver
+`intervalos_individuais`, derivados das mesmas ocorrências reais usadas nas
+estatísticas. O primeiro gráfico mostra cada intervalo como ponto vermelho em
+`concurso do retorno × distância desde o evento anterior`; o texto exibido ao
+passar o mouse informa os dois concursos e o intervalo. Os pontos participam do
+domínio vertical para permanecerem visíveis. A ocorrência real do gráfico de
+previsão foi diferenciada em roxo e a legenda esclarece os dois significados.
+Nenhuma fórmula estatística nem registro persistido foi alterado. Evidência em
+`MSen/tests/TESTE_ITEM_22_16_6.md`.
+
+#### 22.16.7 — Remoção dos gráficos duplicados da página principal
+
+- Remover os dois gráficos embutidos do bloco `Evolução histórica por dezena`.
+- Preservar filtros, consulta da série, assertividade, relatório de falhas e o
+  acesso à página gráfica auxiliar.
+- Retirar o código visual e a altura antes reservada aos gráficos.
+
+Estado: concluído em 2026-10-31. Os gráficos históricos passaram a existir
+somente em `graficos-frequencias.html`. A página principal continua consultando
+a série para preencher os sete indicadores de assertividade e o relatório das
+previsões fora da faixa. O botão `Abrir gráficos` preserva dezena, evento e
+período. A grade, a legenda, o código SVG e a altura mínima dos gráficos
+duplicados foram removidos. Evidência em `MSen/tests/TESTE_ITEM_22_16_7.md`.
+
+#### 22.16.8 — Cobertura histórica integral do backtest
+
+- Avaliar somente previsões cujo limite superior esteja coberto pelo último
+  concurso armazenado.
+- Encerrar a dezena na primeira faixa sem histórico futuro suficiente.
+- Classificar faixa observável como acerto quando o retorno estiver dentro dos
+  limites e como erro quando ocorrer antes, depois ou não ocorrer na faixa.
+- Informar intervalo efetivo, quantidade avaliada e primeira faixa aguardando
+  novos resultados.
+
+Estado: concluído em 2026-10-31. A API agora compara
+`concurso_limite_superior` com o último concurso da geração ativa antes de
+classificar a previsão. Ao encontrar a primeira faixa incompleta, interrompe a
+dezena mesmo que um ponto posterior isolado pudesse parecer observável. A
+resposta inclui `intervalo_backtest`, `aguardando_historico` e a regra explícita
+`LIMITE_SUPERIOR_COBERTO_PELO_HISTORICO`. Na série real da dezena 17, evento
+simples, o backtest avaliou concursos 500–3.053: 2.554 avaliações, 1.697 acertos,
+857 erros e 66,44% de acerto. O concurso 3.054 ficou aguardando porque sua faixa
+termina em 3.073 e o histórico termina em 3.069. Evidência em
+`MSen/tests/TESTE_ITEM_22_16_8.md`.
+
+#### 22.16.9 — Resultado numérico e apresentação simples do backtest
+
+- Renomear `Consultar série` para `Consultar dezena`.
+- Exibir a fotografia final da dezena: concurso, ocorrências, intervalos,
+  mínimo, máximo, média, mediana e desvio-padrão.
+- Destacar **Backtest** e limitar seu resumo a intervalo avaliado, concursos
+  avaliados, acertos, erros e percentual de acerto.
+- Simplificar o relatório de erros e atualizar a ajuda.
+
+Estado: concluído em 2026-10-31. O bloco principal ganhou uma fotografia
+numérica da dezena no último concurso solicitado. O quadro **Backtest** removeu
+da apresentação censurados, erro absoluto e erro percentual; seus rótulos agora
+explicam diretamente que acerto significa retorno dentro da faixa e erro,
+retorno antes ou depois. O relatório passou de sete para cinco colunas. A ajuda
+explica a cobertura integral exigida pela 22.16.8. Passaram 56 testes JavaScript
+e 10 fluxos Chrome. Evidência em `MSen/tests/TESTE_ITEM_22_16_9.md`.
+
+#### 22.16.10 — Linhas de um desvio-padrão no gráfico
+
+- Adicionar `média − desvio-padrão` e `média + desvio-padrão` à evolução dos
+  intervalos.
+- Manter unidade em concursos, estilos próprios, legenda e ajuste integral do
+  eixo vertical.
+- Preservar mínimo, média, máximo e pontos individuais.
+
+Estado: concluído em 2026-10-31. As duas séries são derivadas no navegador dos
+campos `media_intervalos` e `desvio_padrao_intervalos`, sem modificar API ou
+persistência. A inferior usa tracejado azul-petróleo e a superior, tracejado
+roxo; ambas possuem descrição nativa e entram no cálculo do domínio vertical.
+Mínimo, média, máximo e intervalos individuais foram preservados. Passaram 57
+testes JavaScript e 10 fluxos Chrome. Evidência em
+`MSen/tests/TESTE_ITEM_22_16_10.md`.
+
+#### 22.16.11 — Reformulação da evolução histórica dos intervalos
+
+##### 22.16.11.0 — Contrato visual e matemático
+
+Estado: concluído em 2026-11-02, sem alteração de código funcional.
+
+Escopo confirmado após revisão da página e da API:
+
+- A página auxiliar contém dois gráficos distintos: `Evolução dos intervalos`
+  e `Faixa prevista e ocorrências reais`.
+- A reformulação desta etapa alcança somente `Evolução dos intervalos`. O
+  gráfico de previsão/backtest será preservado e não compartilhará a legenda
+  das séries de intervalos.
+- O cabeçalho da consulta passará a usar o formato
+  `Dezena NN: X concursos · Y ocorrências`.
+- A legenda da evolução dos intervalos será única e terá exatamente quatro
+  séries: `Média dos intervalos`, `Média dos intervalos − desvio-padrão`,
+  `Média dos intervalos + desvio-padrão` e `Intervalos`.
+- As séries `Mínimo` e `Máximo` serão removidas desse gráfico.
+- Cada intervalo individual será representado retrospectivamente pelo par de
+  ocorrências consecutivas que o formou. O trecho horizontal ocupará do
+  concurso anterior ao concurso seguinte e terá como ordenada a diferença
+  entre eles. Uma linha vertical tracejada marcará a passagem entre patamares.
+- Se dois intervalos consecutivos tiverem o mesmo valor, os trechos formarão
+  naturalmente uma linha horizontal contínua.
+- A consulta visual continuará começando, por padrão, no concurso 500, mas o
+  primeiro trecho exibido será o intervalo real que atravessa esse limite:
+  última ocorrência anterior ao início e primeira ocorrência igual ou
+  posterior ao início. O desenho equivale ao histórico completo recortado no
+  limite esquerdo, sem criar uma ocorrência artificial no concurso 500.
+- No limite direito, somente intervalos efetivamente concluídos por uma
+  ocorrência conhecida poderão existir. Um trecho concluído depois do final
+  solicitado poderá ser recortado visualmente quando a ocorrência já existir
+  no histórico geral; não se inventará retorno futuro.
+- Média e desvio-padrão serão cumulativos desde o primeiro intervalo real,
+  formado entre a primeira e a segunda ocorrência. No concurso 500 serão
+  mostrados os valores acumulados até aquele corte, sem intervalo artificial
+  iniciado no concurso zero.
+- A posição matemática dos dados não será deslocada para tornar intervalos
+  curtos visíveis. Trechos cuja largura projetada seja muito pequena receberão
+  indicação visual auxiliar; o limiar inicial a validar será de 8 pixels.
+- Concurso inicial, concurso final e valor do intervalo curto serão acessíveis
+  por indicação/ponteiro e detalhe interativo, sem textos permanentes escritos
+  sobre as curvas.
+
+Próximas subetapas previstas:
+
+- **22.16.11.1:** preparar na API os segmentos completos que interceptam o
+  período consultado e validar a média cumulativa.
+  **Concluída em 2026-11-02.** A resposta agora inclui os intervalos concluídos
+  que atravessam os limites inicial ou final da consulta, preservando os
+  concursos reais e acrescentando somente os limites visuais recortados. Um
+  intervalo sem segunda ocorrência não é criado. Foi confirmado que a primeira
+  fotografia do concurso 500 usa todos os intervalos reais acumulados desde a
+  primeira ocorrência, sem concurso zero artificial. Evidência em
+  `MSen/tests/TESTE_ITEM_22_16_11_1.md`.
+- **22.16.11.2:** desenhar a função em degraus e remover mínimo e máximo.
+  **Concluída em 2026-11-02.** Cada intervalo concluído passou a ocupar um
+  patamar horizontal entre suas duas ocorrências reais. Mudanças de valor são
+  ligadas por uma transição vertical tracejada; valores consecutivos iguais
+  permanecem horizontalmente contínuos. Os pontos isolados e as curvas de
+  mínimo e máximo foram retirados do primeiro gráfico, sem alterar o gráfico
+  de previsão/backtest. Evidência em `MSen/tests/TESTE_ITEM_22_16_11_2.md`.
+- **22.16.11.3:** ajustar cabeçalho e legenda.
+  **Concluída em 2026-11-02.** O resumo passou ao formato
+  `Dezena NN: X concursos · Y ocorrências`. A legenda única da evolução dos
+  intervalos ficou restrita às quatro séries acordadas: média, média menos um
+  desvio-padrão, média mais um desvio-padrão e intervalos. O símbolo de
+  intervalos passou a representar uma linha, e não os antigos pontos.
+  Evidência em `MSen/tests/TESTE_ITEM_22_16_11_3.md`.
+- **22.16.11.4:** criar a indicação dos intervalos visualmente curtos.
+  **Concluída em 2026-11-02.** Patamares com largura projetada inferior a
+  8 pixels recebem um losango com haste tracejada, sem deslocamento das
+  coordenadas matemáticas. Mouse, foco pelo teclado ou clique exibem os
+  concursos reais de início e fim e o valor do intervalo. Evidência em
+  `MSen/tests/TESTE_ITEM_22_16_11_4.md`.
+- **22.16.11.5:** validar matemática e visualmente casos de 1, 2, 3, 10 e mais
+  concursos, recorte no concurso 500 e intervalos consecutivos iguais.
+  **Concluída em 2026-11-02, sem defeitos encontrados.** A geração ativa foi
+  conferida nas dezenas 08 e 17. Ambas possuem casos de 1, 2, 3 e 10 concursos,
+  intervalos longos, valores consecutivos iguais e média acumulada no concurso
+  500 idêntica ao recálculo independente. O primeiro segmento da dezena 08 é
+  495–504 e o da 17 é 489–520; ambos são corretamente recortados para iniciar
+  visualmente em 500. Evidência em `MSen/tests/TESTE_ITEM_22_16_11_5.md`.
+- **22.16.11.6:** atualizar ajuda e documentação técnica.
+  **Concluída em 2026-11-02.** A ajuda explica os patamares entre ocorrências,
+  as transições tracejadas, o recorte no concurso 500, a acumulação desde o
+  primeiro intervalo real e o marcador interativo dos trechos curtos. API,
+  funcionamento, decisões e funcionalidades foram reconciliados; a antiga
+  representação por pontos, mínimo e máximo ficou explicitamente substituída.
+  Evidência em `MSen/tests/TESTE_ITEM_22_16_11_6.md`.
+- **22.16.11.7:** reiniciar o servidor único e liberar a implementação para
+  avaliação visual.
+  **Concluída em 2026-11-02.** A instância anterior foi encerrada e substituída
+  por uma única instância Flask, PID 18760, exclusivamente na porta TCP 5050.
+  Página e API responderam HTTP 200. Na consulta real da dezena 17, concursos
+  500–3.069, a API devolveu 2.570 pontos, 271 ocorrências e 271 segmentos; o
+  primeiro preservou 489–520 e foi recortado visualmente para 500–520.
+  Evidência em `MSen/tests/TESTE_ITEM_22_16_11_7.md`.
+
+### Etapa 22.17 — Gráficos auxiliares dos intervalos
+
+Objetivo: acrescentar duas leituras exploratórias aos intervalos da dezena
+selecionada, sem ainda classificar dezenas para o próximo concurso. O primeiro
+gráfico estudará a distribuição dos intervalos. O segundo mostrará as
+ocorrências em ordem crescente e em escala percentual. A futura classificação
+e seu backtest serão tratados em etapa posterior.
+
+#### 22.17.0 — Consolidar o contrato matemático e visual
+
+- Inventariar os diálogos, estilos e funções de abertura/fechamento já
+  existentes para reutilizar componentes comuns sem acoplar finalidades
+  diferentes como ajuda, prévia e progresso.
+- Confirmar que os dois gráficos usam os mesmos intervalos individuais da
+  consulta vigente e que cada intervalo representa uma ocorrência da dezena.
+- Definir a distribuição percentual real, a curva normal teórica sobreposta,
+  a média e os limites de um desvio-padrão.
+- Definir os percentuais exatos dos intervalos ordenados, sem arredondamento ou
+  encaixe artificial nas divisões visuais de 5%.
+- Registrar fórmulas, eixos, unidades, legenda e o contrato de um único modal
+  reutilizável antes da implementação.
+
+Estado: **concluída em 2026-11-02**, sem alteração de código funcional.
+
+Contrato consolidado:
+
+- Os diálogos existentes foram inventariados. `modal-andamento.js` já é
+  reutilizável entre auditoria e frequências, mas é específico para tarefas
+  assíncronas, progresso e cancelamento; não será desviado para gráficos.
+- Ajuda, prévia e configurações possuem estruturas próprias porque têm
+  responsabilidades diferentes. Delas serão reaproveitados os padrões de
+  `<dialog>`, fundo, cabeçalho, rodapé, fechamento por `Esc`, foco e botão de
+  encerramento, sem copiar conteúdo ou regras específicas.
+- Os dois novos botões controlarão exatamente um modal gráfico, um cabeçalho,
+  uma legenda, uma área SVG, uma região de detalhes e um rodapé. Um controlador
+  comum receberá o tipo do gráfico e cuidará de título, abertura, foco,
+  encerramento e limpeza. Cada desenho terá apenas sua função matemática e de
+  renderização específica.
+- O conjunto de análise será `intervalos_individuais` da consulta atual. Cada
+  par consecutivo concluído que intercepta o período conta uma vez, inclusive o
+  intervalo real recortado no limite visual. Nenhum retorno ainda desconhecido
+  será inventado.
+- Para a distribuição real, se `N` é o total de intervalos e `n(d)` é a
+  quantidade com duração inteira `d`, então
+  `frequencia_percentual(d) = n(d) / N × 100`.
+- Média e desvio-padrão populacional serão recalculados sobre esse mesmo
+  conjunto, em concursos. Não serão reutilizadas as curvas acumuladas da
+  fotografia histórica, pois elas respondem a outro recorte.
+- A curva normal será apenas referência teórica ajustada à média e ao
+  desvio-padrão do conjunto. Para manter a comparação com durações inteiras, o
+  percentual teórico de cada duração `d` corresponderá à área normal entre
+  `d − 0,5` e `d + 0,5`, multiplicada por 100. Com desvio zero, não haverá curva
+  normal; será mostrado o único valor observado.
+- No gráfico de distribuição, X será `Duração do intervalo (concursos)` e Y,
+  `Ocorrências (%)`. A média terá linha vertical contínua; média menos e média
+  mais um desvio-padrão terão linhas verticais tracejadas. Um limite fora do
+  domínio visível será informado, não deslocado.
+- No gráfico ordenado, após ordenar `N` intervalos preservando repetições, a
+  ocorrência de posição `i`, numerada de 1 a `N`, terá
+  `X = i / N × 100` e `Y = intervalo_i / maior_intervalo × 100`. O primeiro
+  ponto não será forçado a 0% e o último será exatamente 100%.
+- As grades de ambos os eixos do gráfico ordenado serão marcadas de 5% em 5%,
+  mas os pontos conservarão valores decimais exatos. A interação exibirá
+  posição, percentual acumulado, intervalo em concursos e percentual do maior.
+- Os botões ficarão dentro de `Evolução dos intervalos`. O modal ocupará quase
+  toda a janela, o gráfico atual permanecerá visível ao fundo e `Encerrar`
+  destruirá SVG, detalhes e eventos específicos antes da próxima abertura.
+
+Evidência: `MSen/tests/TESTE_ITEM_22_17_0.md`.
+
+Estado: **concluída em 2026-11-02**, sem alteração de código funcional.
+
+Contrato consolidado:
+
+- Os diálogos existentes foram inventariados. `modal-andamento.js` já é
+  reutilizável entre auditoria e frequências, mas é específico para tarefas
+  assíncronas, progresso e cancelamento; não será desviado para gráficos.
+- Ajuda, prévia e configurações possuem estruturas próprias porque têm
+  responsabilidades diferentes. Delas serão reaproveitados os padrões de
+  `<dialog>`, fundo, cabeçalho, rodapé, fechamento por `Esc`, foco e botão de
+  encerramento, sem copiar conteúdo ou regras específicas.
+- Os dois novos botões controlarão exatamente um modal gráfico, um cabeçalho,
+  uma legenda, uma área SVG, uma região de detalhes e um rodapé. Um controlador
+  comum receberá o tipo do gráfico e cuidará de título, abertura, foco,
+  encerramento e limpeza. Cada desenho terá apenas sua função matemática e de
+  renderização específica.
+- O conjunto de análise será `intervalos_individuais` da consulta atual. Cada
+  par consecutivo concluído que intercepta o período conta uma vez, inclusive o
+  intervalo real recortado no limite visual. Nenhum retorno ainda desconhecido
+  será inventado.
+- Para a distribuição real, se `N` é o total de intervalos e `n(d)` é a
+  quantidade com duração inteira `d`, então
+  `frequencia_percentual(d) = n(d) / N × 100`.
+- Média e desvio-padrão populacional serão recalculados sobre esse mesmo
+  conjunto, em concursos. Não serão reutilizadas as curvas acumuladas da
+  fotografia histórica, pois elas respondem a outro recorte.
+- A curva normal será apenas referência teórica ajustada à média e ao
+  desvio-padrão do conjunto. Para manter a comparação com durações inteiras, o
+  percentual teórico de cada duração `d` corresponderá à área normal entre
+  `d − 0,5` e `d + 0,5`, multiplicada por 100. Com desvio zero, não haverá curva
+  normal; será mostrado o único valor observado.
+- No gráfico de distribuição, X será `Duração do intervalo (concursos)` e Y,
+  `Ocorrências (%)`. A média terá linha vertical contínua; média menos e média
+  mais um desvio-padrão terão linhas verticais tracejadas. Um limite fora do
+  domínio visível será informado, não deslocado.
+- No gráfico ordenado, após ordenar `N` intervalos preservando repetições, a
+  ocorrência de posição `i`, numerada de 1 a `N`, terá
+  `X = i / N × 100` e `Y = intervalo_i / maior_intervalo × 100`. O primeiro
+  ponto não será forçado a 0% e o último será exatamente 100%.
+- As grades de ambos os eixos do gráfico ordenado serão marcadas de 5% em 5%,
+  mas os pontos conservarão valores decimais exatos. A interação exibirá
+  posição, percentual acumulado, intervalo em concursos e percentual do maior.
+- Os botões ficarão dentro de `Evolução dos intervalos`. O modal ocupará quase
+  toda a janela, o gráfico atual permanecerá visível ao fundo e `Encerrar`
+  destruirá SVG, detalhes e eventos específicos antes da próxima abertura.
+
+Evidência: `MSen/tests/TESTE_ITEM_22_17_0.md`.
+
+#### 22.17.1 — Preparar e testar os dados derivados
+
+- Reutilizar `intervalos_individuais`; não criar tabela nem persistência nova.
+- Agrupar por duração para obter quantidade e percentual de ocorrências.
+- Calcular os pontos da curva normal com a média e o desvio-padrão do conjunto.
+- Ordenar os intervalos preservando repetições como ocorrências independentes.
+- Para a posição ordenada `i` entre `N` ocorrências, calcular
+  `percentual_ocorrencias = i / N × 100`.
+- Calcular `percentual_intervalo = intervalo / maior_intervalo × 100`.
+- Cobrir conjunto vazio, um único intervalo, desvio zero e valores repetidos.
+
+Estado: **concluída em 2026-11-02**. Foi criado um módulo matemático puro, sem
+DOM, API ou persistência, que recebe os intervalos individuais e devolve
+distribuição real, referência normal por faixa inteira, média, desvio-padrão
+populacional, limites de um desvio e ocorrências ordenadas nos dois eixos
+percentuais. Repetições permanecem independentes; entradas inválidas são
+rejeitadas e conjunto vazio ou desvio zero têm resposta explícita. Passaram 65
+testes JavaScript. Evidência em `MSen/tests/TESTE_ITEM_22_17_1.md`.
+
+Estado: **concluída em 2026-11-02**. Foi criado um módulo matemático puro, sem
+DOM, API ou persistência, que recebe os intervalos individuais e devolve
+distribuição real, referência normal por faixa inteira, média, desvio-padrão
+populacional, limites de um desvio e ocorrências ordenadas nos dois eixos
+percentuais. Repetições permanecem independentes; entradas inválidas são
+rejeitadas e conjunto vazio ou desvio zero têm resposta explícita. Passaram 65
+testes JavaScript. Evidência em `MSen/tests/TESTE_ITEM_22_17_1.md`.
+
+#### 22.17.2 — Gráfico “Distribuição dos intervalos”
+
+- Usar duração em concursos no eixo horizontal.
+- Usar percentual de ocorrências no eixo vertical.
+- Mostrar a distribuição percentual real e sobrepor a curva normal teórica em
+  estilo visual diferente, sem confundir as duas séries.
+- Marcar a média com linha contínua e `média − desvio-padrão` e
+  `média + desvio-padrão` com linhas tracejadas.
+- Disponibilizar duração, quantidade e percentual exatos por mouse, teclado ou
+  clique.
+
+Estado: **concluída em 2026-11-02**. Foi criado um renderizador independente,
+pronto para ser conectado ao modal único. A distribuição real usa linha e
+pontos vinho; a referência normal usa linha azul tracejada. Média e limites de
+um desvio são verticais e visualmente distintos. Eixos mostram concursos e
+percentual; somente durações realmente observadas recebem pontos interativos.
+Limites fora do domínio são informados, não deslocados. Conjunto vazio e desvio
+zero permanecem legíveis. Passaram 69 testes JavaScript. Evidência em
+`MSen/tests/TESTE_ITEM_22_17_2.md`.
+
+Estado: **concluída em 2026-11-02**. Foi criado um renderizador independente,
+pronto para ser conectado ao modal único. A distribuição real usa linha e
+pontos vinho; a referência normal usa linha azul tracejada. Média e limites de
+um desvio são verticais e visualmente distintos. Eixos mostram concursos e
+percentual; somente durações realmente observadas recebem pontos interativos.
+Limites fora do domínio são informados, não deslocados. Conjunto vazio e desvio
+zero permanecem legíveis. Passaram 69 testes JavaScript. Evidência em
+`MSen/tests/TESTE_ITEM_22_17_2.md`.
+
+#### 22.17.3 — Gráfico “Ocorrências em ordem crescente”
+
+- Ordenar do menor para o maior intervalo, mantendo todas as repetições.
+- Usar `Percentual acumulado das ocorrências` no eixo X, de 0% a 100%.
+- Usar `Intervalo (% do maior intervalo)` no eixo Y, de 0% a 100%.
+- Dividir visualmente ambos os eixos de 5% em 5%; os pontos permanecem em suas
+  posições percentuais exatas e não precisam coincidir com a grade.
+- Mostrar posição percentual, intervalo em concursos e percentual do maior
+  intervalo por mouse, teclado ou clique.
+
+**Estado:** concluída em 02/11/2026.
+
+Implementado o renderizador independente do gráfico ordenado, com repetições
+preservadas, eixos percentuais independentes de 0% a 100%, grade visual de 5%
+sem deslocamento dos pontos e inspeção por mouse, teclado ou clique. O primeiro
+ponto ocupa `1/N × 100` e o último termina exatamente em 100%. Passaram 73
+testes JavaScript. Evidência em `MSen/tests/TESTE_ITEM_22_17_3.md`.
+
+**Estado:** concluída em 02/11/2026.
+
+Implementado o renderizador independente do gráfico ordenado, com repetições
+preservadas, eixos percentuais independentes de 0% a 100%, grade visual de 5%
+sem deslocamento dos pontos e inspeção por mouse, teclado ou clique. O primeiro
+ponto ocupa `1/N × 100` e o último termina exatamente em 100%. Passaram 73
+testes JavaScript. Evidência em `MSen/tests/TESTE_ITEM_22_17_3.md`.
+
+#### 22.17.4 — Botões e modal gráfico reutilizável
+
+- Manter o gráfico atual `Evolução dos intervalos` visível.
+- Inserir no bloco `Evolução dos intervalos` os botões
+  `Curva de distribuição` e
+  `Ocorrências em ordem crescente`.
+- Criar um único `<dialog>` de grandes dimensões, reutilizado pelos dois
+  botões; não duplicar cabeçalho, área SVG, legenda, rodapé ou botão de fechar.
+- Usar uma função comum para abrir, configurar e encerrar o modal; somente os
+  cálculos e desenhos específicos de cada gráfico permanecerão separados.
+- Exibir somente um gráfico auxiliar por vez e usar o botão acionado para
+  definir título, legenda e conteúdo do mesmo modal.
+- Incluir o botão `Encerrar`, fechamento por `Esc` e tratamento acessível de
+  foco, reutilizando padrões existentes quando forem adequados.
+- Ao encerrar, remover SVG, eventos e conteúdo específico para não conservar
+  desenho ou referências desnecessárias em memória.
+- Preservar dezena, evento, período e dados da consulta ao abrir ou fechar o
+  modal, sem nova consulta ao servidor quando os intervalos já estiverem
+  carregados.
+
+**Estado:** concluída em 02/11/2026.
+
+Inseridos os dois botões no cartão `Evolução dos intervalos` e criado um único
+modal amplo, compartilhando título, legenda, SVG, detalhe, rodapé e comando de
+encerramento. Uma função comum configura o modal e encaminha os dados já
+carregados ao renderizador solicitado, sem nova chamada à API. O encerramento
+por botão, `Esc` ou fundo remove desenho, atributos, legenda e detalhes. O
+gráfico histórico e os quatro filtros permanecem inalterados. Passaram 74
+testes JavaScript. Evidência em `MSen/tests/TESTE_ITEM_22_17_4.md`.
+
+**Estado:** concluída em 02/11/2026.
+
+Inseridos os dois botões no cartão `Evolução dos intervalos` e criado um único
+modal amplo, compartilhando título, legenda, SVG, detalhe, rodapé e comando de
+encerramento. Uma função comum configura o modal e encaminha os dados já
+carregados ao renderizador solicitado, sem nova chamada à API. O encerramento
+por botão, `Esc` ou fundo remove desenho, atributos, legenda e detalhes. O
+gráfico histórico e os quatro filtros permanecem inalterados. Passaram 74
+testes JavaScript. Evidência em `MSen/tests/TESTE_ITEM_22_17_4.md`.
+
+#### 22.17.5 — Validação matemática e visual
+
+- Conferir as dezenas 08, 10 e 17 com dados reais.
+- Validar percentuais, repetições, menor e maior intervalo e soma das
+  frequências percentuais.
+- Confirmar que nenhum ponto é arredondado para a grade de 5%.
+- Diferenciar visualmente distribuição empírica e curva normal teórica.
+- Confirmar que os dois botões usam o mesmo modal e que fechar um gráfico limpa
+  o conteúdo antes de abrir o outro.
+- Executar regressões Python, JavaScript e Chrome.
+
+**Estado:** concluída em 02/11/2026.
+
+Validados dados reais das dezenas 08, 10 e 17 no período de 500 a 3.069. As
+frequências percentuais somaram 100% em cada caso; repetições foram preservadas
+e os extremos conferidos. A suíte matemática confirmou posições percentuais
+exatas sem encaixe na grade. O Chrome confirmou o uso de um único modal, a
+troca dos gráficos, o fechamento por `Esc` e botão e a limpeza do SVG. Passaram
+29 testes Python, 74 JavaScript e 34 testes completos de navegador. Evidência
+em `MSen/tests/TESTE_ITEM_22_17_5.md`.
+
+**Estado:** concluída em 02/11/2026.
+
+Validados dados reais das dezenas 08, 10 e 17 no período de 500 a 3.069. As
+frequências percentuais somaram 100% em cada caso; repetições foram preservadas
+e os extremos conferidos. A suíte matemática confirmou posições percentuais
+exatas sem encaixe na grade. O Chrome confirmou o uso de um único modal, a
+troca dos gráficos, o fechamento por `Esc` e botão e a limpeza do SVG. Passaram
+29 testes Python, 74 JavaScript e 34 testes completos de navegador. Evidência
+em `MSen/tests/TESTE_ITEM_22_17_5.md`.
+
+#### 22.17.5-A — Correção do gráfico “Ocorrências em ordem crescente”
+
+##### 22.17.5-A.0 — Diagnóstico da ordenação e das coordenadas
+
+- Conferir, com dados reais e uma amostra pequena controlada, a lista usada no
+  desenho, os pontos gerados e a orientação visual dos eixos.
+- Demonstrar para cada ponto a associação
+  `posição ordinal → duração do intervalo`, mantendo as repetições.
+- Identificar por que a apresentação atual aparenta ordem decrescente, sem
+  alterar código ou dados nesta subetapa.
+
+**Estado:** concluída em 02/11/2026.
+
+O diagnóstico confirmou que a ordenação interna já é crescente e não contém
+inversões nas dezenas 08, 10 e 17. A aparência e a dificuldade de leitura são
+causadas pela transformação dos dois eixos em percentuais: o eixo X deixou de
+mostrar a posição ordinal e o eixo Y deixou de mostrar a duração real em
+concursos. A correção deverá preservar a lista crescente, mas representar
+diretamente `posição ordinal → duração do intervalo`. Nenhum código do gráfico
+foi alterado. Evidência em `MSen/tests/TESTE_ITEM_22_17_5_A_0.md`.
+
+**Estado:** concluída em 02/11/2026.
+
+O diagnóstico confirmou que a ordenação interna já é crescente e não contém
+inversões nas dezenas 08, 10 e 17. A aparência e a dificuldade de leitura são
+causadas pela transformação dos dois eixos em percentuais: o eixo X deixou de
+mostrar a posição ordinal e o eixo Y deixou de mostrar a duração real em
+concursos. A correção deverá preservar a lista crescente, mas representar
+diretamente `posição ordinal → duração do intervalo`. Nenhum código do gráfico
+foi alterado. Evidência em `MSen/tests/TESTE_ITEM_22_17_5_A_0.md`.
+
+##### 22.17.5-A.1 — Correção matemática e visual
+
+- Ordenar os intervalos numericamente do menor para o maior.
+- Manter cada intervalo como uma ocorrência independente, inclusive quando
+  várias durações forem iguais.
+- Usar no eixo X a posição ordinal `1º, 2º, 3º, …, N`, com a mesma largura
+  horizontal entre posições consecutivas.
+- Usar no eixo Y a duração do intervalo correspondente àquela posição.
+- Formar os pontos `(1, intervalo do 1º)`, `(2, intervalo do 2º)`, …,
+  `(N, intervalo do N-ésimo)`, produzindo uma curva não decrescente.
+- Manter percentuais apenas como informação complementar, sem substituir a
+  ordem e a duração reais dos eixos.
+
+**Estado:** concluída em 02/11/2026.
+
+O eixo X passou a representar diretamente as posições ordinais de 1 a N, com
+espaçamento uniforme, e o eixo Y passou a representar a duração real do
+intervalo em concursos. A curva usa os pontos `(ordem, intervalo)`, preserva
+repetições como posições independentes e é não decrescente. Os percentuais
+permanecem somente no detalhe interativo. Passaram 74 testes JavaScript.
+Evidência em `MSen/tests/TESTE_ITEM_22_17_5_A_1.md`.
+
+**Estado:** concluída em 02/11/2026.
+
+O eixo X passou a representar diretamente as posições ordinais de 1 a N, com
+espaçamento uniforme, e o eixo Y passou a representar a duração real do
+intervalo em concursos. A curva usa os pontos `(ordem, intervalo)`, preserva
+repetições como posições independentes e é não decrescente. Os percentuais
+permanecem somente no detalhe interativo. Passaram 74 testes JavaScript.
+Evidência em `MSen/tests/TESTE_ITEM_22_17_5_A_1.md`.
+
+##### 22.17.5-A.2 — Validação da correção
+
+- Validar a amostra `4, 1, 2, 2`, que deverá gerar os pontos
+  `(1,1)`, `(2,2)`, `(3,2)` e `(4,4)`.
+- Conferir espaçamento horizontal uniforme, repetições, primeiro e último
+  pontos e ausência de inversão visual.
+- Revalidar as dezenas 08, 10 e 17 e executar as regressões JavaScript e Chrome.
+- Liberar o gráfico para nova avaliação visual do usuário antes de atualizar a
+  ajuda e a documentação.
+
+**Estado:** concluída em 02/11/2026.
+
+A amostra `4, 1, 2, 2` gerou exatamente `(1,1)`, `(2,2)`, `(3,2)` e
+`(4,4)`. As dezenas 08, 10 e 17 apresentaram zero inversões, primeiro ponto
+`(1,1)`, último ponto coerente com a quantidade e o maior intervalo, além de
+espaçamento horizontal uniforme. Os novos títulos e unidades foram validados
+no Chrome. Passaram 74 testes JavaScript e 34 testes completos de navegador.
+O gráfico está liberado para nova avaliação visual antes da documentação.
+Evidência em `MSen/tests/TESTE_ITEM_22_17_5_A_2.md`.
+
+**Estado:** concluída em 02/11/2026.
+
+A amostra `4, 1, 2, 2` gerou exatamente `(1,1)`, `(2,2)`, `(3,2)` e
+`(4,4)`. As dezenas 08, 10 e 17 apresentaram zero inversões, primeiro ponto
+`(1,1)`, último ponto coerente com a quantidade e o maior intervalo, além de
+espaçamento horizontal uniforme. Os novos títulos e unidades foram validados
+no Chrome. Passaram 74 testes JavaScript e 34 testes completos de navegador.
+O gráfico está liberado para nova avaliação visual antes da documentação.
+Evidência em `MSen/tests/TESTE_ITEM_22_17_5_A_2.md`.
+
+#### 22.17.5-B — Reparo definitivo do gráfico percentual ordenado
+
+> Este plano substitui a interpretação adotada em 22.17.5-A. O gráfico deverá
+> usar dois eixos percentuais e uma grade fixa de referência, sem arredondar ou
+> encaixar os pontos nas linhas do quadriculado.
+
+##### 22.17.5-B.0 — Fixação do contrato matemático e visual
+
+- Registrar a entrada como a lista completa dos intervalos, com repetições.
+- Ordenar numericamente do menor para o maior antes de calcular coordenadas.
+- Para `N` intervalos ordenados, calcular a coordenada horizontal do item `i`,
+  contado de 1 a N, por `X(i) = i / N × 100`.
+- Calcular a coordenada vertical por
+  `Y(i) = intervalo(i) / maior_intervalo × 100`.
+- Fixar ambos os eixos entre 0% e 100%.
+- Definir uma grade semelhante a papel quadriculado, com linhas finas verticais
+  e horizontais e rótulos de 5% em 5%.
+- Registrar que a grade é somente uma referência visual: nenhum ponto poderá
+  ser arredondado, deslocado ou encaixado nas linhas de 5%.
+- Confirmar que o último ponto será `(100%, 100%)` e que repetições produzirão
+  pontos consecutivos com a mesma coordenada vertical.
+
+**Estado:** concluída em 02/11/2026.
+
+O contrato foi consolidado em testes independentes. Com 20 ocorrências, as
+posições horizontais coincidem com as marcas de 5%; com 14 e 17 ocorrências,
+o passo permanece constante e os pontos ficam livres entre as marcas quando o
+cálculo assim determina. As coordenadas verticais usam a proporção em relação
+ao maior intervalo, repetições são preservadas e o último ponto é sempre
+`(100%, 100%)`. Passaram 75 testes JavaScript. Nenhum código de desenho foi
+alterado. Evidência em `MSen/tests/TESTE_ITEM_22_17_5_B_0.md`.
+
+**Estado:** concluída em 02/11/2026.
+
+O contrato foi consolidado em testes independentes. Com 20 ocorrências, as
+posições horizontais coincidem com as marcas de 5%; com 14 e 17 ocorrências,
+o passo permanece constante e os pontos ficam livres entre as marcas quando o
+cálculo assim determina. As coordenadas verticais usam a proporção em relação
+ao maior intervalo, repetições são preservadas e o último ponto é sempre
+`(100%, 100%)`. Passaram 75 testes JavaScript. Nenhum código de desenho foi
+alterado. Evidência em `MSen/tests/TESTE_ITEM_22_17_5_B_0.md`.
+
+##### 22.17.5-B.1 — Implementação do gráfico percentual
+
+- Substituir os eixos absolutos atuais pelos eixos percentuais contratados.
+- Distribuir os pontos horizontalmente com passo constante `100/N`, mantendo
+  todos os intervalos repetidos como ocorrências independentes.
+- Usar no eixo vertical a proporção de cada duração em relação ao maior
+  intervalo, sem arredondar a coordenada.
+- Desenhar a grade completa de 5% em 5% atrás da curva e dos pontos.
+- Ajustar títulos, legenda e detalhe interativo para explicar os percentuais e
+  também informar ordem, total e duração real em concursos.
+- Preservar o modal único e não modificar o gráfico `Evolução dos intervalos`.
+
+**Estado:** concluída em 02/11/2026.
+
+O gráfico passou a usar os dois eixos fixos de 0% a 100%. A grade possui linhas
+finas verticais e horizontais a cada 5%, desenhadas atrás da curva. Cada ponto
+usa diretamente `i/N × 100` no eixo X e
+`intervalo/maior_intervalo × 100` no eixo Y, sem encaixe na grade. O detalhe
+interativo conserva ordem, total, percentual acumulado, duração real e
+percentual do maior intervalo. O modal único e o gráfico histórico não foram
+alterados. Passaram 75 testes JavaScript. Evidência em
+`MSen/tests/TESTE_ITEM_22_17_5_B_1.md`.
+
+**Estado:** concluída em 02/11/2026.
+
+O gráfico passou a usar os dois eixos fixos de 0% a 100%. A grade possui linhas
+finas verticais e horizontais a cada 5%, desenhadas atrás da curva. Cada ponto
+usa diretamente `i/N × 100` no eixo X e
+`intervalo/maior_intervalo × 100` no eixo Y, sem encaixe na grade. O detalhe
+interativo conserva ordem, total, percentual acumulado, duração real e
+percentual do maior intervalo. O modal único e o gráfico histórico não foram
+alterados. Passaram 75 testes JavaScript. Evidência em
+`MSen/tests/TESTE_ITEM_22_17_5_B_1.md`.
+
+##### 22.17.5-B.2 — Validação matemática e visual
+
+- Validar uma amostra de 20 intervalos, na qual cada posição horizontal deverá
+  coincidir com uma marca de 5%.
+- Validar amostras de 14 e 17 intervalos, confirmando que os pontos ficam entre
+  as linhas da grade quando o percentual calculado assim determinar.
+- Confirmar espaçamento horizontal constante, ordenação não decrescente,
+  repetições preservadas e último ponto exatamente em `(100%, 100%)`.
+- Revalidar as dezenas 08, 10 e 17 com dados reais.
+- Executar regressões JavaScript e Chrome e liberar para nova avaliação visual
+  do usuário antes da ajuda e da documentação.
+
+**Estado:** concluída em 02/11/2026.
+
+A amostra de 20 pontos coincidiu integralmente com as marcas de 5%; nas
+amostras de 14 e 17 pontos, os pontos intermediários permaneceram livres entre
+as linhas conforme os percentuais calculados. As dezenas 08, 10 e 17
+apresentaram zero inversões e último ponto em `(100%,100%)`. O Chrome confirmou
+21 marcas por eixo, 42 linhas finas no quadriculado e os novos títulos. Passaram
+75 testes JavaScript e 34 testes completos de navegador. O gráfico está
+liberado para avaliação visual do usuário. Evidência em
+`MSen/tests/TESTE_ITEM_22_17_5_B_2.md`.
+
+**Estado:** concluída em 02/11/2026.
+
+A amostra de 20 pontos coincidiu integralmente com as marcas de 5%; nas
+amostras de 14 e 17 pontos, os pontos intermediários permaneceram livres entre
+as linhas conforme os percentuais calculados. As dezenas 08, 10 e 17
+apresentaram zero inversões e último ponto em `(100%,100%)`. O Chrome confirmou
+21 marcas por eixo, 42 linhas finas no quadriculado e os novos títulos. Passaram
+75 testes JavaScript e 34 testes completos de navegador. O gráfico está
+liberado para avaliação visual do usuário. Evidência em
+`MSen/tests/TESTE_ITEM_22_17_5_B_2.md`.
+
+#### 22.17.6 — Ajuda e documentação
+
+##### 22.17.6.0 — Contrato e conteúdo das três ajudas
+
+- Inventariar os três gráficos: `Evolução dos intervalos`,
+  `Curva de distribuição` e `Ocorrências em ordem crescente`.
+- Definir um roteiro comum: finalidade, origem dos dados, eixos, linhas/pontos,
+  interação, exemplo de leitura, limitações e interpretação recomendada.
+- Redigir os três conteúdos separadamente, com linguagem voltada ao usuário e
+  sem modificar ainda a interface.
+- Explicar expressamente que valores repetidos podem formar patamares e que
+  saltos podem indicar durações intermediárias ausentes.
+- Registrar que os gráficos descrevem o histórico e não garantem o próximo
+  resultado.
+
+**Estado:** concluída em 02/11/2026.
+
+Foram redigidos os três conteúdos de ajuda com estrutura comum: finalidade,
+dados utilizados, leitura dos eixos e elementos, interação, exemplo e cuidados
+de interpretação. A ajuda do gráfico ordenado explica expressamente pontos
+repetidos, patamares, saltos por durações ausentes e todas as informações do
+detalhe interativo. Nenhuma interface foi alterada. Texto completo em
+`MSen/tests/TESTE_ITEM_22_17_6_0.md`.
+
+**Estado:** concluída em 02/11/2026.
+
+Foram redigidos os três conteúdos de ajuda com estrutura comum: finalidade,
+dados utilizados, leitura dos eixos e elementos, interação, exemplo e cuidados
+de interpretação. A ajuda do gráfico ordenado explica expressamente pontos
+repetidos, patamares, saltos por durações ausentes e todas as informações do
+detalhe interativo. Nenhuma interface foi alterada. Texto completo em
+`MSen/tests/TESTE_ITEM_22_17_6_0.md`.
+
+##### 22.17.6.1 — Modal único e botões de ajuda
+
+- Criar um único formulário modal de ajuda reutilizável pelos três gráficos,
+  sem duplicar cabeçalho, corpo, rodapé ou lógica de encerramento.
+- Inserir um botão `Ajuda` no cartão `Evolução dos intervalos`.
+- Inserir um botão `Ajuda` no modal dos gráficos auxiliares; o conteúdo deverá
+  acompanhar o gráfico auxiliar atualmente aberto.
+- Permitir encerramento por botão, ícone, `Esc` e clique no fundo, com foco
+  acessível e retorno ao botão que abriu a ajuda.
+- Manter separado o modal do gráfico e o modal da ajuda, sem apagar ou
+  recalcular o gráfico ao consultar a explicação.
+
+**Estado:** concluída em 02/11/2026.
+
+Criado um único modal contextual reutilizável para os três gráficos. O cartão
+`Evolução dos intervalos` recebeu seu botão `Ajuda`, e o cabeçalho do modal
+auxiliar recebeu outro botão que acompanha o gráfico atualmente exibido. O
+modal fecha por botão, ícone, `Esc` ou fundo, limpa o conteúdo e devolve o foco
+ao acionador sem apagar ou recalcular o gráfico. Nesta subetapa foi inserido
+somente um aviso provisório; os textos completos pertencem às subetapas
+22.17.6.2 a 22.17.6.4. Passaram 76 testes JavaScript. Evidência em
+`MSen/tests/TESTE_ITEM_22_17_6_1.md`.
+
+**Estado:** concluída em 02/11/2026.
+
+Criado um único modal contextual reutilizável para os três gráficos. O cartão
+`Evolução dos intervalos` recebeu seu botão `Ajuda`, e o cabeçalho do modal
+auxiliar recebeu outro botão que acompanha o gráfico atualmente exibido. O
+modal fecha por botão, ícone, `Esc` ou fundo, limpa o conteúdo e devolve o foco
+ao acionador sem apagar ou recalcular o gráfico. Nesta subetapa foi inserido
+somente um aviso provisório; os textos completos pertencem às subetapas
+22.17.6.2 a 22.17.6.4. Passaram 76 testes JavaScript. Evidência em
+`MSen/tests/TESTE_ITEM_22_17_6_1.md`.
+
+##### 22.17.6.2 — Ajuda de “Evolução dos intervalos”
+
+- Explicar os intervalos cronológicos, patamares, transições verticais,
+  marcadores de intervalos estreitos, média e média ± desvio-padrão.
+- Explicar os eixos em concursos e como consultar os valores exatos.
+- Incluir um exemplo curto de leitura de um trecho do gráfico.
+
+**Estado:** concluída em 02/11/2026.
+
+Inserida no modal contextual a ajuda completa de `Evolução dos intervalos`,
+abrangendo finalidade, eixos, patamares, transições, média, desvio-padrão,
+marcadores estreitos, interação, exemplo `1246 → 1261` e cuidados de
+interpretação. As outras duas ajudas permanecem provisórias. Passaram 77 testes
+JavaScript. Evidência em `MSen/tests/TESTE_ITEM_22_17_6_2.md`.
+
+**Estado:** concluída em 02/11/2026.
+
+Inserida no modal contextual a ajuda completa de `Evolução dos intervalos`,
+abrangendo finalidade, eixos, patamares, transições, média, desvio-padrão,
+marcadores estreitos, interação, exemplo `1246 → 1261` e cuidados de
+interpretação. As outras duas ajudas permanecem provisórias. Passaram 77 testes
+JavaScript. Evidência em `MSen/tests/TESTE_ITEM_22_17_6_2.md`.
+
+##### 22.17.6.3 — Ajuda de “Curva de distribuição”
+
+- Explicar duração no eixo X e percentual de ocorrências no eixo Y.
+- Diferenciar distribuição observada, curva normal teórica, média e limites de
+  um desvio-padrão.
+- Esclarecer que a curva normal é somente uma referência e pode não representar
+  bem uma distribuição assimétrica concentrada em intervalos curtos.
+- Explicar como o detalhe informa quantidade e percentual exatos.
+
+**Estado:** concluída em 02/11/2026.
+
+Inserida no modal contextual a ajuda completa de `Curva de distribuição`, com
+finalidade, eixos, distribuição observada, curva normal teórica, média, limites
+de um desvio-padrão, interação, exemplo numérico e alerta sobre assimetria e
+concentração em intervalos curtos. A ajuda do gráfico ordenado permanece
+provisória. Passaram 78 testes JavaScript. Evidência em
+`MSen/tests/TESTE_ITEM_22_17_6_3.md`.
+
+**Estado:** concluída em 02/11/2026.
+
+Inserida no modal contextual a ajuda completa de `Curva de distribuição`, com
+finalidade, eixos, distribuição observada, curva normal teórica, média, limites
+de um desvio-padrão, interação, exemplo numérico e alerta sobre assimetria e
+concentração em intervalos curtos. A ajuda do gráfico ordenado permanece
+provisória. Passaram 78 testes JavaScript. Evidência em
+`MSen/tests/TESTE_ITEM_22_17_6_3.md`.
+
+##### 22.17.6.4 — Ajuda de “Ocorrências em ordem crescente”
+
+- Explicar a ordenação crescente com repetições preservadas.
+- Explicar `X(i) = i/N × 100` e
+  `Y(i) = intervalo(i)/maior_intervalo × 100` em linguagem simples.
+- Explicar o quadriculado de 5%, os pontos que podem ficar entre suas linhas,
+  os patamares formados por repetições e os saltos causados por durações que
+  não ocorreram.
+- Explicar cada informação exibida ao selecionar um ponto, incluindo ordem,
+  percentual acumulado, duração real e percentual do maior intervalo.
+
+**Estado:** concluída em 02/11/2026.
+
+Inserida no modal contextual a ajuda completa de `Ocorrências em ordem
+crescente`, com ordenação, dois eixos percentuais, fórmulas em linguagem
+simples, quadriculado de 5%, pontos vermelhos, espaçamento, repetições,
+patamares, saltos por durações ausentes, último ponto `(100%,100%)`, interação,
+exemplo detalhado e limitações. Passaram 79 testes JavaScript. Evidência em
+`MSen/tests/TESTE_ITEM_22_17_6_4.md`.
+
+**Estado:** concluída em 02/11/2026.
+
+Inserida no modal contextual a ajuda completa de `Ocorrências em ordem
+crescente`, com ordenação, dois eixos percentuais, fórmulas em linguagem
+simples, quadriculado de 5%, pontos vermelhos, espaçamento, repetições,
+patamares, saltos por durações ausentes, último ponto `(100%,100%)`, interação,
+exemplo detalhado e limitações. Passaram 79 testes JavaScript. Evidência em
+`MSen/tests/TESTE_ITEM_22_17_6_4.md`.
+
+##### 22.17.6.5 — Validação no Chrome e análise do usuário
+
+- Confirmar que os três botões abrem o conteúdo correto no mesmo modal de
+  ajuda e que a ajuda não altera filtros, consulta ou gráfico.
+- Validar fechamento, foco, rolagem, larguras normal e estreita e ausência de
+  conteúdo residual entre duas ajudas.
+- Executar regressões JavaScript e Chrome.
+- Liberar as três ajudas para leitura e ajustes solicitados pelo usuário antes
+  da documentação definitiva.
+
+**Estado:** concluída em 02/11/2026.
+
+Confirmado no Chrome que as três ajudas abrem o texto correspondente usando o
+mesmo modal reutilizável, sem substituir nem apagar o gráfico consultado. O
+fechamento devolve o foco ao botão de origem, a troca entre ajudas não mantém
+conteúdo residual e o fechamento por `Esc` da ajuda contextual preserva o
+modal do gráfico auxiliar. Passaram 10 testes direcionados da página, 79 testes
+JavaScript e 34 testes da regressão completa no navegador. As ajudas estão
+liberadas para análise do usuário antes da documentação definitiva. Evidência
+em `MSen/tests/TESTE_ITEM_22_17_6_5.md`.
+
+**Estado:** concluída em 02/11/2026.
+
+Confirmado no Chrome que as três ajudas abrem o texto correspondente usando o
+mesmo modal reutilizável, sem substituir nem apagar o gráfico consultado. O
+fechamento devolve o foco ao botão de origem, a troca entre ajudas não mantém
+conteúdo residual e o fechamento por `Esc` da ajuda contextual preserva o
+modal do gráfico auxiliar. Passaram 10 testes direcionados da página, 79 testes
+JavaScript e 34 testes da regressão completa no navegador. As ajudas estão
+liberadas para análise do usuário antes da documentação definitiva. Evidência
+em `MSen/tests/TESTE_ITEM_22_17_6_5.md`.
+
+##### 22.17.6.6 — Documentação definitiva
+
+- Incorporar os textos aprovados ao manual funcional e à descrição técnica do
+  módulo.
+- Registrar finalidade, fórmulas, limitações e relação entre os três gráficos.
+- Somente concluir esta subetapa após a análise e aprovação do usuário.
+
+**Estado:** concluída em 02/11/2026.
+
+O manual funcional passou a explicar, em sequência, finalidade, eixos,
+interação e cuidados de interpretação de `Evolução dos intervalos`, `Curva de
+distribuição` e `Ocorrências em ordem crescente`. O contrato técnico registra a
+base comum, as fórmulas dos três gráficos, a preservação de repetições, o
+quadriculado percentual, os diálogos reutilizáveis e os limites de uso. A
+documentação foi conferida contra os textos aprovados da ajuda e contra a
+implementação vigente. Evidência em
+`MSen/tests/TESTE_ITEM_22_17_6_6.md`.
+
+#### 22.17.7 — Liberação para avaliação visual
+
+- Reiniciar somente o servidor da porta 5050.
+- Validar página e API reais sem abrir nova porta.
+- Liberar os dois gráficos para avaliação e eventuais ajustes finais do
+  usuário.
+
+### Etapa 23 — Seleção de dezenas, pesquisa de configurações e montagem de jogos
+
+#### Objetivo
+
+Criar a página `Seleção de dezenas` para responder, de forma experimental e
+auditável, quais dezenas atendem à faixa de retorno calculada para cada
+concurso futuro. A mesma regra será submetida a backtest desde o concurso 500,
+sempre ocultando o resultado do concurso-alvo durante a seleção.
+
+Cada pesquisa deverá preservar a configuração usada, as dezenas selecionadas,
+o resultado posteriormente conferido e suas métricas. Isso permitirá comparar
+configurações de `k` e `j`, quantidades de dezenas e estratégias de formação de
+jogos de seis dezenas sem sobrescrever pesquisas anteriores.
+
+#### Regras preliminares já acordadas
+
+- Para avaliar o concurso-alvo `C`, usar somente dados conhecidos até `C - 1`.
+- O resultado real de `C` será consultado apenas depois da seleção, para a
+  conferência do backtest.
+- `k`, com `0 <= k <= 1`, controlará a meia largura da faixa em unidades de
+  desvio-padrão.
+- `j` deslocará o centro da faixa, conforme o contrato da subetapa 23.0.
+- Cada concurso avaliado pertencerá a exatamente uma classe de acerto:
+  `0`, `1`, `2`, `3`, `4`, `5` ou `6` dezenas.
+- O relatório deverá informar também a quantidade de dezenas selecionadas,
+  pois o número de acertos não pode ser interpretado sem o tamanho do conjunto
+  candidato.
+- Previsões futuras permanecerão pendentes até a importação do respectivo
+  resultado. A previsão originalmente emitida deverá ser preservada para não
+  ser substituída por um recálculo posterior.
+- Nenhuma pesquisa ativará automaticamente filtros do Screener nem será
+  tratada como garantia de resultado futuro.
+- O screener de dezenas usará ocorrências `SIMPLES`. `2VS` e `3VS` serão
+  critérios do screener posterior das combinações de seis dezenas.
+
+#### 23.0 — Contrato matemático e temporal
+
+- Formalizar, para cada dezena, concurso-alvo e corte histórico:
+  `centro_original = ultima_ocorrencia + media_intervalos`.
+- Decidir e documentar se o deslocamento será
+  `centro_ajustado = centro_original + j * desvio_padrao`.
+- Definir a faixa candidata como proposta inicial:
+  `centro_ajustado ± k * desvio_padrao`.
+- Definir domínio, precisão e valores padrão de `k` e `j`.
+- Definir arredondamento dos limites para concursos inteiros e confirmar se os
+  limites serão inclusivos.
+- Definir tratamento de desvio zero, ausência de intervalos, faixa anterior ao
+  corte e concurso-alvo fora da cobertura disponível.
+- Fixar a proteção contra vazamento futuro: a seleção para `C` utilizará a
+  fotografia de `C - 1`; o resultado de `C` só poderá entrar na conferência.
+- Definir horizonte futuro configurável, inteiro e no mínimo 1, com valor
+  padrão igual a 1 concurso.
+- Produzir exemplos manuais obrigatórios antes de qualquer DDL ou código.
+
+**Estado:** concluída em 03/11/2026.
+
+O contrato foi consolidado em `docs/CONTRATO_SELECAO_DEZENAS.md`. Ficaram
+definidos `0 < k <= 1` com padrão 1, `-k <= j <= +k` com padrão 0, limites
+externos inclusivos e horizonte configurável com padrão 1. Após o esclarecimento
+da subetapa 23.2, a seleção de dezenas ficou restrita às ocorrências `SIMPLES`;
+`2VS` e `3VS` foram reservados ao screener das combinações. A seleção do alvo
+`C` usa somente o corte `C - 1`; em especial, o alvo 500 exige cálculo até 499
+e não pode reutilizar a fotografia persistida do concurso 500. Casos manuais
+cobrem deslocamentos, limites e horizonte. Nenhum DDL ou código executável foi
+criado. Evidência em `MSen/tests/TESTE_ITEM_23_0.md`.
+
+#### 23.1 — Contrato do backtest e das métricas
+
+- Iniciar o backtest no concurso 500 e definir seu concurso final.
+- Registrar, por concurso-alvo, configuração, corte usado, dezenas candidatas,
+  dezenas sorteadas, interseção e quantidade de acertos.
+- Consolidar classes exclusivas de `0` a `6` acertos, sem contar um resultado
+  de seis também nas classes inferiores.
+- Calcular quantidade e percentual de concursos em cada classe.
+- Informar por concurso e no consolidado: mínimo, máximo e média de dezenas
+  selecionadas.
+- Definir métricas comparáveis entre configurações, incluindo cobertura de
+  acertos, tamanho médio do conjunto candidato e custo combinatório.
+- Garantir que duas configurações só sejam comparadas diretamente quando
+  avaliadas no mesmo período e sobre a mesma assinatura de resultados.
+
+**Estado:** concluída em 03/11/2026.
+
+O contrato foi consolidado em
+`docs/CONTRATO_BACKTEST_SELECAO_DEZENAS.md`. O backtest abrangerá do alvo 500
+ao último resultado disponível, separará seleção e conferência, classificará
+cada concurso exclusivamente entre 0 e 6 acertos e distinguirá seleção vazia
+válida de ausência de base. Foram definidas métricas de cobertura, precisão,
+quantidade selecionada e custo `C(N,6)`, além das condições para comparar
+configurações sem favorecer apenas conjuntos maiores. Nenhum DDL ou código
+executável foi criado. Evidência em `MSen/tests/TESTE_ITEM_23_1.md`.
+
+#### 23.2 — Estudo da quantidade de dezenas e formação de jogos
+
+- Separar duas estratégias para análise:
+  - quantidade variável, formada naturalmente pelas dezenas dentro da faixa;
+  - quantidade fixa, obtida por classificação quando se desejar escolher
+    exatamente `N` dezenas.
+- Antes de implementar quantidade fixa, definir o critério de ordenação das
+  dezenas candidatas, sem inventar desempate ou pontuação.
+- Para `N` dezenas selecionadas, calcular a quantidade de jogos distintos de
+  seis dezenas por `C(N,6)` quando forem geradas todas as combinações.
+- Documentar exemplos mínimos: `N=6 -> 1`, `N=7 -> 7`, `N=8 -> 28`,
+  `N=9 -> 84` e `N=10 -> 210` jogos.
+- Diferenciar claramente “gerar todas as combinações de seis” de “montar uma
+  quantidade limitada de lotes”; a segunda alternativa exigirá regra própria.
+- Medir, no backtest, a relação entre quantidade selecionada, quantidade de
+  jogos, acertos e custo, evitando favorecer artificialmente configurações que
+  simplesmente escolhem muitas dezenas.
+
+**Estado:** concluída em 03/11/2026.
+
+O contrato foi consolidado em
+`docs/CONTRATO_QUANTIDADE_COMBINACOES.md`. Foram separados o screener de
+dezenas, baseado em ocorrências `SIMPLES`, e o screener posterior das
+combinações, no qual atuarão 2VS, 3VS e outros filtros. A regra inicial de
+complementar quantidades com dezenas fora da faixa foi substituída pela
+subetapa 23.2-A. Permanecem válidos classificação, desempates, `C(N,6)`, custo
+e efeito dos filtros posteriores. Nenhum DDL ou código executável foi criado.
+Evidência histórica em `MSen/tests/TESTE_ITEM_23_2.md`.
+
+#### 23.2-A — Quantidade configurável sem complementação
+
+- Incorporar à configuração os modos `MAX` e `FIXA`.
+- Em `MAX`, retornar todas as dezenas aprovadas pelo critério.
+- Em `FIXA`, retornar as `N` melhores aprovadas quando houver pelo menos `N`.
+- Quando houver menos de `N`, retornar somente as aprovadas e informar no log
+  o máximo possível atingido pelo critério.
+- Nunca acrescentar dezenas fora da faixa para completar a quantidade.
+- Registrar por concurso as quantidades configurada, aprovada e retornada.
+
+**Estado:** concluída em 03/11/2026.
+
+O contrato de quantidade foi corrigido para tornar a quantidade parte da
+configuração. `MAX` retorna todas as aprovadas; `FIXA` retorna `min(M,N)` e usa
+o ranking somente para reduzir excessos. A complementação fora da faixa foi
+eliminada. O relatório deverá registrar configuração, quantidade aprovada,
+quantidade retornada e aviso quando o limite solicitado não for alcançado.
+Nenhum DDL ou código executável foi criado. Evidência em
+`MSen/tests/TESTE_ITEM_23_2_A.md`.
+
+#### 23.3 — Modelo relacional das pesquisas
+
+- Projetar tabela de configurações versionadas, com nome, `k`, `j`, quantidade
+  de concursos futuros, estratégia de quantidade e versão do cálculo.
+- Projetar tabela de execuções de pesquisa com cópia imutável da configuração,
+  assinatura dos resultados, período, estado, duração e identificação da
+  origem.
+- Projetar tabela por concurso-alvo com corte histórico, quantidade
+  selecionada, resultado da conferência, classe de acerto e situação
+  `PENDENTE`, `AVALIADO` ou `NÃO AVALIÁVEL`.
+- Projetar tabela normalizada das 60 dezenas avaliadas por alvo, incluindo
+  valores que justificaram aprovação, ranking e retorno: última ocorrência,
+  média, desvio, centro e limites.
+- Avaliar tabela de jogos de seis somente depois de definida a necessidade de
+  persistir todas as combinações; não duplicar dados que possam ser produzidos
+  de forma barata e determinística.
+- Usar chaves estrangeiras, restrições, índices e exclusão em cascata somente
+  entre a execução de pesquisa e seus próprios detalhes.
+- Não alterar nem excluir resultados de concursos ou o histórico de frequência
+  quando uma pesquisa for removida.
+
+**Estado:** concluída em 03/11/2026.
+
+O modelo lógico foi consolidado em
+`docs/MODELO_PESQUISA_SELECAO_DEZENAS.md`, com quatro níveis:
+`configuracoes_pesquisa_selecao`, `execucoes_pesquisa_selecao`,
+`alvos_pesquisa_selecao` e `avaliacoes_dezenas_pesquisa`. Cada alvo preservará
+as 60 avaliações para auditar faixa, ranking e retorno. O resultado será
+referenciado por `id_resultado`, sem duplicar suas dezenas. Cascatas ficaram
+restritas aos detalhes internos da execução; configurações e resultados usam
+`RESTRICT`. Tabelas de jogos foram adiadas até o contrato do segundo screener.
+Nenhum DDL foi executado. Evidência em `MSen/tests/TESTE_ITEM_23_3.md`.
+
+#### 23.4 — Migração e repositório de pesquisas
+
+- Criar a migração PostgreSQL após aprovação do modelo da subetapa 23.3.
+- Implementar gravação transacional e idempotente das configurações e
+  execuções.
+- Preservar pesquisas anteriores quando uma nova configuração for testada.
+- Impedir alteração retroativa da configuração já vinculada a uma execução.
+- Validar integridade, índices, cascatas internas e volume estimado.
+
+**Concluída em 03/11/2026.** A migração 021 criou os quatro níveis
+aprovados na 23.3, foi validada em PostgreSQL efêmero e aplicada no banco
+local `games`. O repositório grava configurações, execuções, alvos e as 60
+avaliações de forma transacional e idempotente. Configurações utilizadas são
+protegidas contra alteração retroativa; exclusões em cascata ficaram limitadas
+aos detalhes internos da execução. Evidência em
+`MSen/tests/TESTE_ITEM_23_4.md`.
+
+#### 23.5 — Motor de seleção para um concurso-alvo
+
+- Reaproveitar `historico_frequencia_dezenas` e as ocorrências de `resultados`
+  sem copiar as seis dezenas para tabelas estatísticas.
+- Calcular a seleção das 60 dezenas para um corte e alvo determinados.
+- Expor, para cada dezena, motivo de inclusão ou exclusão e valores usados.
+- Tratar estados sem base matemática de forma explícita.
+- Validar o motor com casos manuais da subetapa 23.0.
+
+**Concluída em 03/11/2026.** Foi criado um motor puro que avalia as 60 dezenas
+sem receber o resultado do concurso-alvo. A fonte usa a fotografia `SIMPLES`
+da geração ativa quando existe exatamente no corte e reconstrói as estatísticas
+por `resultados` quando o corte antecede o histórico persistido, inclusive 499
+para prever o concurso 500. O resultado explica cada decisão com última
+ocorrência, média, desvio, centros, limites, distâncias, ranking, aprovação e
+retorno. Os modos `MAX` e `FIXA` obedecem ao contrato e nunca completam a
+quantidade com dezenas fora da faixa. Evidência em
+`MSen/tests/TESTE_ITEM_23_5.md`.
+
+#### 23.6 — Motor de backtest e pesquisa comparativa
+
+- Executar concurso a concurso desde 500, sempre usando o corte anterior.
+- Persistir seleção e conferência em lotes transacionais.
+- Permitir cancelamento seguro e retomada ou reinício claramente definidos.
+- Consolidar as classes de 0 a 6 acertos e as métricas de custo e cobertura.
+- Comparar configurações preservadas sem recalcular ou sobrescrever seus
+  resultados originais.
+- Oferecer detalhamento por concurso para auditoria da seleção.
+
+**Concluída em 03/11/2026.** O backtest processa cada concurso usando somente
+o corte anterior, congela a seleção e depois confere o resultado real. Cada
+alvo e suas 60 avaliações são confirmados atomicamente. Cancelamentos preservam
+o progresso e a retomada processa somente os alvos ausentes. O resumo apresenta
+classes exclusivas de 0 a 6, cobertura, precisão, quantidade de dezenas e custo
+combinatório. A comparação exige mesma origem, período, versão e cobertura
+avaliável, sem eleger automaticamente uma configuração vencedora. Evidência em
+`MSen/tests/TESTE_ITEM_23_6.md`.
+
+#### 23.7 — Previsão dos concursos futuros
+
+- Tomar o último concurso armazenado como corte conhecido.
+- Calcular por padrão o concurso-alvo seguinte, permitindo ampliar o horizonte
+  por configuração.
+- Preservar a previsão emitida, sua configuração e a assinatura da origem.
+- Quando um novo resultado for importado, conferir previsões pendentes cujo
+  alvo passou a existir e gerar nova previsão para o horizonte seguinte.
+- Não usar resultados recém-importados para reescrever a previsão que já havia
+  sido emitida para eles.
+
+**Concluída em 03/11/2026.** A previsão futura toma o último concurso real como
+corte e usa esse mesmo corte em todo o horizonte configurado. Repetir a emissão
+sem mudar a origem é idempotente. Quando novos resultados entram, previsões
+pendentes são somente conferidas; dezenas, faixas, ranking e configuração
+originais permanecem congelados. Em seguida é criada outra execução com nova
+assinatura e novo corte, permitindo preservar previsões sobrepostas do mesmo
+concurso-alvo produzidas em momentos diferentes. Evidência em
+`MSen/tests/TESTE_ITEM_23_7.md`.
+
+**Concluída em 03/11/2026.** A previsão futura toma o último concurso real como
+corte e usa esse mesmo corte em todo o horizonte configurado. Repetir a emissão
+sem mudar a origem é idempotente. Quando novos resultados entram, previsões
+pendentes são somente conferidas; dezenas, faixas, ranking e configuração
+originais permanecem congelados. Em seguida é criada outra execução com nova
+assinatura e novo corte, permitindo preservar previsões sobrepostas do mesmo
+concurso-alvo produzidas em momentos diferentes. Evidência em
+`MSen/tests/TESTE_ITEM_23_7.md`.
+
+#### 23.8 — Serviço de combinações de seis dezenas
+
+- Calcular `C(N,6)` antes de materializar jogos e alertar o usuário sobre o
+  volume resultante.
+- Gerar combinações sem repetição e em ordem determinística.
+- Manter vínculo com configuração, pesquisa e concurso-alvo quando houver
+  autorização para salvar os jogos.
+- Exigir confirmação antes de persistir ou exportar volumes elevados.
+- Adiar a estratégia de lotes limitados até que sua regra de cobertura seja
+  definida e testada separadamente.
+
+**Conclusão da subetapa 23.8:** concluída. O serviço calcula `C(N,6)` antes de
+qualquer materialização, produz combinações únicas em ordem lexicográfica por
+iterador e exige autorização para gravar ou exportar. A partir de 10.000 jogos,
+também exige confirmação específica de volume elevado. A migração 022 cria
+lotes vinculados ao alvo da pesquisa e jogos filhos, preservando por esse
+vínculo a configuração, a execução e o concurso-alvo. O ensaio integrado em
+banco efêmero confirmou que uma tentativa não autorizada não grava registros e
+que sete dezenas geram exatamente sete jogos distintos. A migração 022 foi
+aplicada ao banco local `games`, sem gerar jogos. Evidência em
+`MSen/tests/TESTE_ITEM_23_8.md`.
+
+#### 23.9 — API da Seleção de dezenas
+
+- Consultar, criar e preservar configurações de pesquisa.
+- Calcular prévia de uma pesquisa antes de executá-la.
+- Criar, acompanhar e cancelar backtests assíncronos.
+- Consultar previsão futura, consolidado, comparação e detalhe por concurso.
+- Consultar contagem e, quando autorizado, gerar jogos de seis dezenas.
+- Validar parâmetros e retornar erros sem expor detalhes internos do banco.
+
+#### 23.10 — Página e item de menu “Seleção de dezenas”
+
+- Acrescentar item próprio à navegação comum.
+- Criar blocos para configuração, previsão futura, execução do backtest,
+  comparação de pesquisas e formação de jogos.
+- Exibir por concurso futuro as dezenas selecionadas, quantidade e parâmetros
+  usados.
+- Exibir relatório exclusivo de 0 a 6 acertos, período, número de concursos e
+  tamanho dos conjuntos candidatos.
+- Permitir abrir o detalhe de cada concurso avaliado.
+- Mostrar claramente quando uma previsão ainda aguarda resultado.
+
+#### 23.11 — Progresso, confirmação e proteção operacional
+
+- Usar prévia e confirmação antes de iniciar cálculos ou gravações extensas.
+- Exibir progresso real, etapa atual, quantidade processada, duração e estado.
+- Impedir execuções duplicadas da mesma configuração e origem.
+- Não bloquear a navegação nem iniciar servidores ou portas adicionais.
+
+#### 23.12 — Testes matemáticos, banco, API e navegador
+
+- Testar ausência de vazamento do concurso-alvo.
+- Testar `k`, `j`, limites, arredondamento, desvio zero e ausência de base.
+- Testar classes exclusivas de 0 a 6 acertos.
+- Testar preservação e comparação de configurações.
+- Testar `C(N,6)`, geração sem duplicidade e limites de volume.
+- Testar atualização das previsões pendentes após novos resultados.
+- Executar regressões completas sem alterar o módulo de frequência já
+  homologado.
+
+#### 23.13 — Ajuda e documentação definitiva
+
+- Criar ajuda da página bloco a bloco, incluindo interpretação das métricas e
+  cuidados com aleatoriedade e custo combinatório.
+- Documentar tabelas, APIs, fórmulas, configurações e fluxo operacional.
+- Explicar que melhor resultado histórico não garante desempenho futuro.
+- Liberar para avaliação do usuário antes de commit e push.

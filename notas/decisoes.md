@@ -635,3 +635,151 @@
 - As duas páginas possuem orientação contextual. A ajuda ampliada ressalta que
   recorte não significa ausência de dados, que os gráficos têm unidades
   diferentes e que a análise histórica não garante ocorrências futuras.
+
+## 2026-10-31 — Escala integral e degraus dos gráficos de frequência
+
+- A ampliação 10× da 22.16.3 foi substituída porque podia ocultar séries.
+- X e Y são ajustados independentemente para manter todos os valores.
+- O eixo X usa centenas e extremos; mudanças de mínimo/máximo são marcadas no
+  topo sem substituir as marcações regulares.
+- Cores e traçados distinguem as séries sem depender apenas da legenda.
+- A altura responsiva prioriza a visualização integral de cada gráfico.
+
+## 2026-10-31 — Pontos dos intervalos individuais
+
+- As curvas mínima, média e máxima permanecem estatísticas acumuladas.
+- O gráfico de intervalos também mostra cada valor individual observado como
+  ponto em `concurso do retorno × intervalo desde o evento anterior`.
+- O intervalo conserva a ocorrência anterior mesmo quando ela fica antes do
+  início do período visualizado.
+- Os pontos são derivados na consulta para `SIMPLES`, `2VS` e `3VS`; não criam
+  tabela, não mudam fórmulas e não alteram o histórico persistido.
+
+## 2026-10-31 — Gráficos históricos somente na página auxiliar
+
+- O bloco `Evolução histórica por dezena` da página principal deixa de repetir
+  os dois gráficos para recuperar espaço vertical.
+- Filtros, `Consultar série`, assertividade e relatório de falhas permanecem.
+- `Abrir gráficos` continua levando os quatro filtros para a página auxiliar,
+  que passa a ser o único local dos gráficos históricos.
+
+## 2026-10-31 — Cobertura integral da faixa no backtest
+
+- Uma previsão só pode ser avaliada quando seu limite superior não ultrapassa o
+  último concurso armazenado.
+- Ao encontrar a primeira faixa incompleta, o backtest encerra aquela dezena;
+  uma avaliação em lote prossegue com a dezena seguinte e termina após a 60.
+- Faixas ainda não totalmente observáveis não contam como acerto nem erro.
+- O resultado identifica o intervalo efetivamente avaliado e a primeira faixa
+  que aguarda histórico adicional.
+
+## 2026-10-31 — Apresentação simplificada do backtest
+
+- O botão passa a se chamar `Consultar dezena`.
+- A página mostra a fotografia numérica da dezena no último concurso consultado.
+- O quadro **Backtest** exibe somente intervalo avaliado, concursos avaliados,
+  acertos, erros e percentual de acerto.
+- Censura e distâncias médias deixam de ser exibidas para não confundirem taxa
+  de cobertura da faixa com afastamento em relação ao centro.
+- O relatório de erros conserva somente os dados necessários para localizar a
+  faixa que não conteve o retorno.
+
+## 2026-10-31 — Faixa de um desvio-padrão no gráfico de intervalos
+
+- O gráfico de intervalos recebe as linhas `média − desvio-padrão` e
+  `média + desvio-padrão`.
+- Os valores continuam na unidade de concursos; não há conversão percentual.
+- As linhas são derivadas no navegador dos campos históricos já existentes e
+  não alteram API, banco ou cálculo persistido.
+- As duas séries participam do domínio vertical para permanecerem visíveis.
+
+## 2026-11-02 — Intervalos históricos representados por patamares
+
+- A decisão anterior de exibir pontos individuais, mínimo e máximo foi
+  substituída por uma função em degraus dos intervalos reais.
+- Cada patamar liga duas ocorrências consecutivas e tem como valor a diferença
+  entre os concursos; mudanças de valor usam ligação vertical tracejada.
+- O período visual é um recorte do histórico: no concurso 500 aparece o
+  intervalo real que atravessa esse limite, sem criar ocorrência artificial.
+- Média e desvio-padrão permanecem cumulativos desde o primeiro intervalo real.
+- A legenda do gráfico de intervalos possui somente média, média menos desvio,
+  média mais desvio e intervalos.
+- Trechos projetados com menos de 8 pixels conservam suas coordenadas e recebem
+  marcador auxiliar consultável por mouse, teclado ou clique.
+- O gráfico separado de previsão e backtest permanece inalterado.
+
+## 2026-11-03 — Contrato matemático da Seleção de dezenas
+
+- A seleção para o concurso-alvo `C` usa somente resultados até `C - 1`; o
+  resultado de `C` é lido apenas depois, para conferência.
+- A faixa usa centro `última ocorrência + média + j × desvio` e meia largura
+  `k × desvio`, com limites inteiros externos e inclusivos.
+- `k` satisfaz `0 < k <= 1`, com padrão 1; `j` satisfaz `-k <= j <= +k`, com
+  padrão 0.
+- A decisão inicial de combinar `SIMPLES`, `2VS` e `3VS` na seleção de dezenas
+  foi substituída na subetapa 23.2: a seleção usa `SIMPLES`, enquanto 2VS e 3VS
+  pertencem ao screener posterior das combinações.
+- O horizonte futuro é configurável, inteiro e no mínimo 1, com padrão 1.
+- Todos os alvos futuros usam o último concurso real como corte, sem inventar
+  resultados intermediários.
+- A primeira avaliação do backtest, alvo 500, deve ser calculada com resultados
+  até 499; a fotografia persistida do próprio concurso 500 não pode ser usada.
+
+## 2026-11-03 — Contrato do backtest da Seleção de dezenas
+
+- O backtest abrange, de forma inclusiva, os alvos do concurso 500 ao último
+  resultado disponível na assinatura da execução.
+- Cada alvo pertence a exatamente uma classe entre 0 e 6 acertos; seis acertos
+  não são repetidos nas classes inferiores e a classe zero é obrigatória.
+- Seleção vazia com base matemática válida é classe zero; ausência completa de
+  base é `NAO_AVALIAVEL` e fica fora das taxas.
+- A seleção é congelada antes de consultar o resultado-alvo; o serviço de
+  seleção não recebe esse resultado.
+- A comparação informa distribuição das classes, cobertura das sorteadas,
+  precisão das selecionadas, quantidade de candidatas e custo `C(N,6)`.
+- Configurações só são comparáveis diretamente sobre a mesma assinatura,
+  período e versão de cálculo.
+- Não haverá inicialmente um índice único de melhor configuração, porque maior
+  cobertura pode decorrer de mais dezenas e maior custo combinatório.
+
+## 2026-11-03 — Dois screeners e quantidade de dezenas
+
+- O screener de dezenas usa somente ocorrências `SIMPLES`; o acerto é a
+  presença da dezena no resultado, sem posição.
+- `2VS` e `3VS` pertencem ao screener posterior das combinações e não
+  acrescentam nem retiram dezenas do primeiro conjunto.
+- A quantidade passa a integrar a configuração nos modos `MAX` ou `FIXA`.
+- A seleção automática ordena pela distância normalizada ao centro ajustado.
+- A decisão inicial de complementar com dezenas fora da faixa foi substituída
+  na subetapa 23.2-A: no modo `FIXA`, o sistema retorna no máximo `N` aprovadas
+  e informa no log quando o critério aprovou menos que o solicitado.
+- Todas as combinações de seis totalizam `C(N,6)`; lotes limitados exigirão
+  contrato e backtest próprios.
+- O efeito dos filtros do screener de combinações deve ser medido separadamente,
+  pois ele pode rejeitar jogos que conteriam o melhor acerto possível.
+
+## 2026-11-03 — Quantidade configurável sem complementação
+
+- `MAX` retorna todas as dezenas aprovadas pelo screener de dezenas.
+- `FIXA` retorna `min(M,N)`, sendo `M` a quantidade aprovada e `N` a quantidade
+  configurada, escolhendo pelo ranking apenas quando `M > N`.
+- Nenhuma dezena fora da faixa é incluída para completar a configuração.
+- Quando `M < N`, o sistema registra o máximo possível atingido pelo critério.
+- O relatório conserva quantidade configurada, aprovada e retornada em cada
+  concurso, pois o máximo pode variar ao longo do backtest.
+
+## 2026-11-03 — Modelo relacional das pesquisas de seleção
+
+- O modelo terá quatro níveis: configuração, execução, concurso-alvo e as 60
+  avaliações de dezenas do alvo.
+- Configurações são versionadas, assinadas e tornam-se imutáveis quando usadas;
+  várias podem permanecer disponíveis para comparação.
+- A execução preserva JSON e assinaturas da configuração e dos resultados.
+- O alvo referencia `resultados.id_resultado` sem copiar `res_01` a `res_06`.
+- As 60 avaliações preservam inclusive dezenas fora da faixa para permitir
+  auditoria do ranking e da quantidade máxima aprovada.
+- Cascatas existem somente de execução para alvos e de alvo para avaliações.
+  Configuração e resultado usam `RESTRICT`; a pesquisa nunca apaga dados do
+  sistema ou o histórico de frequência.
+- As combinações de seis não serão persistidas antes do contrato do segundo
+  screener.

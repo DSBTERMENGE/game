@@ -124,7 +124,7 @@
         <header class="frequencias-historico-topo">
           <div>
             <h2 id="titulo-historico-frequencia">Evolução histórica por dezena</h2>
-            <p id="mensagem-historico-frequencia" role="status" aria-live="polite">Selecione os filtros e consulte uma série.</p>
+            <p id="mensagem-historico-frequencia" role="status" aria-live="polite">Selecione os filtros e consulte uma dezena.</p>
           </div>
           <form id="form-historico-frequencia" class="frequencias-historico-filtros">
             <label>Dezena
@@ -143,32 +143,34 @@
             <label>Concurso final
               <input id="historico-concurso-final" type="number" min="1" step="1" required>
             </label>
-            <button id="botao-consultar-historico" type="submit">Consultar série</button>
+            <button id="botao-consultar-historico" type="submit">Consultar dezena</button>
             <button id="botao-abrir-graficos-historico" type="button">Abrir gráficos</button>
           </form>
         </header>
-        <div class="frequencias-historico-legenda" aria-label="Legenda do gráfico histórico">
-          <span><i class="legenda-minimo"></i>Mínimo</span>
-          <span><i class="legenda-media"></i>Média / previsão central</span>
-          <span><i class="legenda-maximo"></i>Máximo</span>
-          <span><i class="legenda-faixa"></i>Faixa estatística</span>
-          <span><i class="legenda-real"></i>Ocorrência real</span>
-        </div>
-        <section class="assertividade-resumo" aria-label="Resumo da assertividade">
-          <output>Avaliáveis: <strong id="assertividade-avaliaveis">—</strong></output>
-          <output>Acertos: <strong id="assertividade-acertos">—</strong></output>
-          <output>Erros: <strong id="assertividade-erros">—</strong></output>
-          <output>Censurados: <strong id="assertividade-censurados">—</strong></output>
-          <output>Acerto: <strong id="assertividade-percentual">—</strong></output>
-          <output>Erro absoluto médio: <strong id="assertividade-erro-absoluto">—</strong></output>
-          <output>Erro percentual médio: <strong id="assertividade-erro-percentual">—</strong></output>
+        <section class="dezena-resumo-numerico" aria-labelledby="titulo-resumo-dezena">
+          <h3 id="titulo-resumo-dezena">Resultado numérico da dezena</h3>
+          <output>Concurso: <strong id="dezena-resumo-concurso">—</strong></output>
+          <output>Ocorrências: <strong id="dezena-resumo-ocorrencias">—</strong></output>
+          <output>Intervalos: <strong id="dezena-resumo-intervalos">—</strong></output>
+          <output>Mínimo: <strong id="dezena-resumo-minimo">—</strong></output>
+          <output>Máximo: <strong id="dezena-resumo-maximo">—</strong></output>
+          <output>Média: <strong id="dezena-resumo-media">—</strong></output>
+          <output>Mediana: <strong id="dezena-resumo-mediana">—</strong></output>
+          <output>Desvio-padrão: <strong id="dezena-resumo-desvio">—</strong></output>
         </section>
-        <div id="grade-historico-frequencia" class="grade-historico-frequencia" tabindex="0"></div>
+        <section class="assertividade-resumo" aria-labelledby="titulo-backtest">
+          <h3 id="titulo-backtest"><strong>Backtest</strong></h3>
+          <output>Intervalo avaliado: <strong id="backtest-intervalo">—</strong></output>
+          <output>Concursos avaliados: <strong id="assertividade-avaliaveis">—</strong></output>
+          <output>Acertos — dezena dentro da faixa: <strong id="assertividade-acertos">—</strong></output>
+          <output>Erros — dezena antes ou depois da faixa: <strong id="assertividade-erros">—</strong></output>
+          <output>Percentual de acerto: <strong id="assertividade-percentual">—</strong></output>
+        </section>
         <details class="assertividade-relatorio">
           <summary>Relatório das previsões que não acertaram a faixa</summary>
           <div tabindex="0">
             <table>
-              <thead><tr><th>Corte</th><th>Evento anterior</th><th>Faixa prevista</th><th>Ocorrência real</th><th>Situação</th><th>Erro absoluto</th><th>Erro %</th></tr></thead>
+              <thead><tr><th>Corte</th><th>Evento anterior</th><th>Faixa prevista</th><th>Ocorrência real</th><th>Situação</th></tr></thead>
               <tbody id="corpo-erros-assertividade"></tbody>
             </table>
           </div>
@@ -285,20 +287,19 @@
 
           <section>
             <h3>6. Evolução histórica por dezena</h3>
-            <p>Escolha uma dezena, o evento e o período e pressione <strong>Consultar série</strong>. O primeiro gráfico mostra a evolução dos intervalos mínimo, médio e máximo. O segundo apresenta a previsão central, a faixa estatística e os pontos das ocorrências reais.</p>
-            <p>Use <strong>Abrir gráficos</strong> para analisar os dois gráficos em uma página maior. Dezena, evento e período são preservados na ida e na volta. Na página auxiliar, a escala automática mostra todos os valores e a ampliação 10× aproxima a região central, avisando quando houver recorte.</p>
+            <p>Escolha uma dezena, o evento e o período e pressione <strong>Consultar dezena</strong> para atualizar o resultado numérico, o <strong>Backtest</strong> e o relatório de falhas. Os gráficos não são repetidos neste bloco.</p>
+            <p>Use <strong>Abrir gráficos</strong> para analisar a evolução dos intervalos e a faixa prevista na página gráfica. Dezena, evento e período são preservados na ida e na volta. Na página auxiliar, os eixos X e Y são ajustados separadamente para mostrar todos os valores; o eixo horizontal marca centenas e mudanças de degrau.</p>
             <p>Cada fotografia utiliza somente os concursos conhecidos até aquele corte. As ocorrências posteriores são acrescentadas apenas na avaliação, evitando que informação futura contamine o cálculo.</p>
           </section>
 
           <section>
-            <h3>7. Assertividade e relatório de falhas</h3>
+            <h3>7. Backtest e relatório de falhas</h3>
             <dl>
-              <dt>Avaliáveis</dt><dd>Previsões para as quais já existe uma ocorrência posterior conhecida.</dd>
-              <dt>Acertos</dt><dd>Ocorrências reais que ficaram dentro dos limites previstos, inclusive sobre os limites.</dd>
-              <dt>Erros</dt><dd>Ocorrências abaixo ou acima da faixa prevista.</dd>
-              <dt>Censurados</dt><dd>Casos no final da série que ainda não possuem resultado futuro suficiente; não são contados como erro.</dd>
-              <dt>Erro absoluto médio</dt><dd>Distância média, em concursos, entre a previsão central e a ocorrência real.</dd>
-              <dt>Erro percentual médio</dt><dd>Erro relativo ao intervalo real entre eventos, usado para comparar intervalos de tamanhos diferentes.</dd>
+              <dt>Intervalo avaliado</dt><dd>Primeiro e último concurso cujas faixas completas já estão cobertas pelo histórico.</dd>
+              <dt>Concursos avaliados</dt><dd>Quantidade de previsões classificadas como acerto ou erro.</dd>
+              <dt>Acertos</dt><dd>A dezena ocorreu dentro da faixa prevista, inclusive sobre os limites.</dd>
+              <dt>Erros</dt><dd>A dezena ocorreu antes ou depois da faixa prevista.</dd>
+              <dt>Percentual de acerto</dt><dd>Acertos divididos pelos concursos avaliados.</dd>
             </dl>
             <p>Abra o relatório ao final do bloco para localizar cada previsão que não acertou a faixa.</p>
           </section>
@@ -321,7 +322,7 @@
               <li>Não altere a versão do cálculo apenas para nomear uma experiência.</li>
               <li>Não confunda desvio-padrão em concursos com percentual.</li>
               <li>Autorize reconstrução somente depois de conferir as diferenças apresentadas na prévia.</li>
-              <li>Não interprete casos censurados como falhas do método.</li>
+              <li>Faixas que ainda ultrapassam o último concurso armazenado não entram no backtest.</li>
               <li>Compare experiências usando o mesmo período e o mesmo tipo de evento.</li>
             </ul>
           </section>
