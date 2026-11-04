@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Seleção de dezenas — Game Analysis</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/navegacao.css">
+    <link rel="stylesheet" href="css/modal-andamento.css">
+    <link rel="stylesheet" href="css/selecao-dezenas.css">
+  </head>
+  <body>
+    <header class="barra-navegacao">
+      <a class="marca marca--compacta" href="/" aria-label="Game Analysis">GA</a>
+      <button id="botao-voltar" class="navegacao-voltar" type="button" data-destino-voltar="/frequencias.html">← Voltar</button>
+      <a class="navegacao-link" href="/">Painel</a>
+      <details class="navegacao-menu">
+        <summary>Cadastros</summary>
+        <nav aria-label="Cadastros">
+          <a href="/cadastros.html">Visão geral</a>
+          <a href="/grupos-padroes.html">Grupos de padrões</a>
+          <a href="/padroes.html">Padrões</a>
+        </nav>
+      </details>
+      <a class="navegacao-link" href="/distribuicoes.html">Distribuições</a>
+      <a class="navegacao-link" href="/screener.html">Screener</a>
+      <a class="navegacao-link" href="/auditoria.html">Validação e auditoria</a>
+      <a class="navegacao-link" href="/frequencias.html">Frequência das dezenas</a>
+      <a class="navegacao-link" href="/selecao-dezenas.html" aria-current="page">Seleção de dezenas</a>
+      <strong class="navegacao-pagina">Seleção de dezenas</strong>
+    </header>
+
+    <main class="pagina-conteudo selecao-pagina">
+      <section class="selecao-topo">
+        <div>
+          <h1>Seleção de dezenas</h1>
+          <p id="mensagem-selecao" role="status" aria-live="polite">Carregando configurações…</p>
+        </div>
+        <button id="botao-ajuda-selecao" type="button">Ajuda</button>
+      </section>
+
+      <section class="selecao-bloco selecao-configuracao" aria-labelledby="titulo-configuracao-selecao">
+        <header><h2 id="titulo-configuracao-selecao">Configuração da pesquisa</h2><span id="assinatura-selecao">Assinatura: —</span></header>
+        <form id="form-configuracao-selecao">
+          <label>Configuração gravada<select id="configuracao-gravada-selecao"><option value="">Nova configuração</option></select></label>
+          <label>Nome<input id="selecao-nome" type="text" required value="Seleção inicial"></label>
+          <label>Fator k<input id="selecao-fator-k" type="number" min="0.000001" max="1" step="0.000001" required value="1.000000"></label>
+          <label>Fator j<input id="selecao-fator-j" type="number" min="-1" max="1" step="0.000001" required value="0.000000"></label>
+          <label>Quantidade<select id="selecao-modo-quantidade"><option value="MAX">Máxima aprovada</option><option value="FIXA">Quantidade fixa</option></select></label>
+          <label>Número de dezenas<input id="selecao-quantidade" type="number" min="6" max="60" step="1" disabled></label>
+          <label>Concursos futuros<input id="selecao-horizonte" type="number" min="1" step="1" required value="1"></label>
+          <label>Versão do cálculo<input id="selecao-versao" type="number" min="1" step="1" required value="1"></label>
+          <div class="selecao-acoes"><button id="botao-previa-selecao" type="button">Calcular prévia</button><button id="botao-salvar-configuracao" type="button">Salvar configuração</button></div>
+        </form>
+        <div id="resultado-previa-selecao" class="selecao-resultado" hidden></div>
+      </section>
+
+      <div class="selecao-duas-colunas">
+        <section class="selecao-bloco" aria-labelledby="titulo-previsao-futura">
+          <header><h2 id="titulo-previsao-futura">Previsão futura</h2><button id="botao-atualizar-previsao" type="button">Calcular previsão</button></header>
+          <p>Usa somente resultados conhecidos e mantém cada previsão congelada para conferência posterior.</p>
+          <div id="resumo-previsao" class="selecao-resultado">Nenhuma previsão consultada.</div>
+          <div class="selecao-tabela"><table><thead><tr><th>Concurso</th><th>Corte</th><th>Situação</th><th>Dezenas selecionadas</th><th>Quantidade</th><th>Parâmetros</th><th>Ação</th></tr></thead><tbody id="corpo-previsoes"></tbody></table></div>
+        </section>
+
+        <section class="selecao-bloco" aria-labelledby="titulo-backtest-selecao">
+          <header><h2 id="titulo-backtest-selecao">Backtest</h2></header>
+          <form id="form-backtest-selecao" class="selecao-form-linha">
+            <label>Concurso inicial<input id="backtest-inicial" type="number" min="500" value="500" required></label>
+            <label>Concurso final<input id="backtest-final" type="number" min="500"></label>
+            <button type="submit">Executar backtest</button>
+          </form>
+          <div class="selecao-progresso"><output id="estado-backtest">Aguardando execução.</output></div>
+          <div id="resumo-backtest" class="selecao-resultado">Nenhum backtest executado.</div>
+          <div id="classes-backtest" class="selecao-classes" aria-label="Acertos de zero a seis"></div>
+        </section>
+      </div>
+
+      <section class="selecao-bloco" aria-labelledby="titulo-comparacao-selecao">
+        <header><h2 id="titulo-comparacao-selecao">Comparação de pesquisas</h2></header>
+        <form id="form-comparacao-selecao" class="selecao-form-linha">
+          <label>IDs das execuções, separados por vírgula<input id="comparacao-ids" type="text" placeholder="12, 15" required></label>
+          <button type="submit">Comparar</button>
+        </form>
+        <div id="resultado-comparacao" class="selecao-resultado">Informe ao menos duas execuções.</div>
+      </section>
+
+      <section class="selecao-bloco selecao-detalhes" aria-labelledby="titulo-detalhes-selecao">
+        <header><h2 id="titulo-detalhes-selecao">Detalhe por concurso e formação de jogos</h2></header>
+        <div class="selecao-tabela"><table><thead><tr><th>Concurso</th><th>Corte</th><th>Situação</th><th>Selecionadas</th><th>Acertos</th><th>C( N, 6 )</th><th>Ação</th></tr></thead><tbody id="corpo-detalhes-backtest"></tbody></table></div>
+        <div id="painel-jogos" class="selecao-jogos" hidden>
+          <p id="resumo-jogos">—</p>
+          <button id="botao-gerar-jogos" type="button">Gerar e salvar jogos</button>
+        </div>
+      </section>
+    </main>
+
+    <dialog id="dialogo-ajuda-selecao" class="selecao-ajuda" aria-labelledby="titulo-ajuda-selecao">
+      <form method="dialog">
+        <header><h2 id="titulo-ajuda-selecao">Como usar Seleção de dezenas</h2><button type="submit" aria-label="Fechar ajuda">×</button></header>
+        <div>
+          <section><h3>Finalidade e sequência</h3><p>Esta página é o primeiro Screener: escolhe dezenas candidatas para um concurso-alvo. Depois, as combinações de seis formadas com essas dezenas ainda deverão passar pelo Screener de combinações. As modalidades 2VS e 3VS pertencem a essa segunda fase e não alteram a seleção de dezenas.</p></section>
+          <section><h3>1. Configuração da pesquisa</h3><p>Para cada dezena, o centro é <strong>última ocorrência + média dos intervalos + j × desvio-padrão</strong>. A meia largura da faixa é <strong>k × desvio-padrão</strong>. O limite inferior é arredondado para baixo, o superior para cima e ambos são inclusivos. O fator <strong>k</strong> satisfaz 0 &lt; k ≤ 1; <strong>j</strong> permanece entre −k e +k.</p><p><strong>MAX</strong> retorna todas as aprovadas. <strong>FIXA</strong> retorna até a quantidade pedida, seguindo o ranking, mas nunca completa com dezenas reprovadas. Nome, parâmetros, horizonte e versão formam uma configuração assinada e preservável.</p></section>
+          <section><h3>2. Prévia e previsão futura</h3><p><strong>Calcular prévia</strong> informa a base, o período do backtest e os concursos futuros sem processar ou gravar. <strong>Calcular previsão</strong> usa somente concursos já conhecidos. Todos os alvos do horizonte usam o último resultado disponível como corte.</p><p>“Aguardando resultado” significa que a previsão está congelada e ainda não pode ser conferida. Quando o sorteio for importado, a previsão original passa a avaliada sem alteração das dezenas, faixas ou ranking, e uma nova origem é criada para os próximos concursos.</p></section>
+          <section><h3>3. Backtest</h3><p>Para avaliar o concurso C, o sistema calcula com os dados disponíveis até C − 1 e somente depois lê o resultado de C. A prévia e sua confirmação são obrigatórias. O formulário de andamento informa etapa, quantidade, percentual e duração e permite cancelamento seguro.</p><p>As classes de <strong>0 a 6 acertos</strong> são exclusivas: cada concurso pertence somente à maior quantidade efetivamente encontrada. O resumo também informa período avaliado, concursos sem base, tamanho dos conjuntos e médias. “Não avaliável” não é erro nem acerto: faltou base matemática suficiente.</p></section>
+          <section><h3>4. Comparação de pesquisas</h3><p>Informe ao menos dois IDs persistidos. Compare taxa de acertos junto com quantidade de candidatas e custo combinatório. A página apresenta ressalvas se origem dos resultados, período, versão ou cobertura forem diferentes; nesses casos, uma conclusão direta pode ser enganosa.</p></section>
+          <section><h3>5. Detalhe e formação de jogos</h3><p>O detalhe mostra o corte, as dezenas congeladas, acertos e quantidade bruta de combinações de cada concurso. “Formar jogos” calcula primeiro <strong>C(N,6)</strong>. Por exemplo, 7 dezenas geram 7 jogos; 15 geram 5.005; 60 geram 50.063.860.</p><p>A gravação exige confirmação explícita e volumes elevados exigem confirmação adicional. Os jogos são únicos, ordenados e vinculados à configuração, pesquisa e concurso-alvo.</p></section>
+          <section><h3>Fluxo recomendado</h3><p>1. Escolha ou preencha a configuração. 2. Calcule a prévia. 3. Execute o backtest. 4. Compare configurações equivalentes. 5. Calcule a previsão futura. 6. Inspecione o detalhe e o custo antes de formar jogos.</p></section>
+          <section><h3>Cuidados de interpretação</h3><p>Maior cobertura pode resultar apenas de mais dezenas selecionadas e, portanto, de custo muito maior. Um bom resultado histórico não garante desempenho futuro: sorteios são eventos aleatórios, e este módulo oferece estudo estatístico e rastreabilidade, não promessa de acerto.</p></section>
+        </div>
+        <footer><button type="submit">Encerrar</button></footer>
+      </form>
+    </dialog>
+
+    <dialog id="dialogo-previa-backtest" class="selecao-previa" aria-labelledby="titulo-previa-backtest">
+      <form method="dialog">
+        <header><div><p>Conferência antes do processamento</p><h2 id="titulo-previa-backtest">Prévia do backtest</h2></div><button type="submit" value="cancelar" aria-label="Fechar prévia">×</button></header>
+        <div class="selecao-previa__conteudo">
+          <dl>
+            <div><dt>Resultados disponíveis</dt><dd id="previa-backtest-resultados">—</dd></div>
+            <div><dt>Período do backtest</dt><dd id="previa-backtest-periodo">—</dd></div>
+            <div><dt>Concursos a processar</dt><dd id="previa-backtest-quantidade">—</dd></div>
+            <div><dt>Configuração</dt><dd id="previa-backtest-configuracao">—</dd></div>
+            <div><dt>Operação</dt><dd>Calcular, avaliar e preservar os resultados da pesquisa.</dd></div>
+          </dl>
+          <p>Nenhum cálculo será iniciado até sua confirmação.</p>
+        </div>
+        <footer><button type="submit" value="cancelar">Cancelar</button><button id="botao-confirmar-backtest" type="button">Confirmar e executar</button></footer>
+      </form>
+    </dialog>
+
+    <script type="module" src="js/selecao-dezenas.js"></script>
+    <script type="module" src="js/navegacao.js"></script>
+  </body>
+</html>

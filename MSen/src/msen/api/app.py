@@ -51,6 +51,19 @@ from .frequencias import (
     frequencias_api,
     preparar_no_banco,
 )
+from .selecao_dezenas import (
+    GerenciadorBacktestsSelecao,
+    atualizar_previsoes_no_banco,
+    comparar_no_banco,
+    detalhar_no_banco,
+    listar_configuracoes_no_banco,
+    persistir_jogos_no_banco,
+    preparar_pesquisa_no_banco,
+    previa_jogos_no_banco,
+    resumir_no_banco,
+    salvar_configuracao_no_banco,
+    selecao_dezenas_api,
+)
 
 
 def criar_app(configuracao: Mapping[str, Any] | None = None) -> Flask:
@@ -91,6 +104,16 @@ def criar_app(configuracao: Mapping[str, Any] | None = None) -> Flask:
         CONSULTAR_SERIE_FREQUENCIA=consultar_serie_no_banco,
         PREPARAR_FREQUENCIA=preparar_no_banco,
         GERENCIADOR_FREQUENCIA=GerenciadorExecucoesFrequencia(),
+        LISTAR_CONFIGURACOES_SELECAO=listar_configuracoes_no_banco,
+        SALVAR_CONFIGURACAO_SELECAO=salvar_configuracao_no_banco,
+        PREPARAR_PESQUISA_SELECAO=preparar_pesquisa_no_banco,
+        GERENCIADOR_BACKTEST_SELECAO=GerenciadorBacktestsSelecao(),
+        RESUMIR_BACKTEST_SELECAO=resumir_no_banco,
+        DETALHAR_BACKTEST_SELECAO=detalhar_no_banco,
+        COMPARAR_BACKTESTS_SELECAO=comparar_no_banco,
+        ATUALIZAR_PREVISOES_SELECAO=atualizar_previsoes_no_banco,
+        PREVIA_JOGOS_SELECAO=previa_jogos_no_banco,
+        PERSISTIR_JOGOS_SELECAO=persistir_jogos_no_banco,
     )
     if configuracao is not None:
         app.config.update(configuracao)
@@ -119,5 +142,6 @@ def criar_app(configuracao: Mapping[str, Any] | None = None) -> Flask:
     app.register_blueprint(execucoes_validacao_api)
     app.register_blueprint(validacao_api)
     app.register_blueprint(frequencias_api)
+    app.register_blueprint(selecao_dezenas_api)
 
     return app

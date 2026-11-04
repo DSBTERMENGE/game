@@ -2296,3 +2296,25 @@ Próxima ação exata:
 - O database de benchmark foi removido e o `games` não foi alterado.
 - Nenhum commit ou push foi executado. A próxima ação depende de orientação do
   usuário.
+
+## Conclusão — 2026-11-03 — Etapa 23
+
+- Foi concluído o módulo `Seleção de dezenas`, primeiro Screener do fluxo, que
+  usa ocorrências simples e preserva o segundo Screener para combinações.
+- O motor usa somente resultados até `C - 1`, aplica centro
+  `última + média + j × desvio` e faixa de meia largura `k × desvio`, com
+  limites externos inclusivos.
+- Configurações assinadas suportam `MAX` e `FIXA`; o modo fixo não completa com
+  dezenas reprovadas.
+- O backtest começa no concurso 500, preserva 60 avaliações por alvo e produz
+  classes exclusivas de zero a seis acertos, resumo, detalhe e comparação.
+- Previsões futuras permanecem congeladas até o resultado, são conferidas sem
+  reescrita e geram nova origem quando entram concursos.
+- A página `/selecao-dezenas.html` oferece configuração, prévia obrigatória,
+  progresso, cancelamento, previsão, comparação e jogos com confirmação.
+- Jogos usam `C(N,6)`, ordem determinística, autorização explícita e proteção
+  adicional para volume elevado.
+- Passaram 674 testes Python, 86 testes unitários do frontend, 36 testes no
+  Chrome e seis validadores integrados em PostgreSQL efêmero.
+- Documentação canônica e ajuda da página foram reconciliadas. Nenhum commit ou
+  push foi executado; a próxima ação é a avaliação do usuário.

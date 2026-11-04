@@ -85,6 +85,7 @@ class RelatorioExecucaoBacktest:
 
 @dataclass(frozen=True, slots=True)
 class DetalheAlvoBacktest:
+    id_alvo_selecao: int
     numero_concurso_alvo: int
     numero_concurso_corte: int
     situacao: str
@@ -364,7 +365,8 @@ def detalhar_backtest(
     with conexao.transaction():
         with conexao.cursor() as cursor:
             cursor.execute(
-                "SELECT a.numero_concurso_alvo,a.numero_concurso_corte,a.situacao,"
+                "SELECT a.id_alvo_selecao,a.numero_concurso_alvo,"
+                "a.numero_concurso_corte,a.situacao,"
                 "COALESCE(ARRAY_AGG(d.dezena ORDER BY d.dezena) "
                 "FILTER (WHERE d.retornada),ARRAY[]::SMALLINT[]),"
                 "a.quantidade_aprovada,a.quantidade_retornada,a.quantidade_acertos,"
@@ -378,12 +380,13 @@ def detalhar_backtest(
                 (id_execucao_selecao,),
             )
             return tuple(DetalheAlvoBacktest(
-                numero_concurso_alvo=linha[0], numero_concurso_corte=linha[1],
-                situacao=linha[2], dezenas_retornadas=tuple(linha[3]),
-                quantidade_aprovada=linha[4], quantidade_retornada=linha[5],
-                quantidade_acertos=linha[6], classe_acerto=linha[7],
-                quantidade_combinacoes_brutas=linha[8],
-                limite_nao_atingido=linha[9], motivo=linha[10],
+                id_alvo_selecao=linha[0],
+                numero_concurso_alvo=linha[1], numero_concurso_corte=linha[2],
+                situacao=linha[3], dezenas_retornadas=tuple(linha[4]),
+                quantidade_aprovada=linha[5], quantidade_retornada=linha[6],
+                quantidade_acertos=linha[7], classe_acerto=linha[8],
+                quantidade_combinacoes_brutas=linha[9],
+                limite_nao_atingido=linha[10], motivo=linha[11],
             ) for linha in cursor.fetchall())
 
 

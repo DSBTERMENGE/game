@@ -4774,6 +4774,19 @@ aplicada ao banco local `games`, sem gerar jogos. Evidência em
 - Consultar contagem e, quando autorizado, gerar jogos de seis dezenas.
 - Validar parâmetros e retornar erros sem expor detalhes internos do banco.
 
+**Conclusão da subetapa 23.9:** concluída. A API foi incorporada ao mesmo
+servidor Flask, sob `/api/selecao-dezenas`, sem criar nova porta. Ela permite
+listar e preservar configurações, calcular prévia sem efeitos, iniciar,
+acompanhar e cancelar backtests assíncronos, consultar resumo, detalhes e
+comparação, atualizar previsões futuras e consultar ou materializar jogos com
+as confirmações exigidas. O detalhe fornece `id_alvo_selecao`, mantendo a
+ligação necessária entre a futura página e os jogos. Parâmetros desconhecidos
+ou inválidos são recusados e falhas do PostgreSQL retornam mensagem pública sem
+expor detalhes internos. A integração em banco efêmero validou o fluxo HTTP
+completo e a regressão aprovou 674 testes. Evidência em
+`MSen/tests/TESTE_ITEM_23_9.md` e contrato em
+`docs/API_SELECAO_DEZENAS.md`.
+
 #### 23.10 — Página e item de menu “Seleção de dezenas”
 
 - Acrescentar item próprio à navegação comum.
@@ -4786,12 +4799,37 @@ aplicada ao banco local `games`, sem gerar jogos. Evidência em
 - Permitir abrir o detalhe de cada concurso avaliado.
 - Mostrar claramente quando uma previsão ainda aguarda resultado.
 
+**Conclusão da subetapa 23.10:** concluída. A página
+`/selecao-dezenas.html` foi incorporada à navegação comum e reúne configuração
+assinada, prévia, previsão futura, backtest, comparação de pesquisas, detalhe
+por concurso e formação autorizada de jogos. As previsões exibem concurso,
+corte, dezenas, quantidade, `k`, `j`, modo de quantidade e o estado
+“Aguardando resultado” quando o sorteio ainda não existe. O resumo do backtest
+informa o período efetivamente avaliado, quantidade de concursos, tamanhos
+mínimo e máximo dos conjuntos e classes exclusivas de zero a seis acertos. A
+página foi validada em navegador automatizado, sem servidor ou porta adicional;
+a regressão aprovou 2 testes de navegador, 86 testes de frontend e 674 testes
+Python. Evidência em `MSen/tests/TESTE_ITEM_23_10.md`.
+
 #### 23.11 — Progresso, confirmação e proteção operacional
 
 - Usar prévia e confirmação antes de iniciar cálculos ou gravações extensas.
 - Exibir progresso real, etapa atual, quantidade processada, duração e estado.
 - Impedir execuções duplicadas da mesma configuração e origem.
 - Não bloquear a navegação nem iniciar servidores ou portas adicionais.
+
+**Conclusão da subetapa 23.11:** concluída. O backtest agora sempre consulta a
+prévia e apresenta um formulário de confirmação com base disponível, período,
+quantidade de concursos e parâmetros antes de iniciar. Após a confirmação, a
+página reutiliza o componente comum de andamento para informar etapa,
+quantidade processada, total, percentual, duração e estado, além de permitir
+cancelamento seguro. O formulário não pode ser fechado durante o processamento
+e uma segunda execução é recusada tanto na interface quanto pelo gerenciador da
+API, que mantém somente uma execução ativa. A formação extensa de jogos mantém
+prévia combinatória, confirmação e confirmação adicional para volume elevado.
+Nenhum servidor foi iniciado e nenhuma porta foi criada. A validação aprovou 2
+testes em navegador, 86 testes de frontend e 674 testes Python. Evidência em
+`MSen/tests/TESTE_ITEM_23_11.md`.
 
 #### 23.12 — Testes matemáticos, banco, API e navegador
 
@@ -4804,6 +4842,18 @@ aplicada ao banco local `games`, sem gerar jogos. Evidência em
 - Executar regressões completas sem alterar o módulo de frequência já
   homologado.
 
+**Conclusão da subetapa 23.12:** concluída. A matriz confirmou proteção contra
+vazamento temporal do concurso-alvo, limites e efeitos de `k` e `j`,
+arredondamento externo inclusivo, desvio zero, ausência de base, classes
+exclusivas de zero a seis acertos, preservação e comparação de pesquisas,
+`C(N,6)`, unicidade e ordem dos jogos, autorização e proteção de volume. Em
+PostgreSQL efêmero, também confirmou que a previsão pendente é conferida após a
+entrada do novo resultado sem alterar suas dezenas originais e que uma nova
+origem é criada para os concursos futuros seguintes. Foram aprovados 6
+validadores integrados, 674 testes Python, 86 testes unitários do frontend e 36
+testes de navegador. Os fluxos completos da Frequência das dezenas continuaram
+aprovados. Evidência em `MSen/tests/TESTE_ITEM_23_12.md`.
+
 #### 23.13 — Ajuda e documentação definitiva
 
 - Criar ajuda da página bloco a bloco, incluindo interpretação das métricas e
@@ -4811,3 +4861,31 @@ aplicada ao banco local `games`, sem gerar jogos. Evidência em
 - Documentar tabelas, APIs, fórmulas, configurações e fluxo operacional.
 - Explicar que melhor resultado histórico não garante desempenho futuro.
 - Liberar para avaliação do usuário antes de commit e push.
+
+**Conclusão (2026-11-03):** subetapa concluída. A ajuda modal da página foi
+ampliada bloco a bloco com fórmula, parâmetros, modos de quantidade, proteção
+temporal do backtest, previsão futura, custo combinatório, fluxo recomendado e
+cuidados de interpretação. A documentação funcional, técnica, de decisões, da
+API e do modelo de pesquisa foi reconciliada com as tabelas e rotas realmente
+implementadas, inclusive os lotes e jogos da migração 022. Foi acrescentado um
+teste automático de consistência para impedir que fórmulas, rotas, tabelas ou
+decisões superadas voltem a divergir da implementação.
+
+Validação final: 679 testes Python, 86 testes unitários do frontend e 2 testes
+Playwright específicos da página, todos aprovados. Evidência detalhada em
+`MSen/tests/TESTE_ITEM_23_13.md`. A Etapa 23 está liberada para avaliação do
+usuário antes de qualquer commit ou push.
+
+**Conclusão (2026-11-03):** subetapa concluída. A ajuda modal da página foi
+ampliada bloco a bloco com fórmula, parâmetros, modos de quantidade, proteção
+temporal do backtest, previsão futura, custo combinatório, fluxo recomendado e
+cuidados de interpretação. A documentação funcional, técnica, de decisões, da
+API e do modelo de pesquisa foi reconciliada com as tabelas e rotas realmente
+implementadas, inclusive os lotes e jogos da migração 022. Foi acrescentado um
+teste automático de consistência para impedir que fórmulas, rotas, tabelas ou
+decisões superadas voltem a divergir da implementação.
+
+Validação final: 679 testes Python, 86 testes unitários do frontend e 2 testes
+Playwright específicos da página, todos aprovados. Evidência detalhada em
+`MSen/tests/TESTE_ITEM_23_13.md`. A Etapa 23 está liberada para avaliação do
+usuário antes de qualquer commit ou push.

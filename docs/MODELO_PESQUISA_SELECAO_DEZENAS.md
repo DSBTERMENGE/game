@@ -1,7 +1,7 @@
 # Modelo relacional — Pesquisas da Seleção de dezenas
 
-Este documento fecha a subetapa 23.3. Ele define o modelo lógico e as futuras
-restrições, mas não executa DDL nem cria migração.
+Este documento nasceu na subetapa 23.3 e foi reconciliado na 23.13 com as
+migrações 021 e 022 efetivamente implementadas.
 
 ## 1. Objetivos do modelo
 
@@ -24,6 +24,10 @@ configuracoes_pesquisa_selecao
 
 resultados
     1 ─── N alvos_pesquisa_selecao (referência opcional durante pendência)
+
+alvos_pesquisa_selecao
+    1 ─── N lotes_jogos_selecao
+                1 ─── N jogos_selecao_dezenas
 ```
 
 Uma execução possui vários concursos-alvo. Cada alvo concluído pelo motor deve
@@ -179,7 +183,7 @@ interseção com o resultado é obtida pela FK do alvo para `resultados`; não s
 repete nas 60 avaliações quais dezenas foram sorteadas. A quantidade de acertos
 será reconciliada transacionalmente com essa interseção e coberta por testes.
 
-## 7. Índices propostos
+## 7. Índices
 
 - configuração por assinatura única e por estado;
 - execução por configuração/data e por estado;
@@ -204,17 +208,45 @@ Não haverá exclusão pela interface na primeira implementação. Se uma execu�
 for removida por manutenção autorizada, somente seus alvos e avaliações serão
 removidos.
 
-## 9. Jogos e screener de combinações
+## 9. `lotes_jogos_selecao`
 
-Não será criada nesta etapa uma tabela com todas as combinações de seis. Elas
-podem ser numerosas e são determinísticas a partir do conjunto retornado. A
-persistência de jogos aprovados ou rejeitados será projetada somente após o
-contrato dos filtros 2VS, 3VS e demais critérios do segundo screener.
+Registra uma materialização autorizada das combinações de um alvo.
 
-## 10. Fora do escopo da subetapa 23.3
+| Campo | Tipo | Regra |
+|---|---|---|
+| `id_lote_jogos` | `BIGINT IDENTITY` | chave primária |
+| `id_alvo_selecao` | `BIGINT` | FK para alvo, `CASCADE` |
+| `quantidade_dezenas` | `SMALLINT` | 6 a 60 |
+| `quantidade_combinacoes` | `BIGINT` | maior que zero |
+| `estado` | `VARCHAR(16)` | `GERANDO`, `CONCLUIDO` ou `CANCELADO` |
+| `criado_em` | `TIMESTAMPTZ` | automático |
+| `concluido_em` | `TIMESTAMPTZ` | exigido no estado terminal |
 
-- executar o DDL;
-- escolher o número da migração;
-- implementar repositórios ou serviços;
-- criar tabelas de jogos;
-- API, página, progresso e ajuda.
+Cada solicitação autorizada cria um lote próprio. Antes disso, a prévia calcula
+`C(N,6)` sem inserir registros. Volumes elevados exigem confirmação adicional.
+
+## 10. `jogos_selecao_dezenas`
+
+Guarda somente jogos cuja materialização foi autorizada.
+
+| Campo | Tipo | Regra |
+|---|---|---|
+| `id_lote_jogos` | `BIGINT` | FK para lote, parte da PK, `CASCADE` |
+| `ordem` | `BIGINT` | positiva, parte da PK |
+| `dezena_1` a `dezena_6` | `SMALLINT` | 1 a 60, estritamente crescentes |
+
+A restrição única sobre lote e seis dezenas impede repetição. A ordem de geração
+é lexicográfica e determinística. O vínculo do lote ao alvo conduz à execução,
+configuração, concurso-alvo e eventual resultado real.
+
+Esses jogos ainda não representam aprovação pelo segundo Screener. Eles são as
+combinações brutas formadas pelas dezenas do primeiro Screener.
+
+## 11. Implementação vigente
+
+- migração 021: configurações, execuções, alvos e avaliações;
+- migração 022: lotes e jogos autorizados;
+- repositório: `msen.database.pesquisa_selecao_repository`;
+- serviços: seleção, backtest, previsão e combinações;
+- API: `/api/selecao-dezenas`;
+- página: `/selecao-dezenas.html`.

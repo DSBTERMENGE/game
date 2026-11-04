@@ -27,6 +27,8 @@ rascunhos, protótipos e relatórios antigos como descrição atual do sistema.
 ## Documentos técnicos especializados
 
 - `docs/API_*.md`: contratos das APIs existentes;
+- `docs/API_SELECAO_DEZENAS.md`: endpoints da pesquisa, backtest, previsão e
+  formação autorizada de jogos;
 - `docs/CONTRATO_*.md`: decisões técnicas de uma funcionalidade específica;
 - `docs/DICIONARIO_DADOS_RESULTADOS.md`: significado dos campos de resultados;
 - `docs/MODELO_POSTGRESQL.md` e `docs/banco-de-dados.md`: explicação humana do

@@ -204,6 +204,7 @@ test("navegação separa Painel e Cadastros em uma barra compacta", async () => 
   const paginas = await Promise.all([
     "index.html", "cadastros.html", "grupos-padroes.html", "padroes.html",
     "distribuicoes.html", "screener.html", "auditoria.html", "frequencias.html",
+    "selecao-dezenas.html",
   ].map((arquivo) => readFile(new URL(`../${arquivo}`, import.meta.url), "utf8")));
   const css = await readFile(new URL("../css/navegacao.css", import.meta.url), "utf8");
   const javascript = await readFile(new URL("../js/navegacao.js", import.meta.url), "utf8");
@@ -217,6 +218,7 @@ test("navegação separa Painel e Cadastros em uma barra compacta", async () => 
     assert.match(html, /href="\/padroes\.html"/);
     assert.match(html, /href="\/auditoria\.html"[^>]*>Validação e auditoria</);
     assert.match(html, /href="\/frequencias\.html"[^>]*>Frequência das dezenas</);
+    assert.match(html, /href="\/selecao-dezenas\.html"[^>]*>Seleção de dezenas</);
     assert.match(html, /js\/navegacao\.js/);
   }
   assert.doesNotMatch(paginas[0], /painel-padroes|botao-cadastro-padroes/);

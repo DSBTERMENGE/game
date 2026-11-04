@@ -313,11 +313,74 @@ histórico. A primeira faixa que ultrapassa o último concurso encerra a avalia�
 daquela dezena; a próxima dezena é independente. O estudo não ativa filtros do
 Screener e não promete prever sorteios aleatórios.
 
-## 11. Páginas e APIs vigentes
+## 11. Seleção de dezenas
+
+O módulo `selecao-dezenas.html` é o primeiro de dois screeners. Ele seleciona
+dezenas candidatas por recorrência simples; depois, as combinações de seis
+dezenas ainda passam pelo Screener de combinações, onde podem ser avaliadas por
+2VS, 3VS, estatística, geometria e padrões.
+
+Para uma dezena e um concurso-alvo `C`, usando somente dados até o corte
+`C - 1`:
+
+```text
+centro = última_ocorrência + média_intervalos + j × desvio_padrão
+meia_largura = k × desvio_padrão
+limite_inferior = piso(centro - meia_largura)
+limite_superior = teto(centro + meia_largura)
+```
+
+A dezena é aprovada quando `C` pertence aos limites inclusivos. `k` satisfaz
+`0 < k <= 1`; `j` satisfaz `-k <= j <= k`. Desvio zero cria faixa somente no
+centro. Sem base suficiente, a dezena recebe `SEM_BASE`. No modo `MAX`, todas
+as aprovadas são retornadas; no modo `FIXA`, são retornadas até `N` aprovadas
+conforme ranking, sem completar com dezenas fora da faixa.
+
+O backtest começa no concurso 500. Cada alvo é selecionado antes da leitura de
+seu resultado e pertence a uma única classe entre zero e seis acertos. O resumo
+informa período efetivamente avaliado, quantidade de concursos, tamanhos dos
+conjuntos, cobertura, precisão e custo combinatório. Comparações diretas exigem
+mesma origem, período, versão e cobertura; caso contrário, a API informa
+ressalvas.
+
+As previsões futuras usam o último concurso conhecido como corte para todos os
+alvos do horizonte. Permanecem `PENDENTE` até a chegada do resultado. Na
+atualização seguinte, a previsão antiga é conferida sem alterar suas dezenas,
+faixas ou ranking, enquanto uma nova origem é emitida para os próximos alvos.
+
+As configurações são assinadas e preservadas. O modelo possui
+`configuracoes_pesquisa_selecao`, `execucoes_pesquisa_selecao`,
+`alvos_pesquisa_selecao` e `avaliacoes_dezenas_pesquisa`. Jogos autorizados são
+armazenados em `lotes_jogos_selecao` e `jogos_selecao_dezenas`. O alvo
+referencia `resultados` por chave, sem copiar as seis dezenas.
+
+A interface exige prévia e confirmação antes do backtest. Durante a execução,
+o modal mostra etapa, quantidade, percentual, duração e cancelamento seguro.
+Somente uma execução pode permanecer ativa. Para jogos, a página calcula
+`C(N,6)` antes de materializar; gravação exige autorização e volume elevado
+exige confirmação adicional.
+
+O fluxo recomendado é:
+
+1. escolher ou preencher uma configuração;
+2. calcular a prévia;
+3. executar o backtest;
+4. comparar somente pesquisas equivalentes;
+5. emitir a previsão futura;
+6. inspecionar o detalhe e o custo antes de formar jogos.
+
+Maior quantidade de acertos pode decorrer apenas de um conjunto maior e mais
+caro. O módulo mede comportamento histórico e não garante sorteios futuros.
+Contratos detalhados: `docs/CONTRATO_SELECAO_DEZENAS.md`,
+`docs/CONTRATO_BACKTEST_SELECAO_DEZENAS.md`,
+`docs/MODELO_PESQUISA_SELECAO_DEZENAS.md` e
+`docs/API_SELECAO_DEZENAS.md`.
+
+## 12. Páginas e APIs vigentes
 
 Páginas: `index.html`, `cadastros.html`, `grupos-padroes.html`, `padroes.html`,
-`distribuicoes.html`, `screener.html`, `auditoria.html`, `frequencias.html` e
-`graficos-frequencias.html`.
+`distribuicoes.html`, `screener.html`, `auditoria.html`, `frequencias.html`,
+`graficos-frequencias.html` e `selecao-dezenas.html`.
 
 Rotas centrais desta etapa:
 
@@ -333,14 +396,24 @@ Rotas centrais desta etapa:
 - `POST /api/frequencias/previa`;
 - `POST /api/frequencias/execucoes` e acompanhamento/cancelamento por
   identificador.
+- `GET|POST /api/selecao-dezenas/configuracoes`;
+- `POST /api/selecao-dezenas/previa`;
+- `POST /api/selecao-dezenas/backtests` e acompanhamento/cancelamento por
+  identificador;
+- `GET /api/selecao-dezenas/backtests/<id>/resumo|detalhes`;
+- `POST /api/selecao-dezenas/backtests/comparacao`;
+- `POST /api/selecao-dezenas/previsoes`;
+- `GET|POST /api/selecao-dezenas/alvos/<id>/jogos[/previa]`.
 
 As demais APIs vigentes estão indexadas em `docs/INDICE_DOCUMENTACAO.md`.
 
-## 12. Limites atuais
+## 13. Limites atuais
 
 - processamento integral continua bloqueado;
 - PythonAnywhere continua adiado;
 - o estudo de assertividade das frequências existe, mas o backtest geral do
   Screener ainda não foi implementado;
+- a Seleção de dezenas possui backtest próprio, mas seu resultado não constitui
+  garantia de desempenho futuro;
 - a liberação do flag global exige confirmação controlada de cobertura;
 - commit e push dependem de autorização específica.

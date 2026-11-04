@@ -768,6 +768,24 @@
 - O relatório conserva quantidade configurada, aprovada e retornada em cada
   concurso, pois o máximo pode variar ao longo do backtest.
 
+## 2026-11-03 — Operação e interpretação da Seleção de dezenas
+
+- A página usa o mesmo servidor Flask e a mesma navegação; não cria outra porta.
+- O backtest exige prévia e confirmação e mostra etapa, quantidade, percentual,
+  duração, estado e cancelamento seguro em modal compartilhado.
+- Somente uma execução pode permanecer ativa. Jogos exigem prévia combinatória
+  e confirmação adicional quando o volume for elevado.
+- Previsões futuras ficam congeladas enquanto aguardam o resultado. A chegada
+  do sorteio muda seu estado para avaliado, mas não recalcula dezenas, faixas ou
+  ranking já emitidos.
+- As classes de zero a seis acertos são exclusivas. Resultados `SEM_BASE` ou
+  `NAO_AVALIAVEL` ficam fora das taxas, pois não constituem acerto nem erro.
+- A comparação deve considerar simultaneamente acertos, quantidade de dezenas e
+  custo `C(N,6)`. Maior acerto histórico com conjunto maior não prova melhor
+  eficiência.
+- O estudo não promete previsão de evento aleatório; serve para pesquisa,
+  calibração reproduzível e seleção auditável de candidatas.
+
 ## 2026-11-03 — Modelo relacional das pesquisas de seleção
 
 - O modelo terá quatro níveis: configuração, execução, concurso-alvo e as 60

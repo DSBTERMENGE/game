@@ -196,6 +196,31 @@ continuam pendentes ou pertencem a ciclos posteriores.
 - [x] Remover mínimo e máximo do gráfico de evolução dos intervalos e manter
   legenda única com média, limites de um desvio e intervalos.
 
+## Seleção de dezenas concluída
+
+- [x] Selecionar dezenas para o concurso-alvo usando somente a fotografia do
+  concurso anterior, sem vazamento do resultado conferido.
+- [x] Configurar fatores `k` e `j`, quantidade `MAX` ou `FIXA`, horizonte e
+  versão em configurações assinadas e preservadas.
+- [x] Tratar limites inclusivos, arredondamento externo, desvio zero e ausência
+  de base com estados explícitos.
+- [x] Executar backtest desde o concurso 500 com classes exclusivas de zero a
+  seis acertos, resumo e detalhe por concurso.
+- [x] Preservar pesquisas diferentes e compará-las com ressalvas de origem,
+  período, versão e cobertura.
+- [x] Emitir previsões futuras congeladas, conferi-las após novos resultados e
+  criar nova origem sem alterar previsões anteriores.
+- [x] Calcular `C(N,6)`, gerar jogos únicos em ordem determinística e exigir
+  autorização e confirmação adicional para volumes elevados.
+- [x] Criar API, item de menu e página com configuração, prévia, previsão,
+  backtest, comparação, detalhe e formação de jogos.
+- [x] Exibir prévia obrigatória, progresso, duração, cancelamento seguro e
+  bloqueio de execução duplicada sem criar servidor ou porta adicional.
+- [x] Criar ajuda da página com fórmulas, leitura das métricas, fluxo recomendado
+  e advertências sobre aleatoriedade e custo.
+- [x] Validar matemática, banco, API e navegador, incluindo não regressão da
+  Frequência das dezenas.
+
 ## Fora do escopo inicial
 
 - apostas automáticas;

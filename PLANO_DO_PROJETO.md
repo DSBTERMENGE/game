@@ -1,6 +1,6 @@
 # Projeto Game / MSen — visão vigente
 
-Atualizado em 2026-10-30.
+Atualizado em 2026-11-03.
 
 O roteiro operacional, com autorização por subetapa, está em
 `PLANO_ETAPAS_E_TESTES.md`. O funcionamento implementado está em
@@ -35,6 +35,9 @@ integralmente aprovado e reconciliado.
 - trava do Screener por homologação, perfis, assinaturas e cobertura.
 - módulo de frequência das dezenas com histórico concurso a concurso, eventos
   simples/2VS/3VS, gráficos, simulação e avaliação de assertividade.
+- Seleção de dezenas com configurações `k/j`, quantidade máxima ou fixa,
+  backtest desde o concurso 500, previsões futuras preservadas, comparação de
+  pesquisas e formação autorizada de jogos de seis dezenas.
 
 ## Estado operacional
 
@@ -48,6 +51,8 @@ execução enquanto o flag não for liberado por procedimento controlado.
 - processamento integral de 50.063.860 combinações permanece bloqueado;
 - o backtest geral do Screener ainda será construído; o estudo de frequência já
   preserva cortes sem informação futura e avalia retornos posteriores;
+- o backtest da Seleção de dezenas está concluído, mas não substitui o futuro
+  backtest do Screener completo de combinações;
 - publicação no PythonAnywhere continua adiada;
 - modal de andamento no Screener é etapa posterior;
 - commit e push somente mediante autorização específica.
