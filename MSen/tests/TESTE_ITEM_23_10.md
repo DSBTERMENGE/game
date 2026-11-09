@@ -1,5 +1,9 @@
 # Evidência da subetapa 23.10 — Página Seleção de dezenas
 
+> Registro histórico: o controle de concursos futuros desta evidência foi
+> removido na Etapa 24. A página atual calcula somente o próximo concurso da
+> série cadastrada.
+
 ## Resultado
 
 A página `frontend/selecao-dezenas.html` foi criada e ligada à navegação comum.

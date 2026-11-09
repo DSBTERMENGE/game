@@ -15,7 +15,7 @@ class ConfiguracaoSelecaoDezenasTest(unittest.TestCase):
         self.assertEqual(configuracao.fator_j, Decimal("0.000000"))
         self.assertEqual(configuracao.modo_quantidade, "MAX")
         self.assertIsNone(configuracao.quantidade_dezenas)
-        self.assertEqual(configuracao.horizonte_concursos, 1)
+        self.assertNotIn("horizonte_concursos", configuracao.conteudo_assinavel())
         self.assertRegex(configuracao.assinatura_sha256, r"^[0-9a-f]{64}$")
 
     def test_assinatura_e_deterministica_e_sensivel_a_configuracao(self) -> None:
@@ -27,18 +27,32 @@ class ConfiguracaoSelecaoDezenasTest(unittest.TestCase):
             fator_j=Decimal("0.000000"),
             modo_quantidade="FIXA",
             quantidade_dezenas=12,
-            horizonte_concursos=1,
             versao_calculo=1,
         )
 
         self.assertEqual(primeira.assinatura_sha256, repetida.assinatura_sha256)
         self.assertNotEqual(primeira.assinatura_sha256, alterada.assinatura_sha256)
 
+    def test_assinatura_ignora_diferencas_apenas_na_escala_decimal(self) -> None:
+        inteira = ConfiguracaoSelecaoDezenas(
+            nome="Teste", fator_k=Decimal("1"), fator_j=Decimal("0"),
+            modo_quantidade="MAX", quantidade_dezenas=None, versao_calculo=1,
+        )
+        seis_casas = ConfiguracaoSelecaoDezenas(
+            nome="Teste", fator_k=Decimal("1.000000"),
+            fator_j=Decimal("0.000000"), modo_quantidade="MAX",
+            quantidade_dezenas=None, versao_calculo=1,
+        )
+
+        self.assertEqual(Decimal("1.000000"), inteira.fator_k)
+        self.assertEqual(Decimal("0.000000"), inteira.fator_j)
+        self.assertEqual(inteira.assinatura_sha256, seis_casas.assinatura_sha256)
+
     def test_rejeita_parametros_fora_do_contrato(self) -> None:
         base = dict(
             nome="Teste", fator_k=Decimal("0.5"), fator_j=Decimal("0"),
             modo_quantidade="MAX", quantidade_dezenas=None,
-            horizonte_concursos=1, versao_calculo=1,
+            versao_calculo=1,
         )
         casos = (
             {"fator_k": Decimal("0")},
@@ -47,7 +61,6 @@ class ConfiguracaoSelecaoDezenasTest(unittest.TestCase):
             {"modo_quantidade": "OUTRO"},
             {"quantidade_dezenas": 10},
             {"modo_quantidade": "FIXA", "quantidade_dezenas": 5},
-            {"horizonte_concursos": 0},
             {"versao_calculo": 0},
         )
         for alteracoes in casos:

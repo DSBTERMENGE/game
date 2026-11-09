@@ -59,8 +59,8 @@ class ApiSelecaoDezenasTestCase(unittest.TestCase):
             "COMPARAR_BACKTESTS_SELECAO": lambda ids: (
                 self.comparacoes.append(ids) or {"comparavel": True}
             ),
-            "ATUALIZAR_PREVISOES_SELECAO": lambda config: (
-                self.previsoes.append(config) or {"concurso_corte": 3069}
+            "ATUALIZAR_PREVISOES_SELECAO": lambda identificador: (
+                self.previsoes.append(identificador) or {"concurso_corte": 3069}
             ),
             "PREVIA_JOGOS_SELECAO": lambda alvo: {
                 "id_alvo": alvo, "quantidade_combinacoes": 7
@@ -100,6 +100,13 @@ class ApiSelecaoDezenasTestCase(unittest.TestCase):
             with self.subTest(corpo=corpo):
                 resposta = self.cliente.post("/api/selecao-dezenas/previa", json=corpo)
                 self.assertEqual(400, resposta.status_code)
+
+    def test_rejeita_campo_legado_de_horizonte(self) -> None:
+        resposta = self.cliente.post("/api/selecao-dezenas/configuracoes", json={
+            "configuracao": configuracao_json() | {"horizonte_concursos": 1},
+        })
+
+        self.assertEqual(400, resposta.status_code)
 
     def test_inicia_e_consulta_backtest_assincrono(self) -> None:
         inicio = self.cliente.post("/api/selecao-dezenas/backtests", json={
@@ -143,13 +150,26 @@ class ApiSelecaoDezenasTestCase(unittest.TestCase):
 
     def test_atualiza_e_consulta_previsao_futura(self) -> None:
         atualizada = self.cliente.post("/api/selecao-dezenas/previsoes", json={
-            "configuracao": configuracao_json()
+            "id_configuracao_selecao": 7
         })
         detalhes = self.cliente.get(
             "/api/selecao-dezenas/previsoes/8/detalhes"
         )
         self.assertEqual(3069, atualizada.json["concurso_corte"])
+        self.assertEqual([7], self.previsoes)
         self.assertEqual(8, detalhes.json["detalhes"][0]["id"])
+
+    def test_previsao_exige_identificador_de_configuracao_salva(self) -> None:
+        for corpo in (
+            {"configuracao": configuracao_json()},
+            {"id_configuracao_selecao": 0},
+            {"id_configuracao_selecao": "1"},
+        ):
+            with self.subTest(corpo=corpo):
+                resposta = self.cliente.post(
+                    "/api/selecao-dezenas/previsoes", json=corpo
+                )
+                self.assertEqual(400, resposta.status_code)
 
     def test_previa_e_persistencia_de_jogos(self) -> None:
         previa = self.cliente.get(

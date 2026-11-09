@@ -1193,9 +1193,9 @@ CREATE TABLE configuracoes_pesquisa_selecao (
     fator_j NUMERIC(12,6) NOT NULL,
     modo_quantidade VARCHAR(10) NOT NULL,
     quantidade_dezenas SMALLINT,
-    horizonte_concursos SMALLINT NOT NULL DEFAULT 1,
     versao_calculo INTEGER NOT NULL,
     assinatura_sha256 CHAR(64) NOT NULL,
+    versao_assinatura SMALLINT NOT NULL DEFAULT 2,
     estado VARCHAR(12) NOT NULL DEFAULT 'DISPONIVEL',
     criada_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     arquivada_em TIMESTAMPTZ,
@@ -1213,10 +1213,10 @@ CREATE TABLE configuracoes_pesquisa_selecao (
         OR
         (modo_quantidade = 'FIXA' AND quantidade_dezenas BETWEEN 6 AND 60)
     ),
-    CONSTRAINT ck_config_pesquisa_selecao_horizonte
-        CHECK (horizonte_concursos >= 1),
     CONSTRAINT ck_config_pesquisa_selecao_versao
         CHECK (versao_calculo > 0),
+    CONSTRAINT ck_config_pesquisa_selecao_versao_assinatura
+        CHECK (versao_assinatura IN (1, 2)),
     CONSTRAINT ck_config_pesquisa_selecao_assinatura
         CHECK (assinatura_sha256 ~ '^[0-9a-f]{64}$'),
     CONSTRAINT ck_config_pesquisa_selecao_estado CHECK (
@@ -1329,12 +1329,12 @@ BEGIN
         WHERE id_configuracao_selecao = OLD.id_configuracao_selecao
     ) AND ROW(
         NEW.nome, NEW.fator_k, NEW.fator_j, NEW.modo_quantidade,
-        NEW.quantidade_dezenas, NEW.horizonte_concursos, NEW.versao_calculo,
-        NEW.assinatura_sha256
+        NEW.quantidade_dezenas, NEW.versao_calculo,
+        NEW.assinatura_sha256, NEW.versao_assinatura
     ) IS DISTINCT FROM ROW(
         OLD.nome, OLD.fator_k, OLD.fator_j, OLD.modo_quantidade,
-        OLD.quantidade_dezenas, OLD.horizonte_concursos, OLD.versao_calculo,
-        OLD.assinatura_sha256
+        OLD.quantidade_dezenas, OLD.versao_calculo,
+        OLD.assinatura_sha256, OLD.versao_assinatura
     ) THEN
         RAISE EXCEPTION 'A configuração usada por uma pesquisa é imutável.';
     END IF;
@@ -1578,7 +1578,7 @@ CREATE TABLE jogos_selecao_dezenas (
 COMMENT ON TABLE configuracoes_pesquisa_selecao IS
     'Configurações versionadas e assinadas do screener de dezenas.';
 COMMENT ON TABLE execucoes_pesquisa_selecao IS
-    'Execuções reproduzíveis de backtest ou previsão futura.';
+    'Execuções reproduzíveis de backtest ou previsão do próximo concurso.';
 COMMENT ON TABLE alvos_pesquisa_selecao IS
     'Resultado da seleção e conferência por concurso-alvo.';
 COMMENT ON TABLE avaliacoes_dezenas_pesquisa IS

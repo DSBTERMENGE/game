@@ -13,12 +13,14 @@ interna do PostgreSQL.
 
 - `GET /configuracoes`: lista configurações preservadas.
 - `POST /configuracoes`: cria ou reutiliza configuração de mesma assinatura.
-- `POST /previa`: informa base disponível, período e quantidade de alvos do
-  backtest e da previsão futura, sem iniciar cálculo ou gravação.
+- `POST /previa`: apresenta os dados analíticos da configuração, a base
+  disponível, o período do backtest e o concurso-alvo atual, sem iniciar
+  cálculo nem gravação.
 
 A configuração possui exatamente `nome`, `fator_k`, `fator_j`,
-`modo_quantidade`, `quantidade_dezenas`, `horizonte_concursos` e
-`versao_calculo`.
+`modo_quantidade`, `quantidade_dezenas` e `versao_calculo`. O concurso-alvo
+não é configurável: ele é sempre o concurso imediatamente posterior ao último
+resultado cadastrado no banco.
 
 ## Backtests
 
@@ -33,11 +35,13 @@ A configuração possui exatamente `nome`, `fator_k`, `fator_j`,
 A API impede dois backtests simultâneos no mesmo processo. O motor preserva no
 banco o progresso por alvo, permitindo retomada por nova solicitação idempotente.
 
-## Previsão futura
+## Previsão do próximo concurso
 
-- `POST /previsoes`: confere previsões pendentes que já possuem resultado e
-  emite a nova previsão conforme o horizonte configurado.
-- `GET /previsoes/{id}/detalhes`: retorna os alvos da execução, inclusive
+- `POST /previsoes`: recebe somente `id_configuracao_selecao` de uma
+  configuração salva e disponível, confere a previsão pendente quando seu
+  resultado já está cadastrado e emite exatamente uma previsão para
+  `último concurso + 1`. Não cria configuração implicitamente.
+- `GET /previsoes/{id}/detalhes`: retorna o alvo da execução, inclusive
   `id_alvo_selecao`, necessário para operações de jogos.
 
 ## Jogos de seis dezenas
@@ -57,8 +61,8 @@ Os jogos permanecem vinculados ao alvo, à execução e à configuração de ori
 4. A página consulta `GET /execucoes/{id}` até estado terminal e pode solicitar
    cancelamento seguro.
 5. Resumo e detalhes são carregados somente após conclusão.
-6. `POST /previsoes` confere pendências cobertas por novos resultados e emite a
-   previsão da origem atual.
+6. `POST /previsoes` confere a pendência coberta por resultado novo e emite a
+   previsão para o próximo concurso da série cadastrada.
 7. Jogos exigem primeiro `/jogos/previa` e depois autorização explícita.
 
 Uma execução simultânea recebe HTTP 409 e código `EXECUCAO_EM_ANDAMENTO`. O

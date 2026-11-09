@@ -1,5 +1,9 @@
 # Evidência da subetapa 23.12 — Matriz completa de testes
 
+> Registro histórico: os cenários de horizonte e previsões futuras desta
+> matriz foram substituídos na Etapa 24. A migração 023 e a matriz atual
+> validam somente `CA = último cadastrado + 1`.
+
 ## Resultado geral
 
 Todos os níveis da Seleção de dezenas foram exercitados sem falhas:

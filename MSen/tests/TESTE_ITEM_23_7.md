@@ -2,6 +2,10 @@
 
 Data: 03/11/2026.
 
+> Registro histórico: o horizonte configurável validado nesta subetapa foi
+> substituído na Etapa 24 e removido pela migração 023. Atualmente cada
+> execução calcula somente `CA = último cadastrado + 1`.
+
 ## Escopo concluído
 
 - uso do último concurso armazenado como corte real conhecido;

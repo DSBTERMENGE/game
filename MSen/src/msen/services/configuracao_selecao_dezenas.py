@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 import hashlib
 import json
 
 
 MODOS_QUANTIDADE = frozenset({"MAX", "FIXA"})
+PRECISAO_PARAMETRO = Decimal("0.000001")
 
 
 def _inteiro_positivo(nome: str, valor: int) -> int:
@@ -34,19 +35,24 @@ class ConfiguracaoSelecaoDezenas:
     fator_j: Decimal
     modo_quantidade: str
     quantidade_dezenas: int | None
-    horizonte_concursos: int
     versao_calculo: int
 
     def __post_init__(self) -> None:
         if not isinstance(self.nome, str) or not self.nome.strip():
             raise ValueError("nome deve ser texto preenchido.")
         object.__setattr__(self, "nome", self.nome.strip())
-        k = _decimal_finito("fator_k", self.fator_k)
-        j = _decimal_finito("fator_j", self.fator_j)
+        k = _decimal_finito("fator_k", self.fator_k).quantize(
+            PRECISAO_PARAMETRO, rounding=ROUND_HALF_UP
+        )
+        j = _decimal_finito("fator_j", self.fator_j).quantize(
+            PRECISAO_PARAMETRO, rounding=ROUND_HALF_UP
+        )
         if k <= 0 or k > 1:
             raise ValueError("fator_k deve satisfazer 0 < k <= 1.")
         if j < -k or j > k:
             raise ValueError("fator_j deve satisfazer -k <= j <= k.")
+        object.__setattr__(self, "fator_k", k)
+        object.__setattr__(self, "fator_j", j)
         if not isinstance(self.modo_quantidade, str):
             raise TypeError("modo_quantidade deve ser texto.")
         modo = self.modo_quantidade.strip().upper()
@@ -62,9 +68,6 @@ class ConfiguracaoSelecaoDezenas:
             or not 6 <= self.quantidade_dezenas <= 60
         ):
             raise ValueError("quantidade_dezenas deve ficar entre 6 e 60 no modo FIXA.")
-        object.__setattr__(self, "horizonte_concursos", _inteiro_positivo(
-            "horizonte_concursos", self.horizonte_concursos
-        ))
         object.__setattr__(self, "versao_calculo", _inteiro_positivo(
             "versao_calculo", self.versao_calculo
         ))
@@ -73,7 +76,6 @@ class ConfiguracaoSelecaoDezenas:
         return {
             "fator_j": format(self.fator_j, "f"),
             "fator_k": format(self.fator_k, "f"),
-            "horizonte_concursos": self.horizonte_concursos,
             "modo_quantidade": self.modo_quantidade,
             "nome": self.nome,
             "quantidade_dezenas": self.quantidade_dezenas,
@@ -96,6 +98,5 @@ def configuracao_selecao_inicial() -> ConfiguracaoSelecaoDezenas:
         fator_j=Decimal("0.000000"),
         modo_quantidade="MAX",
         quantidade_dezenas=None,
-        horizonte_concursos=1,
         versao_calculo=1,
     )

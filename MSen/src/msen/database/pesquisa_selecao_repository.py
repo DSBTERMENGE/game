@@ -34,6 +34,8 @@ class ErroRepositorioPesquisaSelecao(RuntimeError):
 class ConfiguracaoSelecaoPersistida:
     id_configuracao_selecao: int
     configuracao: ConfiguracaoSelecaoDezenas
+    assinatura_persistida: str
+    versao_assinatura: int
     estado: str
     criada_em: datetime
     arquivada_em: datetime | None
@@ -98,8 +100,8 @@ class AlvoPesquisaPersistido:
 
 COLUNAS_CONFIGURACAO = (
     "id_configuracao_selecao, nome, fator_k, fator_j, modo_quantidade, "
-    "quantidade_dezenas, horizonte_concursos, versao_calculo, "
-    "assinatura_sha256, estado, criada_em, arquivada_em"
+    "quantidade_dezenas, versao_calculo, assinatura_sha256, "
+    "versao_assinatura, estado, criada_em, arquivada_em"
 )
 COLUNAS_EXECUCAO = (
     "id_execucao_selecao, id_configuracao_selecao, tipo_execucao, "
@@ -126,15 +128,23 @@ def _mapear_configuracao(linha: tuple[Any, ...]) -> ConfiguracaoSelecaoPersistid
     configuracao = ConfiguracaoSelecaoDezenas(
         nome=linha[1], fator_k=linha[2], fator_j=linha[3],
         modo_quantidade=linha[4], quantidade_dezenas=linha[5],
-        horizonte_concursos=linha[6], versao_calculo=linha[7],
+        versao_calculo=linha[6],
     )
-    if linha[8].strip() != configuracao.assinatura_sha256:
+    assinatura_persistida = _hash(linha[7].strip(), "assinatura_sha256")
+    versao_assinatura = linha[8]
+    if versao_assinatura not in (1, 2):
+        raise ErroRepositorioPesquisaSelecao(
+            "VERSAO_ASSINATURA_INVALIDA",
+            "A versão da assinatura da configuração é inválida.",
+        )
+    if versao_assinatura == 2 and assinatura_persistida != configuracao.assinatura_sha256:
         raise ErroRepositorioPesquisaSelecao(
             "ASSINATURA_DIVERGENTE",
-            "A configuração gravada não corresponde à sua assinatura.",
+            "Os dados internos da configuração estão inconsistentes. Nenhuma alteração foi realizada.",
         )
     return ConfiguracaoSelecaoPersistida(
-        linha[0], configuracao, linha[9], linha[10], linha[11]
+        linha[0], configuracao, assinatura_persistida, versao_assinatura,
+        linha[9], linha[10], linha[11]
     )
 
 
@@ -187,16 +197,15 @@ class RepositorioPesquisaSelecao:
                     cursor.execute(
                         "INSERT INTO configuracoes_pesquisa_selecao "
                         "(nome, fator_k, fator_j, modo_quantidade, "
-                        "quantidade_dezenas, horizonte_concursos, "
-                        "versao_calculo, assinatura_sha256) "
-                        "VALUES (%s,%s,%s,%s,%s,%s,%s,%s) "
+                        "quantidade_dezenas, versao_calculo, assinatura_sha256, "
+                        "versao_assinatura) "
+                        "VALUES (%s,%s,%s,%s,%s,%s,%s,2) "
                         "ON CONFLICT (assinatura_sha256) DO NOTHING "
                         f"RETURNING {COLUNAS_CONFIGURACAO}",
                         (
                             configuracao.nome, configuracao.fator_k,
                             configuracao.fator_j, configuracao.modo_quantidade,
                             configuracao.quantidade_dezenas,
-                            configuracao.horizonte_concursos,
                             configuracao.versao_calculo,
                             configuracao.assinatura_sha256,
                         ),
@@ -226,6 +235,7 @@ class RepositorioPesquisaSelecao:
                     cursor.execute(
                         f"SELECT {COLUNAS_CONFIGURACAO} "
                         "FROM configuracoes_pesquisa_selecao "
+                        "WHERE estado='DISPONIVEL' "
                         "ORDER BY criada_em, id_configuracao_selecao"
                     )
                     return tuple(_mapear_configuracao(linha) for linha in cursor.fetchall())
@@ -233,6 +243,33 @@ class RepositorioPesquisaSelecao:
             raise ErroRepositorioPesquisaSelecao(
                 "FALHA_LISTAGEM_CONFIGURACOES",
                 "Não foi possível listar as configurações da pesquisa.",
+            ) from None
+
+    def buscar_configuracao_disponivel(
+        self, id_configuracao_selecao: int
+    ) -> ConfiguracaoSelecaoPersistida:
+        if (
+            isinstance(id_configuracao_selecao, bool)
+            or not isinstance(id_configuracao_selecao, int)
+            or id_configuracao_selecao <= 0
+        ):
+            raise ValueError("id_configuracao_selecao deve ser inteiro positivo.")
+        try:
+            with self._conexao.transaction():
+                with self._conexao.cursor() as cursor:
+                    cursor.execute(
+                        f"SELECT {COLUNAS_CONFIGURACAO} "
+                        "FROM configuracoes_pesquisa_selecao "
+                        "WHERE id_configuracao_selecao=%s AND estado='DISPONIVEL'",
+                        (id_configuracao_selecao,),
+                    )
+                    return _mapear_configuracao(cursor.fetchone())
+        except ErroRepositorioPesquisaSelecao:
+            raise
+        except psycopg.Error:
+            raise ErroRepositorioPesquisaSelecao(
+                "FALHA_BUSCA_CONFIGURACAO",
+                "Não foi possível consultar a configuração salva.",
             ) from None
 
     def criar_ou_buscar_execucao(
@@ -268,7 +305,7 @@ class RepositorioPesquisaSelecao:
                         (
                             configuracao.id_configuracao_selecao, tipo,
                             Jsonb(config.conteudo_assinavel()),
-                            config.assinatura_sha256, assinatura_origem,
+                            configuracao.assinatura_persistida, assinatura_origem,
                             config.versao_calculo, concurso_corte_origem,
                             concurso_alvo_inicial, concurso_alvo_final, total,
                         ),
@@ -282,7 +319,7 @@ class RepositorioPesquisaSelecao:
                             "AND assinatura_resultados=%s AND versao_calculo=%s "
                             "AND concurso_alvo_inicial=%s AND concurso_alvo_final=%s",
                             (
-                                tipo, config.assinatura_sha256, assinatura_origem,
+                                tipo, configuracao.assinatura_persistida, assinatura_origem,
                                 config.versao_calculo, concurso_alvo_inicial,
                                 concurso_alvo_final,
                             ),

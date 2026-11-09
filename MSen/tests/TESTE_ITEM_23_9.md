@@ -1,5 +1,9 @@
 # Evidência da subetapa 23.9 — API da Seleção de dezenas
 
+> Registro histórico: os contratos de horizonte desta evidência foram
+> substituídos na Etapa 24. A API atual aceita somente o concurso-alvo único e
+> não recebe `horizonte_concursos`.
+
 ## Resultado
 
 A API foi registrada no servidor Flask existente com base

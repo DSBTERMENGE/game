@@ -41,7 +41,7 @@ Cada avaliação precisa conservar:
 - identificação e cópia imutável da configuração;
 - assinatura dos resultados e versão do cálculo;
 - concurso-alvo e corte `C - 1`;
-- `k`, `j`, horizonte e estratégia de quantidade aplicáveis;
+- `k`, `j` e estratégia de quantidade aplicáveis;
 - dezenas selecionadas em ordem crescente;
 - condição `SIMPLES` e classificação que justificaram cada seleção;
 - quantidade de dezenas selecionadas;
@@ -77,7 +77,8 @@ confundida com uma seleção válida vazia.
 ## 6. Situações da avaliação
 
 - `AVALIADO`: seleção congelada e resultado real disponível.
-- `PENDENTE`: seleção futura congelada, mas o resultado ainda não existe.
+- `PENDENTE`: seleção do próximo concurso congelada, mas o resultado ainda não
+  existe.
 - `NAO_AVALIAVEL`: lacuna histórica, ausência completa de base simples,
   incompatibilidade de versão ou falha que impeça reproduzir a seleção.
 

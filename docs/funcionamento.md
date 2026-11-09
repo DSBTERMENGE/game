@@ -343,10 +343,11 @@ conjuntos, cobertura, precisão e custo combinatório. Comparações diretas exi
 mesma origem, período, versão e cobertura; caso contrário, a API informa
 ressalvas.
 
-As previsões futuras usam o último concurso conhecido como corte para todos os
-alvos do horizonte. Permanecem `PENDENTE` até a chegada do resultado. Na
-atualização seguinte, a previsão antiga é conferida sem alterar suas dezenas,
-faixas ou ranking, enquanto uma nova origem é emitida para os próximos alvos.
+A previsão usa o último concurso conhecido `L` como corte e calcula somente o
+concurso-alvo `L + 1`. Ela permanece `PENDENTE` até a chegada desse resultado.
+Na atualização seguinte, a previsão é conferida sem alterar suas dezenas,
+faixas ou ranking; depois disso, uma nova origem pode ser emitida para o
+concurso imediatamente seguinte, usando a base atualizada.
 
 As configurações são assinadas e preservadas. O modelo possui
 `configuracoes_pesquisa_selecao`, `execucoes_pesquisa_selecao`,
@@ -366,7 +367,7 @@ O fluxo recomendado é:
 2. calcular a prévia;
 3. executar o backtest;
 4. comparar somente pesquisas equivalentes;
-5. emitir a previsão futura;
+5. calcular e preservar a previsão do próximo concurso;
 6. inspecionar o detalhe e o custo antes de formar jogos.
 
 Maior quantidade de acertos pode decorrer apenas de um conjunto maior e mais

@@ -3,14 +3,17 @@ import { criarModalAndamento } from "./modal-andamento.js";
 
 const e = Object.fromEntries([
   "mensagem-selecao", "configuracao-gravada-selecao", "selecao-nome", "selecao-fator-k",
-  "selecao-fator-j", "selecao-modo-quantidade", "selecao-quantidade", "selecao-horizonte",
-  "selecao-versao", "assinatura-selecao", "botao-previa-selecao", "botao-salvar-configuracao",
+  "selecao-fator-j", "selecao-modo-quantidade", "selecao-quantidade",
+  "selecao-versao", "estado-edicao-configuracao", "botao-previa-selecao", "botao-salvar-configuracao",
   "resultado-previa-selecao", "botao-atualizar-previsao", "resumo-previsao", "corpo-previsoes",
   "form-backtest-selecao", "backtest-inicial", "backtest-final",
   "estado-backtest", "resumo-backtest", "classes-backtest",
   "form-comparacao-selecao", "comparacao-ids", "resultado-comparacao",
   "corpo-detalhes-backtest", "painel-jogos", "resumo-jogos", "botao-gerar-jogos",
   "botao-ajuda-selecao", "dialogo-ajuda-selecao",
+  "dialogo-confirmar-registro", "registro-configuracao", "registro-concurso",
+  "registro-corte", "registro-quantidade", "registro-dezenas", "registro-combinacoes",
+  "botao-cancelar-registro", "botao-confirmar-registro",
   "dialogo-previa-backtest", "previa-backtest-resultados", "previa-backtest-periodo",
   "previa-backtest-quantidade", "previa-backtest-configuracao", "botao-confirmar-backtest",
 ].map((id) => [id.replaceAll("-", "_"), document.getElementById(id)]));
@@ -19,11 +22,21 @@ let configuracoes = [];
 let alvoJogos = null;
 let previaJogos = null;
 let solicitacaoBacktest = null;
+let solicitacaoRegistro = null;
 let modalBacktest = null;
 
 async function respostaJson(resposta) {
   const dados = await resposta.json().catch(() => ({}));
-  if (!resposta.ok) throw new Error(dados.erro?.mensagem || `Erro HTTP ${resposta.status}.`);
+  if (!resposta.ok) {
+    const codigo = dados.erro?.codigo;
+    const mensagens = {
+      ASSINATURA_DIVERGENTE: "Não foi possível salvar porque os dados internos ficaram inconsistentes. Nenhuma configuração foi gravada.",
+      FALHA_CONFIGURACAO: "Não foi possível salvar a configuração. Nenhuma configuração foi gravada.",
+      CONFIGURACAO_INVALIDA: "Não foi possível usar a configuração. Confira os campos preenchidos.",
+      CONFIGURACAO_NAO_ENCONTRADA: "A configuração salva não está mais disponível. Selecione outra configuração.",
+    };
+    throw new Error(mensagens[codigo] || dados.erro?.mensagem || "Não foi possível concluir a operação. Tente novamente.");
+  }
   return dados;
 }
 
@@ -37,20 +50,41 @@ function configuracaoFormulario() {
     nome: e.selecao_nome.value, fator_k: e.selecao_fator_k.value,
     fator_j: e.selecao_fator_j.value, modo_quantidade: e.selecao_modo_quantidade.value,
     quantidade_dezenas: e.selecao_quantidade.value,
-    horizonte_concursos: e.selecao_horizonte.value, versao_calculo: e.selecao_versao.value,
+    versao_calculo: e.selecao_versao.value,
   });
 }
 
-function preencherConfiguracao(configuracao) {
+function definirEdicaoConfiguracao(editavel) {
+  for (const campo of [
+    e.selecao_nome, e.selecao_fator_k, e.selecao_fator_j,
+    e.selecao_modo_quantidade, e.selecao_versao,
+  ]) campo.disabled = !editavel;
+  e.selecao_quantidade.disabled = !editavel || e.selecao_modo_quantidade.value !== "FIXA";
+  e.botao_salvar_configuracao.disabled = !editavel;
+  e.botao_atualizar_previsao.disabled = editavel;
+  e.botao_atualizar_previsao.title = editavel
+    ? "Salve a configuração antes de registrar uma seleção."
+    : "Registrar a seleção produzida pela configuração salva.";
+  e.estado_edicao_configuracao.textContent = editavel
+    ? "Nova configuração: preencha e salve os campos antes de registrar uma seleção."
+    : "Configuração salva: os campos estão protegidos contra alterações e a seleção pode ser registrada.";
+}
+
+function preencherConfiguracao(configuracao, editavel = false) {
   e.selecao_nome.value = configuracao.nome;
   e.selecao_fator_k.value = configuracao.fator_k;
   e.selecao_fator_j.value = configuracao.fator_j;
   e.selecao_modo_quantidade.value = configuracao.modo_quantidade;
   e.selecao_quantidade.value = configuracao.quantidade_dezenas ?? "";
-  e.selecao_quantidade.disabled = configuracao.modo_quantidade !== "FIXA";
-  e.selecao_horizonte.value = configuracao.horizonte_concursos;
   e.selecao_versao.value = configuracao.versao_calculo;
-  e.assinatura_selecao.textContent = `Assinatura: ${configuracao.assinatura_sha256 || "será calculada ao salvar"}`;
+  definirEdicaoConfiguracao(editavel);
+}
+
+function iniciarNovaConfiguracao() {
+  preencherConfiguracao({
+    nome: "Seleção inicial", fator_k: "1.000000", fator_j: "0.000000",
+    modo_quantidade: "MAX", quantidade_dezenas: null, versao_calculo: 1,
+  }, true);
 }
 
 async function carregarConfiguracoes() {
@@ -65,8 +99,11 @@ async function carregarConfiguracoes() {
     const ultima = configuracoes.at(-1);
     e.configuracao_gravada_selecao.value = ultima.id_configuracao_selecao;
     preencherConfiguracao(ultima.configuracao);
+    mensagem(`${configuracoes.length} configuração(ões) salva(s). A selecionada está disponível somente para leitura.`, "sucesso");
+  } else {
+    iniciarNovaConfiguracao();
+    mensagem("Ainda não há configurações salvas. Preencha uma nova configuração para começar.");
   }
-  mensagem(`${configuracoes.length} configuração(ões) disponível(is).`, "sucesso");
 }
 
 async function calcularPrevia() {
@@ -78,10 +115,14 @@ async function calcularPrevia() {
   const dados = await respostaJson(await fetch("/api/selecao-dezenas/previa", {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(corpo),
   }));
+  const analise = dados.analise_configuracao;
   e.resultado_previa_selecao.hidden = false;
-  e.resultado_previa_selecao.textContent = `Base: concursos ${dados.resultados.primeiro} a ${dados.resultados.ultimo}. Backtest: ${dados.backtest.quantidade_alvos.toLocaleString("pt-BR")} concursos (${dados.backtest.concurso_inicial} a ${dados.backtest.concurso_final}). Previsão futura: ${dados.previsao_futura.concurso_inicial} a ${dados.previsao_futura.concurso_final}.`;
+  e.resultado_previa_selecao.textContent = analise
+    ? `Dados analíticos da configuração: último concurso cadastrado ${analise.concurso_corte}; concurso-alvo ${analise.concurso_alvo}; ${analise.quantidade_aprovada.toLocaleString("pt-BR")} dezenas aprovadas; ${analise.quantidade_retornada.toLocaleString("pt-BR")} dezenas retornadas (${formatarDezenas(analise.dezenas_retornadas)}); ${Number(analise.quantidade_combinacoes).toLocaleString("pt-BR")} combinações de seis. Esta análise é momentânea e não foi armazenada.`
+    : "Dados analíticos da configuração indisponíveis: não existem resultados cadastrados.";
+  if (analise) e.botao_atualizar_previsao.textContent = `Registrar previsão do concurso ${analise.concurso_alvo}`;
   e.backtest_final.value ||= dados.backtest.concurso_final;
-  mensagem("Prévia calculada sem iniciar processamento.", "sucesso");
+  mensagem("Configuração analisada sem salvar dados nem iniciar o backtest.", "sucesso");
 }
 
 async function salvarConfiguracao() {
@@ -91,7 +132,7 @@ async function salvarConfiguracao() {
   }));
   preencherConfiguracao(dados.configuracao);
   await carregarConfiguracoes();
-  mensagem(`Configuração ${dados.id_configuracao_selecao} preservada.`, "sucesso");
+  mensagem("Configuração salva com sucesso. Os campos foram protegidos contra alterações.", "sucesso");
 }
 
 function td(texto) { const celula = document.createElement("td"); celula.textContent = texto ?? "—"; return celula; }
@@ -129,23 +170,58 @@ function renderizarDetalhes(itens, corpo) {
   }
 }
 
-async function atualizarPrevisao() {
+async function abrirConfirmacaoRegistro() {
+  const idConfiguracao = Number(e.configuracao_gravada_selecao.value);
+  if (!Number.isInteger(idConfiguracao) || idConfiguracao <= 0) {
+    throw new Error("Salve a configuração antes de registrar uma seleção.");
+  }
+  const configuracao = configuracaoFormulario();
+  const dados = await respostaJson(await fetch("/api/selecao-dezenas/previa", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ configuracao }),
+  }));
+  const analise = dados.analise_configuracao;
+  if (!analise) throw new Error("Não existem resultados cadastrados para calcular a seleção.");
+  solicitacaoRegistro = { idConfiguracao, configuracao };
+  e.registro_configuracao.textContent = configuracao.nome;
+  e.registro_concurso.textContent = analise.concurso_alvo;
+  e.registro_corte.textContent = analise.concurso_corte;
+  e.registro_quantidade.textContent = analise.quantidade_retornada.toLocaleString("pt-BR");
+  e.registro_dezenas.textContent = formatarDezenas(analise.dezenas_retornadas) || "Nenhuma dezena";
+  e.registro_combinacoes.textContent = Number(analise.quantidade_combinacoes).toLocaleString("pt-BR");
+  e.dialogo_confirmar_registro.showModal();
+  mensagem("Confira a seleção. Nenhum dado foi gravado.");
+}
+
+async function confirmarRegistro() {
+  if (!solicitacaoRegistro) return;
+  const { idConfiguracao, configuracao } = solicitacaoRegistro;
+  solicitacaoRegistro = null;
+  e.dialogo_confirmar_registro.close("confirmado");
   const dados = await respostaJson(await fetch("/api/selecao-dezenas/previsoes", {
     method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ configuracao: configuracaoFormulario() }),
+    body: JSON.stringify({ id_configuracao_selecao: idConfiguracao }),
   }));
   const nova = dados.nova_previsao;
   const detalhes = await respostaJson(await fetch(`/api/selecao-dezenas/previsoes/${nova.id_execucao_selecao}/detalhes`));
-  e.resumo_previsao.textContent = `Origem até o concurso ${nova.concurso_corte}. Alvos ${nova.concurso_alvo_inicial} a ${nova.concurso_alvo_final}. ${dados.conferencia.previsoes_conferidas} previsão(ões) anterior(es) conferida(s).`;
+  const registro = nova.alvos_criados_agora > 0
+    ? `Previsão registrada para o concurso ${nova.concurso_alvo_inicial}, usando somente resultados até o concurso ${nova.concurso_corte}. A lista ficará preservada até a importação do resultado.`
+    : `A previsão do concurso ${nova.concurso_alvo_inicial} já estava registrada. A lista original foi mantida sem alterações.`;
+  const conferencia = dados.conferencia.previsoes_conferidas > 0
+    ? ` ${dados.conferencia.previsoes_conferidas} previsão(ões) anterior(es) também foi(foram) conferida(s).`
+    : "";
+  e.resumo_previsao.textContent = `${registro}${conferencia}`;
   e.corpo_previsoes.replaceChildren();
-  const parametros = descricaoParametros(configuracaoFormulario());
+  const parametros = descricaoParametros(configuracao);
   for (const item of detalhes.detalhes) {
     const linha = document.createElement("tr");
     linha.append(td(item.numero_concurso_alvo), td(item.numero_concurso_corte), td(rotuloSituacao(item.situacao)),
       td(formatarDezenas(item.dezenas_retornadas)), td(item.quantidade_retornada), td(parametros));
     const acao = td(""); acao.replaceChildren(criarBotaoAlvo(item)); linha.append(acao); e.corpo_previsoes.append(linha);
   }
-  mensagem("Previsão futura atualizada.", "sucesso");
+  mensagem(nova.alvos_criados_agora > 0
+    ? `Seleção registrada para o concurso ${nova.concurso_alvo_inicial} com ${detalhes.detalhes[0]?.quantidade_retornada ?? 0} dezenas. Nenhum backtest, combinação ou jogo foi criado.`
+    : `A seleção do concurso ${nova.concurso_alvo_inicial} já estava registrada para esta configuração. Nenhum dado foi alterado ou duplicado.`, "sucesso");
 }
 
 function renderizarResumoBacktest(resumo) {
@@ -248,10 +324,25 @@ async function gerarJogos() {
 async function proteger(acao) { try { await acao(); } catch (erro) { mensagem(erro.message, "erro"); } }
 
 e.selecao_modo_quantidade.addEventListener("change", () => { e.selecao_quantidade.disabled = e.selecao_modo_quantidade.value !== "FIXA"; if (e.selecao_quantidade.disabled) e.selecao_quantidade.value = ""; });
-e.configuracao_gravada_selecao.addEventListener("change", () => { const item = configuracoes.find((config) => String(config.id_configuracao_selecao) === e.configuracao_gravada_selecao.value); if (item) preencherConfiguracao(item.configuracao); });
+e.configuracao_gravada_selecao.addEventListener("change", () => {
+  const item = configuracoes.find((config) => String(config.id_configuracao_selecao) === e.configuracao_gravada_selecao.value);
+  if (item) {
+    preencherConfiguracao(item.configuracao);
+    mensagem("Configuração salva carregada somente para leitura.");
+  } else {
+    iniciarNovaConfiguracao();
+    mensagem("Nova configuração iniciada. Nenhum dado foi gravado.");
+  }
+});
 e.botao_previa_selecao.addEventListener("click", () => proteger(calcularPrevia));
 e.botao_salvar_configuracao.addEventListener("click", () => proteger(salvarConfiguracao));
-e.botao_atualizar_previsao.addEventListener("click", () => proteger(atualizarPrevisao));
+e.botao_atualizar_previsao.addEventListener("click", () => proteger(abrirConfirmacaoRegistro));
+e.botao_confirmar_registro.addEventListener("click", () => proteger(confirmarRegistro));
+e.dialogo_confirmar_registro.addEventListener("close", () => {
+  if (e.dialogo_confirmar_registro.returnValue === "confirmado") return;
+  solicitacaoRegistro = null;
+  mensagem("Operação cancelada. Nenhum dado foi gravado.");
+});
 e.form_backtest_selecao.addEventListener("submit", (evento) => proteger(() => abrirPreviaBacktest(evento)));
 e.botao_confirmar_backtest.addEventListener("click", () => proteger(confirmarBacktest));
 e.form_comparacao_selecao.addEventListener("submit", (evento) => proteger(() => comparar(evento)));

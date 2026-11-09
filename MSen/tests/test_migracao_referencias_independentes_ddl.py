@@ -13,7 +13,7 @@ class MigracaoReferenciasIndependentesDDLTestCase(unittest.TestCase):
     def test_016_permanece_na_sequencia_de_migracoes(self):
         versoes = tuple(item.versao for item in descobrir_migracoes(MIGRACOES))
         self.assertIn("016", versoes)
-        self.assertEqual("022", versoes[-1])
+        self.assertEqual("023", versoes[-1])
 
     def test_representa_valor_ausente_e_identifica_revisor(self):
         sql = (MIGRACOES / "016_referencias_independentes_validacao.sql").read_text(

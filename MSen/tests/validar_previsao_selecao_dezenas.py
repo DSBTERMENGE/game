@@ -1,4 +1,4 @@
-"""Valida preservação, conferência e nova origem das previsões futuras."""
+"""Valida preservação, conferência e avanço sequencial do concurso-alvo."""
 
 from decimal import Decimal
 import os
@@ -23,10 +23,10 @@ COLUNAS = (
 
 def configuracao() -> ConfiguracaoSelecaoDezenas:
     return ConfiguracaoSelecaoDezenas(
-        nome="Previsão horizonte 2",
+        nome="Previsão de alvo único",
         fator_k=Decimal("1.000000"), fator_j=Decimal("0.000000"),
         modo_quantidade="MAX", quantidade_dezenas=None,
-        horizonte_concursos=2, versao_calculo=1,
+        versao_calculo=1,
     )
 
 
@@ -54,12 +54,12 @@ def executar() -> None:
                     )
             primeira = emitir_previsao_futura(conexao, configuracao())
             assert primeira.concurso_corte == 505
-            assert (primeira.concurso_alvo_inicial, primeira.concurso_alvo_final) == (506, 507)
-            assert primeira.alvos_criados_agora == 2
+            assert (primeira.concurso_alvo_inicial, primeira.concurso_alvo_final) == (506, 506)
+            assert primeira.alvos_criados_agora == 1
             repetida = emitir_previsao_futura(conexao, configuracao())
             assert repetida.id_execucao_selecao == primeira.id_execucao_selecao
             assert repetida.alvos_criados_agora == 0
-            assert repetida.alvos_ja_existentes == 2
+            assert repetida.alvos_ja_existentes == 1
 
             with conexao.cursor() as cursor:
                 cursor.execute(
@@ -84,7 +84,7 @@ def executar() -> None:
             assert (
                 atualizacao.nova_previsao.concurso_alvo_inicial,
                 atualizacao.nova_previsao.concurso_alvo_final,
-            ) == (507, 508)
+            ) == (507, 507)
 
             with conexao.cursor() as cursor:
                 cursor.execute(
@@ -103,7 +103,7 @@ def executar() -> None:
                     "SELECT COUNT(1) FROM alvos_pesquisa_selecao "
                     "WHERE numero_concurso_alvo=507"
                 )
-                assert cursor.fetchone()[0] == 2
+                assert cursor.fetchone()[0] == 1
         print("Previsão congelada, conferência e nova origem validadas.")
     finally:
         remover(banco, temporario)

@@ -7,7 +7,6 @@ export function montarConfiguracao(valores) {
     fator_j: Number(valores.fator_j),
     modo_quantidade: modo,
     quantidade_dezenas: quantidade,
-    horizonte_concursos: Number(valores.horizonte_concursos),
     versao_calculo: Number(valores.versao_calculo),
   };
   if (!configuracao.nome) throw new Error("Informe o nome da configuração.");
@@ -15,7 +14,6 @@ export function montarConfiguracao(valores) {
   if (configuracao.fator_j < -configuracao.fator_k || configuracao.fator_j > configuracao.fator_k) throw new Error("O fator j deve permanecer entre -k e +k.");
   if (!["MAX", "FIXA"].includes(modo)) throw new Error("Escolha o modo de quantidade.");
   if (modo === "FIXA" && (!Number.isInteger(quantidade) || quantidade < 6 || quantidade > 60)) throw new Error("A quantidade fixa deve ficar entre 6 e 60.");
-  if (!Number.isInteger(configuracao.horizonte_concursos) || configuracao.horizonte_concursos < 1) throw new Error("O horizonte deve ser positivo.");
   if (!Number.isInteger(configuracao.versao_calculo) || configuracao.versao_calculo < 1) throw new Error("A versão deve ser positiva.");
   return configuracao;
 }

@@ -61,7 +61,7 @@ def emitir_previsao_futura(
     origem = _listar_resultados_ate(conexao, corte)
     assinatura = assinatura_resultados(origem)
     inicio = corte + 1
-    final = corte + configuracao.horizonte_concursos
+    final = inicio
     repositorio = RepositorioPesquisaSelecao(conexao)
     fonte = RepositorioFonteSelecaoDezenas(conexao)
     config_persistida = repositorio.criar_ou_buscar_configuracao(configuracao)
@@ -83,9 +83,8 @@ def emitir_previsao_futura(
     estatisticas = fonte.carregar_estatisticas_corte(corte)
     criados = 0
     try:
-        for alvo in range(inicio, final + 1):
-            if alvo in existentes:
-                continue
+        alvo = inicio
+        if alvo not in existentes:
             selecao = selecionar_dezenas_para_alvo(
                 estatisticas,
                 configuracao,
@@ -105,7 +104,7 @@ def emitir_previsao_futura(
                 ),
                 tuple(_converter_avaliacao(item) for item in selecao.avaliacoes),
             )
-            criados += 1
+            criados = 1
         repositorio.concluir_execucao(execucao.id_execucao_selecao)
     except Exception as erro:
         repositorio.registrar_falha(

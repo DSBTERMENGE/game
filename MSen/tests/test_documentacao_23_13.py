@@ -23,8 +23,8 @@ class TestDocumentacao2313(unittest.TestCase):
     def test_ajuda_expoe_formula_fluxo_custo_e_cautela(self):
         ajuda = (RAIZ / "frontend/selecao-dezenas.html").read_text(encoding="utf-8")
         for trecho in (
-            "última ocorrência + média dos intervalos + j × desvio-padrão",
-            "k × desvio-padrão",
+            "Mₐ = U + μ + j × σ",
+            "LIA = ⌊Mₐ − k × σ⌋",
             "C(N,6)",
             "Fluxo recomendado",
             "não garante desempenho futuro",

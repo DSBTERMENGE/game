@@ -29,7 +29,6 @@ def configuracao(nome: str, modo: str, quantidade: int | None):
         fator_j=Decimal("0.000000"),
         modo_quantidade=modo,
         quantidade_dezenas=quantidade,
-        horizonte_concursos=1,
         versao_calculo=1,
     )
 

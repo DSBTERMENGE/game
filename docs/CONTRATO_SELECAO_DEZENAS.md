@@ -107,23 +107,17 @@ limite_inferior <= concurso_alvo <= limite_superior
 - **Faixa no passado:** se o alvo for posterior ao corte mas estiver acima do
   limite superior, a dezena fica `FORA_DA_FAIXA`.
 
-## 7. Horizonte futuro
+## 7. Concurso-alvo
 
-O horizonte é uma quantidade inteira configurável:
+Se `L` é o último concurso armazenado, o único concurso-alvo calculado é
+`CA = L + 1`. Não existe horizonte configurável nem cálculo de concursos além
+desse alvo, pois a metodologia recalcula as estatísticas após cada resultado
+novo.
 
-```text
-horizonte >= 1
-valor padrão: 1
-```
-
-Se `L` é o último concurso armazenado, são consultados os alvos de `L + 1` até
-`L + horizonte`. Todos usam o mesmo corte real `L`; resultados intermediários
-não são inventados. Para cada alvo, entram somente as dezenas cuja faixa o
-contenha.
-
-Quando novos resultados forem importados, previsões já emitidas serão apenas
-conferidas e preservadas. Uma nova previsão poderá ser produzida com o novo
-corte, sem reescrever a anterior.
+O alvo usa como corte o concurso `L`. Quando o resultado de `CA` for importado,
+a previsão congelada será conferida e preservada. Somente então uma nova
+previsão poderá ser produzida para `CA + 1`, usando a base atualizada e sem
+reescrever a previsão anterior.
 
 ## 8. Benefício e risco do deslocamento `j`
 
@@ -180,10 +174,11 @@ A seleção para o alvo 500 é calculada exclusivamente com concursos 1 a 499.
 Somente após congelar a lista de candidatas o resultado 500 pode ser lido para
 conferência.
 
-### 9.6. Horizonte
+### 9.6. Concurso-alvo único
 
-Com último concurso 3090 e horizonte padrão 1, somente 3091 é avaliado. Com
-horizonte 3, os alvos são 3091, 3092 e 3093, todos calculados com corte 3090.
+Com último concurso cadastrado 3090, somente 3091 é calculado, com corte 3090.
+Depois da importação do resultado 3091, ele é conferido e o sistema pode
+calcular 3092 com corte 3091.
 
 ## 10. Fora do escopo da subetapa 23.0
 

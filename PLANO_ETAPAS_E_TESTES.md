@@ -4876,16 +4876,265 @@ Playwright específicos da página, todos aprovados. Evidência detalhada em
 `MSen/tests/TESTE_ITEM_23_13.md`. A Etapa 23 está liberada para avaliação do
 usuário antes de qualquer commit ou push.
 
-**Conclusão (2026-11-03):** subetapa concluída. A ajuda modal da página foi
-ampliada bloco a bloco com fórmula, parâmetros, modos de quantidade, proteção
-temporal do backtest, previsão futura, custo combinatório, fluxo recomendado e
-cuidados de interpretação. A documentação funcional, técnica, de decisões, da
-API e do modelo de pesquisa foi reconciliada com as tabelas e rotas realmente
-implementadas, inclusive os lotes e jogos da migração 022. Foi acrescentado um
-teste automático de consistência para impedir que fórmulas, rotas, tabelas ou
-decisões superadas voltem a divergir da implementação.
+## Etapa 24 — Substituição do horizonte futuro por um único concurso-alvo
 
-Validação final: 679 testes Python, 86 testes unitários do frontend e 2 testes
-Playwright específicos da página, todos aprovados. Evidência detalhada em
-`MSen/tests/TESTE_ITEM_23_13.md`. A Etapa 23 está liberada para avaliação do
-usuário antes de qualquer commit ou push.
+### Objetivo e regra consolidada
+
+Eliminar o conceito configurável de vários “concursos futuros”. Cada cálculo
+deve considerar somente o concurso imediatamente posterior ao último resultado
+cadastrado:
+
+```text
+CA = último concurso cadastrado + 1
+```
+
+Para cada dezena, o sistema calcula sua faixa ajustada de aceitação a partir da
+última ocorrência `U`, da média histórica `μ`, do desvio-padrão `σ` e dos
+fatores `k` e `j`. A dezena é aprovada quando `LIA <= CA <= LSA`. Depois da
+importação de um novo resultado, o sistema deve recalcular a seleção para o
+novo CA; não deve antecipar `CA+1`, `CA+2` ou outros alvos usando o mesmo corte.
+
+As autorizações serão concedidas por etapa. As subetapas abaixo são checklists
+internos e não exigem autorizações individuais.
+
+### 24.1 — Planejamento e diagnóstico
+
+**Autorizada pelo usuário em 08/11/2026.** Esta etapa não altera regras de
+negócio, banco, API ou interface.
+
+- Mapear todas as dependências de `horizonte_concursos`.
+- Identificar riscos para configurações e execuções já persistidas.
+- Definir a ordem segura das alterações.
+- Registrar critérios de validação e pontos que dependem do banco local.
+
+#### Diagnóstico concluído
+
+`horizonte_concursos` não é apenas um controle da página. Ele participa de:
+
+- coluna, valor padrão e restrição `CHECK` de
+  `configuracoes_pesquisa_selecao`;
+- função e gatilho que protegem configurações já usadas contra alteração;
+- modelo `ConfiguracaoSelecaoDezenas`, validação e conteúdo assinado;
+- leitura e gravação do repositório de configurações;
+- fotografia JSON preservada em cada execução;
+- contrato e prévia da API;
+- serviço que atualmente cria o intervalo entre `corte+1` e
+  `corte+horizonte_concursos`;
+- formulário, controles JavaScript, testes de frontend e testes de navegador;
+- testes Python, validadores integrados, documentação da API e modelo de dados;
+- textos e conclusões históricas das subetapas 23.7, 23.9, 23.10, 23.12 e
+  23.13.
+
+As execuções preservam `concurso_alvo_inicial`, `concurso_alvo_final`,
+`total_alvos`, `configuracao_json` e `assinatura_configuracao`. Portanto, a
+remoção do horizonte da configuração atual não exige apagar o histórico das
+execuções antigas. Fotografias antigas podem continuar contendo o atributo
+legado para preservar sua reprodução e auditoria.
+
+Existe risco de duas configurações antigas, diferentes somente pelo horizonte,
+se tornarem semanticamente equivalentes depois da mudança. Antes da migração é
+obrigatório consultar:
+
+- quantidade de configurações existentes;
+- quantidade com `horizonte_concursos > 1`;
+- maior horizonte gravado;
+- quantidade de execuções `PREVISAO_FUTURA` com mais de um alvo;
+- grupos de configurações equivalentes quando o horizonte é desconsiderado.
+
+Essa consulta não pôde ser realizada durante a etapa 24.1 porque as variáveis
+`GAME_DB_*` não estavam disponíveis na sessão. A etapa 24.2 não poderá aplicar
+a migração ao banco real antes dessa verificação.
+
+#### Estratégia recomendada
+
+1. Não modificar a migração histórica 021.
+2. Criar uma nova migração 023, reversível por transação e precedida por
+   verificações de integridade.
+3. Preservar execuções e fotografias históricas sem recalculá-las.
+4. Retirar o horizonte das novas configurações, de sua assinatura e do
+   contrato atual da API.
+5. Fazer toda nova previsão possuir `inicio = final = corte + 1` e
+   `total_alvos = 1`.
+6. Tratar configurações equivalentes antes de remover a coluna, sem apagar
+   execuções vinculadas.
+7. Atualizar o esquema consolidado somente junto com a nova migração; os
+   arquivos 021 e 022 permanecem como história imutável.
+
+### 24.2 — Banco e backend
+
+**Autorizada pelo usuário e concluída na implementação em 08/11/2026.** A
+migração foi aplicada ao banco local real após a autorização específica
+registrada ao final da etapa 24.4.
+
+- Executar o diagnóstico somente leitura no banco configurado.
+- Definir e testar a consolidação de configurações equivalentes.
+- Criar a migração 023 e atualizar o esquema consolidado.
+- Remover `horizonte_concursos` do modelo, assinatura e repositório atuais.
+- Ajustar API e serviço para produzir somente `CA = corte + 1`.
+- Preservar fotografias e execuções históricas.
+- Criar ou adaptar testes unitários, de API, repositório e migração.
+
+Critério de conclusão: uma nova configuração não contém horizonte; toda nova
+previsão possui exatamente um alvo; registros históricos continuam
+consultáveis e suas assinaturas/fotografias não são reescritas.
+
+#### Resultado da etapa 24.2
+
+- A consulta somente leitura ao banco `games` encontrou 0 configurações, 0
+  execuções, 0 previsões com múltiplos alvos e 0 grupos de configurações
+  equivalentes sem o horizonte.
+- A migração 023 remove `horizonte_concursos`, acrescenta
+  `versao_assinatura` e arquiva configurações legadas sem apagar suas
+  execuções ou fotografias.
+- Assinaturas versão 1 permanecem reconhecíveis como legadas; novas
+  configurações usam versão 2 e não incluem horizonte no conteúdo assinado.
+- O repositório lista somente configurações disponíveis e usa a assinatura
+  persistida ao vincular uma execução, preservando referências históricas.
+- O serviço de previsão cria somente `corte + 1`; início e fim são iguais e o
+  total de alvos é sempre 1.
+- A API atual aceita temporariamente o campo legado somente quando seu valor é
+  1, para manter a página funcional até a etapa 24.3. Valores maiores são
+  recusados e o campo não integra o modelo nem a assinatura.
+- A migração completa e o fluxo sequencial foram validados em bancos efêmeros:
+  a previsão 506 foi congelada e conferida; após importar o resultado 506, uma
+  nova execução calculou somente o alvo 507.
+
+Validações: 683 testes Python, 86 testes unitários do frontend, validador
+integrado de previsão e validador integrado da API aprovados. O aviso de
+`ResourceWarning` de arquivos do Screener já existente não causou falhas.
+
+### 24.3 — Interface e ajuda
+
+**Autorizada pelo usuário e concluída em 08/11/2026.**
+
+- Remover o campo “Concursos futuros” do formulário e dos controles JS.
+- Remover referências ao horizonte da assinatura exibida.
+- Fazer “Analisar configuração” apresentar somente o CA calculado com a base
+  atual e, quando definido, o detalhamento das faixas por dezena.
+- Reescrever o bloco “Prévia e previsão futura” com a nova regra sequencial.
+- Reconciliar o fluxo recomendado e os demais textos da ajuda.
+- Atualizar testes de frontend e navegador.
+
+Critério de conclusão: a interface não permite nem sugere vários alvos usando o
+mesmo corte e explica que um novo resultado exige novo cálculo.
+
+#### Resultado da etapa 24.3
+
+- O campo “Concursos futuros” foi removido do formulário, dos controles
+  JavaScript e do contrato HTTP aceito pela API.
+- O bloco visível passou a se chamar “Previsão do próximo concurso” e o comando
+  passou a ser “Calcular concurso-alvo”.
+- O resumo da previsão apresenta somente o corte e um CA, sem intervalo entre
+  alvos.
+- A assinatura exibida não inclui horizonte; o CA é explicado como informação
+  calculada novamente a partir da base, não como parte da configuração.
+- A ajuda diferencia “Analisar configuração”, que é momentâneo, de “Calcular
+  concurso-alvo”, que preserva a seleção para conferência posterior.
+- O fluxo recomendado orienta importar o resultado, conferir a previsão
+  preservada e somente então recalcular para o concurso seguinte.
+- Não restaram referências funcionais ou visíveis a concursos futuros ou ao
+  horizonte no frontend e no código atual da API.
+
+Validações: 86 testes unitários do frontend, 17 testes Python focados, validador
+integrado da API e 2 testes Playwright da página aprovados.
+
+### 24.4 — Validação final e documentação
+
+**Autorizada pelo usuário e concluída em 08/11/2026.** A migração 023 foi
+posteriormente autorizada e aplicada ao banco local `games` na mesma data.
+
+- Executar regressões Python, frontend, API, banco e navegador.
+- Validar migração em banco efêmero e, mediante autorização específica,
+  aplicá-la ao banco local configurado.
+- Atualizar documentação da API, modelo de dados, evidências de teste e as
+  conclusões afetadas da Etapa 23, preservando o registro da decisão anterior.
+- Apresentar diferenças, resultados e pendências ao usuário antes de qualquer
+  commit ou push.
+
+Critério de conclusão: código, banco, interface, testes e documentação usam um
+único conceito de CA e não mantêm dependência funcional do horizonte removido.
+
+#### Resultado da etapa 24.4
+
+- A documentação da API, do contrato matemático, do backtest, do modelo de
+  dados e do funcionamento geral foi reconciliada com o concurso-alvo único.
+- As evidências históricas afetadas da Etapa 23 receberam aviso de superação,
+  sem apagar a decisão e os testes executados na época.
+- A migração 023 foi exercitada em PostgreSQL efêmero, inclusive a remoção da
+  coluna, a assinatura versão 2 e o avanço sequencial 506 para 507.
+- Não existe dependência funcional do horizonte no modelo, serviço, API ou
+  interface atuais. Menções remanescentes documentam migração e legado.
+- Após autorização específica, a migração 023 foi aplicada e registrada no
+  banco local `games`. A auditoria confirmou a remoção de
+  `horizonte_concursos`, `versao_assinatura` obrigatória com padrão 2 e a
+  preservação das cardinalidades existentes: 0 configurações e 0 execuções.
+
+Validação final: 683 testes Python, 86 testes unitários do frontend, 2 testes
+Playwright específicos e os validadores integrados de previsão e API foram
+aprovados. Evidência detalhada em `MSen/tests/TESTE_ETAPA_24_4.md`.
+
+#### Ajuste posterior de usabilidade e assinatura
+
+Durante o primeiro salvamento manual, foi identificado que números JSON como
+`1` e valores PostgreSQL como `1.000000` produziam assinaturas diferentes. Os
+fatores passaram a ser normalizados para seis casas decimais antes do cálculo,
+eliminando a falsa divergência.
+
+A assinatura técnica foi retirada da interface normal. Configurações salvas
+agora carregam com campos e botão de gravação desabilitados; para testar outros
+valores, o usuário escolhe `Nova configuração`. A Ajuda explica a imutabilidade
+e as mensagens informam em linguagem operacional se houve ou não gravação.
+
+Validação do ajuste: 684 testes Python, 86 testes unitários do frontend, 3
+testes Playwright e o fluxo integrado da API com `k = 1` e `j = 0` numéricos
+foram aprovados.
+
+#### Reconstrução do bloco de previsão
+
+O bloco antes denominado `Previsão do próximo concurso` foi reconstruído como
+`Registrar previsão para conferência`. O texto agora explica que a ação guarda,
+antes do sorteio, a lista de dezenas do próximo concurso para conferência após
+a importação do resultado; também informa que não executa backtest nem cria
+jogos.
+
+O comando passou a ser `Registrar previsão do próximo concurso` e, depois da
+análise, inclui o número do concurso no rótulo. Estado, mensagens e colunas da
+tabela foram reescritos em linguagem operacional. A Ajuda passou a diferenciar
+a pergunta respondida pela análise momentânea daquela respondida pelo registro
+da previsão. Validação: 86 testes unitários do frontend e 3 testes Playwright
+aprovados.
+
+#### Confirmação e configuração salva no registro do screener
+
+O registro da seleção passou a exigir confirmação explícita. O primeiro clique
+calcula uma prévia sem gravar e apresenta configuração, concurso, corte,
+quantidade, dezenas e combinações. Cancelar, fechar ou pressionar Esc não grava;
+somente `Confirmar e registrar seleção` autoriza a persistência.
+
+Somente configurações previamente salvas e disponíveis podem originar o
+registro. A opção `Nova configuração` mantém o comando desabilitado, e a API
+recebe apenas `id_configuracao_selecao`, impedindo criação implícita por chamada
+direta. Repetir a mesma configuração, origem e concurso recupera o registro
+existente sem sobrescrever ou duplicar. Configurações diferentes permanecem
+aptas a produzir listas e quantidades diferentes para o mesmo concurso.
+
+Validação: 685 testes Python, 86 testes unitários do frontend, 4 testes
+Playwright e o fluxo integrado PostgreSQL foram aprovados. A integração
+confirmou cancelamento sem POST, confirmação por ID, repetição idempotente e
+duas configurações com listas de 7 e 6 dezenas para o mesmo concurso.
+
+#### Ajuste posterior de usabilidade e assinatura
+
+Durante o primeiro salvamento manual, foi identificado que números JSON como
+`1` e valores PostgreSQL como `1.000000` produziam assinaturas diferentes. Os
+fatores passaram a ser normalizados para seis casas decimais antes do cálculo,
+eliminando a falsa divergência.
+
+A assinatura técnica foi retirada da interface normal. Configurações salvas
+agora carregam com campos e botão de gravação desabilitados; para testar outros
+valores, o usuário escolhe `Nova configuração`. A Ajuda explica a imutabilidade
+e as mensagens informam em linguagem operacional se houve ou não gravação.
+
+Validação do ajuste: 684 testes Python, 86 testes unitários do frontend, 3
+testes Playwright e o fluxo integrado da API com `k = 1` e `j = 0` numéricos
+foram aprovados.

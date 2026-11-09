@@ -10,7 +10,7 @@ let servidor;
 const configuracao = {
   nome: "Seleção inicial", fator_k: "1.000000", fator_j: "0.000000",
   modo_quantidade: "MAX", quantidade_dezenas: null,
-  horizonte_concursos: 1, versao_calculo: 1, assinatura_sha256: "a".repeat(64),
+  versao_calculo: 1, assinatura_sha256: "a".repeat(64),
 };
 const detalhe = {
   id_alvo_selecao: 9, numero_concurso_alvo: 3070, numero_concurso_corte: 3069,
@@ -48,32 +48,85 @@ test.afterAll(async () => {
 });
 
 async function preparar(page) {
+  const chamadas = { registros: 0, corpoRegistro: null };
   await page.route("**/api/selecao-dezenas/configuracoes", (rota) => rota.fulfill({
     status: 200, contentType: "application/json",
     body: JSON.stringify({ configuracoes: [{ id_configuracao_selecao: 1, configuracao }] }),
   }));
-  await page.route("**/api/selecao-dezenas/previsoes", (rota) => rota.fulfill({
+  await page.route("**/api/selecao-dezenas/previa", (rota) => rota.fulfill({
     status: 200, contentType: "application/json",
     body: JSON.stringify({
-      nova_previsao: { id_execucao_selecao: 8, concurso_corte: 3069, concurso_alvo_inicial: 3070, concurso_alvo_final: 3070 },
-      conferencia: { previsoes_conferidas: 0 },
+      resultados: { primeiro: 1, ultimo: 3069, quantidade: 3069 },
+      backtest: { concurso_inicial: 500, concurso_final: 3069, quantidade_alvos: 2570 },
+      analise_configuracao: {
+        concurso_corte: 3069, concurso_alvo: 3070, quantidade_aprovada: 6,
+        quantidade_retornada: 6, dezenas_retornadas: [1, 7, 12, 23, 34, 55],
+        quantidade_combinacoes: 1,
+      },
     }),
   }));
+  await page.route("**/api/selecao-dezenas/previsoes", async (rota) => {
+    chamadas.registros += 1;
+    chamadas.corpoRegistro = rota.request().postDataJSON();
+    await rota.fulfill({
+      status: 200, contentType: "application/json",
+      body: JSON.stringify({
+        nova_previsao: { id_execucao_selecao: 8, concurso_corte: 3069, concurso_alvo_inicial: 3070, concurso_alvo_final: 3070, alvos_criados_agora: 1 },
+        conferencia: { previsoes_conferidas: 0 },
+      }),
+    });
+  });
   await page.route("**/api/selecao-dezenas/previsoes/8/detalhes", (rota) => rota.fulfill({
     status: 200, contentType: "application/json", body: JSON.stringify({ detalhes: [detalhe] }),
   }));
   await page.goto("/selecao-dezenas.html");
   await expect(page.locator("#mensagem-selecao")).toContainText("1 configuração");
+  return chamadas;
 }
 
-test("exibe previsão futura, parâmetros e resultado ainda pendente", async ({ page }) => {
-  await preparar(page);
+test("confirma antes de registrar e exibe o resultado pendente", async ({ page }) => {
+  const chamadas = await preparar(page);
+  await expect(page.locator("#selecao-nome")).toBeDisabled();
+  await expect(page.locator("#selecao-fator-k")).toBeDisabled();
+  await expect(page.locator("#botao-salvar-configuracao")).toBeDisabled();
+  await expect(page.locator("#estado-edicao-configuracao")).toContainText("protegidos contra alterações");
+  await expect(page.locator("#titulo-concurso-alvo")).toHaveText("Registros do screener de dezenas");
   await page.locator("#botao-atualizar-previsao").click();
+  await expect(page.locator("#dialogo-confirmar-registro")).toBeVisible();
+  await expect(page.locator("#registro-concurso")).toHaveText("3070");
+  await expect(page.locator("#registro-quantidade")).toHaveText("6");
+  await expect(page.locator("#registro-dezenas")).toHaveText("01 · 07 · 12 · 23 · 34 · 55");
+  expect(chamadas.registros).toBe(0);
+  await page.locator("#botao-confirmar-registro").click();
+  await expect(page.locator("#resumo-previsao")).toContainText("Previsão registrada para o concurso 3070");
+  await expect(page.locator("#mensagem-selecao")).toContainText("Nenhum backtest, combinação ou jogo foi criado");
+  expect(chamadas.registros).toBe(1);
+  expect(chamadas.corpoRegistro).toEqual({ id_configuracao_selecao: 1 });
   const celulas = page.locator("#corpo-previsoes tr").first().locator("td");
   await expect(celulas).toHaveCount(7);
   await expect(celulas.nth(2)).toHaveText("Aguardando resultado");
   await expect(celulas.nth(3)).toHaveText("01 · 07 · 12 · 23 · 34 · 55");
   await expect(celulas.nth(5)).toContainText("k 1; j 0; máximo aprovado");
+});
+
+test("cancelar a confirmação não registra", async ({ page }) => {
+  const chamadas = await preparar(page);
+  await page.locator("#botao-atualizar-previsao").click();
+  await expect(page.locator("#dialogo-confirmar-registro")).toBeVisible();
+  await page.locator("#botao-cancelar-registro").click();
+  await expect(page.locator("#dialogo-confirmar-registro")).not.toBeVisible();
+  await expect(page.locator("#mensagem-selecao")).toContainText("Nenhum dado foi gravado");
+  expect(chamadas.registros).toBe(0);
+});
+
+test("nova configuração libera os campos para preenchimento", async ({ page }) => {
+  await preparar(page);
+  await page.locator("#configuracao-gravada-selecao").selectOption("");
+  await expect(page.locator("#selecao-nome")).toBeEnabled();
+  await expect(page.locator("#selecao-fator-k")).toBeEnabled();
+  await expect(page.locator("#botao-salvar-configuracao")).toBeEnabled();
+  await expect(page.locator("#botao-atualizar-previsao")).toBeDisabled();
+  await expect(page.locator("#mensagem-selecao")).toContainText("Nenhum dado foi gravado");
 });
 
 test("consolida período, tamanho dos conjuntos e classes exclusivas do backtest", async ({ page }) => {

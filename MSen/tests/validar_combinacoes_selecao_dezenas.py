@@ -51,7 +51,6 @@ def executar() -> None:
                 fator_j=Decimal("0.000000"),
                 modo_quantidade="FIXA",
                 quantidade_dezenas=7,
-                horizonte_concursos=1,
                 versao_calculo=1,
             )
             previsao = emitir_previsao_futura(conexao, configuracao)

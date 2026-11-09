@@ -13,7 +13,7 @@ def configuracao(*, k="0.5", j="0", modo="MAX", quantidade=None):
     return ConfiguracaoSelecaoDezenas(
         nome="Teste", fator_k=Decimal(k), fator_j=Decimal(j),
         modo_quantidade=modo, quantidade_dezenas=quantidade,
-        horizonte_concursos=1, versao_calculo=1,
+        versao_calculo=1,
     )
 
 

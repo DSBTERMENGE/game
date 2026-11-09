@@ -14,6 +14,7 @@
 .selecao-form-linha { display: flex; flex-wrap: wrap; align-items: end; gap: .4rem; margin-top: .45rem; }
 .selecao-form-linha label { min-width: 10rem; flex: 1; }
 .selecao-resultado { margin-top: .45rem; padding: .45rem .55rem; border: 1px solid #d7e0e2; border-radius: .25rem; background: #f7fafb; font-size: .75rem; line-height: 1.45; }
+.selecao-estado-edicao { margin: .45rem 0 0; color: #405b61; font-size: .75rem; line-height: 1.4; }
 .selecao-progresso { margin-top: .5rem; font-size: .72rem; }
 .selecao-classes { display: grid; grid-template-columns: repeat(7, minmax(4.5rem, 1fr)); gap: .3rem; margin-top: .4rem; }
 .selecao-classe { padding: .35rem; border: 1px solid #d7e0e2; background: #f8fbfb; text-align: center; font-size: .68rem; }
@@ -35,7 +36,52 @@
 .selecao-ajuda > form > div { overflow: auto; padding: .3rem 1rem 1rem; }
 .selecao-ajuda section { padding: .7rem 0; border-bottom: 1px solid #e0e7e9; }
 .selecao-ajuda h3 { margin: 0 0 .3rem; color: #1e5d68; font-size: .95rem; }
+.selecao-ajuda h4 { margin: .8rem 0 .3rem; color: #315f68; font-size: .9rem; }
 .selecao-ajuda p { margin: .25rem 0; line-height: 1.45; }
+.selecao-ajuda .selecao-formula { margin: .65rem 0; padding: .65rem .8rem; overflow-x: auto; border-left: .25rem solid #43808b; background: #f2f7f8; line-height: 1.7; }
+.selecao-diagrama-faixa { margin: .8rem 0; padding: .7rem; border: 1px solid #c8d8dc; border-radius: .35rem; background: #fbfdfd; }
+.selecao-diagrama-faixa h4 { margin-top: 0; }
+.selecao-diagrama-faixa__legenda { display: grid; grid-template-columns: minmax(12rem, .8fr) minmax(25rem, 2fr); gap: .65rem 1.2rem; margin: .45rem 0 .2rem; padding: .6rem .7rem; border-radius: .3rem; background: #f2f7f8; font-size: .76rem; }
+.selecao-diagrama-faixa__legenda-linhas { display: grid; align-content: start; gap: .35rem; }
+.selecao-diagrama-faixa__legenda-linhas span { display: flex; align-items: center; gap: .45rem; }
+.selecao-diagrama-faixa__amostra { display: inline-block; flex: 0 0 2.7rem; height: 0; border-top: 3px solid #367884; }
+.selecao-diagrama-faixa__amostra--historico { border-top-width: 7px; border-color: #8ba8ae; }
+.selecao-diagrama-faixa__amostra--faixa { border-top-width: 7px; border-color: #2f7884; }
+.selecao-diagrama-faixa__amostra--alvo { border-top: 2px dashed #a33c32; }
+.selecao-diagrama-faixa__amostra--deslocamento { height: 0; border-top: 2px dashed #a33c32; }
+.selecao-diagrama-faixa__legenda dl { display: grid; grid-template-columns: repeat(3, minmax(9rem, 1fr)); gap: .28rem .8rem; margin: 0; }
+.selecao-diagrama-faixa__legenda dl div { display: flex; gap: .25rem; min-width: 0; }
+.selecao-diagrama-faixa__legenda dt { flex: 0 0 auto; font-weight: 700; color: #315f68; }
+.selecao-diagrama-faixa__legenda dd { margin: 0; }
+.selecao-diagrama-faixa svg { display: block; width: 100%; height: auto; min-width: 42rem; }
+.selecao-diagrama-faixa { overflow-x: auto; }
+.selecao-diagrama-faixa__area { fill: #dbeef0; opacity: .75; }
+.selecao-diagrama-faixa__curva { fill: none; stroke: #367884; stroke-width: 3; }
+.selecao-diagrama-faixa__eixo { stroke: #52676c; stroke-width: 2; }
+.selecao-diagrama-faixa__historico { stroke: #8ba8ae; stroke-width: 8; stroke-linecap: round; }
+.selecao-diagrama-faixa__faixa { stroke: #2f7884; stroke-width: 7; stroke-linecap: round; }
+.selecao-diagrama-faixa__marco line, .selecao-diagrama-faixa__possivel line, .selecao-diagrama-faixa__extremo line, .selecao-diagrama-faixa__historico-marco line, .selecao-diagrama-faixa__limite line, .selecao-diagrama-faixa__referencia line, .selecao-diagrama-faixa__meio line { stroke: #52676c; stroke-width: 1.5; }
+.selecao-diagrama-faixa__historico-marco line { stroke: #78969c; stroke-dasharray: 3 3; }
+.selecao-diagrama-faixa__alvo line { stroke: #a33c32; stroke-width: 2.5; stroke-dasharray: 5 4; }
+.selecao-diagrama-faixa__deslocamento { stroke: #a33c32; stroke-width: 1.25; stroke-dasharray: 5 4; }
+.selecao-diagrama-faixa__deslocamento-j { stroke-dasharray: 3 3; }
+.selecao-diagrama-faixa marker path { fill: none; stroke: #a33c32; stroke-width: 1.25; }
+.selecao-diagrama-faixa__chamada { fill: none; stroke: #842d26; stroke-width: 1; }
+.selecao-diagrama-faixa__texto-chamada { fill: #842d26 !important; font-size: 11px !important; font-weight: 700 !important; text-anchor: middle !important; }
+.selecao-diagrama-faixa__marco circle, .selecao-diagrama-faixa__extremo circle, .selecao-diagrama-faixa__historico-marco circle, .selecao-diagrama-faixa__limite circle, .selecao-diagrama-faixa__referencia circle, .selecao-diagrama-faixa__meio circle { fill: #2f7884; }
+.selecao-diagrama-faixa__possivel { opacity: .75; }
+.selecao-diagrama-faixa__alvo circle { fill: #a33c32; }
+.selecao-diagrama-faixa text { fill: #283f44; font: 12px sans-serif; text-anchor: middle; }
+.selecao-diagrama-faixa__alvo text { fill: #842d26; font-weight: 700; }
+.selecao-diagrama-faixa__rotulo { font-size: 11px !important; font-style: italic !important; }
+.selecao-diagrama-faixa__rotulo--historico { fill: #617b81 !important; }
+.selecao-diagrama-faixa__rotulo--faixa { fill: #1f6672 !important; font-weight: 700 !important; }
+.selecao-diagrama-faixa__escala { fill: #52676c !important; font-size: 11px !important; font-style: italic !important; }
+.selecao-diagrama-faixa figcaption { margin-top: .45rem; line-height: 1.45; }
+@media (max-width: 760px) {
+  .selecao-diagrama-faixa__legenda { grid-template-columns: 1fr; }
+  .selecao-diagrama-faixa__legenda dl { grid-template-columns: repeat(2, minmax(9rem, 1fr)); }
+}
 .selecao-ajuda footer { justify-content: flex-end; }
 .selecao-previa { width: min(42rem, calc(100vw - 2rem)); padding: 0; border: 1px solid #78949c; border-radius: .45rem; }
 .selecao-previa::backdrop { background: rgb(17 34 40 / 58%); }

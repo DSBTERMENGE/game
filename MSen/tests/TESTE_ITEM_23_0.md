@@ -2,6 +2,10 @@
 
 Data: 03/11/2026
 
+> Registro histórico: o horizonte configurável descrito nesta evidência foi
+> substituído na Etapa 24 pelo concurso-alvo único `CA = último cadastrado + 1`.
+> A decisão original é mantida abaixo apenas para auditoria.
+
 ## Objetivo
 
 Fechar o contrato matemático e temporal da futura página `Seleção de dezenas`

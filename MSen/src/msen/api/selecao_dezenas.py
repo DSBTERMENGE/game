@@ -16,7 +16,9 @@ import psycopg
 
 from msen.config import carregar_configuracao_banco
 from msen.database import (
+    ErroFonteSelecaoDezenas,
     ErroRepositorioPesquisaSelecao,
+    RepositorioFonteSelecaoDezenas,
     RepositorioPesquisaSelecao,
     abrir_conexao,
 )
@@ -31,13 +33,14 @@ from msen.services import (
     executar_backtest_selecao,
     persistir_combinacoes_alvo,
     resumir_backtest,
+    selecionar_dezenas_para_alvo,
 )
 
 
 selecao_dezenas_api = Blueprint("selecao_dezenas_api", __name__)
 CAMPOS_CONFIGURACAO = frozenset({
     "nome", "fator_k", "fator_j", "modo_quantidade", "quantidade_dezenas",
-    "horizonte_concursos", "versao_calculo",
+    "versao_calculo",
 })
 
 
@@ -54,7 +57,12 @@ class ExecucaoSelecaoEmAndamento(RuntimeError):
 
 
 def _configuracao_json(dados: object) -> ConfiguracaoSelecaoDezenas:
-    if not isinstance(dados, dict) or set(dados) != CAMPOS_CONFIGURACAO:
+    if not isinstance(dados, dict):
+        raise ErroApiSelecaoDezenas(
+            "CONFIGURACAO_INVALIDA",
+            "A configuração deve possuir exatamente os campos documentados.",
+        )
+    if set(dados) != CAMPOS_CONFIGURACAO:
         raise ErroApiSelecaoDezenas(
             "CONFIGURACAO_INVALIDA",
             "A configuração deve possuir exatamente os campos documentados.",
@@ -66,7 +74,6 @@ def _configuracao_json(dados: object) -> ConfiguracaoSelecaoDezenas:
             fator_j=Decimal(str(dados["fator_j"])),
             modo_quantidade=dados["modo_quantidade"],
             quantidade_dezenas=dados["quantidade_dezenas"],
-            horizonte_concursos=dados["horizonte_concursos"],
             versao_calculo=dados["versao_calculo"],
         )
     except (TypeError, ValueError, InvalidOperation) as erro:
@@ -144,6 +151,21 @@ def preparar_pesquisa_no_banco(configuracao, concurso_inicial, concurso_final):
         with conexao.cursor() as cursor:
             cursor.execute("SELECT MIN(numero_ap),MAX(numero_ap),COUNT(*) FROM resultados")
             primeiro, ultimo, quantidade = cursor.fetchone()
+        if ultimo is not None:
+            try:
+                estatisticas = RepositorioFonteSelecaoDezenas(
+                    conexao
+                ).carregar_estatisticas_corte(ultimo)
+                analise = selecionar_dezenas_para_alvo(
+                    estatisticas,
+                    configuracao,
+                    numero_concurso_alvo=ultimo + 1,
+                    numero_concurso_corte=ultimo,
+                )
+            except ErroFonteSelecaoDezenas as erro:
+                raise ErroApiSelecaoDezenas(erro.codigo, str(erro)) from erro
+        else:
+            analise = None
     inicio = 500 if concurso_inicial is None else concurso_inicial
     final = ultimo if concurso_final is None else concurso_final
     if ultimo is None or inicio < 500 or final < inicio or final > ultimo:
@@ -158,8 +180,23 @@ def preparar_pesquisa_no_banco(configuracao, concurso_inicial, concurso_final):
         },
         "previsao_futura": {
             "concurso_inicial": ultimo + 1,
-            "concurso_final": ultimo + configuracao.horizonte_concursos,
-            "quantidade_alvos": configuracao.horizonte_concursos,
+            "concurso_final": ultimo + 1,
+            "quantidade_alvos": 1,
+        },
+        "analise_configuracao": None if analise is None else {
+            "concurso_corte": ultimo,
+            "concurso_alvo": ultimo + 1,
+            "avaliavel": analise.avaliavel,
+            "motivo": analise.motivo,
+            "dezenas_aprovadas": analise.dezenas_aprovadas,
+            "dezenas_retornadas": analise.dezenas_retornadas,
+            "quantidade_aprovada": len(analise.dezenas_aprovadas),
+            "quantidade_retornada": len(analise.dezenas_retornadas),
+            "limite_nao_atingido": analise.limite_nao_atingido,
+            "quantidade_combinacoes": calcular_previa_combinacoes(
+                analise.dezenas_retornadas
+            ).quantidade_combinacoes,
+            "persistida": False,
         },
     }
 
@@ -194,9 +231,12 @@ def comparar_no_banco(identificadores):
         return asdict(comparar_backtests(conexao, identificadores))
 
 
-def atualizar_previsoes_no_banco(configuracao):
+def atualizar_previsoes_no_banco(id_configuracao_selecao):
     with abrir_conexao(carregar_configuracao_banco()) as conexao:
-        return asdict(atualizar_previsoes_futuras(conexao, configuracao))
+        item = RepositorioPesquisaSelecao(conexao).buscar_configuracao_disponivel(
+            id_configuracao_selecao
+        )
+        return asdict(atualizar_previsoes_futuras(conexao, item.configuracao))
 
 
 def previa_jogos_no_banco(id_alvo):
@@ -448,9 +488,9 @@ def rota_comparar_backtests():
 @selecao_dezenas_api.post("/api/selecao-dezenas/previsoes")
 def rota_atualizar_previsoes():
     def executar():
-        dados = _corpo({"configuracao"})
+        dados = _corpo({"id_configuracao_selecao"})
         return jsonify(current_app.config["ATUALIZAR_PREVISOES_SELECAO"](
-            _configuracao_json(dados.get("configuracao"))
+            _inteiro(dados, "id_configuracao_selecao", minimo=1)
         ))
     return _executar_rota(executar)
 

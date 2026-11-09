@@ -20,11 +20,11 @@ COLUNAS = (
 def configuracao_json():
     return {
         "nome": "API integrada sete dezenas",
-        "fator_k": "1.000000",
-        "fator_j": "0.000000",
+        # O navegador envia números JSON sem preservar zeros decimais.
+        "fator_k": 1,
+        "fator_j": 0,
         "modo_quantidade": "FIXA",
         "quantidade_dezenas": 7,
-        "horizonte_concursos": 1,
         "versao_calculo": 1,
     }
 
@@ -84,6 +84,8 @@ def executar() -> None:
         assert previa.status_code == 200
         assert previa.json["backtest"]["quantidade_alvos"] == 6
         assert previa.json["previsao_futura"]["concurso_inicial"] == 506
+        assert previa.json["previsao_futura"]["concurso_final"] == 506
+        assert previa.json["previsao_futura"]["quantidade_alvos"] == 1
 
         inicio = cliente.post("/api/selecao-dezenas/backtests", json={
             "configuracao": configuracao_json(),
@@ -104,8 +106,9 @@ def executar() -> None:
         assert resumo.json["avaliados"] == 6
         assert len(detalhes.json["detalhes"]) == 6
 
+        id_configuracao = criada.json["id_configuracao_selecao"]
         previsao = cliente.post("/api/selecao-dezenas/previsoes", json={
-            "configuracao": configuracao_json()
+            "id_configuracao_selecao": id_configuracao
         })
         assert previsao.status_code == 200
         id_previsao = previsao.json["nova_previsao"]["id_execucao_selecao"]
@@ -113,6 +116,41 @@ def executar() -> None:
             f"/api/selecao-dezenas/previsoes/{id_previsao}/detalhes"
         ).json["detalhes"][0]
         assert alvo["numero_concurso_alvo"] == 506
+        repetida = cliente.post("/api/selecao-dezenas/previsoes", json={
+            "id_configuracao_selecao": id_configuracao
+        })
+        assert repetida.status_code == 200
+        assert repetida.json["nova_previsao"]["id_execucao_selecao"] == id_previsao
+        assert repetida.json["nova_previsao"]["alvos_criados_agora"] == 0
+
+        segunda_configuracao = configuracao_json() | {
+            "nome": "API integrada seis dezenas",
+            "quantidade_dezenas": 6,
+        }
+        criada_segunda = cliente.post(
+            "/api/selecao-dezenas/configuracoes",
+            json={"configuracao": segunda_configuracao},
+        )
+        assert criada_segunda.status_code == 201
+        segunda_previsao = cliente.post(
+            "/api/selecao-dezenas/previsoes",
+            json={
+                "id_configuracao_selecao": criada_segunda.json[
+                    "id_configuracao_selecao"
+                ]
+            },
+        )
+        assert segunda_previsao.status_code == 200
+        id_segunda = segunda_previsao.json["nova_previsao"][
+            "id_execucao_selecao"
+        ]
+        assert id_segunda != id_previsao
+        alvo_segunda = cliente.get(
+            f"/api/selecao-dezenas/previsoes/{id_segunda}/detalhes"
+        ).json["detalhes"][0]
+        assert alvo_segunda["numero_concurso_alvo"] == 506
+        assert alvo["quantidade_retornada"] == 7
+        assert alvo_segunda["quantidade_retornada"] == 6
         id_alvo = alvo["id_alvo_selecao"]
         jogos = cliente.get(
             f"/api/selecao-dezenas/alvos/{id_alvo}/jogos/previa"

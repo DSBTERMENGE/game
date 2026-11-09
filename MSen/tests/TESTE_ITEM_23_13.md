@@ -2,6 +2,10 @@
 
 Data: 2026-11-03
 
+> Registro histórico: as referências a horizonte e previsões futuras desta
+> evidência foram substituídas na Etapa 24. A ajuda vigente descreve um único
+> concurso-alvo calculado a cada atualização da base.
+
 ## Escopo verificado
 
 - ajuda modal da página `selecao-dezenas.html` explicada bloco a bloco;

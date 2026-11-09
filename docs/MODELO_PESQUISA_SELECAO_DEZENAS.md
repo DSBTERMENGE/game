@@ -1,13 +1,13 @@
 # Modelo relacional — Pesquisas da Seleção de dezenas
 
-Este documento nasceu na subetapa 23.3 e foi reconciliado na 23.13 com as
-migrações 021 e 022 efetivamente implementadas.
+Este documento nasceu na subetapa 23.3, foi reconciliado na 23.13 com as
+migrações 021 e 022 e atualizado na Etapa 24 para a migração 023.
 
 ## 1. Objetivos do modelo
 
 - preservar configurações diferentes para comparação;
 - reproduzir cada pesquisa pela configuração e assinatura dos resultados;
-- separar backtest de previsão futura;
+- separar backtest da previsão do próximo concurso;
 - registrar o que ocorreu em cada concurso-alvo;
 - auditar aprovação, ranking e retorno de cada uma das 60 dezenas;
 - não copiar as seis dezenas da tabela `resultados`;
@@ -47,8 +47,8 @@ Guarda configurações versionadas e reutilizáveis.
 | `fator_j` | `NUMERIC(12,6)` | `-k <= j <= k` |
 | `modo_quantidade` | `VARCHAR(10)` | `MAX` ou `FIXA` |
 | `quantidade_dezenas` | `SMALLINT` | `NULL` em `MAX`; 6 a 60 em `FIXA` |
-| `horizonte_concursos` | `SMALLINT` | inteiro maior ou igual a 1 |
 | `versao_calculo` | `INTEGER` | maior que zero |
+| `versao_assinatura` | `SMALLINT` | `2` para configurações sem horizonte |
 | `assinatura_sha256` | `CHAR(64)` | única, hexadecimal minúscula |
 | `estado` | `VARCHAR(12)` | `DISPONIVEL` ou `ARQUIVADA` |
 | `criada_em` | `TIMESTAMPTZ` | preenchimento automático |
@@ -57,6 +57,10 @@ Guarda configurações versionadas e reutilizáveis.
 A assinatura cobre todos os parâmetros matemáticos e operacionais. Uma
 configuração usada por execução torna-se imutável. Alterar parâmetros cria
 outra linha e outra assinatura; arquivar apenas impede novas execuções.
+
+A migração 023 remove `horizonte_concursos`. Configurações legadas de assinatura
+versão 1 são preservadas e arquivadas; configurações novas usam assinatura
+versão 2 e não incluem horizonte.
 
 Não haverá uma única configuração global obrigatória: várias configurações
 podem permanecer disponíveis para pesquisa comparativa.
@@ -100,6 +104,8 @@ FALHA
 `configuracao_json` preserva a configuração mesmo que seu nome ou estado
 administrativo mude. A combinação de tipo, assinaturas, versão e período deve
 possuir restrição de unicidade para tornar a execução idempotente.
+Instantâneos legados podem conter `horizonte_concursos`; os instantâneos atuais,
+de assinatura versão 2, não contêm esse campo.
 
 ## 5. `alvos_pesquisa_selecao`
 
@@ -124,9 +130,10 @@ Guarda o resultado de cada concurso-alvo.
 | `selecionado_em` | `TIMESTAMPTZ` | congelamento da seleção |
 | `conferido_em` | `TIMESTAMPTZ` | preenchido após resultado |
 
-No backtest, o corte é `alvo - 1`. Na previsão futura, todos os alvos usam como
-corte o último concurso real conhecido na execução. O par execução/alvo é
-único.
+No backtest, o corte é `alvo - 1`. Na previsão do próximo concurso, a execução
+possui um único alvo, igual a `corte + 1`. O par execução/alvo é único. O valor
+interno `PREVISAO_FUTURA` permanece no banco por compatibilidade do modelo; na
+interface ele é apresentado como previsão do concurso-alvo.
 
 Coerência por situação:
 
@@ -246,6 +253,7 @@ combinações brutas formadas pelas dezenas do primeiro Screener.
 
 - migração 021: configurações, execuções, alvos e avaliações;
 - migração 022: lotes e jogos autorizados;
+- migração 023: remoção do horizonte e assinatura de configuração versão 2;
 - repositório: `msen.database.pesquisa_selecao_repository`;
 - serviços: seleção, backtest, previsão e combinações;
 - API: `/api/selecao-dezenas`;
