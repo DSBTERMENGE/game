@@ -107,6 +107,15 @@ from .backtest_selecao_dezenas import (
     executar_backtest_selecao,
     resumir_backtest,
 )
+from .backtest_temporario_selecao_dezenas import (
+    ClasseBacktestTemporario,
+    ErroBacktestTemporario,
+    PontoBacktestTemporario,
+    RelatorioBacktestTemporario,
+    ResumoBacktestTemporario,
+    executar_backtest_temporario,
+    resumir_pontos_temporarios,
+)
 from .previsao_selecao_dezenas import (
     RelatorioAtualizacaoPrevisoes,
     RelatorioConferenciaPrevisoes,
@@ -228,6 +237,13 @@ __all__ = [
     "detalhar_backtest",
     "executar_backtest_selecao",
     "resumir_backtest",
+    "ClasseBacktestTemporario",
+    "ErroBacktestTemporario",
+    "PontoBacktestTemporario",
+    "RelatorioBacktestTemporario",
+    "ResumoBacktestTemporario",
+    "executar_backtest_temporario",
+    "resumir_pontos_temporarios",
     "RelatorioAtualizacaoPrevisoes",
     "RelatorioConferenciaPrevisoes",
     "RelatorioPrevisaoFutura",

@@ -1,5 +1,12 @@
 # Contrato do backtest e das métricas — Seleção de dezenas
 
+> **Contrato legado.** Este documento registra a decisão histórica da
+> subetapa 23.1 e continua descrevendo o motor persistente atualmente em uso.
+> Para o novo backtest paralelo, a decisão vigente está em
+> `docs/CONTRATO_BACKTEST_TEMPORARIO_SELECAO_DEZENAS.md`. Nada deste contrato
+> legado será removido antes da implantação, comparação e aprovação do novo
+> processo.
+
 Este documento fecha a subetapa 23.1. Ele define como conferir historicamente
 as seleções produzidas pelo contrato matemático da subetapa 23.0, sem criar
 tabelas, API ou página.

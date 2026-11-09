@@ -20,7 +20,9 @@ rascunhos, protótipos e relatórios antigos como descrição atual do sistema.
 | API da Frequência das dezenas | `docs/API_FREQUENCIAS.md` |
 | Contrato da Frequência das dezenas | `docs/CONTRATO_FREQUENCIA_DEZENAS.md` |
 | Contrato da Seleção de dezenas | `docs/CONTRATO_SELECAO_DEZENAS.md` |
-| Contrato do backtest da Seleção de dezenas | `docs/CONTRATO_BACKTEST_SELECAO_DEZENAS.md` |
+| Backtest persistente atualmente em uso | `docs/CONTRATO_BACKTEST_SELECAO_DEZENAS.md` |
+| Novo backtest temporário aprovado para implantação paralela | `docs/CONTRATO_BACKTEST_TEMPORARIO_SELECAO_DEZENAS.md` |
+| Auditoria de banco do novo backtest temporário | `docs/AUDITORIA_BANCO_BACKTEST_TEMPORARIO.md` |
 | Quantidade de dezenas e formação de jogos | `docs/CONTRATO_QUANTIDADE_COMBINACOES.md` |
 | Modelo das pesquisas da Seleção de dezenas | `docs/MODELO_PESQUISA_SELECAO_DEZENAS.md` |
 

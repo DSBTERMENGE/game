@@ -5089,6 +5089,120 @@ Validação do ajuste: 684 testes Python, 86 testes unitários do frontend, 3
 testes Playwright e o fluxo integrado da API com `k = 1` e `j = 0` numéricos
 foram aprovados.
 
+## Etapa 25 — Backtest temporário e relatório gráfico
+
+Esta etapa substitui progressivamente o backtest persistente por um cálculo
+reproduzível em memória. O processo antigo e suas tabelas permanecem intactos
+até que o novo motor tenha sido comparado, aprovado e colocado em uso.
+
+### 25.0 — Ponto de segurança
+
+**Autorizada e concluída em 09/11/2026.**
+
+- Alterações anteriores auditadas sem credenciais ou segredos.
+- Commit `7fd9287` criado na branch `developer`.
+- Push concluído para `origin/developer`.
+- Branch local e remota confirmadas no mesmo commit.
+- Diretório de trabalho confirmado sem alterações pendentes.
+- Validações disponíveis: 86 testes unitários do frontend e 4 testes
+  Playwright aprovados. A regressão Python anterior, executada após as mesmas
+  alterações, possuía 685 testes aprovados; não foi repetida nesta sessão
+  porque os interpretadores disponíveis não continham `pytest`.
+
+### 25.1 — Contrato do novo backtest
+
+**Autorizada pelo usuário e concluída em 09/11/2026.**
+
+- Resultados históricos validados são tratados como imutáveis.
+- O backtest recebe configuração salva, concurso inicial e concurso final.
+- Cada alvo usa somente resultados até o concurso anterior.
+- Por concurso, o relatório conserva temporariamente apenas concurso,
+  quantidade de dezenas retornadas e quantidade de acertos.
+- Avaliações analíticas das 60 dezenas são descartadas após cada cálculo.
+- Nenhum resultado derivado do novo backtest é gravado no PostgreSQL.
+- O primeiro gráfico mostra a quantidade retornada, mínimo, máximo e percurso.
+- O segundo mostra classes de 0 a 6, com 0 a 3 em vermelho e 4 a 6 em verde.
+- Os gráficos compartilham o eixo dos concursos; somente centenas possuem
+  linha vertical e rótulo.
+- O quadro-resumo apresenta testes, distribuição exclusiva de 0 a 6, mínimo,
+  máximo, médias e concursos com 4, 5 ou 6 acertos.
+- O processo antigo permanece vigente até a implantação e validação das etapas
+  seguintes.
+
+Contrato completo: `docs/CONTRATO_BACKTEST_TEMPORARIO_SELECAO_DEZENAS.md`.
+
+Critério de conclusão: entradas, isolamento temporal, dados transitórios,
+gráficos, resumo, cancelamento, ausência de persistência e critérios de
+aceitação estão definidos sem alterar banco, API, motor ou interface.
+
+### 25.2 — Banco e consultas de leitura
+
+**Autorizada pelo usuário e concluída em 09/11/2026.**
+
+- O banco `games` possui 3.069 resultados contíguos, do concurso 1 ao 3.069.
+- Existem duas configurações salvas e disponíveis.
+- A geração ativa possui 154.200 fotografias `SIMPLES`: 60 dezenas para cada
+  concurso de 500 a 3.069, sem fotografia incompleta.
+- O novo motor reutilizará essas fotografias como dados básicos do módulo de
+  frequências; não criará avaliações de backtest.
+- O índice único de `resultados.numero_ap` atende buscas e intervalos.
+- Os índices existentes do histórico de frequências atendem a leitura em lote;
+  a medição das 154.140 linhas necessárias aos cortes 500 a 3.068 foi de
+  aproximadamente 122 ms no banco local.
+- O primeiro alvo 500 exige reconstruir somente o corte 499, pois as
+  fotografias persistidas começam no concurso 500.
+- O repositório futuro deverá consumir as fotografias ordenadas em fluxo,
+  mantendo apenas um grupo de 60 dezenas por vez.
+- Não é necessária nova tabela, índice ou migração para o novo backtest.
+- As tabelas legadas foram preservadas e estavam vazias: zero execuções, zero
+  alvos e zero avaliações individuais.
+- A operação administrativa existente de atualização de resultado foi
+  registrada como exceção à regra operacional de imutabilidade, sem alteração
+  nesta etapa.
+
+Evidências: `docs/AUDITORIA_BANCO_BACKTEST_TEMPORARIO.md` e
+`MSen/tests/auditar_backtest_temporario.py`.
+
+Critério de conclusão: fontes, consultas, índices, tratamento do corte 499 e
+estratégia de memória estão definidos e medidos, sem escrita no banco.
+
+### 25.3 — Motor paralelo em memória
+
+**Autorizada pelo usuário e concluída em 09/11/2026.**
+
+- Criado repositório somente leitura com cursores de servidor para fotografias
+  estatísticas e resultados-alvo.
+- Toda execução ocorre em transação PostgreSQL `READ ONLY`.
+- Somente configurações salvas e disponíveis são aceitas.
+- O corte 499 é reconstruído; cortes posteriores são transmitidos da geração
+  ativa em grupos completos de 60 dezenas.
+- A seleção é calculada antes de o serviço consumir o resultado do alvo.
+- Cada concurso produz somente concurso, quantidade retornada e acertos.
+- O relatório em memória contém os pontos, classes exclusivas de 0 a 6,
+  mínimo, máximo, médias e quantidade de concursos nas classes 4, 5 ou 6.
+- Progresso e cancelamento foram implementados sem persistência ou retomada.
+- O período completo de 500 a 3.069 produziu 2.570 pontos em aproximadamente
+  5,21 segundos no ambiente local.
+- Cardinalidades de configurações, resultados, execuções, alvos e avaliações
+  permaneceram idênticas antes e depois.
+- O cancelamento foi validado e também não produziu gravação.
+- Motor persistente, API e interface atuais não foram alterados.
+
+Evidência: `MSen/tests/TESTE_ETAPA_25_3.md`.
+
+Critério de conclusão: o relatório completo é produzido em memória com
+isolamento temporal, progresso e cancelamento, enquanto o PostgreSQL impede
+escritas durante toda a operação.
+
+### Próximas etapas da Etapa 25
+
+1. 25.4 — disponibilizar API temporária e progresso não persistente;
+2. 25.5 — construir os gráficos e o quadro-resumo;
+3. 25.6 — comparar motores, medir desempenho e validar ausência de gravação;
+4. 25.7 — colocar o novo processo como principal, preservando o legado;
+5. 25.8 — validação manual com dados reais;
+6. 25.9 — planejar separadamente a retirada controlada do legado.
+
 #### Reconstrução do bloco de previsão
 
 O bloco antes denominado `Previsão do próximo concurso` foi reconstruído como
