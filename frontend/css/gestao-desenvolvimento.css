@@ -1,0 +1,24 @@
+.pagina-gestao-desenvolvimento { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; align-content: start; align-items: start; }
+.gestao-acoes { grid-column: 1 / -1; display: flex; justify-content: end; }
+#gestao-desenvolvimento { min-width: 0; }
+#gestao-desenvolvimento.crud-navegavel { gap: .55rem; }
+.gestao-cabecalho-acoes { display: flex; align-items: center; gap: .55rem; }
+#gestao-desenvolvimento .crud-navegavel__consulta { grid-template-columns: minmax(18rem, 2fr) repeat(4, minmax(9rem, 1fr)); }
+#gestao-desenvolvimento .crud-navegavel__consulta { grid-template-columns: minmax(18rem, 2fr) repeat(4, minmax(9rem, 1fr)); }
+#gestao-desenvolvimento .crud-navegavel__corpo { grid-template-columns: 1fr; }
+#gestao-desenvolvimento fieldset { column-gap: 1rem; row-gap: .9rem; }
+#gestao-desenvolvimento [data-campo="tipo"] { grid-column: span 3; }
+#gestao-desenvolvimento [data-campo="titulo"] { grid-column: span 4; }
+#gestao-desenvolvimento [data-campo="data_registro"] { grid-column: span 2; }
+#gestao-desenvolvimento [data-campo="status_trabalho"] { grid-column: span 3; }
+#gestao-desenvolvimento [data-campo="status_publicacao"] { grid-column: span 3; }
+#gestao-desenvolvimento [data-campo="pagina_origem"] { grid-column: span 9; }
+#gestao-desenvolvimento [data-campo="descricao"] { grid-column: 1 / -1; }
+.gestao-ajuda { width: min(54rem, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); border: 0; border-radius: .5rem; }
+.gestao-ajuda::backdrop { background: rgb(0 0 0 / 45%); }
+.gestao-ajuda header { display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: #fff; }
+.gestao-ajuda h2 { margin: 0; }
+@media (max-width: 850px) {
+  .gestao-cabecalho-acoes { align-items: stretch; flex-direction: column; }
+  #gestao-desenvolvimento [data-campo] { grid-column: 1 / -1; }
+}

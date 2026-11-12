@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const porta = Number(process.env.PLAYWRIGHT_TEST_PORT || 4173);
 let servidor;
 
 const configuracao = {
@@ -37,15 +38,18 @@ test.beforeAll(async () => {
     const arquivos = {
       "/frequencias.html": ["frequencias.html", "text/html; charset=utf-8"],
       "/graficos-frequencias.html": ["graficos-frequencias.html", "text/html; charset=utf-8"],
+      "/ajuda.html": ["ajuda.html", "text/html; charset=utf-8"],
       "/css/style.css": ["css/style.css", "text/css; charset=utf-8"],
       "/css/navegacao.css": ["css/navegacao.css", "text/css; charset=utf-8"],
       "/css/modal-andamento.css": ["css/modal-andamento.css", "text/css; charset=utf-8"],
       "/css/frequencias.css": ["css/frequencias.css", "text/css; charset=utf-8"],
       "/css/graficos-frequencias.css": ["css/graficos-frequencias.css", "text/css; charset=utf-8"],
+      "/css/ajuda.css": ["css/ajuda.css", "text/css; charset=utf-8"],
       "/js/frequencias.js": ["js/frequencias.js", "text/javascript; charset=utf-8"],
       "/js/graficos-frequencias.js": ["js/graficos-frequencias.js", "text/javascript; charset=utf-8"],
+      "/js/ajuda.js": ["js/ajuda.js", "text/javascript; charset=utf-8"],
+      "/js/ajuda-conteudo.js": ["js/ajuda-conteudo.js", "text/javascript; charset=utf-8"],
       "/js/navegacao-graficos-frequencias.js": ["js/navegacao-graficos-frequencias.js", "text/javascript; charset=utf-8"],
-      "/js/ajuda-frequencias.js": ["js/ajuda-frequencias.js", "text/javascript; charset=utf-8"],
       "/js/frequencia-graficos.js": ["js/frequencia-graficos.js", "text/javascript; charset=utf-8"],
       "/js/frequencia-historico.js": ["js/frequencia-historico.js", "text/javascript; charset=utf-8"],
       "/js/frequencia-intervalos-auxiliares.js": ["js/frequencia-intervalos-auxiliares.js", "text/javascript; charset=utf-8"],
@@ -62,7 +66,7 @@ test.beforeAll(async () => {
   });
   await new Promise((resolver, rejeitar) => {
     servidor.once("error", rejeitar);
-    servidor.listen(4173, "127.0.0.1", resolver);
+    servidor.listen(porta, "127.0.0.1", resolver);
   });
 });
 
@@ -239,24 +243,10 @@ test("abre a página auxiliar e retorna ao bloco histórico preservando filtros"
   );
   await expect(page.locator(".historico-titulo-eixo")).toHaveCount(2);
   await expect(page.locator(".grafico-historico-ampliado clipPath")).toHaveCount(2);
-  await page.locator(".botao-ajuda-evolucao-intervalos").click();
-  await expect(page.locator("#dialogo-ajuda-grafico")).toBeVisible();
-  await expect(page.locator("#titulo-ajuda-grafico")).toHaveText("Ajuda — Evolução dos intervalos");
-  await expect(page.locator("#conteudo-ajuda-grafico")).toContainText("Concursos 1246 → 1261");
-  await page.locator("#dialogo-ajuda-grafico").getByRole("button", { name: "Fechar", exact: true }).click();
-  await expect(page.locator("#dialogo-ajuda-grafico")).toBeHidden();
-  await expect(page.locator(".botao-ajuda-evolucao-intervalos")).toBeFocused();
   await expect(page.locator("#dialogo-grafico-auxiliar")).toHaveCount(1);
   await page.getByRole("button", { name: "Curva de distribuição" }).click();
   await expect(page.locator("#dialogo-grafico-auxiliar")).toBeVisible();
   await expect(page.locator("#titulo-grafico-auxiliar")).toHaveText("Curva de distribuição dos intervalos");
-  await expect(page.locator("#svg-grafico-auxiliar .distribuicao-ponto-real")).toHaveCount(1);
-  await page.locator("#botao-ajuda-grafico-auxiliar").click();
-  await expect(page.locator("#titulo-ajuda-grafico")).toHaveText("Ajuda — Curva de distribuição");
-  await expect(page.locator("#conteudo-ajuda-grafico")).toContainText("Curva normal teórica");
-  await page.keyboard.press("Escape");
-  await expect(page.locator("#dialogo-ajuda-grafico")).toBeHidden();
-  await expect(page.locator("#dialogo-grafico-auxiliar")).toBeVisible();
   await expect(page.locator("#svg-grafico-auxiliar .distribuicao-ponto-real")).toHaveCount(1);
   await page.keyboard.press("Escape");
   await expect(page.locator("#dialogo-grafico-auxiliar")).toBeHidden();
@@ -278,21 +268,9 @@ test("abre a página auxiliar e retorna ao bloco histórico preservando filtros"
     })),
   );
   expect(pontosPercentuais).toEqual([{ x: 750, y: 36 }, { x: 1412, y: 36 }]);
-  await page.locator("#botao-ajuda-grafico-auxiliar").click();
-  await expect(page.locator("#titulo-ajuda-grafico")).toHaveText("Ajuda — Ocorrências em ordem crescente");
-  await expect(page.locator("#conteudo-ajuda-grafico")).toContainText("Cada ponto vermelho");
-  await expect(page.locator("#conteudo-ajuda-grafico")).not.toContainText("Curva normal teórica");
-  await page.locator("#dialogo-ajuda-grafico").getByRole("button", { name: "Fechar", exact: true }).click();
-  await expect(page.locator("#botao-ajuda-grafico-auxiliar")).toBeFocused();
   await page.getByRole("button", { name: "Encerrar", exact: true }).click();
   await expect(page.locator("#dialogo-grafico-auxiliar")).toBeHidden();
   await expect(page.locator("#svg-grafico-auxiliar")).toBeEmpty();
-  await page.locator("#botao-ajuda-graficos").click();
-  await expect(page.locator("#dialogo-ajuda-graficos")).toBeVisible();
-  await expect(page.locator("#dialogo-ajuda-graficos")).toContainText("100 em 100");
-  await page.keyboard.press("Escape");
-  await expect(page.locator("#dialogo-ajuda-graficos")).toBeHidden();
-
   await page.locator("#botao-voltar-frequencias").click();
   await expect(page).toHaveURL(/frequencias\.html\?dezena=17&tipo_evento=3VS&concurso_inicial=500&concurso_final=700#evolucao-historica-dezena/);
   await expect(page.locator("#historico-dezena")).toHaveValue("17");
@@ -398,18 +376,12 @@ test("prosseguir com gravação envia confirmação explícita uma única vez", 
   expect(solicitacao.salvar_dados).toBe(true);
 });
 
-test("abre e fecha a ajuda completa da página", async ({ page }) => {
+test("abre a Ajuda central no tópico da Frequência", async ({ page }) => {
   await preparar(page);
-  const dialogo = page.locator("#dialogo-ajuda-frequencias");
-  await expect(dialogo).not.toBeVisible();
   await page.locator("#botao-ajuda-frequencias").click();
-  await expect(dialogo).toBeVisible();
-  await expect(dialogo.getByRole("heading", { name: "Como usar Frequência das dezenas" })).toBeVisible();
-  await expect(dialogo.getByRole("heading", { name: "4. Atualização do histórico" })).toBeVisible();
-  await expect(dialogo.getByRole("heading", { name: "Fluxo recomendado" })).toBeVisible();
-  await expect(dialogo).toContainText("Autorize reconstrução somente depois");
-  await dialogo.getByRole("button", { name: "Fechar", exact: true }).click();
-  await expect(dialogo).not.toBeVisible();
+  await expect(page).toHaveURL(/#pagina-frequencia-dezenas$/);
+  await expect(page.getByRole("heading", { name: "Frequência das dezenas", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Voltar para Frequência das dezenas" })).toBeVisible();
 });
 
 for (const largura of [1280, 520]) {
@@ -442,5 +414,6 @@ test("página auxiliar mantém os gráficos roláveis sem alargar a janela estre
   const cartaoRolavel = await page.locator(".historico-cartao-ampliado").first().evaluate((elemento) => elemento.scrollWidth > elemento.clientWidth);
   expect(cartaoRolavel).toBeTruthy();
   await page.locator("#botao-ajuda-graficos").click();
-  await expect(page.locator("#dialogo-ajuda-graficos")).toBeVisible();
+  await expect(page).toHaveURL(/#pagina-graficos-frequencia$/);
+  await expect(page.getByRole("heading", { name: "Gráficos de frequência", exact: true })).toBeVisible();
 });

@@ -22,7 +22,7 @@ class MigracaoConfiguracaoFrequenciaDDLTestCase(unittest.TestCase):
     def test_018_permanece_na_sequencia(self) -> None:
         versoes = tuple(item.versao for item in descobrir_migracoes(MIGRACOES))
         self.assertIn("018", versoes)
-        self.assertEqual("023", versoes[-1])
+        self.assertEqual("029", versoes[-1])
 
     def test_campos_e_unidades_sao_explicitos(self) -> None:
         for campo in (

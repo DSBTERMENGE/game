@@ -801,3 +801,78 @@
   sistema ou o histórico de frequência.
 - As combinações de seis não serão persistidas antes do contrato do segundo
   screener.
+
+## 2026-11-11 — CRUD interno e Gestão do desenvolvimento
+
+- O Game terá um CRUD reutilizável próprio, sem depender do CRUD do FinCtl.
+- A reutilização pertence à interface e aos fluxos; cada domínio preserva API,
+  serviço, repositório e regras explícitos.
+- Lista e formulário serão separados. Registros ficam protegidos em consulta e
+  só entram em edição por comando explícito.
+- Uma inclusão somente chama o servidor depois de validação, conferência e
+  confirmação; cancelar não cria registro.
+- Identidades PostgreSQL são técnicas e podem possuir intervalos. Não serão
+  apresentadas como numeração funcional.
+- Pesquisa será textual pelo título, com filtros, ordenação e paginação no
+  servidor; não será uma lista contendo todos os registros.
+- Exclusão comum será substituída por arquivamento reversível.
+- Estado será isolado por instância, sem configuração CRUD em objeto global.
+- A Gestão do desenvolvimento será o piloto. Migrar outros cadastros exigirá
+  etapas próprias depois da validação.
+- A primeira reutilização aprovada é a inclusão de configurações da Seleção de
+  dezenas. Sua imutabilidade e sua análise própria foram preservadas; somente o
+  fluxo comum de gravação confirmada foi compartilhado.
+- Na Gestão do desenvolvimento, Prioridade foi substituída por uma data
+  escolhida em calendário. Origem e escolha de ordenação foram removidas;
+  Situação do trabalho permanece e a lista segue a criação.
+
+## 2026-11-11 — Ajuda central
+
+- A Ajuda será uma página central e será tratada como fonte oficial somente
+  depois da conferência de seu conteúdo com código, banco e testes.
+- `Ajuda` será sempre o último item do menu principal, alinhado à esquerda.
+- A auditoria inicial confirmou três marcos distintos: resultados desde o
+  concurso 1, primeira fotografia acumulada da Frequência no concurso 500 e
+  primeiro alvo do Backtest da Seleção no concurso 500, usando o corte 499.
+- O inventário e as lacunas editoriais estão em
+  `docs/AUDITORIA_AJUDA_ETAPA_28_1.md`.
+- A Ajuda será dividida em `Começar aqui`, `Conceitos gerais`, `Ajuda por
+  página` e `Referência funcional`, conforme
+  `docs/CONTRATO_EDITORIAL_AJUDA.md`.
+- `Preparação do Screener` é o título editorial do assunto; `Screener`
+  permanece como alias enquanto a interface não for alterada por etapa própria.
+- Cada tópico terá identificador estável, aliases, data e fontes de conferência.
+  Alteração funcional visível exigirá atualização do tópico relacionado para
+  que a etapa possa ser encerrada.
+- A página central usa o fragmento da URL como link direto, guarda no navegador
+  o último tópico consultado e retorna ao início com aviso quando recebe um ID
+  desconhecido.
+- Conteúdo e apresentação permanecem separados. Tópicos ainda não reconciliados
+  são exibidos como `Em desenvolvimento`, e os modais locais somente serão
+  removidos depois da migração confirmada.
+- A Ajuda diferencia resultado, fotografia estatística, seleção registrada e
+  relatório momentâneo do Backtest. Esses termos não serão usados como
+  sinônimos.
+- `k` estreita ou alarga a faixa ajustada dentro do limite permitido; `j`
+  desloca a faixa sem alterar sua largura. Nenhum deles altera a curva ou os
+  intervalos históricos já observados.
+- O marco 500 não significa que a série comece no 500: resultados começam no
+  1; a fotografia 500 usa a base iniciada no 1; e o alvo 500 do Backtest da
+  Seleção usa exclusivamente o corte 499.
+- O Backtest da Seleção permanece momentâneo. Configurações salvas e seleções
+  registradas são persistidas; a análise antes de salvar não é persistida.
+- Cada página vigente possui tópico operacional na Ajuda central. Grupos de
+  padrões, Padrões e Gráficos de frequência ganharam tópicos próprios, embora
+  pertençam a ramos de menu ou fluxos de outra página.
+- `Preparação do Screener` e `Seleção de dezenas` exibem `Limitação conhecida`
+  enquanto, respectivamente, o processamento integral e a integração do
+  Screener de combinações não estiverem disponíveis.
+- Os modais locais continuam ativos até que seus botões sejam redirecionados e
+  a migração seja validada na subetapa 28.6.
+- Na subetapa 28.6, os acessos contextuais passaram a usar links diretos para a
+  Ajuda central. A origem é validada contra páginas internas conhecidas e usada
+  apenas para oferecer retorno seguro. Os três gráficos de intervalos possuem
+  tópicos próprios.
+- A Etapa 28 estabelece `frontend/js/ajuda-conteudo.js` como fonte editorial
+  oficial. Alterações futuras de comportamento visível exigem atualização e
+  teste dos tópicos afetados antes do encerramento da respectiva etapa.

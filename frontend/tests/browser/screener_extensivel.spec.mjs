@@ -15,8 +15,10 @@ test.beforeAll(async () => {
       "/css/style.css": ["css/style.css", "text/css; charset=utf-8"],
       "/css/navegacao.css": ["css/navegacao.css", "text/css; charset=utf-8"],
       "/css/screener.css": ["css/screener.css", "text/css; charset=utf-8"],
+      "/css/modal-andamento.css": ["css/modal-andamento.css", "text/css; charset=utf-8"],
       "/js/screener-extensivel.js": ["js/screener-extensivel.js", "text/javascript; charset=utf-8"],
       "/js/screener-extensivel-contrato.js": ["js/screener-extensivel-contrato.js", "text/javascript; charset=utf-8"],
+      "/js/modal-andamento.js": ["js/modal-andamento.js", "text/javascript; charset=utf-8"],
       "/js/navegacao.js": ["js/navegacao.js", "text/javascript; charset=utf-8"],
     };
     const item = arquivos[new URL(requisicao.url, "http://127.0.0.1").pathname];
@@ -88,6 +90,7 @@ const dados = {
 
 test("renderiza contrato real em blocos expansíveis e compactos", async ({ page }) => {
   let limiteRecebido;
+  let consultasExecucao = 0;
   await page.setViewportSize({ width: 1280, height: 820 });
   await page.route("**/api/validacao/relatorio", (rota) => rota.fulfill({
     status: 200, contentType: "application/json", body: JSON.stringify({
@@ -95,9 +98,25 @@ test("renderiza contrato real em blocos expansíveis e compactos", async ({ page
       criterios: [{ estado: "APROVADO", estado_catalogo: "ATUAL" }],
     }),
   }));
-  await page.route("**/api/screener/quadro", async (rota) => {
+  await page.route("**/api/screener/execucoes", async (rota) => {
     limiteRecebido = rota.request().postDataJSON().limite_raridade;
-    await new Promise((resolver) => setTimeout(resolver, 150));
+    return rota.fulfill({
+      status: 202, contentType: "application/json", body: JSON.stringify({
+        id: "teste-29-3", estado: "EXECUTANDO", etapa: "Aplicando filtros",
+        concluido: 2500, total: 10000, percentual: 25, duracao_segundos: 0.1,
+      }),
+    });
+  });
+  await page.route("**/api/screener/execucoes/teste-29-3", async (rota) => {
+    consultasExecucao += 1;
+    if (consultasExecucao === 1) {
+      return rota.fulfill({
+        status: 200, contentType: "application/json", body: JSON.stringify({
+          id: "teste-29-3", estado: "EXECUTANDO", etapa: "Aplicando filtros",
+          concluido: 5000, total: 10000, percentual: 50, duracao_segundos: 0.15,
+        }),
+      });
+    }
     const respostaDados = structuredClone(dados);
     const limiteFormatado = Number(limiteRecebido).toFixed(6);
     respostaDados.configuracao_raridade.limite_percentual = limiteFormatado;
@@ -107,11 +126,15 @@ test("renderiza contrato real em blocos expansíveis e compactos", async ({ page
     }));
     return rota.fulfill({
       status: 200, contentType: "application/json", body: JSON.stringify({
-        ...respostaDados,
-        comparacao: {
-          anterior: { total_aprovado: 4409 }, novo: { total_aprovado: 4000 },
-          diferenca_aprovadas: -409,
-        },
+        id: "teste-29-3", estado: "CONCLUIDA", etapa: "Teste concluído",
+        concluido: 10000, total: 10000, percentual: 100, duracao_segundos: 0.2,
+        resultado: {
+          ...respostaDados,
+          comparacao: {
+            anterior: { total_aprovado: 4409 }, novo: { total_aprovado: 4000 },
+            diferenca_aprovadas: -409,
+          },
+        }, erro: null,
       }),
     });
   });
@@ -120,7 +143,9 @@ test("renderiza contrato real em blocos expansíveis e compactos", async ({ page
   await expect(page.locator("#botao-fechar-todos")).toBeDisabled();
   await page.locator("#limite-raridade-extensivel").fill("7.5");
   await page.locator("#botao-executar-extensivel").click();
-  await expect(page.locator("#mensagem-extensivel")).toContainText("Executando 5.000");
+  await expect(page.locator("#dialogo-confirmar-teste-screener")).toBeVisible();
+  await page.locator("#botao-confirmar-teste-screener").click();
+  await expect(page.locator("#mensagem-extensivel")).toContainText("Teste em andamento");
   await expect(page.locator("#botao-executar-extensivel")).toBeDisabled();
   await expect(page.locator("#botao-abrir-todos")).toBeDisabled();
   expect(limiteRecebido).toBe("7.5");
@@ -130,6 +155,7 @@ test("renderiza contrato real em blocos expansíveis e compactos", async ({ page
   await expect(page.locator("#extensivel-total-analisado")).toHaveText("5.000");
   await expect(page.locator("#extensivel-reconciliacao")).toContainText("Fechamento correto");
   await expect(page.locator("#extensivel-comparacao")).toContainText("anterior: 4.409");
+  await page.getByRole("dialog", { name: "Teste do Screener" }).getByRole("button", { name: "Fechar" }).click();
   await expect(page.locator(".prototipo-nivel[open]")).toHaveCount(0);
   await expect(page.locator("#botao-abrir-todos")).toBeEnabled();
   await expect(page.locator("#botao-fechar-todos")).toBeEnabled();
@@ -146,13 +172,14 @@ test("renderiza contrato real em blocos expansíveis e compactos", async ({ page
   await expect(page.locator("#extensivel-raridade-usada")).toContainText("PD_002, PD_003, PD_005, PD_006, PD_009");
   await expect(page.locator("#extensivel-raridade-usada")).toContainText("7,500000%");
   expect(await page.evaluate(() => localStorage.getItem("msen.screener.limiteRaridade"))).toBe("7.500000");
-  await page.unroute("**/api/screener/quadro");
-  await page.route("**/api/screener/quadro", (rota) => rota.fulfill({
+  await page.unroute("**/api/screener/execucoes");
+  await page.route("**/api/screener/execucoes", (rota) => rota.fulfill({
     status: 503,
     contentType: "application/json",
     body: JSON.stringify({ erro: { mensagem: "Falha posterior controlada." } }),
   }));
   await page.locator("#botao-executar-extensivel").click();
+  await page.locator("#botao-confirmar-teste-screener").click();
   await expect(page.locator("#mensagem-extensivel")).toContainText("Falha posterior controlada");
   await expect(page.locator("#botao-abrir-todos")).toBeEnabled();
   await expect(page.locator("#botao-fechar-todos")).toBeEnabled();
@@ -173,20 +200,87 @@ test("falha mantém detalhes indisponíveis quando não existe execução carreg
       criterios: [{ estado: "APROVADO", estado_catalogo: "ATUAL" }],
     }),
   }));
-  await page.route("**/api/screener/quadro", (rota) => rota.fulfill({
+  await page.route("**/api/screener/execucoes", (rota) => rota.fulfill({
     status: 503,
     contentType: "application/json",
     body: JSON.stringify({ erro: { mensagem: "Serviço temporariamente indisponível." } }),
   }));
   await page.goto("http://127.0.0.1:4175/screener.html");
   await page.locator("#botao-executar-extensivel").click();
+  await page.locator("#botao-confirmar-teste-screener").click();
   await expect(page.locator("#mensagem-extensivel")).toContainText(
-    "Não foi possível concluir a execução: Serviço temporariamente indisponível.",
+    "Não foi possível concluir o teste: Serviço temporariamente indisponível.",
   );
   await expect(page.locator("#botao-executar-extensivel")).toBeEnabled();
   await expect(page.locator("#limite-raridade-extensivel")).toBeEnabled();
   await expect(page.locator("#botao-abrir-todos")).toBeDisabled();
   await expect(page.locator("#botao-fechar-todos")).toBeDisabled();
+});
+
+test("exige confirmação e cancelar não inicia o teste", async ({ page }) => {
+  let requisicoes = 0;
+  await page.route("**/api/validacao/relatorio", (rota) => rota.fulfill({
+    status: 200, contentType: "application/json", body: JSON.stringify({
+      fechamento: { valido: true, divergentes: 0, pendentes: 0 },
+      criterios: [{ estado: "APROVADO", estado_catalogo: "ATUAL" }],
+    }),
+  }));
+  await page.route("**/api/screener/execucoes", (rota) => {
+    requisicoes += 1;
+    return rota.fulfill({ status: 500, body: "{}" });
+  });
+  await page.goto("http://127.0.0.1:4175/screener.html");
+  await page.locator("#botao-executar-extensivel").click();
+  const dialogo = page.locator("#dialogo-confirmar-teste-screener");
+  await expect(dialogo).toBeVisible();
+  await dialogo.getByRole("button", { name: "Cancelar" }).click();
+  await expect(dialogo).toBeHidden();
+  expect(requisicoes).toBe(0);
+  await expect(page.locator("#botao-aplicacao-screener")).toBeDisabled();
+});
+
+test("confirma o cancelamento e descarta o resultado parcial", async ({ page }) => {
+  let cancelamentoSolicitado = false;
+  await page.route("**/api/validacao/relatorio", (rota) => rota.fulfill({
+    status: 200, contentType: "application/json", body: JSON.stringify({
+      fechamento: { valido: true, divergentes: 0, pendentes: 0 },
+      criterios: [{ estado: "APROVADO", estado_catalogo: "ATUAL" }],
+    }),
+  }));
+  await page.route("**/api/screener/execucoes", (rota) => rota.fulfill({
+    status: 202, contentType: "application/json", body: JSON.stringify({
+      id: "cancelar-29-3", estado: "EXECUTANDO", etapa: "Aplicando filtros",
+      concluido: 1250, total: 10000, percentual: 12.5, duracao_segundos: 0.1,
+    }),
+  }));
+  await page.route("**/api/screener/execucoes/cancelar-29-3", (rota) => rota.fulfill({
+    status: 200, contentType: "application/json", body: JSON.stringify(
+      cancelamentoSolicitado
+        ? { id: "cancelar-29-3", estado: "CANCELADA", etapa: "Teste cancelado", concluido: 1300, total: 10000, percentual: 13, duracao_segundos: 0.2, resultado: null, erro: null }
+        : { id: "cancelar-29-3", estado: "EXECUTANDO", etapa: "Aplicando filtros", concluido: 1250, total: 10000, percentual: 12.5, duracao_segundos: 0.1 },
+    ),
+  }));
+  await page.route("**/api/screener/execucoes/cancelar-29-3/cancelamento", (rota) => {
+    cancelamentoSolicitado = true;
+    return rota.fulfill({
+      status: 202, contentType: "application/json", body: JSON.stringify({
+        id: "cancelar-29-3", estado: "CANCELAMENTO_SOLICITADO",
+      }),
+    });
+  });
+
+  await page.goto("http://127.0.0.1:4175/screener.html");
+  await page.locator("#botao-executar-extensivel").click();
+  await page.locator("#botao-confirmar-teste-screener").click();
+  const andamento = page.getByRole("dialog", { name: "Teste do Screener" });
+  await andamento.getByRole("button", { name: "Cancelar" }).click();
+  const confirmacao = page.getByRole("dialog", { name: "Cancelar processamento?" });
+  await expect(confirmacao).toBeVisible();
+  await confirmacao.getByRole("button", { name: "Confirmar cancelamento" }).click();
+  await expect(page.locator("#mensagem-extensivel")).toContainText("cancelado");
+  expect(cancelamentoSolicitado).toBe(true);
+  await expect(page.locator(".prototipo-nivel")).toHaveCount(0);
+  await expect(andamento.getByRole("button", { name: "Fechar" })).toBeEnabled();
 });
 
 test("bloqueia o Screener e exibe a mensagem única quando a validação possui pendências", async ({ page }) => {

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Ajuda central do Game Analysis.">
+    <title>Ajuda — Game Analysis</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/navegacao.css">
+    <link rel="stylesheet" href="css/ajuda.css">
+  </head>
+  <body>
+    <header class="barra-navegacao">
+      <a class="marca marca--compacta" href="/" aria-label="Game Analysis">GA</a>
+      <a class="navegacao-link" href="/">Painel</a>
+      <details class="navegacao-menu">
+        <summary>Cadastros</summary>
+        <nav aria-label="Cadastros">
+          <a href="/cadastros.html">Visão geral</a>
+          <a href="/grupos-padroes.html">Grupos de padrões</a>
+          <a href="/padroes.html">Padrões</a>
+        </nav>
+      </details>
+      <a class="navegacao-link" href="/distribuicoes.html">Distribuições</a>
+      <a class="navegacao-link" href="/screener.html">Preparação do Screener</a>
+      <a class="navegacao-link" href="/auditoria.html">Validação e auditoria</a>
+      <a class="navegacao-link" href="/frequencias.html">Frequência das dezenas</a>
+      <a class="navegacao-link" href="/selecao-dezenas.html">Seleção de dezenas</a>
+      <a class="navegacao-link" href="/gestao-desenvolvimento.html">Gestão do desenvolvimento</a>
+      <a class="navegacao-link" href="/ajuda.html" aria-current="page">Ajuda</a>
+    </header>
+
+    <main class="pagina-ajuda">
+      <header class="ajuda-topo">
+        <div>
+          <h1>Ajuda do Game</h1>
+          <p>Consulte conceitos, páginas e referências funcionais.</p>
+        </div>
+        <a id="ajuda-voltar-origem" class="ajuda-voltar-origem" href="/" hidden>Voltar</a>
+        <div class="ajuda-pesquisa" role="search">
+          <label for="ajuda-busca">Localizar assunto</label>
+          <div class="ajuda-pesquisa__campo">
+            <input id="ajuda-busca" type="search" autocomplete="off" placeholder="Digite uma palavra ou expressão" aria-describedby="ajuda-estado-busca">
+            <button id="ajuda-limpar-busca" type="button" hidden>Limpar</button>
+          </div>
+          <span id="ajuda-estado-busca" class="texto-apoio" role="status" aria-live="polite"></span>
+        </div>
+      </header>
+
+      <div class="ajuda-corpo">
+        <aside class="ajuda-lateral" aria-label="Tópicos da Ajuda">
+          <nav id="ajuda-arvore" class="ajuda-arvore" aria-label="Índice da Ajuda"></nav>
+          <div id="ajuda-resultados-busca" class="ajuda-resultados-busca" aria-label="Resultados da pesquisa" hidden></div>
+        </aside>
+        <section class="ajuda-leitura" aria-live="polite">
+          <p id="ajuda-aviso" class="ajuda-aviso" role="status" hidden></p>
+          <article id="ajuda-artigo" class="ajuda-artigo"></article>
+        </section>
+      </div>
+    </main>
+
+    <script type="module" src="js/navegacao.js"></script>
+    <script type="module" src="js/ajuda.js"></script>
+  </body>
+</html>

@@ -204,14 +204,15 @@ test("navegação separa Painel e Cadastros em uma barra compacta", async () => 
   const paginas = await Promise.all([
     "index.html", "cadastros.html", "grupos-padroes.html", "padroes.html",
     "distribuicoes.html", "screener.html", "auditoria.html", "frequencias.html",
-    "selecao-dezenas.html",
+    "selecao-dezenas.html", "gestao-desenvolvimento.html", "ajuda.html",
   ].map((arquivo) => readFile(new URL(`../${arquivo}`, import.meta.url), "utf8")));
   const css = await readFile(new URL("../css/navegacao.css", import.meta.url), "utf8");
   const javascript = await readFile(new URL("../js/navegacao.js", import.meta.url), "utf8");
 
   for (const html of paginas) {
     assert.match(html, /class="barra-navegacao"/);
-    assert.match(html, /id="botao-voltar"/);
+    assert.doesNotMatch(html, /id="botao-voltar"/);
+    assert.doesNotMatch(html, /class="navegacao-pagina"/);
     assert.match(html, /href="\/"[^>]*>Painel</);
     assert.match(html, /<summary>Cadastros<\/summary>/);
     assert.match(html, /href="\/grupos-padroes\.html"/);
@@ -219,13 +220,17 @@ test("navegação separa Painel e Cadastros em uma barra compacta", async () => 
     assert.match(html, /href="\/auditoria\.html"[^>]*>Validação e auditoria</);
     assert.match(html, /href="\/frequencias\.html"[^>]*>Frequência das dezenas</);
     assert.match(html, /href="\/selecao-dezenas\.html"[^>]*>Seleção de dezenas</);
+    assert.match(html, /href="\/ajuda\.html"[^>]*>Ajuda</);
+    const barra = html.match(/<header class="barra-navegacao">([\s\S]*?)<\/header>/)?.[1] ?? "";
+    const destinos = [...barra.matchAll(/href="([^"]+)"/g)].map((resultado) => resultado[1]);
+    assert.equal(destinos.at(-1), "/ajuda.html");
     assert.match(html, /js\/navegacao\.js/);
   }
   assert.doesNotMatch(paginas[0], /painel-padroes|botao-cadastro-padroes/);
   assert.match(css, /\.barra-navegacao\s*\{[^}]*min-height:\s*2\.8rem/s);
   assert.match(css, /\.navegacao-menu nav\s*\{[^}]*position:\s*absolute/s);
   assert.match(css, /\.pagina-conteudo\s*\{[^}]*height:\s*calc\(100vh - 2\.8rem\)/s);
-  assert.match(javascript, /window\.history\.back/);
+  assert.doesNotMatch(javascript, /window\.history\.back|botaoVoltar/);
 });
 
 test("página de auditoria mantém estrutura compacta e expõe validação", async () => {
@@ -236,7 +241,7 @@ test("página de auditoria mantém estrutura compacta e expõe validação", asy
   assert.match(html, /id="botao-atualizar-validacao"/);
   assert.match(html, /id="filtros-auditoria"/);
   assert.match(html, /id="corpo-avaliacoes"/);
-  assert.match(html, /data-destino-voltar="\/screener\.html"/);
+  assert.doesNotMatch(html, /data-destino-voltar/);
   assert.doesNotMatch(html, /<input/i);
   assert.match(css, /grid-template-rows:\s*auto auto auto auto minmax\(0,\s*1fr\)/);
 });

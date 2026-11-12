@@ -84,6 +84,7 @@ from .contrato_extensivel import (
     LinhaFiltro,
     RelatorioFunilExtensivel,
     executar_funil_extensivel,
+    validar_plano_funil,
 )
 from .fotografia import (
     EnvelopeFotografia,
@@ -194,6 +195,7 @@ __all__ = [
     "LinhaFiltro",
     "RelatorioFunilExtensivel",
     "executar_funil_extensivel",
+    "validar_plano_funil",
     "EnvelopeFotografia",
     "ErroFotografia",
     "FamiliaFotografada",

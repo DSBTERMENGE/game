@@ -97,31 +97,21 @@ from .selecao_dezenas import (
 )
 from .backtest_selecao_dezenas import (
     ClasseBacktest,
-    ComparacaoBacktests,
-    DetalheAlvoBacktest,
-    ErroBacktestSelecao,
-    RelatorioExecucaoBacktest,
-    ResumoBacktestSelecao,
-    comparar_backtests,
-    detalhar_backtest,
-    executar_backtest_selecao,
-    resumir_backtest,
-)
-from .backtest_temporario_selecao_dezenas import (
-    ClasseBacktestTemporario,
-    ErroBacktestTemporario,
-    PontoBacktestTemporario,
-    RelatorioBacktestTemporario,
-    ResumoBacktestTemporario,
-    executar_backtest_temporario,
-    resumir_pontos_temporarios,
+    ErroBacktest,
+    PontoBacktest,
+    RelatorioBacktest,
+    ResumoBacktest,
+    executar_backtest,
+    resumir_pontos,
 )
 from .previsao_selecao_dezenas import (
+    DetalhePrevisao,
     RelatorioAtualizacaoPrevisoes,
     RelatorioConferenciaPrevisoes,
     RelatorioPrevisaoFutura,
     atualizar_previsoes_futuras,
     conferir_previsoes_pendentes,
+    detalhar_previsao,
     emitir_previsao_futura,
 )
 from .combinacoes_selecao_dezenas import (
@@ -133,6 +123,24 @@ from .combinacoes_selecao_dezenas import (
     exportar_combinacoes_csv,
     gerar_combinacoes_seis_dezenas,
     persistir_combinacoes_alvo,
+)
+from .configuracao_formacao_jogos import (
+    ConfiguracaoFormacaoJogos,
+    ErroConfiguracaoFormacaoJogos,
+    MAXIMO_JOGOS,
+)
+from .motor_formacao_jogos import (
+    AdaptadorCombinacao,
+    ErroMotorFormacaoJogos,
+    RelatorioGeracaoControlada,
+    executar_geracao_controlada,
+)
+from .integracao_screener_formacao_jogos import (
+    AdaptadorScreenerFormacao,
+    PlanoScreenerFormacao,
+    RelatorioScreenerFormacao,
+    ResultadoIntegracaoScreener,
+    executar_screener_formacao,
 )
 from .frequencia_historica import (
     ErroMotorFrequencia,
@@ -155,6 +163,10 @@ from .operacao_historico_frequencia import (
     RelatorioSimulacaoHistoricoFrequencia,
     preparar_operacao_historico_frequencia,
     simular_historico_frequencia,
+)
+from .gestao_desenvolvimento import (
+    DadosManutencao,
+    ErroGestaoDesenvolvimento,
 )
 
 __all__ = [
@@ -228,27 +240,19 @@ __all__ = [
     "ResultadoSelecaoDezenas",
     "selecionar_dezenas_para_alvo",
     "ClasseBacktest",
-    "ComparacaoBacktests",
-    "DetalheAlvoBacktest",
-    "ErroBacktestSelecao",
-    "RelatorioExecucaoBacktest",
-    "ResumoBacktestSelecao",
-    "comparar_backtests",
-    "detalhar_backtest",
-    "executar_backtest_selecao",
-    "resumir_backtest",
-    "ClasseBacktestTemporario",
-    "ErroBacktestTemporario",
-    "PontoBacktestTemporario",
-    "RelatorioBacktestTemporario",
-    "ResumoBacktestTemporario",
-    "executar_backtest_temporario",
-    "resumir_pontos_temporarios",
+    "ErroBacktest",
+    "PontoBacktest",
+    "RelatorioBacktest",
+    "ResumoBacktest",
+    "executar_backtest",
+    "resumir_pontos",
     "RelatorioAtualizacaoPrevisoes",
     "RelatorioConferenciaPrevisoes",
     "RelatorioPrevisaoFutura",
     "atualizar_previsoes_futuras",
     "conferir_previsoes_pendentes",
+    "DetalhePrevisao",
+    "detalhar_previsao",
     "emitir_previsao_futura",
     "LIMITE_VOLUME_ELEVADO",
     "ErroCombinacoesSelecao",
@@ -258,6 +262,18 @@ __all__ = [
     "exportar_combinacoes_csv",
     "gerar_combinacoes_seis_dezenas",
     "persistir_combinacoes_alvo",
+    "ConfiguracaoFormacaoJogos",
+    "ErroConfiguracaoFormacaoJogos",
+    "MAXIMO_JOGOS",
+    "AdaptadorCombinacao",
+    "ErroMotorFormacaoJogos",
+    "RelatorioGeracaoControlada",
+    "executar_geracao_controlada",
+    "AdaptadorScreenerFormacao",
+    "PlanoScreenerFormacao",
+    "RelatorioScreenerFormacao",
+    "ResultadoIntegracaoScreener",
+    "executar_screener_formacao",
     "ErroMotorFrequencia",
     "FotografiaFrequencia",
     "MotorFrequenciaAcumulada",
@@ -274,4 +290,5 @@ __all__ = [
     "RelatorioSimulacaoHistoricoFrequencia",
     "preparar_operacao_historico_frequencia",
     "simular_historico_frequencia",
+    "DadosManutencao", "ErroGestaoDesenvolvimento",
 ]

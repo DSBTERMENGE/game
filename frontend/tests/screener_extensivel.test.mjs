@@ -68,13 +68,24 @@ test("interface explica que cadastro não substitui função Python", async () =
 
   assert.match(html, /Cadastrar um padrão não cria seu filtro/);
   assert.match(html, /função Python, testes e integração validada/);
-  assert.match(html, /Executar 5\.000/);
+  assert.match(html, /Preparação do Screener/);
+  assert.match(html, /Teste do Screener/);
+  assert.match(html, /id="botao-aplicacao-screener"[^>]*disabled/);
+  assert.match(html, /id="dialogo-confirmar-teste-screener"/);
+  assert.match(html, /Confirmar e iniciar teste/);
+  assert.match(html, /id="dialogo-confirmar-aplicacao-screener"/);
+  assert.match(html, /primeiras 5\.000 combinações/);
+  assert.match(html, /todas as 50\.063\.860 combinações/);
+  assert.match(html, /Ainda não disponível/);
+  assert.match(html, /Limite de raridade dos padrões/);
   assert.match(html, /id="limite-raridade-extensivel"/);
   assert.match(html, /id="botao-abrir-todos"[^>]*disabled/);
   assert.match(html, /id="botao-fechar-todos"[^>]*disabled/);
   assert.doesNotMatch(html, /dados inteiramente fictícios/i);
   assert.match(javascript, /Função Python validada/);
-  assert.match(javascript, /fetch\s*\("\/api\/screener\/quadro"/);
+  assert.match(javascript, /fetch\s*\("\/api\/screener\/execucoes"/);
+  assert.match(javascript, /\/api\/screener\/execucoes\/\$\{encodeURIComponent\(id\)\}/);
+  assert.match(javascript, /confirmarCancelamento:\s*true/);
   assert.match(javascript, /limite_raridade/);
   assert.match(javascript, /detalhesDisponiveis/);
   assert.match(javascript, /Screener bloqueado: há pendências na Validação e auditoria dos critérios de seleção\./);

@@ -9,6 +9,7 @@ from msen.config import carregar_configuracao_banco
 from msen.database import (
     AlvoPesquisaEntrada,
     AvaliacaoDezenaPesquisaEntrada,
+    ErroRepositorioPesquisaSelecao,
     RepositorioPesquisaSelecao,
 )
 from msen.services import configuracao_selecao_inicial
@@ -39,23 +40,24 @@ def executar() -> None:
             configuracao = repositorio.criar_ou_buscar_configuracao(
                 configuracao_selecao_inicial()
             )
-            repetida = repositorio.criar_ou_buscar_configuracao(
-                configuracao_selecao_inicial()
-            )
-            assert repetida.id_configuracao_selecao == configuracao.id_configuracao_selecao
+            try:
+                repositorio.criar_ou_buscar_configuracao(configuracao_selecao_inicial())
+                raise AssertionError("O nome repetido deveria ser recusado.")
+            except ErroRepositorioPesquisaSelecao as erro:
+                assert erro.codigo == "NOME_CONFIGURACAO_EXISTENTE"
 
             execucao = repositorio.criar_ou_buscar_execucao(
                 configuracao,
-                tipo_execucao="BACKTEST",
+                tipo_execucao="PREVISAO_FUTURA",
                 assinatura_resultados="a" * 64,
                 concurso_corte_origem=3069,
-                concurso_alvo_inicial=500,
-                concurso_alvo_final=500,
+                concurso_alvo_inicial=3070,
+                concurso_alvo_final=3070,
             )
             avaliacoes = tuple(avaliacao_sem_base(i) for i in range(1, 61))
             alvo = AlvoPesquisaEntrada(
-                numero_concurso_alvo=500,
-                numero_concurso_corte=499,
+                numero_concurso_alvo=3070,
+                numero_concurso_corte=3069,
                 id_resultado=None,
                 situacao="PENDENTE",
                 quantidade_configurada=None,

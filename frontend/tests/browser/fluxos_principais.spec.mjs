@@ -59,6 +59,7 @@ const raizFrontend = path.resolve(
   "../..",
 );
 let servidor;
+const porta = Number(process.env.PLAYWRIGHT_TEST_PORT || 4173);
 
 
 test.beforeAll(async () => {
@@ -94,7 +95,7 @@ test.beforeAll(async () => {
   });
   await new Promise((resolver, rejeitar) => {
     servidor.once("error", rejeitar);
-    servidor.listen(4173, "127.0.0.1", resolver);
+    servidor.listen(porta, "127.0.0.1", resolver);
   });
 });
 
@@ -372,21 +373,22 @@ test("menu horizontal navega entre Painel e páginas de Cadastros", async ({ pag
   await page.locator(".navegacao-menu summary").click();
   await page.locator('.navegacao-menu a[href="/cadastros.html"]').click();
   await expect(page).toHaveURL(/cadastros\.html$/);
-  await expect(page.locator(".navegacao-pagina")).toHaveText("Cadastros");
+  await expect(page.locator('[aria-current="page"]')).toHaveText("Visão geral");
 
   await page.locator('a[href="/grupos-padroes.html"]').last().click();
   await expect(page).toHaveURL(/grupos-padroes\.html$/);
-  await expect(page.locator(".navegacao-pagina")).toHaveText("Grupos de padrões");
+  await expect(page.locator('[aria-current="page"]')).toHaveText("Grupos de padrões");
 
-  await page.locator("#botao-voltar").click();
+  await page.locator(".navegacao-menu summary").click();
+  await page.locator('a[href="/cadastros.html"]').click();
   await expect(page).toHaveURL(/cadastros\.html$/);
   await page.locator('a[href="/padroes.html"]').last().click();
   await expect(page).toHaveURL(/padroes\.html$/);
-  await expect(page.locator(".navegacao-pagina")).toHaveText("Padrões");
+  await expect(page.locator('[aria-current="page"]')).toHaveText("Padrões");
 
   await page.locator('a[href="/auditoria.html"]').click();
   await expect(page).toHaveURL(/auditoria\.html$/);
-  await expect(page.locator(".navegacao-pagina")).toHaveText("Validação e auditoria");
+  await expect(page.locator('[aria-current="page"]')).toHaveText("Validação e auditoria");
   await expect(page.getByRole("heading", { name: "Validação e auditoria" })).toBeVisible();
   await expect(page.getByText("Relatório por função")).toBeVisible();
   await page.setViewportSize({ width: 700, height: 600 });
@@ -395,8 +397,6 @@ test("menu horizontal navega entre Painel e páginas de Cadastros", async ({ pag
     janela: window.innerWidth,
   }));
   expect(larguraAuditoria.documento).toBeLessThanOrEqual(larguraAuditoria.janela);
-  await page.locator("#botao-voltar").click();
-  await expect(page).toHaveURL(/padroes\.html$/);
 });
 
 
@@ -577,7 +577,7 @@ test("páginas compactas não alargam a janela estreita", async ({ page }) => {
 test("menu Screener abre diretamente o funil oficial em três níveis", async ({ page }) => {
   await page.goto("/screener.html");
   await expect(page.locator("h1")).toHaveText("Screener");
-  await expect(page.locator(".navegacao-pagina")).toHaveText("Funil em três níveis");
+  await expect(page.locator('[aria-current="page"]')).toHaveText("Screener");
   await expect(page.locator("#botao-executar-extensivel")).toHaveText("Executar 5.000");
   await expect(page.locator("#corpo-validacoes-screener")).toHaveCount(0);
   await expect(page.getByText("Abrir novo funil")).toHaveCount(0);

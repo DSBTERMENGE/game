@@ -6,6 +6,7 @@ from datetime import date
 from decimal import Decimal
 from pathlib import Path
 from time import perf_counter
+from typing import Callable
 
 from msen.screener import (
     FaixaEstatistica,
@@ -187,9 +188,16 @@ def _detalhar_padroes(
 
 def gerar_quadro_screener_extensivel(
     limite_raridade: Decimal | int | str | None = None,
+    informar_progresso: Callable[[str, int, int], None] | None = None,
+    cancelado: Callable[[], bool] | None = None,
 ) -> dict[str, object]:
     """Executa exatamente 5.000 combinações e compara com o funil anterior."""
 
+    progresso = informar_progresso or (lambda _etapa, _concluido, _total: None)
+    foi_cancelado = cancelado or (lambda: False)
+    progresso("Preparando filtros do Screener", 0, 10_000)
+    if foi_cancelado():
+        raise InterruptedError("Processamento do Screener cancelado.")
     raiz = Path(__file__).resolve().parents[3]
     configuracao = carregar_configuracao_screener(
         raiz / "config" / "screener.toml", raiz / "config" / "screener.local.toml"
@@ -318,7 +326,14 @@ def gerar_quadro_screener_extensivel(
     amostra = gerar_amostra(configuracao)
 
     inicio = perf_counter()
-    relatorio_novo = executar_funil_extensivel(amostra, familias)
+    relatorio_novo = executar_funil_extensivel(
+        amostra,
+        familias,
+        informar_progresso=lambda concluido, _total: progresso(
+            "Aplicando os filtros atuais", concluido, 10_000
+        ),
+        cancelado=foi_cancelado,
+    )
     duracao = perf_counter() - inicio
     quadro = criar_quadro_consolidado(relatorio_novo, tipo_escopo="amostra")
     dados = serializar_quadro_consolidado(quadro)
@@ -341,7 +356,13 @@ def gerar_quadro_screener_extensivel(
     }
 
     relatorio_anterior = executar_funil(
-        amostra, criar_adaptadores_ativos(configuracao)
+        amostra,
+        criar_adaptadores_ativos(configuracao),
+        informar_progresso=lambda concluido, _total: progresso(
+            "Comparando com o resultado anterior", 5_000 + concluido, 10_000
+        ),
+        cancelado=foi_cancelado,
+        total_combinacoes=5_000,
     )
     dados.update({
         "duracao_segundos": duracao,

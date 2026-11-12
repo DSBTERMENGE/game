@@ -22,17 +22,19 @@ from msen.database import (
     RepositorioPesquisaSelecao,
     abrir_conexao,
 )
+from msen.database.fonte_backtest_repository import (
+    ErroFonteBacktest,
+    RepositorioFonteBacktest,
+)
 from msen.services import (
     ConfiguracaoSelecaoDezenas,
-    ErroBacktestSelecao,
+    ErroBacktest,
     ErroCombinacoesSelecao,
     atualizar_previsoes_futuras,
     calcular_previa_combinacoes,
-    comparar_backtests,
-    detalhar_backtest,
-    executar_backtest_selecao,
+    detalhar_previsao,
+    executar_backtest,
     persistir_combinacoes_alvo,
-    resumir_backtest,
     selecionar_dezenas_para_alvo,
 )
 
@@ -201,34 +203,95 @@ def preparar_pesquisa_no_banco(configuracao, concurso_inicial, concurso_final):
     }
 
 
+def preparar_backtest_no_banco(
+    id_configuracao_selecao, concurso_inicial, concurso_final
+):
+    with abrir_conexao(carregar_configuracao_banco()) as conexao:
+        with conexao.transaction():
+            with conexao.cursor() as cursor:
+                cursor.execute("SET TRANSACTION READ ONLY")
+                cursor.execute(
+                    "SELECT MIN(numero_ap),MAX(numero_ap),COUNT(*) FROM resultados"
+                )
+                primeiro, ultimo, quantidade = cursor.fetchone()
+            final = ultimo if concurso_final is None else concurso_final
+            if final is None or concurso_inicial > final:
+                raise ErroApiSelecaoDezenas(
+                    "PERIODO_INVALIDO",
+                    "O concurso inicial deve estar entre 500 e o último concurso cadastrado.",
+                )
+            item = RepositorioPesquisaSelecao(
+                conexao
+            ).buscar_configuracao_disponivel(id_configuracao_selecao)
+            RepositorioFonteBacktest(conexao).validar_periodo(
+                concurso_inicial, final
+            )
+    return {
+        "id_configuracao_selecao": item.id_configuracao_selecao,
+        "configuracao": _configuracao_dict(item.configuracao),
+        "resultados": {
+            "primeiro": primeiro,
+            "ultimo": ultimo,
+            "quantidade": quantidade,
+        },
+        "periodo": {
+            "concurso_inicial": concurso_inicial,
+            "concurso_final": final,
+            "quantidade_concursos": final - concurso_inicial + 1,
+        },
+        "persistira_resultados": False,
+    }
+
+
+def _relatorio_backtest_json(relatorio):
+    resumo = relatorio.resumo
+    return {
+        "id_configuracao_selecao": relatorio.id_configuracao_selecao,
+        "concurso_inicial": relatorio.concurso_inicial,
+        "concurso_final": relatorio.concurso_final,
+        "pontos": [asdict(item) for item in relatorio.pontos],
+        "resumo": {
+            "testes_efetuados": resumo.testes_efetuados,
+            "classes": [{
+                "classe": item.classe,
+                "quantidade": item.quantidade,
+                "percentual": float(item.percentual),
+            } for item in resumo.classes],
+            "minimo_dezenas": resumo.minimo_dezenas,
+            "maximo_dezenas": resumo.maximo_dezenas,
+            "media_dezenas": float(resumo.media_dezenas),
+            "media_acertos": float(resumo.media_acertos),
+            "concursos_premiados": resumo.concursos_premiados,
+            "percentual_premiados": float(resumo.percentual_premiados),
+        },
+        "duracao_segundos": float(relatorio.duracao_segundos),
+        "persistido": False,
+    }
+
+
 def executar_backtest_no_banco(solicitacao, progresso, cancelado):
     with abrir_conexao(carregar_configuracao_banco()) as conexao:
-        relatorio = executar_backtest_selecao(
-            conexao,
-            solicitacao["configuracao"],
-            concurso_inicial=solicitacao["concurso_inicial"],
-            concurso_final=solicitacao["concurso_final"],
-            cancelamento_solicitado=cancelado,
-            informar_progresso=lambda concluido, total: progresso(
-                "Avaliando concursos", concluido, total
-            ),
-        )
-        return asdict(relatorio)
+        try:
+            relatorio = executar_backtest(
+                conexao,
+                solicitacao["id_configuracao_selecao"],
+                concurso_inicial=solicitacao["concurso_inicial"],
+                concurso_final=solicitacao["concurso_final"],
+                cancelamento_solicitado=cancelado,
+                informar_progresso=lambda concluido, total: progresso(
+                    "Calculando Backtest", concluido, total
+                ),
+            )
+        except ErroBacktest as erro:
+            if erro.codigo == "BACKTEST_CANCELADO" and cancelado():
+                return None
+            raise
+    return _relatorio_backtest_json(relatorio)
 
 
-def resumir_no_banco(identificador):
+def detalhar_previsao_no_banco(identificador):
     with abrir_conexao(carregar_configuracao_banco()) as conexao:
-        return asdict(resumir_backtest(conexao, identificador))
-
-
-def detalhar_no_banco(identificador):
-    with abrir_conexao(carregar_configuracao_banco()) as conexao:
-        return [asdict(item) for item in detalhar_backtest(conexao, identificador)]
-
-
-def comparar_no_banco(identificadores):
-    with abrir_conexao(carregar_configuracao_banco()) as conexao:
-        return asdict(comparar_backtests(conexao, identificadores))
+        return [asdict(item) for item in detalhar_previsao(conexao, identificador)]
 
 
 def atualizar_previsoes_no_banco(id_configuracao_selecao):
@@ -265,7 +328,9 @@ def persistir_jogos_no_banco(id_alvo, autorizar, confirmar_volume):
         ))
 
 
-class GerenciadorBacktestsSelecao:
+class GerenciadorBacktests:
+    """Mantém somente o relatório mais recente durante a sessão do processo."""
+
     def __init__(self, operacao: Callable | None = None) -> None:
         self._operacao = operacao or executar_backtest_no_banco
         self._trava = Lock()
@@ -279,6 +344,9 @@ class GerenciadorBacktestsSelecao:
                 "AGUARDANDO", "EXECUTANDO", "CANCELAMENTO_SOLICITADO"
             }:
                 raise ExecucaoSelecaoEmAndamento(self._ativa)
+            if self._ativa is None:
+                self._execucoes.clear()
+                self._cancelamentos.clear()
             identificador = str(uuid4())
             agora = datetime.now(timezone.utc)
             self._execucoes[identificador] = {
@@ -354,7 +422,23 @@ class GerenciadorBacktestsSelecao:
             )
             if estado == "CONCLUIDA":
                 dados["concluido"], dados["percentual"] = dados["total"], 100
+            if estado == "CANCELADA":
+                dados["resultado"] = None
             self._ativa = None
+
+    def descartar(self, identificador: str) -> None:
+        with self._trava:
+            if identificador not in self._execucoes:
+                raise KeyError(identificador)
+            if self._execucoes[identificador]["estado"] in {
+                "AGUARDANDO", "EXECUTANDO", "CANCELAMENTO_SOLICITADO"
+            }:
+                raise ErroApiSelecaoDezenas(
+                    "BACKTEST_EM_ANDAMENTO",
+                    "Cancele ou aguarde o término antes de descartar o relatório.",
+                )
+            del self._execucoes[identificador]
+            self._cancelamentos.pop(identificador, None)
 
 
 def _erro_json(erro, status=400):
@@ -366,8 +450,9 @@ def _executar_rota(funcao):
         return funcao()
     except (
         ErroApiSelecaoDezenas,
-        ErroBacktestSelecao,
+        ErroBacktest,
         ErroCombinacoesSelecao,
+        ErroFonteBacktest,
         ErroRepositorioPesquisaSelecao,
     ) as erro:
         status = 404 if erro.codigo.endswith("NAO_ENCONTRADA") else 400
@@ -410,79 +495,98 @@ def rota_previa_pesquisa():
     return _executar_rota(executar)
 
 
+@selecao_dezenas_api.post("/api/selecao-dezenas/backtests/previa")
+def rota_previa_backtest():
+    def executar():
+        dados = _corpo({"id_configuracao_selecao", "concurso_inicial"})
+        inicio = _inteiro(dados, "concurso_inicial", minimo=500)
+        return jsonify(current_app.config["PREPARAR_BACKTEST_SELECAO"](
+            _inteiro(dados, "id_configuracao_selecao", minimo=1), inicio, None
+        ))
+    return _executar_rota(executar)
+
+
 @selecao_dezenas_api.post("/api/selecao-dezenas/backtests")
 def rota_iniciar_backtest():
     try:
-        dados = _corpo({"configuracao", "concurso_inicial", "concurso_final"})
+        dados = _corpo({"id_configuracao_selecao", "concurso_inicial"})
+        identificador = _inteiro(dados, "id_configuracao_selecao", minimo=1)
+        inicio = _inteiro(dados, "concurso_inicial", minimo=500)
+        previa = current_app.config["PREPARAR_BACKTEST_SELECAO"](
+            identificador, inicio, None
+        )
         solicitacao = {
-            "configuracao": _configuracao_json(dados.get("configuracao")),
-            "concurso_inicial": _inteiro(dados, "concurso_inicial", minimo=500),
-            "concurso_final": _inteiro(
-                dados, "concurso_final", minimo=500, obrigatorio=False
-            ),
+            "id_configuracao_selecao": identificador,
+            "concurso_inicial": inicio,
+            "concurso_final": previa["periodo"]["concurso_final"],
         }
-        return jsonify(current_app.config["GERENCIADOR_BACKTEST_SELECAO"].iniciar(
-            solicitacao
-        )), 202
-    except (ErroApiSelecaoDezenas, ErroBacktestSelecao) as erro:
+        return jsonify(
+            current_app.config["GERENCIADOR_BACKTEST_SELECAO"].iniciar(
+                solicitacao
+            )
+        ), 202
+    except (ErroApiSelecaoDezenas, ErroBacktest) as erro:
         return _erro_json(erro)
     except ExecucaoSelecaoEmAndamento as erro:
         return jsonify(erro={
-            "codigo": "EXECUCAO_EM_ANDAMENTO",
-            "mensagem": "Já existe um backtest em andamento.",
+            "codigo": "BACKTEST_EM_ANDAMENTO",
+            "mensagem": "Já existe um Backtest em andamento. Aguarde a conclusão ou cancele o cálculo atual.",
             "id_execucao": erro.identificador,
         }), 409
 
 
-@selecao_dezenas_api.get("/api/selecao-dezenas/execucoes/<identificador>")
-def rota_consultar_execucao(identificador):
+@selecao_dezenas_api.get(
+    "/api/selecao-dezenas/backtests/<identificador>"
+)
+def rota_consultar_backtest(identificador):
     try:
-        return jsonify(current_app.config["GERENCIADOR_BACKTEST_SELECAO"].obter(identificador))
+        return jsonify(
+            current_app.config["GERENCIADOR_BACKTEST_SELECAO"].obter(
+                identificador
+            )
+        )
     except KeyError:
-        return jsonify(erro={"codigo": "EXECUCAO_NAO_ENCONTRADA",
-                             "mensagem": "A execução não foi encontrada."}), 404
+        return jsonify(erro={
+            "codigo": "BACKTEST_NAO_ENCONTRADO",
+            "mensagem": "O relatório do Backtest não está mais disponível. Gere o relatório novamente.",
+        }), 404
 
 
-@selecao_dezenas_api.post("/api/selecao-dezenas/execucoes/<identificador>/cancelamento")
-def rota_cancelar_execucao(identificador):
+@selecao_dezenas_api.post(
+    "/api/selecao-dezenas/backtests/<identificador>/cancelamento"
+)
+def rota_cancelar_backtest(identificador):
     try:
-        return jsonify(current_app.config["GERENCIADOR_BACKTEST_SELECAO"].cancelar(
-            identificador
-        )), 202
+        return jsonify(
+            current_app.config["GERENCIADOR_BACKTEST_SELECAO"].cancelar(
+                identificador
+            )
+        ), 202
     except KeyError:
-        return jsonify(erro={"codigo": "EXECUCAO_NAO_ENCONTRADA",
-                             "mensagem": "A execução não foi encontrada."}), 404
+        return jsonify(erro={
+            "codigo": "BACKTEST_NAO_ENCONTRADO",
+            "mensagem": "O relatório do Backtest não está mais disponível. Gere o relatório novamente.",
+        }), 404
     except ErroApiSelecaoDezenas as erro:
         return _erro_json(erro, 409)
 
 
-@selecao_dezenas_api.get("/api/selecao-dezenas/backtests/<int:identificador>/resumo")
-def rota_resumo_backtest(identificador):
-    return _executar_rota(lambda: jsonify(
-        current_app.config["RESUMIR_BACKTEST_SELECAO"](identificador)
-    ))
-
-
-@selecao_dezenas_api.get("/api/selecao-dezenas/backtests/<int:identificador>/detalhes")
-def rota_detalhes_backtest(identificador):
-    return _executar_rota(lambda: jsonify(detalhes=
-        current_app.config["DETALHAR_BACKTEST_SELECAO"](identificador)
-    ))
-
-
-@selecao_dezenas_api.post("/api/selecao-dezenas/backtests/comparacao")
-def rota_comparar_backtests():
-    def executar():
-        dados = _corpo({"ids_execucoes"})
-        ids = dados.get("ids_execucoes")
-        if not isinstance(ids, list) or any(
-            isinstance(item, bool) or not isinstance(item, int) or item <= 0 for item in ids
-        ):
-            raise ErroApiSelecaoDezenas(
-                "PARAMETRO_INVALIDO", "ids_execucoes deve ser uma lista de inteiros positivos."
-            )
-        return jsonify(current_app.config["COMPARAR_BACKTESTS_SELECAO"](tuple(ids)))
-    return _executar_rota(executar)
+@selecao_dezenas_api.delete(
+    "/api/selecao-dezenas/backtests/<identificador>"
+)
+def rota_descartar_backtest(identificador):
+    try:
+        current_app.config["GERENCIADOR_BACKTEST_SELECAO"].descartar(
+            identificador
+        )
+        return "", 204
+    except KeyError:
+        return jsonify(erro={
+            "codigo": "BACKTEST_NAO_ENCONTRADO",
+            "mensagem": "O relatório do Backtest não está mais disponível. Gere o relatório novamente.",
+        }), 404
+    except ErroApiSelecaoDezenas as erro:
+        return _erro_json(erro, 409)
 
 
 @selecao_dezenas_api.post("/api/selecao-dezenas/previsoes")
@@ -498,7 +602,7 @@ def rota_atualizar_previsoes():
 @selecao_dezenas_api.get("/api/selecao-dezenas/previsoes/<int:identificador>/detalhes")
 def rota_detalhes_previsao(identificador):
     return _executar_rota(lambda: jsonify(detalhes=
-        current_app.config["DETALHAR_BACKTEST_SELECAO"](identificador)
+        current_app.config["DETALHAR_PREVISAO_SELECAO"](identificador)
     ))
 
 

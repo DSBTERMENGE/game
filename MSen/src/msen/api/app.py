@@ -29,7 +29,7 @@ from .grupos_padroes import (
     grupos_padroes_api,
     listar_grupos_padroes_do_banco,
 )
-from .screener import screener_api
+from .screener import GerenciadorExecucoesScreener, screener_api
 from .perfis_padroes import (
     calcular_perfil_no_banco,
     perfis_padroes_api,
@@ -52,17 +52,25 @@ from .frequencias import (
     preparar_no_banco,
 )
 from .selecao_dezenas import (
-    GerenciadorBacktestsSelecao,
+    GerenciadorBacktests,
     atualizar_previsoes_no_banco,
-    comparar_no_banco,
-    detalhar_no_banco,
+    detalhar_previsao_no_banco,
     listar_configuracoes_no_banco,
     persistir_jogos_no_banco,
     preparar_pesquisa_no_banco,
+    preparar_backtest_no_banco,
     previa_jogos_no_banco,
-    resumir_no_banco,
     salvar_configuracao_no_banco,
     selecao_dezenas_api,
+)
+from .gestao_desenvolvimento import (
+    arquivar_no_banco as arquivar_gestao_desenvolvimento_no_banco,
+    atualizar_no_banco as atualizar_gestao_desenvolvimento_no_banco,
+    consultar_no_banco as consultar_gestao_desenvolvimento_no_banco,
+    criar_no_banco as criar_gestao_desenvolvimento_no_banco,
+    gestao_desenvolvimento_api,
+    historico_no_banco as historico_gestao_desenvolvimento_no_banco,
+    listar_no_banco as listar_gestao_desenvolvimento_no_banco,
 )
 
 
@@ -93,6 +101,7 @@ def criar_app(configuracao: Mapping[str, Any] | None = None) -> Flask:
         EXCLUIR_GRUPO_PADRAO=excluir_grupo_padrao_no_banco,
         LISTAR_GRUPOS_PADROES=listar_grupos_padroes_do_banco,
         GERAR_QUADRO_SCREENER=gerar_quadro_screener_extensivel,
+        GERENCIADOR_SCREENER=GerenciadorExecucoesScreener(),
         CALCULAR_PERFIL_PADROES=calcular_perfil_no_banco,
         CALCULAR_DISTRIBUICOES=calcular_distribuicoes_no_banco,
         GERENCIADOR_VALIDACAO=GerenciadorExecucoesValidacao(),
@@ -107,13 +116,18 @@ def criar_app(configuracao: Mapping[str, Any] | None = None) -> Flask:
         LISTAR_CONFIGURACOES_SELECAO=listar_configuracoes_no_banco,
         SALVAR_CONFIGURACAO_SELECAO=salvar_configuracao_no_banco,
         PREPARAR_PESQUISA_SELECAO=preparar_pesquisa_no_banco,
-        GERENCIADOR_BACKTEST_SELECAO=GerenciadorBacktestsSelecao(),
-        RESUMIR_BACKTEST_SELECAO=resumir_no_banco,
-        DETALHAR_BACKTEST_SELECAO=detalhar_no_banco,
-        COMPARAR_BACKTESTS_SELECAO=comparar_no_banco,
+        PREPARAR_BACKTEST_SELECAO=preparar_backtest_no_banco,
+        GERENCIADOR_BACKTEST_SELECAO=GerenciadorBacktests(),
+        DETALHAR_PREVISAO_SELECAO=detalhar_previsao_no_banco,
         ATUALIZAR_PREVISOES_SELECAO=atualizar_previsoes_no_banco,
         PREVIA_JOGOS_SELECAO=previa_jogos_no_banco,
         PERSISTIR_JOGOS_SELECAO=persistir_jogos_no_banco,
+        LISTAR_GESTAO_DESENVOLVIMENTO=listar_gestao_desenvolvimento_no_banco,
+        CONSULTAR_GESTAO_DESENVOLVIMENTO=consultar_gestao_desenvolvimento_no_banco,
+        HISTORICO_GESTAO_DESENVOLVIMENTO=historico_gestao_desenvolvimento_no_banco,
+        CRIAR_GESTAO_DESENVOLVIMENTO=criar_gestao_desenvolvimento_no_banco,
+        ATUALIZAR_GESTAO_DESENVOLVIMENTO=atualizar_gestao_desenvolvimento_no_banco,
+        ARQUIVAR_GESTAO_DESENVOLVIMENTO=arquivar_gestao_desenvolvimento_no_banco,
     )
     if configuracao is not None:
         app.config.update(configuracao)
@@ -143,5 +157,6 @@ def criar_app(configuracao: Mapping[str, Any] | None = None) -> Flask:
     app.register_blueprint(validacao_api)
     app.register_blueprint(frequencias_api)
     app.register_blueprint(selecao_dezenas_api)
+    app.register_blueprint(gestao_desenvolvimento_api)
 
     return app

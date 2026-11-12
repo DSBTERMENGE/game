@@ -21,7 +21,7 @@ class MigracaoHistoricoFrequenciaDDLTestCase(unittest.TestCase):
     def test_019_permanece_na_sequencia(self) -> None:
         versoes = tuple(item.versao for item in descobrir_migracoes(MIGRACOES))
         self.assertIn("019", versoes)
-        self.assertEqual("023", versoes[-1])
+        self.assertEqual("029", versoes[-1])
 
     def test_normaliza_geracao_concurso_dezena_e_evento(self) -> None:
         for trecho in (

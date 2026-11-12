@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Protocol
+from typing import Callable, Protocol
 
 from .gerador import Combinacao
 
@@ -61,7 +61,10 @@ def _validar_criterios(criterios: tuple[CriterioFunil, ...]) -> tuple[str, ...]:
 
 
 def executar_funil(
-    combinacoes: Iterable[Combinacao], criterios: Iterable[CriterioFunil]
+    combinacoes: Iterable[Combinacao], criterios: Iterable[CriterioFunil], *,
+    informar_progresso: Callable[[int, int], None] | None = None,
+    cancelado: Callable[[], bool] | None = None,
+    total_combinacoes: int | None = None,
 ) -> RelatorioFunil:
     """Executa critérios em ordem e encerra a combinação na primeira reprovação.
 
@@ -78,6 +81,8 @@ def executar_funil(
     total = 0
 
     for combinacao in combinacoes:
+        if cancelado is not None and cancelado():
+            raise InterruptedError("Processamento do Screener cancelado.")
         total += 1
         for criterio in criterios_fixos:
             avaliacoes[criterio.codigo] += 1
@@ -96,6 +101,11 @@ def executar_funil(
                 break
         else:
             aprovadas.append(combinacao)
+        if informar_progresso is not None and (
+            total % 25 == 0
+            or total_combinacoes is not None and total == total_combinacoes
+        ):
+            informar_progresso(total, total_combinacoes or total)
 
     saldo = total
     saldos: dict[str, int] = {}

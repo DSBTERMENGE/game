@@ -3,15 +3,15 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Screener — Game Analysis</title>
+    <title>Sistema de preparação e aplicação do Screener — Game Analysis</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/navegacao.css">
     <link rel="stylesheet" href="css/screener.css">
+    <link rel="stylesheet" href="css/modal-andamento.css">
   </head>
   <body>
     <header class="barra-navegacao">
       <a class="marca marca--compacta" href="/" aria-label="Game Analysis">GA</a>
-      <button id="botao-voltar" class="navegacao-voltar" type="button" data-destino-voltar="/">← Voltar</button>
       <a class="navegacao-link" href="/">Painel</a>
       <details class="navegacao-menu">
         <summary>Cadastros</summary>
@@ -22,28 +22,48 @@
         </nav>
       </details>
       <a class="navegacao-link" href="/distribuicoes.html">Distribuições</a>
-      <a class="navegacao-link" href="/screener.html" aria-current="page">Screener</a>
+      <a class="navegacao-link" href="/screener.html" aria-current="page">Preparação do Screener</a>
       <a class="navegacao-link" href="/auditoria.html">Validação e auditoria</a>
       <a class="navegacao-link" href="/frequencias.html">Frequência das dezenas</a>
       <a class="navegacao-link" href="/selecao-dezenas.html">Seleção de dezenas</a>
-      <strong class="navegacao-pagina">Funil em três níveis</strong>
+      <a class="navegacao-link" href="/gestao-desenvolvimento.html">Gestão do desenvolvimento</a>
+      <a class="navegacao-link" href="/ajuda.html">Ajuda</a>
     </header>
 
     <main class="pagina-conteudo prototipo-pagina">
       <section class="prototipo-topo">
-        <div>
-          <h1>Screener</h1>
-          <p id="mensagem-extensivel" role="status">Pronto para executar somente a amostra protegida de 5.000 combinações.</p>
+        <div class="prototipo-apresentacao">
+          <h1>Sistema de preparação e aplicação do Screener</h1>
+          <p>Use o teste para conferir os filtros em 5.000 combinações. A aplicação usará os mesmos filtros em todas as combinações possíveis.</p>
+          <p id="mensagem-extensivel" role="status">Pronto para iniciar o Teste do Screener.</p>
           <p class="aviso-integracao">Cadastrar um padrão não cria seu filtro: cada grupo precisa de função Python, testes e integração validada.</p>
         </div>
-        <label class="controle-raridade">Limite de raridade (%)
-          <input id="limite-raridade-extensivel" type="number" min="0" max="100" step="0.000001" value="10" required>
-        </label>
-        <button id="botao-executar-extensivel" type="button">Executar 5.000</button>
-        <button id="botao-abrir-todos" type="button" disabled>Abrir detalhes</button>
-        <button id="botao-fechar-todos" type="button" disabled>Fechar detalhes</button>
+        <div class="prototipo-configuracao">
+          <label class="controle-raridade" for="limite-raridade-extensivel">Limite de raridade dos padrões (%)</label>
+          <input id="limite-raridade-extensivel" type="number" min="0" max="100" step="0.000001" value="10" required aria-describedby="explicacao-limite-raridade">
+          <small id="explicacao-limite-raridade">Padrões com ocorrência histórica abaixo deste percentual são considerados raros.</small>
+        </div>
+        <section class="prototipo-comando" aria-labelledby="titulo-teste-screener">
+          <div>
+            <h2 id="titulo-teste-screener">Teste do Screener</h2>
+            <p>Analisa somente as primeiras 5.000 combinações para conferir o funcionamento dos filtros.</p>
+          </div>
+          <button id="botao-executar-extensivel" type="button">Iniciar teste</button>
+        </section>
+        <section class="prototipo-comando prototipo-comando--indisponivel" aria-labelledby="titulo-aplicacao-screener">
+          <div>
+            <h2 id="titulo-aplicacao-screener">Aplicação do Screener</h2>
+            <p>Analisará todas as 50.063.860 combinações depois da validação do progresso e do cancelamento seguro.</p>
+          </div>
+          <button id="botao-aplicacao-screener" type="button" disabled aria-describedby="estado-aplicacao-screener">Iniciar aplicação</button>
+          <small id="estado-aplicacao-screener">Ainda não disponível.</small>
+        </section>
+        <div class="prototipo-acoes-detalhes">
+          <button id="botao-abrir-todos" type="button" disabled>Abrir detalhes</button>
+          <button id="botao-fechar-todos" type="button" disabled>Fechar detalhes</button>
+        </div>
       </section>
-      <p id="extensivel-raridade-usada" class="prototipo-politica">Limite ainda não executado.</p>
+      <p id="extensivel-raridade-usada" class="prototipo-politica">Nenhum teste foi executado com o limite informado.</p>
 
       <section class="prototipo-resumo" aria-label="Resumo real do funil">
         <output><span>Universo possível</span><strong id="extensivel-total-universo">—</strong><small>Analisadas: <b id="extensivel-total-analisado">—</b></small></output>
@@ -52,13 +72,37 @@
       </section>
 
       <section id="extensivel-niveis" class="prototipo-niveis" aria-label="Famílias do funil">
-        <p class="estado-vazio">Nenhuma execução carregada. O processamento integral permanece bloqueado.</p>
+        <p class="estado-vazio">Nenhum resultado disponível. Inicie o Teste do Screener para analisar 5.000 combinações.</p>
       </section>
       <p id="extensivel-comparacao" class="comparacao-screener">Comparação com o screener anterior aguardando execução.</p>
       <footer class="prototipo-rodape">
-        <strong id="extensivel-reconciliacao">Aguardando execução protegida.</strong>
+        <strong id="extensivel-reconciliacao">Aguardando o Teste do Screener.</strong>
         <span>Somente filtros com função Python validada podem participar do funil.</span>
       </footer>
+
+      <dialog id="dialogo-confirmar-teste-screener" class="dialogo-confirmacao-screener" aria-labelledby="titulo-confirmar-teste-screener">
+        <form method="dialog">
+          <h2 id="titulo-confirmar-teste-screener">Confirmar Teste do Screener</h2>
+          <p>O mesmo motor do Screener analisará somente as primeiras 5.000 combinações de seis dezenas.</p>
+          <p>Deseja iniciar o teste?</p>
+          <div class="dialogo-confirmacao-screener__acoes">
+            <button value="cancelar" type="submit">Cancelar</button>
+            <button id="botao-confirmar-teste-screener" value="confirmar" type="submit">Confirmar e iniciar teste</button>
+          </div>
+        </form>
+      </dialog>
+
+      <dialog id="dialogo-confirmar-aplicacao-screener" class="dialogo-confirmacao-screener" aria-labelledby="titulo-confirmar-aplicacao-screener">
+        <form method="dialog">
+          <h2 id="titulo-confirmar-aplicacao-screener">Confirmar Aplicação do Screener</h2>
+          <p>O mesmo motor analisará todas as 50.063.860 combinações de seis dezenas.</p>
+          <p>A aplicação integral ainda não está liberada.</p>
+          <div class="dialogo-confirmacao-screener__acoes">
+            <button value="cancelar" type="submit">Voltar</button>
+            <button value="confirmar" type="submit" disabled>Confirmar e iniciar aplicação</button>
+          </div>
+        </form>
+      </dialog>
     </main>
     <script type="module" src="js/screener-extensivel.js"></script>
     <script type="module" src="js/navegacao.js"></script>

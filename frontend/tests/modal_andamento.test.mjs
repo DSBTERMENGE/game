@@ -49,6 +49,8 @@ test("modal apresenta progresso real, duração, erro e bloqueio de fechamento",
   assert.match(componente, /fechar\.disabled = !terminal/);
   assert.match(componente, /modal-andamento__resultado/);
   assert.match(componente, /apresentarResultado/);
+  assert.match(componente, /confirmarCancelamento/);
+  assert.match(componente, /Confirmar cancelamento/);
   assert.match(pagina, /Validação e auditoria concluída e aprovada/);
   assert.match(pagina, /Use o filtro Situação para localizar as ocorrências/);
   assert.match(pagina, /Validação e auditoria aprovada/);

@@ -16,7 +16,7 @@ from msen.services.configuracao_selecao_dezenas import ConfiguracaoSelecaoDezena
 
 
 HASH_SHA256 = re.compile(r"[0-9a-f]{64}")
-TIPOS_EXECUCAO = frozenset({"BACKTEST", "PREVISAO_FUTURA"})
+TIPOS_EXECUCAO = frozenset({"PREVISAO_FUTURA"})
 SITUACOES_ALVO = frozenset({"AVALIADO", "PENDENTE", "NAO_AVALIAVEL"})
 ESTADOS_AVALIACAO = frozenset({
     "SEM_BASE", "FORA_FAIXA",
@@ -195,6 +195,16 @@ class RepositorioPesquisaSelecao:
             with self._conexao.transaction():
                 with self._conexao.cursor() as cursor:
                     cursor.execute(
+                        "SELECT 1 FROM configuracoes_pesquisa_selecao "
+                        "WHERE LOWER(BTRIM(nome))=LOWER(BTRIM(%s)) LIMIT 1",
+                        (configuracao.nome,),
+                    )
+                    if cursor.fetchone() is not None:
+                        raise ErroRepositorioPesquisaSelecao(
+                            "NOME_CONFIGURACAO_EXISTENTE",
+                            "Já existe uma configuração salva com esse nome. Escolha outro nome.",
+                        )
+                    cursor.execute(
                         "INSERT INTO configuracoes_pesquisa_selecao "
                         "(nome, fator_k, fator_j, modo_quantidade, "
                         "quantidade_dezenas, versao_calculo, assinatura_sha256, "
@@ -222,6 +232,16 @@ class RepositorioPesquisaSelecao:
                     return _mapear_configuracao(linha)
         except ErroRepositorioPesquisaSelecao:
             raise
+        except psycopg.errors.UniqueViolation as erro:
+            if erro.diag.constraint_name == "uk_config_pesquisa_nome_normalizado":
+                raise ErroRepositorioPesquisaSelecao(
+                    "NOME_CONFIGURACAO_EXISTENTE",
+                    "Já existe uma configuração salva com esse nome. Escolha outro nome.",
+                ) from None
+            raise ErroRepositorioPesquisaSelecao(
+                "FALHA_CONFIGURACAO",
+                "Não foi possível gravar a configuração da pesquisa.",
+            ) from None
         except psycopg.Error:
             raise ErroRepositorioPesquisaSelecao(
                 "FALHA_CONFIGURACAO",

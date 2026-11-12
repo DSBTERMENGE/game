@@ -73,7 +73,7 @@ Identifica uma execução reproduzível.
 |---|---|---|
 | `id_execucao_selecao` | `BIGINT IDENTITY` | chave primária |
 | `id_configuracao_selecao` | `BIGINT` | FK para configuração, `RESTRICT` |
-| `tipo_execucao` | `VARCHAR(20)` | `BACKTEST` ou `PREVISAO_FUTURA` |
+| `tipo_execucao` | `VARCHAR(20)` | `PREVISAO_FUTURA` |
 | `configuracao_json` | `JSONB` | cópia imutável da configuração |
 | `assinatura_configuracao` | `CHAR(64)` | igual à assinatura usada |
 | `assinatura_resultados` | `CHAR(64)` | origem completa da pesquisa |
@@ -249,11 +249,47 @@ configuração, concurso-alvo e eventual resultado real.
 Esses jogos ainda não representam aprovação pelo segundo Screener. Eles são as
 combinações brutas formadas pelas dezenas do primeiro Screener.
 
-## 11. Implementação vigente
+As tabelas 9 e 10 pertencem ao fluxo inicial e foram preservadas temporariamente
+para não interromper consumidores existentes. A interface nova não cria mais
+esses lotes. Sua retirada somente ocorrerá depois da validação integral do novo
+processo.
+
+## 11. `formacoes_jogos_selecao`
+
+Registra a configuração imutável e a contabilidade de uma formação final:
+
+- alvo e quantidade de dezenas de origem;
+- quantidade bruta `C(N,6)` e número máximo solicitado;
+- valor unitário, valor máximo previsto e valor efetivo;
+- fotografia e assinatura do Screener;
+- versão e assinatura do classificador;
+- chave SHA-256 de idempotência;
+- totais examinado, reprovado, aprovado e disponibilizado;
+- estado, datas e eventual erro operacional.
+
+Os valores calculados usam `NUMERIC(24,2)`. A configuração não pode ser alterada
+depois da criação. Os totais obedecem a
+`examinadas = reprovadas + aprovadas`, e a quantidade disponibilizada nunca
+supera a aprovada nem a solicitada. Nenhuma combinação bruta ou reprovada é
+armazenada nessa tabela.
+
+## 12. `jogos_finais_selecao`
+
+Guarda somente a lista final autorizada. Cada linha contém posição classificada,
+seis dezenas crescentes, pontuação e evidências da classificação. Uma combinação
+não pode se repetir dentro da formação e um jogo final não pode ser alterado.
+
+As tabelas 11 e 12 foram criadas pelas migrações 026 e 027. Ainda não recebem
+dados porque geração, Screener, classificação e confirmação pertencem às etapas
+seguintes.
+
+## 13. Implementação vigente
 
 - migração 021: configurações, execuções, alvos e avaliações;
 - migração 022: lotes e jogos autorizados;
 - migração 023: remoção do horizonte e assinatura de configuração versão 2;
+- migração 026: configuração imutável e jogos finais;
+- migração 027: capacidade monetária das colunas calculadas;
 - repositório: `msen.database.pesquisa_selecao_repository`;
 - serviços: seleção, backtest, previsão e combinações;
 - API: `/api/selecao-dezenas`;

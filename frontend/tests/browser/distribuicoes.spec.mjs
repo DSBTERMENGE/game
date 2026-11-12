@@ -11,6 +11,7 @@ const codigos = [
   "GEO_AREA_TOTAL", "GEO_CENTRO_GRAVIDADE_X", "GEO_CENTRO_GRAVIDADE_Y",
 ];
 const raizFrontend = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const porta = Number(process.env.PLAYWRIGHT_TEST_PORT || 4173);
 let servidor;
 
 test.beforeAll(async () => {
@@ -34,7 +35,7 @@ test.beforeAll(async () => {
   });
   await new Promise((resolver, rejeitar) => {
     servidor.once("error", rejeitar);
-    servidor.listen(4173, "127.0.0.1", resolver);
+    servidor.listen(porta, "127.0.0.1", resolver);
   });
 });
 

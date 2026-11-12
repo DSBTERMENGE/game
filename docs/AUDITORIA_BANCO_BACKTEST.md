@@ -1,12 +1,12 @@
-# Auditoria do banco para o backtest temporário
+# Auditoria do banco para o Backtest
 
 Auditoria somente leitura realizada na Etapa 25.2 em 09/11/2026. Seu objetivo
-foi identificar as fontes, consultas e índices necessários ao novo backtest,
+foi identificar as fontes, consultas e índices necessários ao Backtest,
 sem criar ou remover estruturas.
 
 ## 1. Conclusão
 
-O novo backtest não necessita de tabela, índice ou migração adicional.
+O Backtest não necessita de tabela, índice ou migração adicional.
 
 As estruturas existentes fornecem todos os dados básicos necessários:
 
@@ -104,7 +104,7 @@ Ler em fluxo as fotografias `SIMPLES` da geração ativa para os cortes entre
 `concurso_inicial - 1` e `concurso_final - 1`, ordenadas por concurso e dezena.
 
 O repositório deve entregar um grupo de 60 dezenas por corte. O motor processa
-um grupo, produz o trio temporário do relatório e libera os detalhes antes de
+um grupo, produz os três dados necessários ao relatório e libera os detalhes antes de
 avançar.
 
 Não se deve materializar simultaneamente em objetos Python todo o conjunto de
@@ -135,7 +135,7 @@ Ao final de cada concurso, os detalhes das 60 dezenas são descartados.
 ## 7. Imutabilidade dos resultados
 
 O esquema impede concursos duplicados, mas o repositório atual ainda contém
-uma operação administrativa de atualização de resultado. Para o novo backtest,
+uma operação administrativa de atualização de resultado. Para o Backtest,
 a regra operacional permanece: resultados validados são imutáveis e novas
 importações apenas acrescentam concursos.
 
@@ -157,7 +157,7 @@ processo e de autorização específica.
 
 ## 9. Evidência reproduzível
 
-O script `MSen/tests/auditar_backtest_temporario.py` repete as consultas de
+O script `MSen/tests/auditar_backtest.py` repete as consultas de
 cardinalidade, índices, tamanhos e planos sem mostrar host, usuário ou senha e
 sem alterar dados.
 

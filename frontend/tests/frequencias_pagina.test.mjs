@@ -5,7 +5,6 @@ import test from "node:test";
 const html = await readFile(new URL("../frequencias.html", import.meta.url), "utf8");
 const css = await readFile(new URL("../css/frequencias.css", import.meta.url), "utf8");
 const javascript = await readFile(new URL("../js/frequencias.js", import.meta.url), "utf8");
-const ajuda = await readFile(new URL("../js/ajuda-frequencias.js", import.meta.url), "utf8");
 const paginaGraficos = await readFile(new URL("../graficos-frequencias.html", import.meta.url), "utf8");
 const navegacaoGraficos = await readFile(new URL("../js/navegacao-graficos-frequencias.js", import.meta.url), "utf8");
 const javascriptGraficos = await readFile(new URL("../js/graficos-frequencias.js", import.meta.url), "utf8");
@@ -53,14 +52,7 @@ test("página auxiliar possui ida, volta e preserva os quatro filtros", () => {
   assert.match(paginaGraficos, /id="botao-consultar-graficos"/);
   assert.match(paginaGraficos, /Escalas X e Y independentes/);
   assert.match(paginaGraficos, /id="botao-ajuda-graficos"/);
-  assert.match(paginaGraficos, /id="dialogo-ajuda-graficos"/);
-  assert.match(paginaGraficos, /Cuidados de interpretação/);
-  assert.match(paginaGraficos, /linha vermelha em patamares/);
-  assert.match(paginaGraficos, /concurso 500/);
-  assert.match(paginaGraficos, /losango com haste tracejada/);
-  assert.match(paginaGraficos, /linha vermelha em patamares/);
-  assert.match(paginaGraficos, /concurso 500/);
-  assert.match(paginaGraficos, /losango com haste tracejada/);
+  assert.match(paginaGraficos, /ajuda\.html\?origem=%2Fgraficos-frequencias\.html#pagina-graficos-frequencia/);
   assert.match(javascriptGraficos, /\/api\/frequencias\/serie\?/);
   assert.match(javascriptGraficos, /Evolução dos intervalos/);
   assert.match(javascriptGraficos, /Faixa prevista e ocorrências reais/);
@@ -80,7 +72,6 @@ test("página auxiliar possui ida, volta e preserva os quatro filtros", () => {
   assert.match(cssGraficos, /historico-marca-degrau/);
   assert.match(cssGraficos, /historico-intervalo-curto/);
   assert.match(cssGraficos, /\.grade-graficos-historicos[^}]*display:\s*grid/s);
-  assert.match(cssGraficos, /\.ajuda-graficos::backdrop/);
 });
 
 test("gráficos auxiliares compartilham um único modal reutilizável", () => {
@@ -94,63 +85,19 @@ test("gráficos auxiliares compartilham um único modal reutilizável", () => {
   assert.match(javascriptGraficos, /svgAuxiliar\.replaceChildren\(\)/);
 });
 
-test("três acessos de ajuda usam um único modal contextual", () => {
-  assert.equal((paginaGraficos.match(/id="dialogo-ajuda-grafico"/g) || []).length, 1);
+test("três acessos de ajuda abrem tópicos da Ajuda central", () => {
+  assert.doesNotMatch(paginaGraficos, /<dialog id="dialogo-ajuda-grafico"/);
   assert.match(paginaGraficos, /id="botao-ajuda-grafico-auxiliar"/);
   assert.match(javascriptGraficos, /botao-ajuda-evolucao-intervalos/);
-  assert.match(javascriptGraficos, /Ajuda — Evolução dos intervalos/);
-  assert.match(javascriptGraficos, /Ajuda — Curva de distribuição/);
-  assert.match(javascriptGraficos, /Ajuda — Ocorrências em ordem crescente/);
-  assert.match(javascriptGraficos, /acionadorAjudaGrafico\.focus\(\)/);
-  assert.match(javascriptGraficos, /conteudoAjudaGrafico\.replaceChildren\(\)/);
+  assert.match(javascriptGraficos, /pagina-graficos-frequencia-evolucao/);
+  assert.match(javascriptGraficos, /pagina-graficos-frequencia-distribuicao/);
+  assert.match(javascriptGraficos, /pagina-graficos-frequencia-ordenado/);
 });
 
-test("ajuda de evolução explica eixos, linhas, interação e limites", () => {
-  for (const trecho of [
-    "Finalidade", "Eixo horizontal: número do concurso",
-    "Eixo vertical: duração do intervalo", "Média dos intervalos",
-    "Média menos desvio-padrão", "Média mais desvio-padrão",
-    "Losango com haste tracejada", "Concursos 1246 → 1261",
-    "não garantem quando acontecerá a próxima ocorrência",
-  ]) assert.match(javascriptGraficos, new RegExp(trecho));
-});
-
-test("ajuda da distribuição diferencia dados observados e curva normal", () => {
-  for (const trecho of [
-    "Eixo horizontal: duração do intervalo em concursos",
-    "Eixo vertical: percentual das ocorrências",
-    "Distribuição observada", "Curva normal teórica",
-    "Média ± desvio-padrão", "Intervalo 4: 28 ocorrências · 11,07%",
-    "distribuição pode ser assimétrica",
-    "não garante quando acontecerá a próxima ocorrência",
-  ]) assert.match(javascriptGraficos, new RegExp(trecho));
-});
-
-test("ajuda do gráfico ordenado explica percentuais, patamares e saltos", () => {
-  for (const trecho of [
-    "percentual acumulado das ocorrências ordenadas",
-    "percentual do maior intervalo observado", "linhas finas de 5%",
-    "posição horizontal do item i", "Cada ponto vermelho",
-    "Intervalos repetidos", "durações intermediárias não ocorreram",
-    "último ponto é sempre (100%, 100%)",
-    "Ocorrência 32 de 253 · 12,65% acumulado · intervalo 2 · 4% do maior",
-    "nem garante maior probabilidade no próximo concurso",
-  ]) assert.ok(javascriptGraficos.includes(trecho), `Trecho ausente: ${trecho}`);
-});
-
-test("ajuda explica a página bloco a bloco e funciona sem depender da API", () => {
+test("ajuda da página abre diretamente o tópico central", () => {
   assert.match(html, /id="botao-ajuda-frequencias"/);
-  assert.match(html, /<dialog id="dialogo-ajuda-frequencias"/);
-  for (const titulo of [
-    "Finalidade da página", "1. Estado da base", "2. Configuração gravada",
-    "3. Configuração a calcular", "4. Atualização do histórico",
-    "5. Fotografia atual das 60 dezenas", "6. Evolução histórica por dezena",
-    "7. Backtest e relatório de falhas", "Fluxo recomendado",
-    "Cuidados importantes",
-  ]) assert.match(html, new RegExp(titulo.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-  assert.match(ajuda, /showModal\(\)/);
-  assert.match(ajuda, /dialogo\.close\(\)/);
-  assert.doesNotMatch(ajuda, /fetch\(/);
+  assert.match(html, /ajuda\.html\?origem=%2Ffrequencias\.html#pagina-frequencia-dezenas/);
+  assert.doesNotMatch(html, /<dialog id="dialogo-ajuda-frequencias"/);
 });
 
 test("página usa API, prévia modal, confirmação, progresso e cancelamento", () => {

@@ -1,235 +1,206 @@
-# Contrato do backtest e das métricas — Seleção de dezenas
+# Contrato do Backtest — Seleção de dezenas
 
-> **Contrato legado.** Este documento registra a decisão histórica da
-> subetapa 23.1 e continua descrevendo o motor persistente atualmente em uso.
-> Para o novo backtest paralelo, a decisão vigente está em
-> `docs/CONTRATO_BACKTEST_TEMPORARIO_SELECAO_DEZENAS.md`. Nada deste contrato
-> legado será removido antes da implantação, comparação e aprovação do novo
-> processo.
-
-Este documento fecha a subetapa 23.1. Ele define como conferir historicamente
-as seleções produzidas pelo contrato matemático da subetapa 23.0, sem criar
-tabelas, API ou página.
+Este documento registra a revisão iniciada na Etapa 25.1 e consolidada após a
+validação da Etapa 25.8. O Backtest calcula o relatório sem gravar resultados
+derivados.
 
 ## 1. Finalidade
 
-O backtest mede quantas das seis dezenas efetivamente sorteadas estavam no
-conjunto selecionado antes de cada concurso-alvo. Ele compara configurações de
-forma reproduzível, mas não transforma desempenho passado em garantia futura.
+O backtest verifica, em resultados históricos conhecidos, quantas das seis
+dezenas sorteadas estavam na lista produzida pelo screener antes de cada
+concurso. Seu relatório deve permitir observar simultaneamente:
 
-## 2. Período
+- a variação da quantidade de dezenas retornadas;
+- a quantidade de acertos de 0 a 6;
+- o equilíbrio entre cobertura histórica e tamanho da seleção.
 
-- Primeiro concurso-alvo: 500.
-- Último concurso-alvo: último resultado existente no corte da execução.
-- Período inclusivo.
-- Previsões posteriores ao último resultado ficam pendentes e não entram no
-  backtest.
+Desempenho histórico não constitui garantia de resultado futuro.
 
-Uma comparação direta exige o mesmo concurso inicial, concurso final e a mesma
-assinatura da tabela de resultados.
+## 2. Premissas de reprodutibilidade
 
-## 3. Separação obrigatória entre seleção e conferência
+Resultados históricos validados são imutáveis. Novos concursos são
+acrescentados à série e não alteram os anteriores.
 
-Para cada alvo `C`:
+Com os mesmos resultados históricos, configuração e versão do algoritmo, o
+screener deve produzir o mesmo resultado. Por isso, o Backtest não
+persistirá avaliações individuais nem listas derivadas que possam ser
+recalculadas.
 
-1. reconstruir ou obter as estatísticas usando somente concursos até `C - 1`;
-2. calcular e congelar configuração, justificativas e dezenas selecionadas;
-3. somente depois consultar o resultado real de `C`;
-4. calcular a interseção entre selecionadas e sorteadas.
+Alterações diretas no PostgreSQL ficam fora do fluxo normal da aplicação. Uma
+eventual correção administrativa de resultado deverá invalidar qualquer
+relatório do Backtest ainda aberto.
 
-O serviço de seleção não receberá o resultado de `C`. A conferência será uma
-operação posterior e separada. Para o alvo 500, os cálculos usam somente os
-concursos 1 a 499; a fotografia persistida do próprio concurso 500 é proibida.
+## 3. Entrada
 
-## 4. Dados mínimos por concurso-alvo
+O Backtest recebe somente:
 
-Cada avaliação precisa conservar:
+- identificador de uma configuração previamente salva e disponível;
+- concurso inicial.
 
-- identificação e cópia imutável da configuração;
-- assinatura dos resultados e versão do cálculo;
-- concurso-alvo e corte `C - 1`;
-- `k`, `j` e estratégia de quantidade aplicáveis;
-- dezenas selecionadas em ordem crescente;
-- condição `SIMPLES` e classificação que justificaram cada seleção;
-- quantidade de dezenas selecionadas;
-- referência ao resultado real, sem duplicar suas seis dezenas na tabela de
-  pesquisa;
-- dezenas acertadas, obtidas pela interseção;
-- quantidade de acertos e classe exclusiva;
-- situação e motivo quando não avaliável.
+O período é inclusivo, o concurso inicial não pode ser anterior a 500 e deve
+ser menor ou igual ao último resultado cadastrado. O concurso final não é
+informado pelo usuário: o servidor sempre utiliza o último concurso cadastrado.
+A configuração utilizada é imutável e contém `k`, `j`, modo de quantidade,
+quantidade fixa quando aplicável e versão do cálculo.
 
-Os valores matemáticos que justificam cada dezena — última ocorrência, média,
-desvio, centro e limites — pertencem ao detalhe da seleção e deverão ser
-preservados para auditoria.
+Antes do processamento, a página apresenta uma prévia com a configuração, o
+período e a quantidade de concursos. O cálculo começa somente após confirmação
+expressa do usuário.
 
-## 5. Interseção e classe exclusiva
+## 4. Proteção temporal
 
-Se `S(C)` é o conjunto selecionado e `R(C)` é o conjunto das seis dezenas do
-resultado:
+Para cada concurso-alvo `C`:
+
+1. utilizar exclusivamente resultados até `C - 1` para formar as estatísticas;
+2. executar o screener sem fornecer a ele o resultado de `C`;
+3. obter a lista efetivamente retornada pelo screener;
+4. somente então consultar as seis dezenas sorteadas em `C`;
+5. calcular a interseção entre as retornadas e as sorteadas.
+
+Para o alvo 500, os cálculos usam somente os concursos 1 a 499. Resultados
+posteriores ao alvo jamais podem influenciar sua seleção.
+
+## 5. Resultado por concurso
+
+Durante o relatório, cada concurso é representado apenas por:
 
 ```text
-acertos(C) = S(C) ∩ R(C)
-quantidade_acertos(C) = |acertos(C)|
-classe(C) = quantidade_acertos(C)
+concurso
+quantidade_dezenas_retornadas
+quantidade_acertos
 ```
 
-`classe(C)` assume exatamente um valor entre 0 e 6. Se houve seis acertos, o
-concurso conta somente na classe 6; não é repetido nas classes 1 a 5. A classe
-0 é obrigatória.
+Para uma lista `S(C)` retornada pelo screener e o resultado `R(C)`:
 
-Uma seleção vazia produz zero acertos e classe 0 quando havia base matemática
-válida e nenhuma faixa continha o alvo. Ausência completa de base não deve ser
-confundida com uma seleção válida vazia.
+```text
+quantidade_acertos(C) = |S(C) ∩ R(C)|
+```
 
-## 6. Situações da avaliação
+A quantidade de acertos assume exatamente um valor entre 0 e 6. Um concurso
+com seis acertos pertence somente à classe 6, e não também às classes menores.
 
-- `AVALIADO`: seleção congelada e resultado real disponível.
-- `PENDENTE`: seleção do próximo concurso congelada, mas o resultado ainda não
-  existe.
-- `NAO_AVALIAVEL`: lacuna histórica, ausência completa de base simples,
-  incompatibilidade de versão ou falha que impeça reproduzir a seleção.
+As avaliações das 60 dezenas podem existir enquanto o concurso está sendo
+calculado, mas devem ser descartadas em seguida. Somente os três valores acima
+permanecem durante a consulta até o relatório ser fechado ou substituído.
 
-`PENDENTE` e `NAO_AVALIAVEL` não entram no denominador das taxas de acerto. O
-motivo deve ser registrado e exibido separadamente.
+## 6. Ausência de persistência
 
-## 7. Relatório consolidado obrigatório
+O Backtest é uma operação de leitura. Ele não deve:
 
-Para uma execução de pesquisa, informar:
+- criar execução de pesquisa no banco;
+- criar alvos de pesquisa;
+- gravar avaliações individuais das dezenas;
+- gravar listas retornadas;
+- gravar resumos ou pontos dos gráficos;
+- alterar resultados, configurações ou registros do screener.
 
-- período solicitado e período efetivamente avaliado;
-- quantidade de concursos solicitados, avaliados, pendentes e não avaliáveis;
-- quantidade e percentual de concursos em cada classe de 0 a 6;
-- quantidade mínima, máxima e média de dezenas selecionadas por concurso;
-- quantidades solicitada, aprovada e efetivamente retornada, incluindo quantas
-  vezes uma configuração fixa não atingiu `N`;
-- total de dezenas selecionadas;
-- total de dezenas acertadas;
-- percentual das dezenas sorteadas cobertas;
-- percentual das dezenas selecionadas que foram acertadas;
-- custo combinatório total e médio, quando aplicável.
+O relatório deixa de existir quando a página é atualizada ou fechada. Para
+consultá-lo novamente, o usuário executa novamente o cálculo.
 
-Para `A` concursos avaliados e `n_r` concursos da classe `r`:
+O contrato não exige nova tabela para dados derivados. A Etapa 25.2 deverá
+confirmar se as tabelas básicas e os índices existentes são suficientes para a
+leitura eficiente. Qualquer nova estrutura proposta deverá armazenar apenas
+dados básicos indispensáveis, nunca reproduzir o resultado calculável do
+backtest.
+
+## 7. Primeiro gráfico — quantidade de dezenas
+
+O primeiro gráfico apresenta:
+
+- eixo horizontal com todos os concursos do período;
+- rótulos e linhas verticais finas somente de 100 em 100 concursos;
+- concursos intermediários posicionados matematicamente, sem linhas verticais
+  nem rótulos;
+- eixo vertical com a quantidade de dezenas retornadas pelo screener;
+- um ponto para cada concurso e uma linha contínua passando pelos pontos;
+- uma linha horizontal no menor valor observado;
+- uma linha horizontal no maior valor observado.
+
+A escala vertical é ajustada ao mínimo e ao máximo observados, com pequena
+margem visual. Ela deve ser mais compacta que a escala do gráfico de acertos;
+a proporção inicial será avaliada visualmente com dados reais e poderá ser
+ajustada sem modificar a regra de cálculo.
+
+## 8. Segundo gráfico — quantidade de acertos
+
+O segundo gráfico compartilha exatamente as mesmas posições do eixo horizontal
+do primeiro, mas possui escala vertical independente de 0 a 6.
+
+- linhas horizontais 0, 1, 2 e 3: vermelhas;
+- linhas horizontais 4, 5 e 6: verdes;
+- linhas verticais: somente de 100 em 100 concursos;
+- um ponto por concurso na classe correspondente;
+- linha fina ligando os pontos para tornar visível o percurso histórico.
+
+Os dois gráficos devem manter alinhamento horizontal: o mesmo concurso ocupa a
+mesma coordenada X em ambos.
+
+## 9. Quadro-resumo
+
+O relatório informa obrigatoriamente:
+
+- número de testes efetuados;
+- quantidade e percentual nas classes 0, 1, 2, 3, 4, 5 e 6;
+- menor quantidade de dezenas retornadas;
+- maior quantidade de dezenas retornadas;
+- média de dezenas retornadas;
+- média de acertos por concurso;
+- quantidade e percentual de concursos com 4, 5 ou 6 acertos.
+
+Se `A` é o total de concursos avaliados e `n_r` é o total da classe `r`:
 
 ```text
 percentual_classe(r) = n_r / A × 100
 ```
 
-As sete quantidades de classe devem somar `A`, e seus percentuais devem somar
-100%, admitida apenas diferença de apresentação causada por arredondamento.
+As quantidades das sete classes devem somar `A`. Seus percentuais devem somar
+100%, admitida somente diferença visual de arredondamento.
 
-## 8. Métricas de cobertura e concentração
+## 10. Execução, progresso e cancelamento
 
-Se `H` é a soma dos acertos, `Q` é a soma das quantidades selecionadas e cada
-concurso tem seis dezenas sorteadas:
+O processamento pode ser assíncrono para não bloquear a página, mas sua
+identificação acompanha somente o cálculo e não representa registro no banco.
 
-```text
-cobertura_das_sorteadas = H / (6 × A) × 100
-precisao_das_selecionadas = H / Q × 100
-media_acertos_por_concurso = H / A
-```
+A página deve mostrar:
 
-Se `Q = 0`, a precisão das selecionadas é `NULL`, nunca zero. Essas métricas
-complementam as classes exclusivas e não as substituem.
+- quantidade total de concursos;
+- quantidade já processada;
+- duração transcorrida;
+- conclusão, cancelamento ou erro em linguagem compreensível.
 
-Também podem ser exibidas taxas cumulativas claramente identificadas, como
-`pelo menos 4 acertos`, mas elas são derivadas e não alteram a classificação
-exclusiva.
+O cancelamento interrompe novos cálculos e descarta o relatório incompleto. Não
+há retomada persistente, pois nenhum progresso do Backtest é gravado.
 
-## 9. Custo combinatório
+## 11. Comparação entre configurações
 
-Se uma seleção possui `N` dezenas e forem gerados todos os jogos possíveis de
-seis dezenas:
+Comparações não dependerão de IDs permanentes de execuções. Quando
+implementadas, deverão utilizar relatórios do Backtest mantidos apenas durante
+a sessão da página e exigir o mesmo período e a mesma versão do algoritmo.
 
-```text
-jogos(C) = C(N,6), quando N >= 6
-jogos(C) = 0, quando N < 6
-```
+Não haverá índice automático de “melhor configuração”. Quantidade de acertos e
+tamanho da seleção devem ser interpretados juntos.
 
-O custo total da pesquisa é a soma de `jogos(C)` nos concursos avaliados. O
-custo médio é o total dividido por `A`.
+## 12. Critérios de aceitação
 
-Se `quantidade_acertos(C) = 6`, a geração completa de `C(N,6)` contém
-exatamente uma combinação igual ao resultado real. Se houve menos de seis
-acertos, nenhuma combinação formada somente pelas selecionadas pode reproduzir
-as seis dezenas sorteadas.
+O novo contrato estará atendido quando:
 
-## 10. Comparação entre configurações
+1. cada alvo usar somente o histórico até `C - 1`;
+2. o resultado do alvo for consultado somente após a seleção;
+3. cada concurso produzir somente o trio de dados contratado;
+4. nenhuma tabela receber dados derivados do Backtest;
+5. as sete classes forem exclusivas e somarem os testes efetuados;
+6. os dois gráficos compartilharem as mesmas coordenadas horizontais;
+7. somente centenas gerarem linhas verticais e rótulos no eixo dos concursos;
+8. o gráfico superior mostrar mínimo, máximo e percurso da quantidade;
+9. o gráfico inferior mostrar 0 a 3 em vermelho e 4 a 6 em verde;
+10. atualizar a página eliminar o relatório do Backtest;
+11. o novo motor produzir os mesmos resultados do motor antigo para casos de
+    comparação controlada;
+12. tempo e memória serem medidos com o período completo antes da substituição
+    do processo atual.
 
-Uma comparação válida exige:
+## 13. Histórico do escopo
 
-- mesma assinatura de resultados;
-- mesmo período efetivamente avaliado;
-- mesma versão das fórmulas;
-- ausência de concursos não avaliáveis em apenas uma das pesquisas, ou
-  apresentação explícita dessa diferença.
-
-O relatório comparativo deve colocar lado a lado:
-
-- `k`, `j` e estratégia de quantidade;
-- distribuição das classes 0 a 6;
-- cobertura das sorteadas;
-- precisão das selecionadas;
-- quantidade média de dezenas selecionadas;
-- custo combinatório total e médio.
-
-Não haverá inicialmente um único índice automático de “melhor configuração”.
-Uma configuração que seleciona mais dezenas tende a aumentar a cobertura e o
-custo ao mesmo tempo. A decisão deve mostrar esse compromisso, sem declarar
-vencedora apenas a maior quantidade de acertos.
-
-## 11. Casos manuais obrigatórios
-
-### 11.1. Classe exclusiva
-
-```text
-selecionadas = {10, 20, 30, 40, 50, 60}
-resultado    = {10, 20, 30, 40, 50, 59}
-interseção   = {10, 20, 30, 40, 50}
-classe       = 5
-```
-
-Esse concurso incrementa somente a classe 5.
-
-### 11.2. Classe zero com seleção válida
-
-```text
-selecionadas = {01, 02, 03}
-resultado    = {10, 20, 30, 40, 50, 60}
-classe       = 0
-```
-
-### 11.3. Seleção vazia
-
-Se todas as dezenas possuíam base matemática, mas nenhuma faixa continha o
-alvo, a seleção vazia é válida e pertence à classe 0.
-
-### 11.4. Sem base
-
-Se nenhum tipo ativo de nenhuma dezena possui intervalo suficiente, o alvo é
-`NAO_AVALIAVEL` e não pertence à classe 0.
-
-### 11.5. Consolidação
-
-Em quatro concursos avaliados com classes `0, 2, 5, 5`:
-
-```text
-classe 0: 1 concurso = 25%
-classe 2: 1 concurso = 25%
-classe 5: 2 concursos = 50%
-demais classes: 0
-```
-
-### 11.6. Proteção temporal
-
-A lista do concurso 500 deve ser idêntica quando o teste é executado em bases
-que compartilham os resultados 1 a 499, mesmo que uma delas contenha resultados
-posteriores diferentes.
-
-## 12. Fora do escopo da subetapa 23.1
-
-- DDL e nomes definitivos das tabelas;
-- implementação da quantidade configurável, definida posteriormente nas
-  subetapas 23.2 e 23.2-A;
-- persistência, execução assíncrona e cancelamento;
-- API, página, gráficos e ajuda;
-- otimização automática dos parâmetros.
+Motor, endpoints, gráficos e substituição do método anterior foram
+concluídos nas etapas 25.2 a 25.8. A comparação simultânea de vários relatórios
+do Backtest continua fora do escopo atual.

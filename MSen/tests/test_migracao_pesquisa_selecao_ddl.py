@@ -46,12 +46,12 @@ class MigracaoPesquisaSelecaoDDLTest(unittest.TestCase):
         self.assertIn("CHECK (dezena BETWEEN 1 AND 60)", self.migracao)
         self.assertIn("PRIMARY KEY (id_alvo_selecao, dezena)", self.migracao)
 
-    def test_migracoes_possuem_versoes_unicas_e_023_e_a_ultima(self) -> None:
+    def test_migracoes_possuem_versoes_unicas_e_029_e_a_ultima(self) -> None:
         versoes = sorted(
             int(arquivo.name.split("_", 1)[0])
             for arquivo in MIGRACAO.parent.glob("[0-9][0-9][0-9]_*.sql")
         )
-        self.assertEqual(versoes[-1], 23)
+        self.assertEqual(versoes[-1], 29)
         self.assertEqual(len(versoes), len(set(versoes)))
 
 

@@ -1,4 +1,5 @@
 import { validarQuadroExtensivel } from "./screener-extensivel-contrato.js";
+import { criarModalAndamento } from "./modal-andamento.js";
 
 
 const formato = new Intl.NumberFormat("pt-BR");
@@ -149,8 +150,8 @@ export function renderizarQuadroExtensivel(dados) {
   texto(
     "#mensagem-extensivel",
     dados.escopo.processamento_integral
-      ? "Processamento integral reconciliado."
-      : "Amostra protegida reconciliada; não representa processamento integral.",
+      ? "Aplicação do Screener concluída e conferida."
+      : "Teste do Screener concluído com 5.000 combinações; este resultado não representa a aplicação integral.",
   );
   if (dados.comparacao) {
     const anterior = dados.comparacao.anterior.total_aprovado;
@@ -158,20 +159,50 @@ export function renderizarQuadroExtensivel(dados) {
     const diferenca = dados.comparacao.diferenca_aprovadas;
     texto(
       "#extensivel-comparacao",
-      `Mesma amostra — anterior: ${formato.format(anterior)} aprovadas; novo: ${formato.format(novo)}; diferença: ${formato.format(diferenca)}. As regras e a ordem são diferentes.`,
+      `Mesmo conjunto de teste — resultado anterior: ${formato.format(anterior)} aprovadas; resultado atual: ${formato.format(novo)}; diferença: ${formato.format(diferenca)}. As regras e a ordem são diferentes.`,
     );
   }
 }
 
 const botaoExecutar = document.querySelector("#botao-executar-extensivel");
+const botaoAplicacao = document.querySelector("#botao-aplicacao-screener");
+const dialogoConfirmarTeste = document.querySelector("#dialogo-confirmar-teste-screener");
+const botaoConfirmarTeste = document.querySelector("#botao-confirmar-teste-screener");
 const botaoAbrirTodos = document.querySelector("#botao-abrir-todos");
 const botaoFecharTodos = document.querySelector("#botao-fechar-todos");
 const limiteRaridade = document.querySelector("#limite-raridade-extensivel");
 let detalhesDisponiveis = false;
 let bloqueadoPelaValidacao = true;
 
+async function respostaJson(resposta) {
+  const dados = await resposta.json();
+  if (!resposta.ok) throw new Error(dados.erro?.mensagem || `Falha HTTP ${resposta.status}.`);
+  return dados;
+}
+
+const modalTeste = criarModalAndamento({
+  titulo: "Teste do Screener",
+  descricao: "Aplicação dos filtros atuais e comparação com o resultado anterior sobre as mesmas 5.000 combinações.",
+  confirmarCancelamento: true,
+  iniciar: async () => respostaJson(await fetch("/api/screener/execucoes", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ limite_raridade: limiteRaridade.value }),
+  })),
+  consultar: async (id) => respostaJson(await fetch(`/api/screener/execucoes/${encodeURIComponent(id)}`)),
+  cancelar: async (id) => respostaJson(await fetch(
+    `/api/screener/execucoes/${encodeURIComponent(id)}/cancelamento`, { method: "POST" },
+  )),
+  apresentarResultado: (dados) => {
+    renderizarQuadroExtensivel(dados);
+    detalhesDisponiveis = true;
+    return { aprovado: true, mensagem: "Teste concluído. Os resultados estão disponíveis na página." };
+  },
+});
+
 function atualizarControles(processando = false) {
   botaoExecutar.disabled = processando || bloqueadoPelaValidacao;
+  botaoAplicacao.disabled = true;
   limiteRaridade.disabled = processando;
   botaoAbrirTodos.disabled = processando || !detalhesDisponiveis;
   botaoFecharTodos.disabled = processando || !detalhesDisponiveis;
@@ -206,19 +237,14 @@ async function executarAmostra() {
     return;
   }
   atualizarControles(true);
-  texto("#mensagem-extensivel", "Executando 5.000 combinações e comparando os funis...");
+  texto("#mensagem-extensivel", "Teste em andamento: analisando 5.000 combinações e comparando os resultados...");
   try {
-    const resposta = await fetch("/api/screener/quadro", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ limite_raridade: limiteRaridade.value }),
-    });
-    const dados = await resposta.json();
-    if (!resposta.ok) throw new Error(dados.erro?.mensagem || "Falha no novo screener.");
-    renderizarQuadroExtensivel(dados);
-    detalhesDisponiveis = true;
-  } catch (erro) {
-    texto("#mensagem-extensivel", `Não foi possível concluir a execução: ${erro.message}`);
+    const final = await modalTeste.abrir();
+    if (final?.estado === "CANCELADA") {
+      texto("#mensagem-extensivel", "Teste cancelado. Os resultados parciais foram descartados.");
+    } else if (final?.estado === "FALHOU") {
+      texto("#mensagem-extensivel", `Não foi possível concluir o teste: ${final.erro?.mensagem || "falha não identificada"}.`);
+    }
   } finally {
     atualizarControles(false);
   }
@@ -230,6 +256,20 @@ botaoAbrirTodos.addEventListener("click", () => {
 botaoFecharTodos.addEventListener("click", () => {
   document.querySelectorAll(".prototipo-nivel").forEach((item) => { item.open = false; });
 });
-botaoExecutar.addEventListener("click", executarAmostra);
+botaoExecutar.addEventListener("click", () => {
+  if (bloqueadoPelaValidacao) {
+    texto("#mensagem-extensivel", MENSAGEM_VALIDACAO_PENDENTE);
+    return;
+  }
+  if (!limiteRaridade.checkValidity()) {
+    limiteRaridade.reportValidity();
+    texto("#mensagem-extensivel", "Informe um limite de raridade entre 0% e 100%.");
+    return;
+  }
+  dialogoConfirmarTeste.showModal();
+});
+botaoConfirmarTeste.addEventListener("click", () => {
+  queueMicrotask(executarAmostra);
+});
 atualizarControles(false);
 carregarEstadoValidacao();

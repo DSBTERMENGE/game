@@ -12,7 +12,6 @@
   <body>
     <header class="barra-navegacao">
       <a class="marca marca--compacta" href="/" aria-label="Game Analysis">GA</a>
-      <button id="botao-voltar" class="navegacao-voltar" type="button" data-destino-voltar="/frequencias.html">← Voltar</button>
       <a class="navegacao-link" href="/">Painel</a>
       <details class="navegacao-menu">
         <summary>Cadastros</summary>
@@ -23,11 +22,12 @@
         </nav>
       </details>
       <a class="navegacao-link" href="/distribuicoes.html">Distribuições</a>
-      <a class="navegacao-link" href="/screener.html">Screener</a>
+      <a class="navegacao-link" href="/screener.html">Preparação do Screener</a>
       <a class="navegacao-link" href="/auditoria.html">Validação e auditoria</a>
       <a class="navegacao-link" href="/frequencias.html">Frequência das dezenas</a>
       <a class="navegacao-link" href="/selecao-dezenas.html" aria-current="page">Seleção de dezenas</a>
-      <strong class="navegacao-pagina">Seleção de dezenas</strong>
+      <a class="navegacao-link" href="/gestao-desenvolvimento.html">Gestão do desenvolvimento</a>
+      <a class="navegacao-link" href="/ajuda.html">Ajuda</a>
     </header>
 
     <main class="pagina-conteudo selecao-pagina">
@@ -36,7 +36,7 @@
           <h1>Seleção de dezenas</h1>
           <p id="mensagem-selecao" role="status" aria-live="polite">Carregando configurações…</p>
         </div>
-        <button id="botao-ajuda-selecao" type="button">Ajuda</button>
+        <a id="botao-ajuda-selecao" class="ajuda-contextual" href="/ajuda.html?origem=%2Fselecao-dezenas.html#pagina-selecao-dezenas">Ajuda</a>
       </section>
 
       <section class="selecao-bloco selecao-configuracao" aria-labelledby="titulo-configuracao-selecao">
@@ -64,152 +64,72 @@
         </section>
 
         <section class="selecao-bloco" aria-labelledby="titulo-backtest-selecao">
-          <header><h2 id="titulo-backtest-selecao">Backtest</h2></header>
-          <form id="form-backtest-selecao" class="selecao-form-linha">
+          <header><h2 id="titulo-backtest-selecao">Backtest</h2><button id="botao-gerar-backtest" type="button">Gerar relatório gráfico</button></header>
+          <p id="estado-backtest" class="selecao-resultado">Escolha uma configuração salva e o concurso inicial. O estudo seguirá automaticamente até o último concurso cadastrado.</p>
+          <div id="controles-backtest-selecao" class="selecao-form-linha">
+            <label>Configuração do estudo<select id="backtest-configuracao" required><option value="">Selecione uma configuração</option></select></label>
             <label>Concurso inicial<input id="backtest-inicial" type="number" min="500" value="500" required></label>
-            <label>Concurso final<input id="backtest-final" type="number" min="500"></label>
-            <button type="submit">Executar backtest</button>
-          </form>
-          <div class="selecao-progresso"><output id="estado-backtest">Aguardando execução.</output></div>
-          <div id="resumo-backtest" class="selecao-resultado">Nenhum backtest executado.</div>
-          <div id="classes-backtest" class="selecao-classes" aria-label="Acertos de zero a seis"></div>
+          </div>
         </section>
       </div>
 
-      <section class="selecao-bloco" aria-labelledby="titulo-comparacao-selecao">
-        <header><h2 id="titulo-comparacao-selecao">Comparação de pesquisas</h2></header>
-        <form id="form-comparacao-selecao" class="selecao-form-linha">
-          <label>IDs das execuções, separados por vírgula<input id="comparacao-ids" type="text" placeholder="12, 15" required></label>
-          <button type="submit">Comparar</button>
-        </form>
-        <div id="resultado-comparacao" class="selecao-resultado">Informe ao menos duas execuções.</div>
+      <section id="relatorio-backtest" class="selecao-bloco backtest-relatorio" aria-labelledby="titulo-relatorio-backtest" hidden>
+        <header><div><p class="backtest-relatorio__estado">Resultado do estudo</p><h2 id="titulo-relatorio-backtest">Relatório gráfico do Backtest</h2></div><button id="botao-fechar-backtest" type="button">Fechar relatório</button></header>
+        <p id="periodo-backtest" class="selecao-resultado"></p>
+        <div id="resumo-backtest" class="backtest-relatorio__resumo" aria-label="Resumo do Backtest"></div>
+        <div id="classes-backtest" class="selecao-classes" aria-label="Quantidade e percentual de concursos com zero a seis acertos"></div>
+        <figure class="backtest-grafico">
+          <h3>Quantidade de dezenas retornadas por concurso</h3>
+          <p>A linha superior mostra a variação da seleção. As linhas horizontais identificam o menor e o maior valor observados.</p>
+          <svg id="grafico-backtest-quantidade"></svg>
+        </figure>
+        <figure class="backtest-grafico">
+          <h3>Quantidade de acertos por concurso</h3>
+          <p>As linhas de 0 a 3 são vermelhas; as linhas de 4 a 6 são verdes por representarem as faixas premiadas.</p>
+          <svg id="grafico-backtest-acertos"></svg>
+        </figure>
       </section>
 
-      <section class="selecao-bloco selecao-detalhes" aria-labelledby="titulo-detalhes-selecao">
-        <header><h2 id="titulo-detalhes-selecao">Detalhe por concurso e formação de jogos</h2></header>
-        <div class="selecao-tabela"><table><thead><tr><th>Concurso</th><th>Corte</th><th>Situação</th><th>Selecionadas</th><th>Acertos</th><th>C( N, 6 )</th><th>Ação</th></tr></thead><tbody id="corpo-detalhes-backtest"></tbody></table></div>
+      <section class="selecao-bloco" aria-labelledby="titulo-formacao-jogos">
+        <header><h2 id="titulo-formacao-jogos">Formação de jogos com as dezenas registradas</h2></header>
+        <p>Escolha <strong>Formar jogos</strong> em um registro acima para indicar quais dezenas serão usadas. Nesta etapa, a configuração pode ser conferida, mas o Screener de combinações ainda não será executado.</p>
         <div id="painel-jogos" class="selecao-jogos" hidden>
-          <p id="resumo-jogos">—</p>
-          <button id="botao-gerar-jogos" type="button">Gerar e salvar jogos</button>
+          <section class="selecao-jogos__origem" aria-labelledby="titulo-origem-jogos">
+            <h3 id="titulo-origem-jogos">Origem escolhida</h3>
+            <dl>
+              <div><dt>Concurso previsto</dt><dd id="jogos-origem-concurso">—</dd></div>
+              <div><dt>Configuração das dezenas</dt><dd id="jogos-origem-configuracao">—</dd></div>
+              <div><dt>Dezenas registradas</dt><dd id="jogos-origem-dezenas">—</dd></div>
+              <div><dt>Combinações brutas de seis</dt><dd id="jogos-origem-combinacoes">—</dd></div>
+            </dl>
+          </section>
+          <form id="form-configuracao-jogos" class="selecao-jogos__configuracao" novalidate>
+            <label>Número máximo de jogos<input id="jogos-quantidade-solicitada" type="number" min="1" max="50063860" step="1" required></label>
+            <label>Valor de um jogo (R$)<input id="jogos-valor-unitario" type="text" inputmode="decimal" placeholder="0,00" required></label>
+            <div class="selecao-jogos__valor"><span>Valor máximo previsto</span><strong id="jogos-valor-previsto">—</strong></div>
+            <div class="selecao-acoes"><button id="botao-conferir-jogos" type="button">Conferir configuração</button></div>
+          </form>
+          <p id="estado-configuracao-jogos" class="selecao-resultado">Informe a quantidade máxima e o valor unitário. Nenhuma combinação será processada ou gravada.</p>
         </div>
       </section>
     </main>
 
-    <dialog id="dialogo-ajuda-selecao" class="selecao-ajuda" aria-labelledby="titulo-ajuda-selecao">
+
+    <dialog id="dialogo-confirmar-configuracao" class="selecao-previa" aria-labelledby="titulo-confirmar-configuracao">
       <form method="dialog">
-        <header><h2 id="titulo-ajuda-selecao">Como usar Seleção de dezenas</h2><button type="submit" aria-label="Fechar ajuda">×</button></header>
-        <div>
-          <section><h3>Finalidade e sequência</h3><p>Esta página é o primeiro Screener: escolhe dezenas candidatas para um concurso-alvo. Depois, as combinações de seis formadas com essas dezenas ainda deverão passar pelo Screener de combinações. As modalidades 2VS e 3VS pertencem a essa segunda fase e não alteram a seleção de dezenas.</p></section>
-          <section>
-            <h3>1. Configuração da pesquisa</h3>
-            <h4>1.1 Abordagem técnica</h4>
-            <p><strong>Concurso-alvo (CA)</strong> é sempre o concurso imediatamente posterior ao último resultado cadastrado no banco de dados. Se a base estiver desatualizada, o CA indicado pelo sistema também estará defasado em relação ao próximo concurso promovido pela operadora. Por isso, confira antes se o resultado mais recente já foi importado.</p>
-            <p>Para cada dezena, <strong>U</strong> é o concurso de sua última ocorrência, <strong>μ</strong> é a média histórica dos intervalos entre ocorrências e <strong>σ</strong> é o desvio-padrão desses intervalos. A curva histórica e essas medidas não são alteradas por <strong>k</strong> ou <strong>j</strong>. Na escala relativa, toma-se <strong>U = 0</strong>; para obter o número do concurso, soma-se U ao intervalo.</p>
-            <p>Como referências fixas do histórico, esta ajuda chama de <strong>LIH</strong> e <strong>LSH</strong> os pontos situados a um desvio-padrão da média:</p>
-            <p class="selecao-formula"><strong>LIH = U + μ − σ</strong><br><strong>LSH = U + μ + σ</strong></p>
-            <p>A configuração não altera LIH, μ, LSH nem a curva. Ela calcula uma faixa projetada de aceitação, com ponto médio ajustado <strong>Mₐ</strong>, limite inferior ajustado <strong>LIA</strong> e limite superior ajustado <strong>LSA</strong>:</p>
-            <p class="selecao-formula"><strong>Mₐ = U + μ + j × σ</strong><br><strong>LIA = ⌊Mₐ − k × σ⌋</strong><br><strong>LSA = ⌈Mₐ + k × σ⌉</strong></p>
-            <p>A dezena é aprovada somente quando o concurso-alvo está dentro da faixa ajustada, inclusive:</p>
-            <p class="selecao-formula"><strong>LIA ≤ CA ≤ LSA</strong></p>
-            <p>O fator <strong>k</strong> controla a meia largura da faixa ajustada. O padrão é <strong>k = 1</strong>, correspondente a um desvio-padrão para cada lado de Mₐ. Valores menores estreitam a faixa e tendem a aprovar menos dezenas. O sistema exige <strong>0 &lt; k ≤ 1</strong>; portanto, k = 0 serve apenas para imaginar o caso-limite de largura zero e não pode ser informado.</p>
-            <p>O fator <strong>j</strong> desloca Mₐ em relação a μ e, por isso, redistribui assimetricamente a faixa sobre a curva histórica. O padrão é <strong>j = 0</strong>: nesse caso, Mₐ coincide com U + μ e nenhum deslocamento é aplicado. Um j positivo desloca a faixa para concursos posteriores; um j negativo, para concursos anteriores. O mesmo j é aplicado a todas as dezenas e deve permanecer entre <strong>−k e +k</strong>.</p>
-            <p>Os gráficos atualizados das distribuições históricas podem orientar valores iniciais de j, mas o sistema não mede nem corrige automaticamente a assimetria. A calibração deve testar diferentes pares de <strong>k</strong> e <strong>j</strong> pelo backtest, mantendo as demais configurações iguais e usando <strong>k = 1, j = 0</strong> como referência.</p>
-            <p>Compare não apenas os acertos, mas também a quantidade de dezenas retornadas e o número de combinações de seis que elas formam. Um par que retorne dezenas demais gera muitas combinações e pode tornar as apostas onerosas. É necessário buscar equilíbrio entre quantidade de dezenas, cobertura observada no backtest e custo; o método não calcula uma probabilidade garantida de acerto.</p>
-            <p>Em <strong>MAX</strong>, o sistema retorna todas as dezenas aprovadas pela faixa. Em <strong>FIXA</strong>, retorna até a quantidade pedida, seguindo o ranking, mas nunca completa a quantidade com dezenas reprovadas.</p>
-            <h4>1.2 Configurando</h4>
-            <p><strong>Configuração gravada</strong> lista as configurações salvas. Escolher uma delas carrega seus parâmetros somente para consulta e utilização: os campos ficam desabilitados porque uma configuração salva não pode ser alterada. Essa proteção preserva os parâmetros associados aos backtests e previsões já realizados. Para experimentar outros valores, escolha <strong>Nova configuração</strong>, preencha os campos e salve um novo registro. Se a lista mostrar somente essa opção, ainda não existe configuração gravada.</p>
-            <p><strong>Nome</strong> identifica a configuração. “Seleção inicial” é apenas uma sugestão e pode ser substituída. <strong>Fator k</strong> controla a largura da faixa ajustada e <strong>Fator j</strong> controla seu deslocamento em relação à média histórica. Os valores padrão são <strong>k = 1</strong> e <strong>j = 0</strong>.</p>
-            <p><strong>Quantidade</strong> define o modo: <strong>Máxima aprovada (MAX)</strong> retorna todas as dezenas aprovadas; <strong>Quantidade fixa (FIXA)</strong> retorna até o limite escolhido pelo ranking. Ao escolher FIXA, preencha <strong>Número de dezenas</strong>. Se houver menos aprovadas que o número pedido, o sistema retorna somente as aprovadas.</p>
-            <p><strong>Versão do cálculo</strong> identifica a regra matemática utilizada. O sistema mantém internamente um identificador técnico para reconhecer e preservar a configuração usada em cada pesquisa; o usuário não precisa informar nem administrar esse identificador. O concurso-alvo não faz parte da configuração: ele é calculado novamente a partir da base disponível.</p>
-            <h4>1.3 Botões de comando</h4>
-            <p><strong>Analisar configuração</strong> aplica os valores atualmente exibidos à base disponível e mostra, em <strong>Dados analíticos da configuração</strong>, o último concurso cadastrado, o CA, as dezenas aprovadas, as dezenas retornadas e a quantidade de combinações de seis. A análise é momentânea: não salva o resultado, não altera uma configuração gravada e não inicia o backtest.</p>
-            <p><strong>Salvar configuração</strong> fica disponível somente para uma nova configuração e preserva seus parâmetros para reutilização posterior. O botão não armazena os dados analíticos momentâneos apresentados pela análise. Depois de salva, a configuração passa a ser somente para leitura.</p>
-          </section>
-          <figure class="selecao-diagrama-faixa" aria-labelledby="titulo-diagrama-faixa legenda-diagrama-faixa">
-            <h4 id="titulo-diagrama-faixa">Histórico fixo e faixa ajustada para o concurso-alvo</h4>
-            <div class="selecao-diagrama-faixa__legenda" aria-label="Legenda do gráfico">
-              <div class="selecao-diagrama-faixa__legenda-linhas">
-                <span><i class="selecao-diagrama-faixa__amostra selecao-diagrama-faixa__amostra--curva"></i>Curva histórica fixa</span>
-                <span><i class="selecao-diagrama-faixa__amostra selecao-diagrama-faixa__amostra--historico"></i>Extensão histórica observada</span>
-                <span><i class="selecao-diagrama-faixa__amostra selecao-diagrama-faixa__amostra--faixa"></i>Faixa ajustada por k e j</span>
-                <span><i class="selecao-diagrama-faixa__amostra selecao-diagrama-faixa__amostra--alvo"></i>Concurso-alvo (CA)</span>
-                <span><i class="selecao-diagrama-faixa__amostra selecao-diagrama-faixa__amostra--deslocamento"></i>Distâncias da faixa ajustada</span>
-              </div>
-              <dl>
-                <div><dt>U:</dt><dd>origem da escala; última ocorrência</dd></div>
-                <div><dt>Min/Máx:</dt><dd>intervalos históricos extremos</dd></div>
-                <div><dt>μ:</dt><dd>média histórica dos intervalos</dd></div>
-                <div><dt>LIH/LSH:</dt><dd>referências históricas μ − σ e μ + σ</dd></div>
-                <div><dt>Mₐ:</dt><dd>ponto médio ajustado por j</dd></div>
-                <div><dt>LIA/LSA:</dt><dd>limites ajustados por k e j</dd></div>
-                <div><dt>CA:</dt><dd>concurso-alvo, colocado na escala como CA − U</dd></div>
-              </dl>
-            </div>
-            <svg viewBox="0 0 900 300" role="img" aria-labelledby="titulo-svg-faixa descricao-svg-faixa">
-              <title id="titulo-svg-faixa">Curva histórica fixa e faixa ajustada em escala proporcional de intervalos</title>
-              <desc id="descricao-svg-faixa">Exemplo com média dez, desvio quatro, k igual a meio e j igual a um quarto. As referências históricas permanecem fixas; k e j produzem LIA, ponto médio ajustado e LSA. O concurso-alvo está dentro dessa faixa.</desc>
-              <defs>
-                <marker id="ponta-aberta-alvo" markerWidth="5" markerHeight="5" refX="4.5" refY="2.5" orient="auto-start-reverse"><path d="M0 0 L4.5 2.5 L0 5"/></marker>
-              </defs>
-
-              <path class="selecao-diagrama-faixa__area" d="M112 204 C190 199 240 164 304 96 C343 55 390 48 432 72 C494 108 536 181 720 204 L720 212 L112 212 Z"/>
-              <path class="selecao-diagrama-faixa__curva" d="M112 204 C190 199 240 164 304 96 C343 55 390 48 432 72 C494 108 536 181 720 204"/>
-              <line class="selecao-diagrama-faixa__eixo" x1="70" y1="212" x2="780" y2="212"/>
-              <line class="selecao-diagrama-faixa__historico" x1="112" y1="212" x2="720" y2="212"/>
-              <line class="selecao-diagrama-faixa__faixa" x1="368" y1="212" x2="496" y2="212"/>
-
-              <line class="selecao-diagrama-faixa__deslocamento" x1="432" y1="188" x2="368" y2="188" marker-start="url(#ponta-aberta-alvo)" marker-end="url(#ponta-aberta-alvo)"/>
-              <line class="selecao-diagrama-faixa__deslocamento" x1="432" y1="188" x2="496" y2="188" marker-start="url(#ponta-aberta-alvo)" marker-end="url(#ponta-aberta-alvo)"/>
-              <line class="selecao-diagrama-faixa__deslocamento selecao-diagrama-faixa__deslocamento-j" x1="400" y1="132" x2="432" y2="132" marker-start="url(#ponta-aberta-alvo)" marker-end="url(#ponta-aberta-alvo)"/>
-              <polyline class="selecao-diagrama-faixa__chamada" points="416,127 330,112 232,112"/>
-              <text class="selecao-diagrama-faixa__texto-chamada" x="232" y="101">j = 0: Mₐ e μ coincidem</text>
-
-              <g class="selecao-diagrama-faixa__marco"><line x1="80" y1="198" x2="80" y2="226"/><circle cx="80" cy="212" r="4"/><text x="80" y="248">U</text></g>
-              <g class="selecao-diagrama-faixa__extremo"><line x1="112" y1="198" x2="112" y2="226"/><circle cx="112" cy="212" r="4"/><text x="112" y="248">Min</text></g>
-              <g class="selecao-diagrama-faixa__historico-marco"><line x1="272" y1="151" x2="272" y2="226"/><circle cx="272" cy="212" r="4"/><text x="272" y="248">LIH</text></g>
-              <g class="selecao-diagrama-faixa__limite"><line x1="368" y1="142" x2="368" y2="226"/><circle cx="368" cy="212" r="5"/><text x="368" y="248">LIA</text></g>
-              <g class="selecao-diagrama-faixa__referencia"><line x1="400" y1="56" x2="400" y2="226"/><circle cx="400" cy="212" r="5"/><text x="400" y="248">μ</text></g>
-              <g class="selecao-diagrama-faixa__meio"><line x1="432" y1="70" x2="432" y2="226"/><circle cx="432" cy="212" r="5"/><text x="432" y="248">Mₐ</text></g>
-              <g class="selecao-diagrama-faixa__alvo"><line x1="464" y1="122" x2="464" y2="226"/><circle cx="464" cy="212" r="6"/><text x="464" y="248">CA</text></g>
-              <g class="selecao-diagrama-faixa__limite"><line x1="496" y1="148" x2="496" y2="226"/><circle cx="496" cy="212" r="5"/><text x="496" y="248">LSA</text></g>
-              <g class="selecao-diagrama-faixa__historico-marco"><line x1="528" y1="168" x2="528" y2="226"/><circle cx="528" cy="212" r="4"/><text x="528" y="248">LSH</text></g>
-              <g class="selecao-diagrama-faixa__extremo"><line x1="720" y1="198" x2="720" y2="226"/><circle cx="720" cy="212" r="4"/><text x="720" y="248">Máx</text></g>
-
-              <text class="selecao-diagrama-faixa__rotulo" x="654" y="78">curva histórica fixa</text>
-              <text class="selecao-diagrama-faixa__escala" x="425" y="282">escala horizontal: intervalos desde U (U = 0)</text>
-            </svg>
-            <figcaption id="legenda-diagrama-faixa">Exemplo proporcional: <strong>μ = 10</strong>, <strong>σ = 4</strong>, <strong>k = 0,5</strong> e <strong>j = 0,25</strong>. Assim, LIH = 6 e LSH = 14 permanecem fixos; a configuração produz Mₐ = 11, LIA = 9 e LSA = 13. O CA foi colocado no intervalo 12 e, portanto, a dezena seria aprovada por satisfazer <strong>LIA ≤ CA ≤ LSA</strong>. Para obter números de concursos, soma-se U a cada posição. Os valores servem somente para explicar as relações; cada dezena possui seu próprio histórico.</figcaption>
-          </figure>
-          <section>
-            <h3>2. Registros do screener de dezenas</h3>
-            <p>Este bloco preserva a saída do primeiro screener. Ele registra, antes do sorteio, quais dezenas foram selecionadas pela configuração escolhida. A lista registrada poderá ser usada posteriormente para formar todas as combinações possíveis de seis dezenas; essas combinações ainda deverão passar pelo screener de combinações.</p>
-            <p>Somente uma <strong>configuração previamente salva</strong> pode originar um registro. Enquanto <strong>Nova configuração</strong> estiver selecionada, o botão de registro permanece desabilitado. Isso impede que uma configuração seja gravada escondida ou acidentalmente: primeiro o usuário salva os parâmetros no bloco anterior e depois decide se deseja registrar a seleção produzida por eles.</p>
-            <p><strong>Analisar configuração</strong>, no bloco anterior, responde à pergunta “quais dezenas seriam selecionadas agora?”. Essa análise é momentânea e não fica gravada. O botão <strong>Registrar previsão do próximo concurso</strong> tem outra finalidade: grava a seleção para que ela possa ser consultada, utilizada na formação das combinações e conferida quando o resultado do sorteio for importado.</p>
-            <p>Ao pressionar <strong>Registrar previsão do próximo concurso</strong>, o sistema identifica o último concurso cadastrado e adota como concurso previsto somente o imediatamente posterior. Em seguida, usa a configuração selecionada e calcula uma prévia sem gravar. Um diálogo apresenta configuração, concurso previsto, último resultado utilizado, quantidade de dezenas, lista selecionada e quantidade de combinações possíveis.</p>
-            <p>Nesse diálogo, <strong>Cancelar — não registrar</strong>, o botão de fechar ou a tecla Esc encerram a operação sem gravação. Somente <strong>Confirmar e registrar seleção</strong> autoriza o banco a preservar a lista e os dados que justificam sua formação.</p>
-            <p>Esse botão <strong>não executa o backtest</strong> e <strong>não gera as combinações</strong>. Ele registra somente a lista de dezenas que servirá de origem. A formação das combinações é uma ação posterior e separada. Depois de formadas, as combinações poderão ser submetidas ao screener de combinações.</p>
-            <p>Se a previsão da mesma configuração para o mesmo concurso já estiver registrada, pressionar o botão novamente não cria uma cópia nem altera a lista original. O sistema recupera o registro existente. Uma configuração diferente pode produzir outro registro para o mesmo concurso, permitindo comparar seleções feitas com parâmetros diferentes.</p>
-            <p>Cada configuração pode retornar uma quantidade diferente. Por exemplo, uma seleção pode conter 18 dezenas e outra 26 para o mesmo concurso. Cada registro preserva separadamente sua quantidade e identifica, entre as 60 dezenas avaliadas, quais foram aprovadas e quais entraram na lista final; por isso, as listas não se misturam.</p>
-            <p><strong>Seleção registrada</strong> e <strong>resultado oficial</strong> são informações diferentes. A seleção é a lista produzida pelo screener antes do sorteio e pode existir uma por configuração. O resultado oficial contém as seis dezenas efetivamente sorteadas e existe apenas um por concurso. Esse resultado entra no sistema pela importação da planilha de resultados no <strong>Painel</strong>, usando <strong>Selecionar Excel</strong> e depois <strong>Importar, calcular e armazenar</strong>.</p>
-            <p>A tabela apresenta:</p>
-            <ul>
-              <li><strong>Concurso previsto:</strong> concurso para o qual a lista de dezenas foi registrada.</li>
-              <li><strong>Dados utilizados até:</strong> último concurso conhecido e usado no cálculo.</li>
-              <li><strong>Estado da conferência:</strong> informa se o resultado ainda é aguardado ou se a lista já foi comparada com o sorteio.</li>
-              <li><strong>Dezenas registradas:</strong> lista imutável produzida pelo screener de dezenas.</li>
-              <li><strong>Total:</strong> quantidade de dezenas presentes na lista.</li>
-              <li><strong>Configuração utilizada:</strong> valores de k, j e modo de quantidade usados na seleção.</li>
-              <li><strong>Próxima ação:</strong> acesso à formação das combinações quando houver dezenas suficientes.</li>
-            </ul>
-            <p><strong>Aguardando resultado</strong> significa que a lista está preservada, mas o resultado oficial ainda não foi importado. Depois da importação, a próxima atualização deste bloco confere todas as seleções pendentes daquele concurso sem recalculá-las. Com a base atualizada, o sistema passa a considerar o concurso seguinte para um novo registro.</p>
-          </section>
-          <section><h3>3. Backtest</h3><p>Para avaliar o concurso C, o sistema calcula com os dados disponíveis até C − 1 e somente depois lê o resultado de C. A prévia e sua confirmação são obrigatórias. O formulário de andamento informa etapa, quantidade, percentual e duração e permite cancelamento seguro.</p><p>As classes de <strong>0 a 6 acertos</strong> são exclusivas: cada concurso pertence somente à maior quantidade efetivamente encontrada. O resumo também informa período avaliado, concursos sem base, tamanho dos conjuntos e médias. “Não avaliável” não é erro nem acerto: faltou base matemática suficiente.</p></section>
-          <section><h3>4. Comparação de pesquisas</h3><p>Informe ao menos dois IDs persistidos. Compare taxa de acertos junto com quantidade de candidatas e custo combinatório. A página apresenta ressalvas se origem dos resultados, período, versão ou cobertura forem diferentes; nesses casos, uma conclusão direta pode ser enganosa.</p></section>
-          <section><h3>5. Detalhe e formação de jogos</h3><p>O detalhe mostra o corte, as dezenas congeladas, acertos e quantidade bruta de combinações de cada concurso. “Formar jogos” calcula primeiro <strong>C(N,6)</strong>. Por exemplo, 7 dezenas geram 7 jogos; 15 geram 5.005; 60 geram 50.063.860.</p><p>A gravação exige confirmação explícita e volumes elevados exigem confirmação adicional. Os jogos são únicos, ordenados e vinculados à configuração, pesquisa e concurso-alvo.</p></section>
-          <section><h3>Fluxo recomendado</h3><p>1. Confira se o resultado mais recente está cadastrado. 2. Escolha ou preencha a configuração. 3. Use Analisar configuração. 4. Execute o backtest e compare configurações equivalentes. 5. Quando decidir acompanhar a configuração no próximo sorteio, registre a previsão. 6. Inspecione as dezenas e o custo antes de formar jogos. 7. Depois de importar o resultado, confira a previsão preservada e registre outra para o concurso seguinte.</p></section>
-          <section><h3>Cuidados de interpretação</h3><p>Maior cobertura pode resultar apenas de mais dezenas selecionadas e, portanto, de custo muito maior. Um bom resultado histórico não garante desempenho futuro: sorteios são eventos aleatórios, e este módulo oferece estudo estatístico e rastreabilidade, não promessa de acerto.</p></section>
+        <header><div><p>Conferência antes da gravação</p><h2 id="titulo-confirmar-configuracao">Salvar nova configuração</h2></div><button type="submit" value="cancelar" aria-label="Fechar confirmação">×</button></header>
+        <div class="selecao-previa__conteudo">
+          <dl>
+            <div><dt>Nome</dt><dd id="configuracao-confirmar-nome">—</dd></div>
+            <div><dt>Fator k</dt><dd id="configuracao-confirmar-k">—</dd></div>
+            <div><dt>Fator j</dt><dd id="configuracao-confirmar-j">—</dd></div>
+            <div><dt>Quantidade</dt><dd id="configuracao-confirmar-modo">—</dd></div>
+            <div><dt>Número de dezenas</dt><dd id="configuracao-confirmar-quantidade">—</dd></div>
+            <div><dt>Versão do cálculo</dt><dd id="configuracao-confirmar-versao">—</dd></div>
+          </dl>
+          <p><strong>Nenhuma configuração será criada até sua confirmação.</strong></p>
         </div>
-        <footer><button type="submit">Encerrar</button></footer>
+        <footer><button type="submit" value="cancelar">Cancelar — não salvar</button><button id="botao-confirmar-configuracao" type="button">Confirmar e salvar</button></footer>
       </form>
     </dialog>
 
@@ -234,18 +154,37 @@
 
     <dialog id="dialogo-previa-backtest" class="selecao-previa" aria-labelledby="titulo-previa-backtest">
       <form method="dialog">
-        <header><div><p>Conferência antes do processamento</p><h2 id="titulo-previa-backtest">Prévia do backtest</h2></div><button type="submit" value="cancelar" aria-label="Fechar prévia">×</button></header>
+        <header><div><p>Conferência antes do cálculo</p><h2 id="titulo-previa-backtest">Conferir dados do Backtest</h2></div><button type="submit" value="cancelar" aria-label="Fechar conferência">×</button></header>
         <div class="selecao-previa__conteudo">
           <dl>
+            <div><dt>Configuração salva</dt><dd id="previa-backtest-configuracao">—</dd></div>
             <div><dt>Resultados disponíveis</dt><dd id="previa-backtest-resultados">—</dd></div>
-            <div><dt>Período do backtest</dt><dd id="previa-backtest-periodo">—</dd></div>
-            <div><dt>Concursos a processar</dt><dd id="previa-backtest-quantidade">—</dd></div>
-            <div><dt>Configuração</dt><dd id="previa-backtest-configuracao">—</dd></div>
-            <div><dt>Operação</dt><dd>Calcular, avaliar e preservar os resultados da pesquisa.</dd></div>
+            <div><dt>Período até o último concurso cadastrado</dt><dd id="previa-backtest-periodo">—</dd></div>
+            <div><dt>Concursos a calcular</dt><dd id="previa-backtest-quantidade">—</dd></div>
           </dl>
           <p>Nenhum cálculo será iniciado até sua confirmação.</p>
         </div>
-        <footer><button type="submit" value="cancelar">Cancelar</button><button id="botao-confirmar-backtest" type="button">Confirmar e executar</button></footer>
+        <footer><button type="submit" value="cancelar">Cancelar</button><button id="botao-confirmar-backtest" type="button">Confirmar e gerar relatório</button></footer>
+      </form>
+    </dialog>
+
+    <dialog id="dialogo-previa-jogos" class="selecao-previa" aria-labelledby="titulo-previa-jogos">
+      <form method="dialog">
+        <header><div><p>Conferência sem processamento</p><h2 id="titulo-previa-jogos">Conferir configuração dos jogos</h2></div><button type="submit" value="cancelar" aria-label="Fechar conferência">×</button></header>
+        <div class="selecao-previa__conteudo">
+          <dl>
+            <div><dt>Concurso previsto</dt><dd id="previa-jogos-concurso">—</dd></div>
+            <div><dt>Configuração das dezenas</dt><dd id="previa-jogos-configuracao">—</dd></div>
+            <div><dt>Dezenas registradas</dt><dd id="previa-jogos-dezenas">—</dd></div>
+            <div><dt>Combinações brutas</dt><dd id="previa-jogos-combinacoes">—</dd></div>
+            <div><dt>Número máximo de jogos</dt><dd id="previa-jogos-quantidade">—</dd></div>
+            <div><dt>Valor de um jogo</dt><dd id="previa-jogos-valor-unitario">—</dd></div>
+            <div><dt>Valor máximo previsto</dt><dd id="previa-jogos-valor-previsto">—</dd></div>
+          </dl>
+          <p>O número informado é um teto. A quantidade efetiva e o investimento efetivo dependerão das combinações aprovadas pelo Screener.</p>
+          <p><strong>Nenhuma combinação foi processada e nenhum dado foi gravado.</strong></p>
+        </div>
+        <footer><button type="submit" value="cancelar">Voltar e ajustar</button><button id="botao-iniciar-screener-jogos" type="button" disabled title="Disponível depois da integração do Screener de combinações.">Confirmar e iniciar Screener</button></footer>
       </form>
     </dialog>
 

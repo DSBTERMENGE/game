@@ -1,18 +1,40 @@
 from decimal import Decimal
+
 import unittest
 
-from msen.services.backtest_selecao_dezenas import _media, _percentual
+from msen.services.backtest_selecao_dezenas import (
+    PontoBacktest,
+    resumir_pontos,
+)
 
 
-class MetricasBacktestSelecaoTest(unittest.TestCase):
-    def test_percentual_e_media_usam_seis_casas(self) -> None:
-        self.assertEqual(_percentual(1, 3), Decimal("33.333333"))
-        self.assertEqual(_media(5, 2), Decimal("2.500000"))
+class BacktestSelecaoDezenasTest(unittest.TestCase):
+  def test_resumo_backtest_mantem_classes_exclusivas(self):
+    pontos = (
+        PontoBacktest(500, 10, 0),
+        PontoBacktest(501, 14, 2),
+        PontoBacktest(502, 18, 4),
+        PontoBacktest(503, 22, 6),
+    )
 
-    def test_denominador_zero_produz_ausencia_e_nao_zero(self) -> None:
-        self.assertIsNone(_percentual(0, 0))
-        self.assertIsNone(_media(0, 0))
+    resumo = resumir_pontos(pontos)
+
+    self.assertEqual(resumo.testes_efetuados, 4)
+    self.assertEqual([item.quantidade for item in resumo.classes], [1, 0, 1, 0, 1, 0, 1])
+    self.assertEqual(sum(item.quantidade for item in resumo.classes), 4)
+    self.assertEqual(resumo.minimo_dezenas, 10)
+    self.assertEqual(resumo.maximo_dezenas, 22)
+    self.assertEqual(resumo.media_dezenas, Decimal("16.000000"))
+    self.assertEqual(resumo.media_acertos, Decimal("3.000000"))
+    self.assertEqual(resumo.concursos_premiados, 2)
+    self.assertEqual(resumo.percentual_premiados, Decimal("50.000000"))
 
 
-if __name__ == "__main__":
-    unittest.main()
+  def test_resumo_backtest_rejeita_lista_vazia(self):
+    with self.assertRaisesRegex(ValueError, "ao menos um"):
+        resumir_pontos(())
+
+
+  def test_resumo_backtest_rejeita_acerto_fora_de_zero_a_seis(self):
+    with self.assertRaisesRegex(ValueError, "entre 0 e 6"):
+        resumir_pontos((PontoBacktest(500, 10, 7),))

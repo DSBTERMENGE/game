@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const porta = Number(process.env.PLAYWRIGHT_TEST_PORT || 4173);
 let servidor;
 
 const configuracao = {
@@ -28,7 +29,9 @@ test.beforeAll(async () => {
       "/css/modal-andamento.css": ["css/modal-andamento.css", "text/css; charset=utf-8"],
       "/css/selecao-dezenas.css": ["css/selecao-dezenas.css", "text/css; charset=utf-8"],
       "/js/selecao-dezenas.js": ["js/selecao-dezenas.js", "text/javascript; charset=utf-8"],
+      "/js/selecao-dezenas-graficos.js": ["js/selecao-dezenas-graficos.js", "text/javascript; charset=utf-8"],
       "/js/selecao-dezenas-controles.js": ["js/selecao-dezenas-controles.js", "text/javascript; charset=utf-8"],
+      "/js/fluxo-cadastro-confirmado.js": ["js/fluxo-cadastro-confirmado.js", "text/javascript; charset=utf-8"],
       "/js/modal-andamento.js": ["js/modal-andamento.js", "text/javascript; charset=utf-8"],
       "/js/navegacao.js": ["js/navegacao.js", "text/javascript; charset=utf-8"],
     };
@@ -39,7 +42,7 @@ test.beforeAll(async () => {
   });
   await new Promise((resolver, rejeitar) => {
     servidor.once("error", rejeitar);
-    servidor.listen(4173, "127.0.0.1", resolver);
+    servidor.listen(porta, "127.0.0.1", resolver);
   });
 });
 
@@ -47,12 +50,22 @@ test.afterAll(async () => {
   if (servidor) await new Promise((resolver) => servidor.close(resolver));
 });
 
-async function preparar(page) {
-  const chamadas = { registros: 0, corpoRegistro: null };
-  await page.route("**/api/selecao-dezenas/configuracoes", (rota) => rota.fulfill({
-    status: 200, contentType: "application/json",
-    body: JSON.stringify({ configuracoes: [{ id_configuracao_selecao: 1, configuracao }] }),
-  }));
+async function preparar(page, listaConfiguracoes = [{ id_configuracao_selecao: 1, configuracao }]) {
+  const chamadas = { registros: 0, corpoRegistro: null, configuracoes: 0, corpoConfiguracao: null, jogosPost: 0 };
+  await page.route("**/api/selecao-dezenas/configuracoes", (rota) => {
+    if (rota.request().method() === "POST") {
+      chamadas.configuracoes += 1;
+      chamadas.corpoConfiguracao = rota.request().postDataJSON();
+      return rota.fulfill({
+        status: 201, contentType: "application/json",
+        body: JSON.stringify({ id_configuracao_selecao: 9, configuracao: chamadas.corpoConfiguracao.configuracao }),
+      });
+    }
+    return rota.fulfill({
+      status: 200, contentType: "application/json",
+      body: JSON.stringify({ configuracoes: listaConfiguracoes }),
+    });
+  });
   await page.route("**/api/selecao-dezenas/previa", (rota) => rota.fulfill({
     status: 200, contentType: "application/json",
     body: JSON.stringify({
@@ -79,8 +92,20 @@ async function preparar(page) {
   await page.route("**/api/selecao-dezenas/previsoes/8/detalhes", (rota) => rota.fulfill({
     status: 200, contentType: "application/json", body: JSON.stringify({ detalhes: [detalhe] }),
   }));
+  await page.route("**/api/selecao-dezenas/alvos/9/jogos/previa", (rota) => rota.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({
+      quantidade_dezenas: 6, quantidade_combinacoes: 1,
+      volume_elevado: false, exige_confirmacao: false,
+      dezenas: detalhe.dezenas_retornadas,
+    }),
+  }));
+  await page.route("**/api/selecao-dezenas/alvos/9/jogos", (rota) => {
+    chamadas.jogosPost += 1;
+    return rota.fulfill({ status: 500, contentType: "application/json", body: "{}" });
+  });
   await page.goto("/selecao-dezenas.html");
-  await expect(page.locator("#mensagem-selecao")).toContainText("1 configuração");
+  await expect(page.locator("#mensagem-selecao")).toContainText(`${listaConfiguracoes.length} configuração`);
   return chamadas;
 }
 
@@ -129,53 +154,154 @@ test("nova configuração libera os campos para preenchimento", async ({ page })
   await expect(page.locator("#mensagem-selecao")).toContainText("Nenhum dado foi gravado");
 });
 
-test("consolida período, tamanho dos conjuntos e classes exclusivas do backtest", async ({ page }) => {
+test("salvar configuração exige confirmação antes de chamar o banco", async ({ page }) => {
+  const chamadas = await preparar(page);
+  await page.locator("#configuracao-gravada-selecao").selectOption("");
+  await page.locator("#selecao-nome").fill("Estudo confirmado");
+  await page.locator("#botao-salvar-configuracao").click();
+  await expect(page.locator("#dialogo-confirmar-configuracao")).toBeVisible();
+  await expect(page.locator("#configuracao-confirmar-nome")).toHaveText("Estudo confirmado");
+  expect(chamadas.configuracoes).toBe(0);
+  await page.locator("#dialogo-confirmar-configuracao button[value=cancelar]").last().click();
+  await expect(page.locator("#mensagem-selecao")).toContainText("Nenhuma configuração foi criada");
+  expect(chamadas.configuracoes).toBe(0);
+
+  await page.locator("#botao-salvar-configuracao").click();
+  await page.locator("#botao-confirmar-configuracao").click();
+  await expect.poll(() => chamadas.configuracoes).toBe(1);
+  expect(chamadas.corpoConfiguracao.configuracao.nome).toBe("Estudo confirmado");
+});
+
+test("listas exibem somente os nomes das configurações", async ({ page }) => {
+  const outra = { ...configuracao, nome: "Outra configuração" };
+  await preparar(page, [
+    { id_configuracao_selecao: 2, configuracao },
+    { id_configuracao_selecao: 5, configuracao: outra },
+  ]);
+  await expect(page.locator("#configuracao-gravada-selecao option").nth(1)).toHaveText(configuracao.nome);
+  await expect(page.locator("#configuracao-gravada-selecao option").nth(2)).toHaveText("Outra configuração");
+  await expect(page.locator("#backtest-configuracao option").nth(2)).toHaveText("Outra configuração");
+});
+
+test("configura formação de jogos sem processar nem gravar", async ({ page }) => {
+  const chamadas = await preparar(page);
+  await page.locator("#botao-atualizar-previsao").click();
+  await page.locator("#botao-confirmar-registro").click();
+  await page.getByRole("button", { name: "Formar jogos" }).click();
+
+  await expect(page.locator("#titulo-formacao-jogos")).toHaveText("Formação de jogos com as dezenas registradas");
+  await expect(page.locator("#painel-jogos")).toBeVisible();
+  await expect(page.locator("#jogos-origem-concurso")).toHaveText("3070");
+  await expect(page.locator("#jogos-origem-configuracao")).toHaveText(configuracao.nome);
+  await expect(page.locator("#jogos-origem-dezenas")).toHaveText("01 · 07 · 12 · 23 · 34 · 55");
+
+  await page.locator("#jogos-quantidade-solicitada").fill("100");
+  await page.locator("#jogos-valor-unitario").fill("5,00");
+  await expect(page.locator("#jogos-valor-previsto")).toHaveText("R$ 500,00");
+  await page.locator("#botao-conferir-jogos").click();
+
+  await expect(page.locator("#dialogo-previa-jogos")).toBeVisible();
+  await expect(page.locator("#previa-jogos-quantidade")).toHaveText("100");
+  await expect(page.locator("#previa-jogos-valor-unitario")).toHaveText("R$ 5,00");
+  await expect(page.locator("#previa-jogos-valor-previsto")).toHaveText("R$ 500,00");
+  await expect(page.locator("#botao-iniciar-screener-jogos")).toBeDisabled();
+  await expect(page.locator("#mensagem-selecao")).toContainText("sem processar combinações nem gravar dados");
+  expect(chamadas.jogosPost).toBe(0);
+});
+
+test("configuração do estudo é independente da configuração superior", async ({ page }) => {
+  const outra = { ...configuracao, nome: "Outra configuração", fator_k: "0.500000" };
+  await preparar(page, [
+    { id_configuracao_selecao: 1, configuracao },
+    { id_configuracao_selecao: 2, configuracao: outra },
+  ]);
+  await expect(page.locator("#configuracao-gravada-selecao")).toHaveValue("2");
+  await expect(page.locator("#backtest-configuracao")).toHaveValue("");
+  await page.locator("#botao-gerar-backtest").click();
+  await expect(page.locator("#estado-backtest")).toContainText("Selecione uma configuração salva");
+  await page.locator("#backtest-configuracao").selectOption("1");
+  let corpoRecebido;
+  await page.route("**/api/selecao-dezenas/backtests/previa", (rota) => {
+    corpoRecebido = rota.request().postDataJSON();
+    return rota.fulfill({
+      status: 200, contentType: "application/json",
+      body: JSON.stringify({
+        id_configuracao_selecao: 1, configuracao,
+        resultados: { primeiro: 1, ultimo: 3069, quantidade: 3069 },
+        periodo: { concurso_inicial: 500, concurso_final: 3069, quantidade_concursos: 2570 },
+        persistira_resultados: false,
+      }),
+    });
+  });
+  await page.locator("#botao-gerar-backtest").click();
+  await expect(page.locator("#dialogo-previa-backtest")).toBeVisible();
+  expect(corpoRecebido).toEqual({ id_configuracao_selecao: 1, concurso_inicial: 500 });
+});
+
+test("desenha relatório do Backtest com centenas, limites e níveis de acerto", async ({ page }) => {
   await preparar(page);
-  await page.route("**/api/selecao-dezenas/previa", (rota) => rota.fulfill({
+  await page.locator("#backtest-configuracao").selectOption("1");
+  const pontos = [
+    { concurso: 500, quantidade_dezenas: 12, quantidade_acertos: 2 },
+    { concurso: 501, quantidade_dezenas: 18, quantidade_acertos: 4 },
+    { concurso: 502, quantidade_dezenas: 15, quantidade_acertos: 6 },
+  ];
+  await page.route("**/api/selecao-dezenas/backtests/previa", (rota) => rota.fulfill({
     status: 200, contentType: "application/json",
     body: JSON.stringify({
+      id_configuracao_selecao: 1, configuracao,
       resultados: { primeiro: 1, ultimo: 3069, quantidade: 3069 },
-      backtest: { concurso_inicial: 500, concurso_final: 3069, quantidade_alvos: 2570 },
-      previsao_futura: { concurso_inicial: 3070, concurso_final: 3070 },
+      periodo: { concurso_inicial: 500, concurso_final: 502, quantidade_concursos: 3 },
+      persistira_resultados: false,
     }),
   }));
-  await page.route("**/api/selecao-dezenas/backtests", (rota) => rota.fulfill({
+  await page.route(/\/api\/selecao-dezenas\/backtests$/, (rota) => rota.fulfill({
     status: 202, contentType: "application/json",
     body: JSON.stringify({
-      id: "tarefa", estado: "AGUARDANDO", etapa: "Aguardando início",
-      concluido: 0, total: 1, percentual: 0, duracao_segundos: 0,
+      id: "backtest-1", estado: "AGUARDANDO", etapa: "Aguardando início",
+      concluido: 0, total: 3, percentual: 0, duracao_segundos: 0,
     }),
   }));
-  await page.route("**/api/selecao-dezenas/execucoes/tarefa", (rota) => rota.fulfill({
-    status: 200, contentType: "application/json",
-    body: JSON.stringify({
-      estado: "CONCLUIDA", etapa: "Concluída", concluido: 1, total: 1,
-      percentual: 100, duracao_segundos: 1.2,
-      resultado: { id_execucao_selecao: 12 },
-    }),
-  }));
-  await page.route("**/api/selecao-dezenas/backtests/12/resumo", (rota) => rota.fulfill({
-    status: 200, contentType: "application/json",
-    body: JSON.stringify({
-      id_execucao_selecao: 12, primeiro_avaliado: 500, ultimo_avaliado: 3069,
-      avaliados: 2570, nao_avaliaveis: 0, minimo_dezenas: 6, maximo_dezenas: 14,
-      media_dezenas: "9.25", media_acertos_concurso: "2.10",
-      classes: Array.from({ length: 7 }, (_, classe) => ({ classe, quantidade: classe + 1, percentual: 10 + classe })),
-    }),
-  }));
-  await page.route("**/api/selecao-dezenas/backtests/12/detalhes", (rota) => rota.fulfill({
-    status: 200, contentType: "application/json",
-    body: JSON.stringify({ detalhes: [{ ...detalhe, situacao: "AVALIADO", quantidade_acertos: 2 }] }),
-  }));
-  await page.locator("#form-backtest-selecao button[type=submit]").click();
+  await page.route("**/api/selecao-dezenas/backtests/backtest-1", (rota) => {
+    if (rota.request().method() === "DELETE") {
+      return rota.fulfill({ status: 204, body: "" });
+    }
+    return rota.fulfill({
+      status: 200, contentType: "application/json",
+      body: JSON.stringify({
+        id: "backtest-1", estado: "CONCLUIDA", etapa: "Concluída",
+        concluido: 3, total: 3, percentual: 100, duracao_segundos: 0.2,
+        resultado: {
+          id_configuracao_selecao: 1, concurso_inicial: 500, concurso_final: 502,
+          pontos, duracao_segundos: 0.18, persistido: false,
+          resumo: {
+            testes_efetuados: 3, minimo_dezenas: 12, maximo_dezenas: 18,
+            media_dezenas: 15, media_acertos: 4, concursos_premiados: 2,
+            percentual_premiados: 66.666667,
+            classes: Array.from({ length: 7 }, (_, classe) => ({
+              classe, quantidade: [0, 0, 1, 0, 1, 0, 1][classe],
+              percentual: [0, 0, 33.333333, 0, 33.333333, 0, 33.333333][classe],
+            })),
+          },
+        },
+      }),
+    });
+  });
+
+  await page.locator("#botao-gerar-backtest").click();
   await expect(page.locator("#dialogo-previa-backtest")).toBeVisible();
-  await expect(page.locator("#previa-backtest-quantidade")).toHaveText("2.570");
+  await expect(page.locator("#previa-backtest-quantidade")).toHaveText("3");
   await page.locator("#botao-confirmar-backtest").click();
-  await expect(page.locator(".modal-andamento")).toBeVisible();
-  await expect(page.locator(".modal-andamento__quantidade")).toHaveText("1 / 1 — 100%");
-  await expect(page.locator(".modal-andamento__duracao")).toContainText("s");
-  await expect(page.locator("#resumo-backtest")).toContainText("concursos 500 a 3069");
-  await expect(page.locator("#resumo-backtest")).toContainText("conjuntos de 6 a 14 dezenas");
+  const andamento = page.getByRole("dialog", { name: "Cálculo do Backtest" });
+  await expect(andamento.locator(".modal-andamento__contexto")).toContainText("Seleção inicial");
+  await expect(andamento.locator(".modal-andamento__contexto")).not.toContainText("Configuração 1 —");
+  await expect(andamento.locator(".modal-andamento__contexto")).toContainText("3 concursos");
+  await expect(page.locator("#relatorio-backtest")).toBeVisible();
+  await expect(page.locator("#resumo-backtest")).toContainText("Testes efetuados");
   await expect(page.locator("#classes-backtest .selecao-classe")).toHaveCount(7);
-  await expect(page.locator("#corpo-detalhes-backtest tr")).toHaveCount(1);
+  await expect(page.locator("#grafico-backtest-quantidade path.backtest-grafico__trajeto")).toHaveCount(1);
+  await expect(page.locator("#grafico-backtest-quantidade line.backtest-grafico__grade-vertical")).toHaveCount(1);
+  await expect(page.locator("#grafico-backtest-acertos line.backtest-grafico__nivel")).toHaveCount(7);
+  await expect(page.locator("#mensagem-selecao")).toContainText("Relatório gráfico concluído");
+  await expect(page.locator("#periodo-backtest")).toContainText("k=1.000000; j=0.000000; modo MAX; versão 1");
 });

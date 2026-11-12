@@ -18,12 +18,6 @@ export function montarConfiguracao(valores) {
   return configuracao;
 }
 
-export function idsComparacao(texto) {
-  const ids = String(texto).split(",").map((item) => Number(item.trim())).filter((item) => Number.isInteger(item) && item > 0);
-  if (ids.length < 2 || new Set(ids).size !== ids.length) throw new Error("Informe ao menos dois IDs distintos.");
-  return ids;
-}
-
 export function formatarDezenas(dezenas = []) {
   return dezenas.map((dezena) => String(dezena).padStart(2, "0")).join(" · ");
 }

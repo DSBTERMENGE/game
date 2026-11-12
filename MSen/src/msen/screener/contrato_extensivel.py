@@ -6,7 +6,7 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from decimal import Decimal, ROUND_HALF_UP
 from types import MappingProxyType
-from typing import Protocol
+from typing import Callable, Protocol
 
 from .gerador import Combinacao
 
@@ -214,6 +214,14 @@ def _validar_plano(
     return tuple(sorted(normalizadas, key=lambda item: item.ordem))
 
 
+def validar_plano_funil(
+    familias: Iterable[DefinicaoFamilia],
+) -> tuple[DefinicaoFamilia, ...]:
+    """Expõe a validação canônica para executores streaming autorizados."""
+
+    return _validar_plano(familias)
+
+
 def _percentual(quantidade: int, base: int) -> Decimal:
     if base == 0:
         return Decimal("0.000000")
@@ -225,6 +233,9 @@ def _percentual(quantidade: int, base: int) -> Decimal:
 def executar_funil_extensivel(
     combinacoes: Iterable[Combinacao],
     familias: Iterable[DefinicaoFamilia],
+    *,
+    informar_progresso: Callable[[int, int], None] | None = None,
+    cancelado: Callable[[], bool] | None = None,
 ) -> RelatorioFunilExtensivel:
     """Executa famílias/filtros em ordem e para na primeira exclusão.
 
@@ -241,7 +252,9 @@ def executar_funil_extensivel(
     exclusoes = dict.fromkeys(avaliacoes, 0)
     aprovadas: list[Combinacao] = []
 
-    for combinacao in combinacoes_fixas:
+    for indice, combinacao in enumerate(combinacoes_fixas, start=1):
+        if cancelado is not None and cancelado():
+            raise InterruptedError("Processamento do Screener cancelado.")
         excluida = False
         for familia in plano:
             for filtro in familia.filtros:
@@ -264,6 +277,8 @@ def executar_funil_extensivel(
                 break
         if not excluida:
             aprovadas.append(combinacao)
+        if informar_progresso is not None and (indice == total or indice % 25 == 0):
+            informar_progresso(indice, total)
 
     saldo = total
     linhas_familias: list[LinhaFamilia] = []

@@ -18,8 +18,10 @@ um sistema verificável. Ele não autoriza automaticamente nenhuma implementaç�
    específica, mesmo quando aparecerem como etapa futura.
 8. Concluir e testar todo o sistema no ambiente local antes de preparar qualquer
    alteração no PythonAnywhere.
-8. Concluir e testar todo o sistema no ambiente local antes de preparar qualquer
-   alteração no PythonAnywhere.
+9. Toda etapa com duração estimada superior a 8 minutos deve ser dividida antes
+   da execução em subetapas de até 8 minutos. Cada subetapa exige autorização,
+   resultado verificável e teste próprios; se a execução revelar que ultrapassará
+   esse limite, interromper em um ponto seguro e propor a subdivisão restante.
 
 ## Estratégia para evitar retrabalho
 
@@ -31,7 +33,6 @@ um sistema verificável. Ele não autoriza automaticamente nenhuma implementaç�
 - conservar a fonte original e usar transações nas gravações;
 - registrar cada decisão e atualizar `CONTINUIDADE_IA.md` ao final de cada item;
 - somente marcar item concluído quando seu teste de aceitação passar.
-- manter o PythonAnywhere intocado até a conclusão e aprovação dos testes locais.
 - manter o PythonAnywhere intocado até a conclusão e aprovação dos testes locais.
 
 ---
@@ -5089,6 +5090,744 @@ Validação do ajuste: 684 testes Python, 86 testes unitários do frontend, 3
 testes Playwright e o fluxo integrado da API com `k = 1` e `j = 0` numéricos
 foram aprovados.
 
+## Etapa 29 — Preparação do Screener: teste e aplicação
+
+O Teste do Screener e a Aplicação do Screener usarão o mesmo motor. A diferença
+será o limite do laço: 5.000 combinações no teste e todas as 50.063.860
+combinações na aplicação integral. Ambos exigirão confirmação, acompanhamento
+do progresso e cancelamento que interrompa o processamento no servidor.
+
+### 29.1 — Dois comandos e confirmação prévia
+
+**Autorizada e concluída em 11/11/2026.**
+
+1. Adotar `Preparação do Screener` como nome da página e do item de menu.
+2. Substituir `Executar 5.000` por `Teste do Screener`.
+3. Criar `Aplicação do Screener`, mantendo o comando integral desabilitado até
+   que progresso e cancelamento sejam implementados e validados.
+4. Exigir confirmação antes de iniciar o teste. Cancelar ou fechar a
+   confirmação não chama a API e não inicia processamento.
+5. Preparar a confirmação da aplicação integral sem liberar sua execução.
+6. Registrar na Ajuda que os dois comandos usarão o mesmo motor e se
+   diferenciarão pelo limite do laço.
+
+Critério de conclusão: a interface distingue teste e aplicação, o teste só
+começa depois da confirmação, e a aplicação integral permanece protegida.
+
+Resultado: a página e o menu passaram a usar `Preparação do Screener`. O
+comando `Teste do Screener` abre uma confirmação e somente a confirmação
+positiva chama a API vigente das 5.000 combinações. Cancelar não inicia o
+processamento. O comando `Aplicação do Screener` e sua confirmação foram
+preparados, mas a execução integral permanece desabilitada. A Ajuda central foi
+atualizada. Passaram 114 testes unitários do frontend e 6 testes Chromium
+direcionados. Evidência em `MSen/tests/TESTE_ETAPA_29_1.md`.
+
+### 29.2 — Organização visual e linguagem
+
+**Autorizada e concluída em 11/11/2026.**
+
+Organizar finalidade, mensagens e limite de raridade sem alterar o motor.
+
+Resultado: o topo foi dividido em apresentação, configuração do limite de
+raridade, Teste do Screener e Aplicação do Screener. Cada comando informa seu
+alcance e estado. O limite explica que padrões abaixo do percentual informado
+são considerados raros. Estados vazios e mensagens passaram a identificar
+teste e aplicação sem usar `amostra protegida` como linguagem principal. O
+layout se reorganiza em uma coluna nas telas estreitas. Motor, API e bloqueio
+integral permaneceram inalterados. Passaram 114 testes unitários do frontend e
+6 testes Chromium direcionados. Evidência em
+`MSen/tests/TESTE_ETAPA_29_2.md`.
+
+### 29.3 — Progresso e cancelamento real do teste
+
+**Autorizada e concluída em 11/11/2026.**
+
+Implementar acompanhamento e cancelamento que interrompa o trabalho no
+servidor, inicialmente sobre as 5.000 combinações.
+
+Resultado: o Teste do Screener passou a criar uma execução identificada em
+memória, informar etapa, quantidade processada, percentual e duração, e exibir
+esses dados em uma janela de andamento. O pedido de cancelamento possui uma
+segunda confirmação. Depois de confirmado, o servidor sinaliza a tarefa, o
+laço para no próximo ponto seguro e nenhum quadro parcial é entregue à página.
+As contagens e o resultado da execução cancelada são descartados; não há
+gravação nem rollback de banco de dados. O progresso total considera as duas
+passagens sobre as mesmas 5.000 combinações — filtros atuais e comparação com
+o comportamento anterior. A aplicação integral permanece desabilitada.
+
+Validação: passaram 19 testes Python do motor/API, 114 testes unitários do
+frontend e 7 testes Chromium direcionados, incluindo conclusão, falha,
+confirmação e cancelamento. Evidência em
+`MSen/tests/TESTE_ETAPA_29_3.md`.
+
+### 29.4 — Diagnóstico e validação do Teste do Screener
+
+Identificar a causa real do bloqueio atual, melhorar a mensagem e validar o
+fluxo completo das 5.000 combinações.
+
+### 29.5 — Preparação e liberação controlada da aplicação integral
+
+Validar iteração por lotes, consumo de memória, progresso, cancelamento e
+proteção contra início acidental antes de habilitar a aplicação integral.
+
+### 29.6 — Ajuda e validação final
+
+Consolidar a explicação e os testes de confirmação, progresso, cancelamento,
+resultado concluído e resultado interrompido.
+
+## Etapa 28 — Ajuda central e fonte oficial de funcionamento
+
+**Planejada, autorizada e concluída em 11/11/2026. As subetapas 28.1 a 28.7
+foram executadas mediante autorização individual.**
+
+Objetivo: construir uma Ajuda central, navegável e pesquisável que seja a fonte
+oficial de funcionamento do Game. A documentação deverá permitir ao usuário,
+ao desenvolvedor e à IA esclarecer rapidamente conceitos, períodos históricos,
+cálculos, persistência, estados, bloqueios e operações de cada página sem
+depender da memória de conversas anteriores.
+
+### Regras gerais da Etapa 28
+
+- Cada subetapa exige autorização expressa antes de sua execução.
+- Textos funcionais deverão ser confrontados com o código, o banco e os testes;
+  lembranças e hipóteses não poderão ser publicadas como fatos.
+- Quando houver divergência entre documentação e sistema, ela deverá ser
+  registrada e apresentada antes de qualquer alteração funcional.
+- A Ajuda usará linguagem compreensível, definirá termos técnicos antes de
+  empregá-los e evitará textos extensos sem divisão por assunto.
+- O conteúdo central não será duplicado em modais independentes. Os acessos de
+  Ajuda das páginas deverão abrir diretamente o tópico central correspondente.
+- Alterações funcionais futuras relevantes somente serão consideradas
+  concluídas depois da atualização da Ajuda relacionada.
+- Esta etapa documenta o funcionamento comprovado; ela não autoriza corrigir
+  cálculos, liberar travas ou mudar regras de negócio encontradas na auditoria.
+
+### 28.1 — Inventário e auditoria das fontes atuais
+
+- Levantar todas as páginas, itens de menu, modais de Ajuda, documentos
+  funcionais, contratos, notas e registros da Gestão do desenvolvimento.
+- Classificar as fontes como vigente, histórica, incompleta ou contraditória.
+- Relacionar cada página aos serviços Python, APIs, tabelas e testes que
+  comprovam seu comportamento.
+- Identificar dúvidas estruturais ainda sem resposta comprovada, incluindo:
+  início dos cálculos históricos, início das avaliações por concurso, cortes
+  temporais e forma de atualização incremental.
+- Não alterar interface, regras nem textos de Ajuda nesta subetapa.
+
+Critério de conclusão: inventário rastreável por página e assunto, com fonte
+técnica de conferência e lista explícita de contradições ou lacunas.
+
+Estado: concluída em 11/11/2026. O inventário rastreável foi registrado em
+`docs/AUDITORIA_AJUDA_ETAPA_28_1.md`. Foram identificadas onze páginas, quatro
+com Ajuda local e sete sem Ajuda, bem como a dispersão do conteúdo entre HTML,
+JavaScript, contratos e documentos históricos. Código, contratos e consultas
+somente de leitura ao banco confirmaram que os resultados começam no concurso
+1, a primeira fotografia acumulada da Frequência ocorre no 500 e o primeiro
+alvo permitido no Backtest da Seleção é o 500, com corte 499. Ficou registrada
+a decisão de que `Ajuda`, quando implementada, será o último item do menu
+principal, alinhado à esquerda. Nenhuma interface, regra, Ajuda existente ou
+dado foi alterado nesta subetapa.
+
+### 28.2 — Contrato editorial e estrutura da informação
+
+- Definir a árvore da Ajuda central e a nomenclatura oficial dos tópicos.
+- Separar o conteúdo em `Conceitos gerais`, `Ajuda por página` e
+  `Referência funcional`.
+- Adotar títulos e subtítulos curtos, links internos e leitura progressiva.
+- Definir um modelo comum para finalidade, dados de entrada, comandos,
+  resultados, gravação, bloqueios, mensagens e exemplos.
+- Definir como indicar informação confirmada, limitação conhecida e tema
+  ainda em desenvolvimento, sem expor detalhes desnecessários de programação.
+- Definir o mecanismo que relacionará cada alteração funcional ao seu tópico
+  de Ajuda.
+
+Critério de conclusão: estrutura editorial aprovada antes da criação da nova
+página ou da migração dos textos existentes.
+
+Estado: concluída em 11/11/2026. O contrato
+`docs/CONTRATO_EDITORIAL_AJUDA.md` definiu a árvore `Começar aqui`, `Conceitos
+gerais`, `Ajuda por página` e `Referência funcional`; o vocabulário inicial; o
+modelo de cada tópico; os estados editoriais; IDs estáveis; aliases de busca;
+e a regra que vincula alterações funcionais à atualização da Ajuda. Foi
+adotado `Preparação do Screener` como título editorial, preservando `Screener`
+como alias enquanto o menu atual não for alterado. Nenhuma página, menu, modal
+ou regra funcional foi modificada.
+
+### 28.3 — Página central, navegação e busca
+
+- Criar uma página de Ajuda com lista de tópicos na lateral esquerda e área de
+  leitura à direita, tomando como referência funcional a página do FinCtl.
+- Permitir expansão por subtópicos sem obrigar a leitura integral do texto.
+- Criar busca por palavra ou expressão em títulos, subtítulos e conteúdo.
+- Destacar resultados e permitir abrir diretamente a ocorrência selecionada.
+- Aceitar link direto por tópico e subtópico na URL.
+- Garantir teclado, foco, leitores de tela, telas estreitas e retorno ao ponto
+  anteriormente consultado.
+- Manter os conteúdos desacoplados da estrutura visual para facilitar revisão
+  e testes sem espalhar cópias pelo frontend.
+
+Critério de conclusão: a página abre qualquer tópico por navegação, busca ou
+URL direta e permanece utilizável em resoluções comuns e estreitas.
+
+Estado: concluída em 11/11/2026. Foi criada `/ajuda.html`, com índice lateral,
+área de leitura, busca sem distinção de acentos em títulos, aliases e conteúdo,
+links diretos por ID estável, retomada do último tópico, foco controlado,
+mensagens acessíveis e retorno seguro para tópico inexistente. Conteúdo e
+apresentação ficaram separados em `ajuda-conteudo.js`, `ajuda.js` e
+`ajuda.css`. O item `Ajuda` passou a ser o último do menu principal, alinhado à
+esquerda, em todas as páginas. Os modais locais foram preservados para a
+migração posterior. Passaram 113 testes unitários do frontend e dois fluxos
+Chromium específicos, incluindo tela de 390 px.
+
+### 28.4 — Conceitos gerais comprovados
+
+- Documentar concurso, resultado, concurso-alvo, corte histórico, intervalo,
+  perfil, configuração, previsão, Backtest, Screener, teste, aplicação,
+  validação, homologacão e cobertura.
+- Confirmar e documentar separadamente:
+  - de qual concurso parte cada cálculo histórico;
+  - por que determinadas avaliações começam no concurso 500;
+  - qual base anterior é usada para avaliar cada concurso;
+  - quais valores são acumulados, recalculados ou preservados;
+  - o que é persistido no PostgreSQL e o que existe apenas durante a consulta.
+- Documentar as diferenças entre a amostra de 5.000 combinações, o universo
+  `C(60,6)` e as combinações geradas a partir das dezenas selecionadas.
+- Incluir fórmulas, exemplos e representações visuais apenas quando ajudarem
+  materialmente o entendimento.
+
+Critério de conclusão: os conceitos estruturais possuem resposta objetiva,
+fonte conferida e exemplos coerentes com o comportamento atual.
+
+Estado: concluída em 11/11/2026. A Ajuda central passou a explicar concurso e
+resultado; ocorrência e intervalo; média e desvio-padrão; concurso-alvo e
+corte; faixa ajustada e fatores `k` e `j`; configuração, assinatura e
+imutabilidade; perfil e fotografia; seleção registrada; Backtest; Screener,
+teste e aplicação; validação, homologação e cobertura; persistência; e cálculo
+integral ou incremental. Foram incluídas fórmulas, exemplos, a linha do tempo
+dos concursos 1/499/500, o mapa funcional do que fica gravado e a diferença
+entre 5.000 combinações, `C(60,6)` e `C(N,6)`. As afirmações foram confrontadas
+com serviços, repositórios e contratos vigentes. Passaram 114 testes unitários
+do frontend e dois testes Chromium da Ajuda. Nenhum cálculo, dado ou regra de
+negócio foi alterado.
+
+### 28.5 — Ajuda por página e migração dos textos existentes
+
+- Criar um tópico para cada página e item de menu vigente.
+- Para cada página, explicar finalidade, campos, botões, tabelas, gráficos,
+  mensagens, sequência normal de uso e efeitos no banco.
+- Migrar os textos úteis das ajudas atuais, reescrevendo linguagem ambígua e
+  eliminando conceitos superados.
+- Documentar condições de bloqueio com mensagens compreensíveis e orientação
+  sobre a próxima ação possível.
+- Começar pelas páginas em uso ativo: Preparação do Screener, Seleção de
+  dezenas, Gestão do desenvolvimento, Frequência, Distribuições e Auditoria.
+
+Critério de conclusão: todas as páginas vigentes possuem tópico central
+coerente com a interface, o backend e o banco atuais.
+
+Estado: concluída em 11/11/2026. A Ajuda central recebeu tópicos operacionais
+para Painel, visão de Cadastros, Grupos de padrões, Padrões, Distribuições,
+Preparação do Screener, Validação e auditoria, Frequência das dezenas, Gráficos
+de frequência, Seleção de dezenas, Gestão do desenvolvimento e a própria
+Ajuda. Cada tópico descreve finalidade, campos, comandos, resultados, efeito
+nos dados, sequência de uso e limitações aplicáveis. O conteúdo útil dos
+modais locais foi reconciliado, mas esses modais foram preservados até a
+integração da 28.6. `Preparação do Screener` e `Seleção de dezenas` aparecem
+com `Limitação conhecida` porque o processamento integral e o início do
+Screener de combinações continuam bloqueados. Passaram 115 testes unitários do
+frontend e dois testes Chromium da Ajuda. Nenhuma regra funcional foi alterada.
+
+### 28.6 — Integração dos acessos de Ajuda
+
+- Fazer cada botão `Ajuda` abrir a página central diretamente no tópico da
+  página de origem.
+- Preservar retorno claro à página e, quando viável, ao contexto anterior.
+- Remover somente depois da migração confirmada os textos e modais locais que
+  se tornarem duplicados.
+- Impedir links quebrados e definir comportamento seguro para tópico ausente.
+- Não modificar a lógica funcional das páginas durante essa integração.
+
+Critério de conclusão: todos os acessos abrem o assunto correto sem duplicar
+conteúdo nem alterar operações das páginas.
+
+**Estado em 11/11/2026:** concluída. Os acessos contextuais de Frequência das
+dezenas, Gráficos de frequência, Seleção de dezenas e Gestão do desenvolvimento
+abrem diretamente o tópico central correspondente. Os três gráficos de
+intervalos possuem destinos específicos. A Ajuda valida a origem e oferece
+retorno seguro à página anterior. Os antigos modais deixaram de ser elementos
+executáveis. Passaram 116 testes unitários do frontend e dois testes Chromium
+da Ajuda. Nenhum cálculo, dado ou regra de negócio foi alterado.
+
+### 28.7 — Validação editorial, funcional e encerramento
+
+- Conferir cada afirmação sensível contra código, banco, configuração e testes.
+- Validar busca, links diretos, navegação lateral, subtópicos, foco, teclado e
+  responsividade.
+- Testar os acessos de Ajuda a partir de todas as páginas vigentes.
+- Revisar linguagem com foco em compreensão humana, concisão e consistência de
+  termos.
+- Registrar lacunas funcionais descobertas na Gestão do desenvolvimento, sem
+  escondê-las ou corrigi-las implicitamente nesta etapa.
+- Atualizar a continuidade do projeto e estabelecer a Ajuda como requisito de
+  conclusão das etapas futuras.
+
+Critério de conclusão: nenhuma contradição conhecida permanece publicada;
+busca e navegação estão validadas; os links contextuais funcionam; e a Ajuda
+passa a ser a referência oficial do sistema.
+
+**Estado em 11/11/2026:** concluída. O conteúdo sensível foi confrontado com
+código, contratos e testes. Busca, links diretos, tópico inexistente, foco,
+teclado, tela estreita, retorno seguro e acessos contextuais foram validados.
+As cópias inativas dos antigos textos locais foram removidas, tornando
+`frontend/js/ajuda-conteudo.js` a fonte editorial única. Não foi descoberta
+nova lacuna funcional que exigisse registro na Gestão do desenvolvimento. A
+regressão aprovou 114 testes unitários do frontend, 70 testes Python
+direcionados e 47 testes Chromium. A Ajuda passa a ser a referência oficial e
+sua atualização é requisito para encerrar futuras alterações visíveis.
+
+## ETAPA 27 — Gestão do desenvolvimento e CRUD interno reutilizável
+
+Objetivo: criar no Game uma fonte consultável de erros, maus funcionamentos,
+modificações e novas funcionalidades, usando um mecanismo CRUD claro que possa
+ser reaproveitado posteriormente por outros cadastros do próprio Game.
+
+### 27.1 — Contrato e desenho do CRUD interno
+
+**Autorizada e concluída em 11/11/2026.**
+
+1. Auditar os cadastros existentes e identificar repetição e fontes de erro.
+2. Definir lista, pesquisa, formulário, estados e mensagens do componente.
+3. Definir inclusão com conferência anterior ao POST e proteção contra
+   repetição.
+4. Definir edição, concorrência, arquivamento e desarquivamento.
+5. Definir os campos e estados da Gestão do desenvolvimento.
+6. Preservar APIs de domínio explícitas e impedir acesso genérico ao banco.
+
+Resultado: os contratos foram registrados em
+`docs/CONTRATO_CRUD_INTERNO_GAME.md` e
+`docs/CONTRATO_GESTAO_DESENVOLVIMENTO.md`. O mecanismo será isolado por
+instância, com lista separada do formulário, pesquisa textual, paginação,
+confirmação, idempotência, concorrência otimista e arquivamento. Identificadores
+técnicos não serão exibidos como numeração funcional. Nenhuma implementação ou
+migração foi realizada. Evidência em `MSen/tests/TESTE_ETAPA_27_1.md`.
+
+### 27.2 — Banco e backend da Gestão do desenvolvimento
+
+**Autorizada e concluída em 11/11/2026.**
+
+1. Criar migração incremental e restrições do modelo aprovado.
+2. Criar domínio, repositório e serviço.
+3. Criar histórico imutável dos eventos relevantes.
+4. Implementar pesquisa, filtros, ordenação e paginação no servidor.
+5. Implementar idempotência, concorrência e arquivamento.
+6. Criar endpoints explícitos e testes sem interferir nas tabelas existentes.
+
+Resultado: foi criada a migração 028 com registro principal, idempotência e
+histórico imutável, além do domínio, repositório e API explícita. A consulta
+oferece pesquisa por título, filtros, quatro ordenações e paginação no servidor.
+Edição e arquivamento usam versão para impedir sobrescrita silenciosa. Não há
+exclusão física nem API genérica de banco. A migração 028 foi aplicada ao banco
+local `games`, mediante autorização específica, em 11/11/2026; as duas tabelas
+foram criadas vazias e conferidas no catálogo do PostgreSQL. Nenhuma interface foi criada. Contrato HTTP em
+`docs/API_GESTAO_DESENVOLVIMENTO.md` e evidência em
+`MSen/tests/TESTE_ETAPA_27_2.md`.
+
+### 27.3 — Componentes CRUD reutilizáveis do Game
+
+**Autorizada e concluída em 11/11/2026.**
+
+1. Criar lista navegável, pesquisa textual, filtros e paginação.
+2. Criar formulário de consulta, inclusão e edição por configuração de campos.
+3. Criar conferência, proteção contra mudanças não salvas e mensagens comuns.
+4. Usar estado por instância e adaptadores de API, sem variáveis CRUD globais.
+5. Cobrir o componente com testes unitários de interface.
+
+Resultado: foram criados o controlador e a camada visual reutilizável em
+`frontend/js/crud-navegavel.js`, com estilos próprios em
+`frontend/css/crud-navegavel.css`. Cada instância mantém seu estado, usa um
+adaptador explícito, exige conferência antes de gravar, preserva rascunhos em
+falhas e protege alterações não salvas. A página da Gestão do desenvolvimento
+ainda não foi criada. Evidência em `MSen/tests/TESTE_ETAPA_27_3.md`.
+
+### 27.4 — Página Gestão do desenvolvimento
+
+**Autorizada e concluída em 11/11/2026.**
+
+1. Aplicar o componente reutilizável ao primeiro domínio.
+2. Exibir resumo, pesquisa, filtros, lista e detalhes.
+3. Permitir criar, editar, iniciar, validar, concluir, reabrir e arquivar.
+4. Separar conclusão local de publicação no PythonAnywhere.
+5. Criar Ajuda em linguagem operacional.
+
+Resultado: a página `frontend/gestao-desenvolvimento.html` passou a usar o CRUD
+reutilizável e a API específica. Ela oferece busca, filtros, lista, formulário,
+histórico, estados de trabalho e publicação, arquivamento e Ajuda operacional.
+O identificador técnico não aparece como numeração funcional. A navegação
+principal recebeu acesso à página. O registro rápido global permanece reservado
+à etapa 27.5. Evidência em `MSen/tests/TESTE_ETAPA_27_4.md`.
+
+### 27.5 — Registro rápido global
+
+**Autorizada e concluída em 11/11/2026.**
+
+1. Criar comando disponível nas páginas do Game.
+2. Abrir modal com tipo, título, descrição, prioridade e referência.
+3. Preencher a página de origem sem torná-la obrigatória.
+4. Exigir conferência e confirmação antes de gravar.
+5. Oferecer acesso à página completa de gestão.
+
+Resultado: a navegação comum passou a instalar o botão `Registrar ideia ou
+problema`. O modal registra os campos essenciais, identifica automaticamente a
+página de origem, permite correção e exige confirmação anterior ao POST. Abrir,
+preencher, conferir ou cancelar não cria registros. Após o sucesso, o usuário
+pode abrir a Gestão do desenvolvimento completa. Evidência em
+`MSen/tests/TESTE_ETAPA_27_5.md`.
+
+### 27.6 — Memória operacional e validação integrada
+
+**Autorizada e concluída em 11/11/2026.**
+
+1. Orientar a retomada de sessões a consultar registros relacionados.
+2. Testar cancelamento, repetição, conflito, arquivamento e reabertura.
+3. Confirmar que abrir ou cancelar formulário não cria registros.
+4. Validar banco, API, navegador, acessibilidade e não regressão.
+5. Preparar publicação sem executá-la automaticamente.
+
+Resultado: a retomada de sessões passou a consultar a Gestão do desenvolvimento
+como memória operacional, sem transformar registros em autorização. O fluxo
+integrado validou idempotência, conflito de versão, histórico, reabertura e
+arquivamento com rollback total no banco real. O navegador confirmou que
+cancelar, conferir ou retornar por `Escape` não envia dados e que somente a
+confirmação produz um POST. Foi preparado um roteiro de publicação, mas nenhuma
+publicação, commit ou push foi executado. Evidência em
+`MSen/tests/TESTE_ETAPA_27_6.md`.
+
+### 27.7 — Reutilização em outros cadastros do Game
+
+**Autorizada e concluída em 11/11/2026.**
+
+Depois da aprovação do piloto, auditar e migrar um cadastro por vez. A ordem
+provável começa por configurações e segue por grupos, subgrupos e padrões. Cada
+migração dependerá de autorização e testes próprios; esta etapa não autoriza
+substituição automática dos formulários atuais.
+
+Resultado: a primeira reutilização foi aplicada à inclusão de configurações da
+Seleção de dezenas. A auditoria preservou a imutabilidade das configurações e a
+ação própria de análise; somente o fluxo compatível de validação, conferência,
+confirmação, cancelamento e proteção contra repetição foi extraído e aplicado.
+Grupos, subgrupos e padrões não foram modificados. Evidência em
+`MSen/tests/TESTE_ETAPA_27_7.md`.
+
+## ETAPA 28 — Localização da Gestão do desenvolvimento
+
+**Autorizada e concluída em 11/11/2026.**
+
+1. Manter localização, filtros e ordenação em uma linha nas telas largas.
+2. Substituir `Pesquisar pelo título` por `Localizar`.
+3. Oferecer títulos existentes e aplicar busca por `contém`.
+4. Abrir automaticamente o primeiro registro encontrado.
+5. Esclarecer a consulta de registros arquivados.
+6. Preservar adaptação responsiva e acessibilidade.
+
+Resultado: `Localizar` combina sugestões de títulos com busca parcial no
+servidor. A abertura e cada consulta apresentam automaticamente o primeiro
+resultado, priorizando correspondência exata. Os controles permanecem em uma
+linha na largura da tela apresentada e se reorganizam quando falta espaço.
+O formulário passou a usar larguras curta, média, larga e total conforme o
+conteúdo esperado, mantendo textos longos com a largura integral.
+As três primeiras linhas foram fixadas como: Tipo/Título/Prioridade/Trabalho;
+Publicação/Origem/Página; e Descrição em largura total.
+O formulário fica abaixo da lista e da paginação, alinhado à margem do botão
+Anterior, com espaçamento uniforme entre os controles.
+Evidência em `MSen/tests/TESTE_ETAPA_28.md`.
+
+## ETAPA 29 — Data e simplificação da Gestão do desenvolvimento
+
+**Autorizada e concluída no código em 11/11/2026. Migração local pendente.**
+
+1. Substituir Prioridade por uma Data escolhida em calendário.
+2. Remover Origem do registro e do histórico.
+3. Preservar Situação do trabalho.
+4. Remover o seletor de ordenação.
+5. Fixar a lista na ordem de criação.
+6. Criar e testar a migração 029 sem aplicá-la automaticamente.
+
+Resultado: interface, registro rápido, domínio, API e repositório usam
+`data_registro`; Prioridade e Origem foram eliminadas; a listagem segue a ordem
+de criação. A migração 029 aguarda autorização específica para aplicação no
+banco `games`. Evidência em `MSen/tests/TESTE_ETAPA_29.md`.
+
+## ETAPA 26 — Formação de jogos com as dezenas registradas
+
+Objetivo: transformar uma seleção de dezenas já registrada em uma lista final
+de jogos de seis dezenas, submetendo as combinações ao Screener, classificando
+as aprovadas e limitando a lista ao número de jogos que o usuário pretende
+utilizar. O produto final será um relatório para conferência e digitação manual
+no site da operadora; o sistema não realizará apostas.
+
+### Decisões funcionais já aprovadas para o planejamento
+
+- O bloco será denominado `Formação de jogos com as dezenas registradas`.
+- A origem será obrigatoriamente um registro do Screener de dezenas.
+- As combinações terão seis dezenas distintas e serão geradas pela biblioteca
+  Python já utilizada no projeto (`itertools.combinations`).
+- A configuração informará `número de jogos` e `valor de um jogo`.
+- O valor inicialmente previsto será calculado por
+  `número de jogos × valor de um jogo`; não será digitado separadamente.
+- O número informado será um teto. Se o Screener aprovar menos combinações, o
+  sistema disponibilizará somente as aprovadas e explicará a redução.
+- O investimento efetivo será
+  `jogos disponibilizados × valor de um jogo`.
+- A lista aprovada será ordenada por critério de probabilidade ainda a ser
+  definido e validado antes de sua implementação.
+- O relatório final mostrará os jogos para transcrição manual, sem integração
+  automática com o site da operadora.
+
+### 26.1 — Auditoria do gerador, do Screener e dos dados existentes
+
+**Autorizada e concluída em 10/11/2026.**
+
+Objetivo: fechar o contrato técnico antes de modificar o fluxo operacional.
+
+1. Mapear o serviço atual de combinações, as rotas, a interface, as tabelas
+   `lotes_jogos_selecao` e `jogos_selecao_dezenas` e seus consumidores.
+2. Mapear como o Screener oficial fotografa a configuração, recebe combinações,
+   interrompe o funil na primeira reprovação e consolida os resultados.
+3. Identificar filtros realmente ativos e os que ainda dependem de cadastros.
+4. Definir como substituir a amostra fixa de 5.000 pelas combinações de uma
+   seleção registrada, sem liberar o universo integral de 60 dezenas.
+5. Medir volumes representativos e definir limites de memória, duração e
+   cancelamento.
+6. Propor o que precisa ser persistido. A proposta inicial é não gravar
+   combinações reprovadas.
+7. Apresentar as decisões pendentes, especialmente o critério de classificação,
+   antes de qualquer implementação correspondente.
+
+Critério de conclusão: contrato documentado, dependências identificadas e
+nenhuma alteração funcional ou de banco realizada.
+
+Resultado: a integração é viável, mas o fluxo atual grava todas as combinações
+brutas e o motor extensível materializa a entrada e as aprovadas. O novo motor
+deverá trabalhar em fluxo, preservar apenas contadores e a lista final limitada.
+O Screener possui 13 filtros elegíveis no plano atual, porém permanece bloqueado
+porque a cobertura global ainda não foi concluída. Não existe classificador de
+probabilidade. Evidências em
+`docs/AUDITORIA_FORMACAO_JOGOS_ETAPA_26_1.md` e
+`MSen/tests/TESTE_ETAPA_26_1.md`.
+
+### 26.2 — Interface inicial e configuração financeira
+
+**Autorizada e concluída em 10/11/2026.**
+
+**Autorizada e concluída em 10/11/2026.**
+
+1. Renomear o bloco para `Formação de jogos com as dezenas registradas`.
+2. Exibir concurso, configuração e dezenas do registro escolhido.
+3. Criar `Número máximo de jogos` e `Valor de um jogo`.
+4. Calcular e exibir o valor máximo previsto durante o preenchimento.
+5. Criar o comando de análise e a conferência anterior ao processamento.
+6. Manter desabilitadas as ações que dependam da integração ainda incompleta,
+   com uma explicação clara.
+7. Adequar a Ajuda sem anunciar recursos incompletos como operacionais.
+
+Critério de conclusão: interface compreensível, cálculos monetários exatos e
+nenhuma geração ou gravação acidental.
+
+Resultado: o bloco foi renomeado, passou a mostrar a origem escolhida e recebeu
+os campos de número máximo de jogos e valor unitário. O valor máximo previsto é
+calculado em centavos. `Conferir configuração` abre uma revisão sem executar o
+Screener nem gravar dados; o comando futuro permanece desabilitado e explica sua
+dependência. A interface antiga deixou de chamar a gravação integral de jogos,
+mas backend e tabelas foram preservados. Evidência em
+`MSen/tests/TESTE_ETAPA_26_2.md`.
+
+Resultado: o bloco foi renomeado, passou a mostrar a origem escolhida e recebeu
+os campos de número máximo de jogos e valor unitário. O valor máximo previsto é
+calculado em centavos. `Conferir configuração` abre uma revisão sem executar o
+Screener nem gravar dados; o comando futuro permanece desabilitado e explica sua
+dependência. A interface antiga deixou de chamar a gravação integral de jogos,
+mas backend e tabelas foram preservados. Evidência em
+`MSen/tests/TESTE_ETAPA_26_2.md`.
+
+### 26.3 — Configuração dos jogos e modelo de persistência
+
+**Autorizada e concluída em 10/11/2026.**
+
+1. Definir configuração imutável contendo origem, número solicitado, valor
+   unitário, versão do cálculo e configuração do Screener utilizada.
+2. Usar tipo decimal exato para dinheiro e fixar o arredondamento.
+3. Adequar tabelas existentes ou criar migração incremental sem quebrar vínculos.
+4. Registrar totais bruto, examinado, reprovado, aprovado e disponibilizado,
+   além dos valores previsto e efetivo.
+5. Impedir duplicação causada por clique repetido.
+6. Não persistir combinações brutas ou reprovadas sem justificativa aprovada.
+
+Critério de conclusão: modelo revisado e migração testada sem interferir nos
+registros do Screener de dezenas.
+
+Resultado: foi criado um contrato imutável com valor monetário decimal e chave
+SHA-256 de idempotência. As migrações 026 e 027 criaram tabelas separadas para a
+formação e somente seus jogos finais, preservando o modelo bruto anterior até a
+validação integral. Fotografia do Screener, classificador, totais reconciliados,
+valores previsto/efetivo, estados e erros fazem parte do novo modelo. Nenhum
+jogo bruto, reprovado ou final foi gravado. Evidência em
+`MSen/tests/TESTE_ETAPA_26_3.md`.
+
+### 26.4 — Motor de geração e execução controlada
+
+**Autorizada e concluída em 10/11/2026.**
+
+1. Reutilizar `itertools.combinations` somente sobre as dezenas registradas.
+2. Processar em fluxo, sem materializar todas as combinações simultaneamente.
+3. Informar `C(N,6)`, andamento, duração e permitir cancelamento seguro.
+4. Encaminhar cada combinação ao adaptador do Screener.
+5. Não gravar definitivamente enquanto filtragem, classificação e confirmação
+   não estiverem concluídas.
+6. Testar casos mínimos, volumes pequenos e volumes representativos.
+
+Critério de conclusão: combinações produzidas uma vez, em ordem determinística
+e com uso controlado de memória.
+
+Resultado: `executar_geracao_controlada` calcula `C(N,6)`, percorre o iterador
+uma única vez, entrega cada item ao adaptador, informa progresso e cancela em
+ponto seguro. O relatório não carrega combinações e nenhuma API ou persistência
+foi ativada. O ensaio de 230.230 itens permaneceu abaixo de 2 MiB; a seleção real
+de 16 dezenas encaminhou 8.008 itens sem gravações. Evidências em
+`docs/CONTRATO_MOTOR_FORMACAO_JOGOS.md` e
+`MSen/tests/TESTE_ETAPA_26_4.md`.
+
+### 26.5 — Integração com o Screener de combinações
+
+**Situação: concluída em 10/11/2026, após autorização do usuário.**
+
+1. Fazer o Screener receber o iterador da seleção registrada, em vez de gerar
+   sua própria amostra aleatória.
+2. Fotografar configuração e filtros antes do início.
+3. Preservar o funil: a primeira reprovação encerra aquela combinação.
+4. Contabilizar recebidas, exclusões por filtro e aprovadas.
+5. Informar filtros ausentes ou inativos; uma estrutura incompleta não será
+   apresentada como Screener integral.
+6. Validar `examinadas = reprovadas + aprovadas`.
+
+Critério de conclusão: resultado reproduzível, reconciliado e identificado pelas
+regras efetivamente aplicadas.
+
+Implementado por adaptador streaming, fotografia assinada, identificação de
+filtros inativos e fechamento por filtro/família. A homologação real permanece
+bloqueada por `HOMOLOGACAO_CONCLUIDA_AGUARDANDO_COBERTURA`; a integração respeita
+essa trava e não apresenta a estrutura incompleta como Screener integral.
+
+### 26.6 — Classificação das combinações aprovadas
+
+**Situação: estudo autorizado e concluído em 10/11/2026; decisão funcional
+pendente antes da implementação.**
+
+Esta etapa exige decisão antes da implementação: definir o significado de
+`probabilidade de ocorrência`. O sistema não apresentará frequência histórica
+como probabilidade garantida nem usará pontuação arbitrária.
+
+1. Inventariar medidas existentes que possam fundamentar a classificação.
+2. Propor fórmula, pesos, desempate e versão do classificador.
+3. Avaliar a proposta historicamente sem usar o concurso avaliado como entrada.
+4. Submeter proposta e resultados ao usuário.
+5. Implementar somente depois de autorização específica.
+
+Critério de conclusão: toda posição da lista é explicável e reproduzível.
+
+O inventário e o ensaio histórico foram concluídos sem vazamento de dados
+futuros. Um índice de centralidade estatística/geométrica obteve percentil médio
+de 50,2179% para os resultados reais diante de controles determinísticos e não
+demonstrou poder preditivo. Foram propostas: ordem neutra reproduzível por
+SHA-256 (recomendada), aderência histórica sem chamá-la de probabilidade, ou
+ordem lexicográfica. A implementação aguarda decisão específica do usuário.
+Evidências em `docs/ESTUDO_CLASSIFICACAO_FORMACAO_JOGOS_26_6.md` e
+`MSen/tests/TESTE_ETAPA_26_6_ESTUDO.md`.
+
+### 26.7 — Limite de jogos e cálculo do investimento
+
+1. Ordenar as aprovadas pela classificação autorizada.
+2. Calcular `disponibilizados = mínimo(solicitados, aprovados)`.
+3. Quando faltarem aprovadas, informar solicitado, aprovado e disponibilizado.
+4. Calcular o investimento efetivo somente sobre os disponibilizados.
+5. Exigir conferência explícita antes de gravar a lista final.
+
+Critério de conclusão: o sistema nunca completa a quantidade com jogos
+reprovados e os valores correspondem à lista final.
+
+### 26.8 — Relatório para conferência e digitação
+
+1. Identificar concurso, seleção de dezenas, Screener e configuração dos jogos.
+2. Mostrar dezenas de origem e totais bruto, examinado, reprovado, aprovado,
+   solicitado e disponibilizado.
+3. Mostrar valor unitário, valor máximo previsto e investimento efetivo.
+4. Listar jogos numerados, com seis dezenas crescentes, classificação e dados
+   suficientes para explicar sua posição.
+5. Preparar visualização e impressão para conferência e transcrição manual.
+6. Não automatizar aposta nem comunicação com a operadora.
+
+Critério de conclusão: o usuário consegue conferir e transcrever cada jogo sem
+consultar tabelas internas.
+
+### 26.9 — Validação integrada, Ajuda e encerramento
+
+1. Testar geração, filtragem, classificação, limitação financeira, confirmação,
+   persistência e relatório de ponta a ponta.
+2. Confirmar que cancelamento não deixa lotes parciais.
+3. Confirmar idempotência, rastreabilidade e reprodução.
+4. Medir desempenho com volumes reais.
+5. Revisar a Ajuda e registrar evidências.
+6. Somente após a validação, retirar o fluxo antigo de gravação integral que não
+   possuir mais consumidores.
+
+Critério de conclusão: processo completo sem interferir no Backtest, nos
+registros do Screener de dezenas ou nas demais áreas.
+
+### 25.10 — Confirmação, nome exclusivo e ocultação dos IDs
+
+**Autorizada e concluída em 09/11/2026.**
+
+- `Salvar configuração` passou a abrir uma conferência sem criar registros. A
+  gravação ocorre somente depois de `Confirmar e salvar`; cancelar, fechar ou
+  pressionar Esc não chama a API de gravação.
+- O nome passou a ser exclusivo para o usuário. A interface faz a primeira
+  verificação e a migração 025 protege o PostgreSQL contra nomes equivalentes,
+  desconsiderando maiúsculas, minúsculas e espaços nas extremidades.
+- O identificador numérico foi mantido apenas como chave técnica interna, pois
+  os registros do screener, jogos e demais vínculos dependem dele. Ele deixou
+  de ser apresentado nas listas de configurações, no Backtest, na conferência,
+  no andamento e no relatório.
+- Os registros existentes não foram renumerados nem apagados. Os saltos 1 e 4
+  permanecem apenas no histórico da identidade interna e não interferem no uso.
+- Uma tentativa real com nome repetido foi recusada antes do `INSERT`: a
+  sequência permaneceu em 5 antes e depois da tentativa.
+- A Ajuda passou a explicar a confirmação, a exclusividade do nome e o efeito
+  do cancelamento.
+
+Evidência: `MSen/tests/TESTE_ETAPA_25_10.md`.
+
+### 25.10 — Confirmação, nome exclusivo e ocultação dos IDs
+
+**Autorizada e concluída em 09/11/2026.**
+
+- `Salvar configuração` passou a abrir uma conferência sem criar registros. A
+  gravação ocorre somente depois de `Confirmar e salvar`; cancelar, fechar ou
+  pressionar Esc não chama a API de gravação.
+- O nome passou a ser exclusivo para o usuário. A interface faz a primeira
+  verificação e a migração 025 protege o PostgreSQL contra nomes equivalentes,
+  desconsiderando maiúsculas, minúsculas e espaços nas extremidades.
+- O identificador numérico foi mantido apenas como chave técnica interna, pois
+  os registros do screener, jogos e demais vínculos dependem dele. Ele deixou
+  de ser apresentado nas listas de configurações, no Backtest, na conferência,
+  no andamento e no relatório.
+- Os registros existentes não foram renumerados nem apagados. Os saltos 1 e 4
+  permanecem apenas no histórico da identidade interna e não interferem no uso.
+- Uma tentativa real com nome repetido foi recusada antes do `INSERT`: a
+  sequência permaneceu em 5 antes e depois da tentativa.
+- A Ajuda passou a explicar a confirmação, a exclusividade do nome e o efeito
+  do cancelamento.
+
+Evidência: `MSen/tests/TESTE_ETAPA_25_10.md`.
+
 ## Etapa 25 — Backtest temporário e relatório gráfico
 
 Esta etapa substitui progressivamente o backtest persistente por um cálculo
@@ -5194,14 +5933,214 @@ Critério de conclusão: o relatório completo é produzido em memória com
 isolamento temporal, progresso e cancelamento, enquanto o PostgreSQL impede
 escritas durante toda a operação.
 
+### 25.4 — API temporária e progresso não persistente
+
+**Autorizada pelo usuário e concluída em 09/11/2026.**
+
+- Criadas rotas paralelas de prévia, início, consulta, cancelamento e descarte.
+- O contrato aceita somente ID de configuração salva e período explícito.
+- A execução usa UUID temporário, sem criar identificador no PostgreSQL.
+- Estado, etapa, quantidade concluída, total, percentual e duração podem ser
+  consultados enquanto o cálculo está em andamento.
+- O resultado concluído fornece os 2.570 pontos e o resumo em JSON.
+- Somente o relatório mais recente permanece no processo; iniciar outro
+  elimina o anterior.
+- Relatórios terminais podem ser descartados explicitamente por `DELETE`.
+- Cancelamento elimina o resultado parcial e retorna estado `CANCELADA`.
+- As rotas persistentes atuais e a página não foram substituídas.
+- Foram aprovados 18 testes unitários específicos da API.
+- O fluxo HTTP real processou 500 a 3.069 em aproximadamente 6,34 segundos,
+  cancelou uma segunda execução, descartou o relatório e manteve todas as
+  cardinalidades do banco inalteradas.
+
+Evidência: `MSen/tests/TESTE_ETAPA_25_4.md`.
+
+Critério de conclusão: o motor temporário pode ser controlado integralmente por
+HTTP, permanece limitado à memória e não interfere no backtest persistente.
+
+### 25.5 — Gráficos e quadro-resumo temporários
+
+**Autorizada pelo usuário e concluída em 09/11/2026.**
+
+- Criado relatório experimental paralelo, sem substituir o backtest persistente.
+- O cálculo exige uma configuração salva e possui prévia e confirmação.
+- Os dois gráficos compartilham o mesmo eixo horizontal.
+- Somente concursos múltiplos de 100 recebem linha vertical e rótulo.
+- O gráfico superior traça a quantidade de dezenas e destaca apenas seus
+  limites mínimo e máximo.
+- O gráfico inferior usa escala própria de 0 a 6, com classes 0 a 3 em vermelho
+  e 4 a 6 em verde.
+- O quadro-resumo mostra período, 2.570 testes quando usado o período completo,
+  estatísticas de quantidade e acertos e as sete classes exclusivas.
+- O relatório pode ser descartado e permanece somente na memória e na página.
+- Foram aprovados 89 testes unitários do frontend e 5 testes Playwright.
+
+Evidência: `MSen/tests/TESTE_ETAPA_25_5.md`.
+
+Critério de conclusão: os gráficos e o resumo representam todos os pontos sem
+poluir o eixo com grades intermediárias, mantendo o processo atual intacto.
+
+### 25.5.1 — Correção do acesso ao relatório gráfico
+
+**Autorizada pelo usuário e concluída em 09/11/2026.**
+
+- Corrigida a ausência de resposta visível quando `Concurso final` estava vazio.
+- O último concurso cadastrado passa a ser adotado automaticamente e mostrado
+  no campo e na prévia temporária.
+- Mensagens de estado e falha passaram a aparecer dentro do bloco Backtest.
+- O processo antigo foi identificado como `Executar e gravar backtest`.
+- Sua prévia informa explicitamente a persistência e diferencia confirmação de
+  cancelamento sem gravação.
+- A Ajuda passou a explicar os dois comandos e o preenchimento automático.
+- A Execução 1 encontrada durante o diagnóstico foi preservada.
+- Foram aprovados 89 testes de frontend, 19 testes da API e 5 testes Playwright.
+- A validação HTTP integrada processou 2.570 pontos e confirmou que as
+  cardinalidades do banco permaneceram inalteradas.
+
+Evidência: `MSen/tests/TESTE_ETAPA_25_5_1.md`.
+
+Critério de conclusão: campo final vazio produz uma prévia válida e visível,
+enquanto qualquer ação persistente exige uma confirmação com linguagem clara.
+
+### 25.5.2 — Configuração e período próprios do estudo
+
+**Autorizada pelo usuário e concluída em 09/11/2026.**
+
+Objetivo: tornar o Backtest um ambiente de estudo independente da configuração
+operacional escolhida no bloco `Configuração da pesquisa`.
+
+#### Lista própria de configurações
+
+- Criar no bloco Backtest a caixa `Configuração do estudo`.
+- A primeira opção será `Selecione uma configuração` e não permitirá iniciar o
+  cálculo.
+- As demais opções listarão todas as configurações salvas, com ID e nome.
+- A configuração escolhida no Backtest será independente daquela selecionada
+  no bloco superior para analisar ou selecionar dezenas.
+- Alternar estudos entre configurações não exigirá retornar ao bloco superior.
+- Nenhuma configuração nova será criada implicitamente pelo Backtest.
+
+#### Período do estudo
+
+- Manter somente o campo `Concurso inicial`, com valor padrão 500.
+- Permitir ao usuário escolher um concurso igual ou superior a 500 e igual ou
+  inferior ao último concurso cadastrado.
+- Remover da interface o campo `Concurso final`.
+- Adotar sempre o último concurso cadastrado como final do estudo.
+- Resolver e validar o último concurso no servidor, sem confiar em valor final
+  enviado pelo navegador.
+- A prévia mostrará concurso inicial, último concurso cadastrado e quantidade
+  total de concursos a avaliar.
+
+#### Identificação durante o cálculo
+
+- A prévia e a caixa de progresso informarão ID e nome da configuração, fatores
+  `k` e `j`, modo `MAX` ou `FIXA`, quantidade fixa quando aplicável, versão do
+  cálculo, período e quantidade de concursos.
+- O progresso exibirá de forma permanente `Relatório temporário — não será
+  gravado`.
+- Erros de configuração ou período serão apresentados dentro do bloco Backtest.
+
+#### Identificação no relatório gráfico
+
+- O relatório preservará a identificação da configuração que realmente originou
+  seus dados, mesmo se a seleção da caixa for alterada depois do cálculo.
+- Seu cabeçalho mostrará ID, nome, `k`, `j`, modo de quantidade, quantidade fixa
+  quando aplicável, versão do cálculo e período efetivamente analisado.
+- O relatório manterá o aviso `Relatório temporário — não gravado no banco`.
+
+#### Validação prevista
+
+- Impedir execução enquanto `Selecione uma configuração` estiver ativa.
+- Confirmar independência entre a configuração superior e a do Backtest.
+- Testar concurso inicial 500, um valor intermediário, o último concurso e os
+  valores inválidos abaixo de 500 ou acima do último cadastrado.
+- Confirmar que o cálculo termina sempre no último concurso cadastrado.
+- Confirmar que progresso e relatório exibem a configuração efetivamente usada.
+- Revalidar os dois gráficos, o quadro-resumo, o descarte e a ausência de novas
+  gravações no PostgreSQL.
+- Preservar a Execução 1 e todo o processo persistente enquanto ele não for
+  substituído por etapa posterior autorizada.
+
+Critério de conclusão: o usuário escolhe diretamente no Backtest uma
+configuração salva e apenas o concurso inicial; prévia, progresso e relatório
+identificam sem ambiguidade a configuração e o período estudados, e o relatório
+temporário continua sem gravar dados.
+
+Implementação validada por 89 testes de frontend, 19 testes da API, 6 testes
+Playwright e execução HTTP real de 2.570 pontos, sem alteração das cardinalidades
+do banco. Evidência: `MSen/tests/TESTE_ETAPA_25_5_2.md`.
+
+### 25.6 — Comparação dos motores e ausência de gravação
+
+**Autorizada pelo usuário e concluída em 09/11/2026.**
+
+- A Execução 1 persistida foi usada como referência, sem criar nova execução.
+- A referência usa a configuração 3, k=0,5, j=0, modo MAX e versão 1.
+- Foram comparados integralmente os concursos 500 a 3.069.
+- Os 2.570 pontos coincidiram em quantidade de dezenas e quantidade de acertos.
+- Não houve concurso ausente, adicional ou divergente.
+- O temporário levou aproximadamente 3,09 segundos de ponta a ponta.
+- Comparado aos 79,7 segundos mostrados na execução persistente original, o
+  ganho observado foi de aproximadamente 25,79 vezes.
+- Configurações, resultados, execuções, alvos e avaliações individuais
+  permaneceram com as mesmas cardinalidades antes e depois.
+- O relatório temporário foi descartado sem modificar o PostgreSQL.
+
+Evidência: `MSen/tests/TESTE_ETAPA_25_6.md` e
+`MSen/tests/validar_comparacao_motores_selecao.py`.
+
+Critério de conclusão: igualdade integral dos resultados da referência,
+desempenho medido e ausência de gravação confirmada.
+
 ### Próximas etapas da Etapa 25
 
-1. 25.4 — disponibilizar API temporária e progresso não persistente;
-2. 25.5 — construir os gráficos e o quadro-resumo;
-3. 25.6 — comparar motores, medir desempenho e validar ausência de gravação;
-4. 25.7 — colocar o novo processo como principal, preservando o legado;
-5. 25.8 — validação manual com dados reais;
-6. 25.9 — planejar separadamente a retirada controlada do legado.
+**Etapa 25.7 concluída em 09/11/2026:** o processo em memória tornou-se o único
+backtest. Código, interface, rotas, testes, contrato e dados exclusivos do
+processo persistente foram removidos pela migração 024. As tabelas compartilhadas
+com os registros do screener e a formação de jogos foram preservadas.
+
+**Etapa 25.8 concluída em 09/11/2026:** a aplicação e o PostgreSQL reais foram
+validados no navegador com o período completo e com início personalizado.
+
+1. 25.7 — concluída: o processo em memória tornou-se o único backtest; código,
+   interface, rotas, testes, contrato e dados exclusivos do processo persistente
+   foram removidos pela migração 024, sem retirar as tabelas compartilhadas com
+   os registros do screener e a formação de jogos;
+2. 25.8 — concluída em 09/11/2026: validação no navegador conectado à aplicação
+   e ao banco reais, cobrindo o período completo e um início personalizado.
+
+### 25.9 — Linguagem definitiva e revisão da Ajuda
+
+**Autorizada e concluída em 09/11/2026.**
+
+- A interface passou a usar somente o nome `Backtest`, sem qualificadores
+  associados à implantação ou à forma interna de processamento.
+- A Ajuda foi reorganizada em finalidade, configuração do estudo, uso do botão
+  e interpretação do relatório.
+- Mensagens, confirmação, andamento, fechamento, erros, API, documentação,
+  nomes Python, JavaScript, CSS e testes receberam a nomenclatura definitiva.
+- Os endpoints vigentes foram consolidados em `/api/selecao-dezenas/backtests`.
+- A explicação funcional informa apenas que o Backtest consulta os dados,
+  calcula o relatório e não grava seus resultados no banco.
+
+Evidência: `MSen/tests/TESTE_ETAPA_25_9.md`.
+
+### 25.9 — Linguagem definitiva e revisão da Ajuda
+
+**Autorizada e concluída em 09/11/2026.**
+
+- A interface passou a usar somente o nome `Backtest`, sem qualificadores
+  associados à implantação ou à forma interna de processamento.
+- A Ajuda foi reorganizada em finalidade, configuração do estudo, uso do botão
+  e interpretação do relatório.
+- Mensagens, confirmação, andamento, fechamento, erros, API, documentação,
+  nomes Python, JavaScript, CSS e testes receberam a nomenclatura definitiva.
+- Os endpoints vigentes foram consolidados em `/api/selecao-dezenas/backtests`.
+- A explicação funcional informa apenas que o Backtest consulta os dados,
+  calcula o relatório e não grava seus resultados no banco.
+
+Evidência: `MSen/tests/TESTE_ETAPA_25_9.md`.
 
 #### Reconstrução do bloco de previsão
 

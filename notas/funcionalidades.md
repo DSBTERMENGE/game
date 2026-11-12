@@ -227,3 +227,40 @@ continuam pendentes ou pertencem a ciclos posteriores.
 - promessa de previsão de resultados aleatórios;
 - alteração direta do banco pela interface;
 - armazenamento de senhas no código ou no Git.
+
+## Ajuda central
+
+- [x] Definir contrato editorial, vocabulário, árvore e IDs permanentes.
+- [x] Criar página com índice lateral, área de leitura e conteúdo separado da
+  apresentação.
+- [x] Pesquisar títulos, aliases e conteúdo sem diferenciar acentos.
+- [x] Abrir tópicos por URL direta, preservar o último assunto e tratar links
+  desconhecidos com retorno seguro.
+- [x] Manter `Ajuda` como último item do menu principal em todas as páginas.
+- [x] Validar teclado, foco e layout estreito da estrutura inicial.
+- [x] Conferir e ampliar os conceitos gerais, incluindo linha do tempo,
+  fórmulas de `k` e `j`, persistência e formas de atualização.
+- [x] Migrar e reconciliar as ajudas específicas de cada página, mantendo os
+  modais locais até a integração dos acessos.
+- [ ] Fazer os botões contextuais abrirem diretamente o tópico central.
+
+## Gestão do desenvolvimento
+
+- [x] Definir contrato do CRUD interno reutilizável.
+- [x] Definir tipos, prioridades, estados e publicação no PythonAnywhere.
+- [x] Criar banco, domínio, repositório e API da manutenção.
+- [x] Criar lista pesquisável, filtros, ordenação e paginação.
+- [x] Criar formulário separado com conferência anterior à gravação.
+- [x] Criar arquivamento, reabertura e histórico.
+- [x] Criar registro rápido global com página de origem opcional.
+- [x] Integrar a consulta da manutenção à retomada de sessões da IA.
+- [x] Migrar o fluxo de inclusão das configurações da Seleção de dezenas.
+- [ ] Avaliar separadamente grupos, subgrupos e padrões antes de cada migração.
+- [x] Simplificar a Gestão: Data em calendário, sem Prioridade, Origem ou
+  seletor de ordenação (migração 029 ainda pendente no banco local).
+- [x] Integrar os acessos contextuais à Ajuda central, com tópico correto,
+  retorno seguro à origem e sem modais locais executáveis.
+- [x] Validar editorial e funcionalmente a Ajuda e adotá-la como referência
+  oficial e requisito de conclusão das mudanças visíveis futuras.
+- [x] Validar editorial e funcionalmente a Ajuda e adotá-la como referência
+  oficial e requisito de conclusão das mudanças visíveis futuras.

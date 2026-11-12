@@ -1,7 +1,9 @@
 import unittest
 from decimal import Decimal
+from time import sleep
 
 from msen.api import criar_app
+from msen.api.screener import GerenciadorExecucoesScreener
 
 
 class ApiScreenerTestCase(unittest.TestCase):
@@ -71,6 +73,51 @@ class ApiScreenerTestCase(unittest.TestCase):
         )
         self.assertEqual(400, malformada.status_code)
         self.assertEqual([], self.execucoes)
+
+
+class GerenciadorExecucoesScreenerTestCase(unittest.TestCase):
+    def test_informa_progresso_e_conclui_sem_persistencia(self):
+        def operacao(limite, progresso, cancelado):
+            self.assertEqual(Decimal("7.500000"), limite)
+            self.assertFalse(cancelado())
+            progresso("Aplicando filtros", 2500, 10000)
+            progresso("Comparando resultados", 10000, 10000)
+            return {"resumo": {"total_analisado": 5000}}
+
+        gerenciador = GerenciadorExecucoesScreener(operacao)
+        inicial = gerenciador.iniciar(Decimal("7.500000"))
+        final = inicial
+        for _ in range(100):
+            final = gerenciador.obter(inicial["id"])
+            if final["estado"] == "CONCLUIDA":
+                break
+            sleep(0.005)
+        self.assertEqual("CONCLUIDA", final["estado"])
+        self.assertEqual(100, final["percentual"])
+        self.assertEqual(5000, final["resultado"]["resumo"]["total_analisado"])
+
+    def test_cancelamento_interrompe_e_descarta_resultado_parcial(self):
+        def operacao(_limite, progresso, cancelado):
+            for indice in range(1, 1001):
+                if cancelado():
+                    raise InterruptedError
+                progresso("Aplicando filtros", indice, 1000)
+                sleep(0.001)
+            return {"indevido": True}
+
+        gerenciador = GerenciadorExecucoesScreener(operacao)
+        inicial = gerenciador.iniciar(Decimal("10"))
+        sleep(0.01)
+        gerenciador.cancelar(inicial["id"])
+        final = inicial
+        for _ in range(200):
+            final = gerenciador.obter(inicial["id"])
+            if final["estado"] == "CANCELADA":
+                break
+            sleep(0.005)
+        self.assertEqual("CANCELADA", final["estado"])
+        self.assertIsNone(final["resultado"])
+        self.assertLess(final["percentual"], 100)
 
 
 if __name__ == "__main__":

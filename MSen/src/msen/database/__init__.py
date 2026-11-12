@@ -49,6 +49,12 @@ from .pesquisa_selecao_repository import (
     ExecucaoSelecaoPersistida,
     RepositorioPesquisaSelecao,
 )
+from .gestao_desenvolvimento_repository import (
+    ErroRepositorioGestaoDesenvolvimento,
+    EventoManutencaoPersistido,
+    ManutencaoPersistida,
+    RepositorioGestaoDesenvolvimento,
+)
 from .fonte_selecao_dezenas_repository import (
     ErroFonteSelecaoDezenas,
     RepositorioFonteSelecaoDezenas,
@@ -72,5 +78,7 @@ __all__ = [
     "AvaliacaoDezenaPesquisaEntrada", "ConfiguracaoSelecaoPersistida",
     "ErroRepositorioPesquisaSelecao", "ExecucaoSelecaoPersistida",
     "RepositorioPesquisaSelecao",
+    "ErroRepositorioGestaoDesenvolvimento", "EventoManutencaoPersistido", "ManutencaoPersistida",
+    "RepositorioGestaoDesenvolvimento",
     "ErroFonteSelecaoDezenas", "RepositorioFonteSelecaoDezenas",
 ]

@@ -22,18 +22,44 @@ A configuração possui exatamente `nome`, `fator_k`, `fator_j`,
 não é configurável: ele é sempre o concurso imediatamente posterior ao último
 resultado cadastrado no banco.
 
-## Backtests
+## Backtest
 
-- `POST /backtests`: inicia tarefa assíncrona.
-- `GET /execucoes/{id}`: consulta estado, progresso, duração e resultado da
-  tarefa.
-- `POST /execucoes/{id}/cancelamento`: solicita cancelamento seguro.
-- `GET /backtests/{id}/resumo`: consulta consolidado e classes de 0 a 6.
-- `GET /backtests/{id}/detalhes`: consulta os concursos e dezenas congeladas.
-- `POST /backtests/comparacao`: compara duas ou mais execuções persistidas.
+O backtest produz um relatório do Backtest e não persiste execução, pontos ou
+resumo no banco:
 
-A API impede dois backtests simultâneos no mesmo processo. O motor preserva no
-banco o progresso por alvo, permitindo retomada por nova solicitação idempotente.
+- `POST /backtests/previa`: recebe
+  `id_configuracao_selecao` e `concurso_inicial`; valida a configuração salva e
+  resolve o final para o último concurso cadastrado, sem iniciar cálculo ou
+  gravação;
+- `POST /backtests`: inicia o cálculo assíncrono e retorna HTTP 202
+  com identificador UUID do cálculo;
+- `GET /backtests/{id}`: informa estado, etapa, progresso, duração,
+  erro público e, quando concluído, pontos e resumo;
+- `POST /backtests/{id}/cancelamento`: solicita cancelamento em
+  ponto seguro;
+- `DELETE /backtests/{id}`: descarta da memória um relatório já
+  concluído, cancelado ou falho.
+
+O corpo de início aceita somente o identificador de uma configuração salva e o
+concurso inicial. Não aceita concurso final, objeto de configuração nem cria
+configuração implicitamente. O servidor consulta novamente o último concurso
+cadastrado ao iniciar e o adota como final do estudo.
+
+Somente o relatório do Backtest mais recente permanece no processo. Iniciar
+outro descarta o anterior; a operação `DELETE` permite liberação explícita. O
+servidor não grava execução, progresso, pontos ou resumo no PostgreSQL. Toda a
+leitura do motor ocorre em transação `READ ONLY`.
+
+O resultado concluído contém:
+
+- `pontos`: concurso, quantidade de dezenas e quantidade de acertos;
+- `resumo`: testes efetuados, classes exclusivas de 0 a 6, mínimo, máximo,
+  médias e concursos nas classes 4, 5 ou 6;
+- `persistido: false`.
+
+Uma tentativa simultânea recebe HTTP 409 e
+`BACKTEST_EM_ANDAMENTO`. Depois do descarte ou da substituição, a
+consulta recebe HTTP 404 e `BACKTEST_NAO_ENCONTRADO`.
 
 ## Previsão do próximo concurso
 
@@ -53,21 +79,25 @@ banco o progresso por alvo, permitindo retomada por nova solicitação idempoten
 
 Os jogos permanecem vinculados ao alvo, à execução e à configuração de origem.
 
+Essas rotas pertencem ao fluxo inicial de materialização bruta. A página não
+chama mais o `POST /jogos`. O novo processo usará `formacoes_jogos_selecao` e
+`jogos_finais_selecao`, mas suas rotas somente serão publicadas quando geração,
+Screener, classificação e confirmação estiverem integrados e validados.
+
 ## Fluxo da página
 
 1. `GET /configuracoes` preenche configurações preservadas.
 2. `POST /previa` alimenta o diálogo de conferência sem criar tarefa.
-3. Após confirmação, `POST /backtests` cria a execução assíncrona.
-4. A página consulta `GET /execucoes/{id}` até estado terminal e pode solicitar
-   cancelamento seguro.
-5. Resumo e detalhes são carregados somente após conclusão.
+3. Após confirmação, `POST /backtests` inicia o cálculo.
+4. A página consulta `GET /backtests/{id}` até estado terminal e
+   pode solicitar cancelamento seguro.
+5. O relatório e os gráficos são montados somente após a conclusão.
 6. `POST /previsoes` confere a pendência coberta por resultado novo e emite a
    previsão para o próximo concurso da série cadastrada.
 7. Jogos exigem primeiro `/jogos/previa` e depois autorização explícita.
 
-Uma execução simultânea recebe HTTP 409 e código `EXECUCAO_EM_ANDAMENTO`. O
-cliente não deve repetir automaticamente uma operação de gravação após resposta
-incerta; deve consultar o estado pelo identificador retornado.
+Uma execução simultânea recebe HTTP 409. O cliente acompanha o cálculo pelo
+identificador do cálculo retornado.
 
 ## Interpretação
 

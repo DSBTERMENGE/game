@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { formatarDezenas, idsComparacao, montarConfiguracao } from "../js/selecao-dezenas-controles.js";
+import { formatarDezenas, montarConfiguracao } from "../js/selecao-dezenas-controles.js";
 
 test("monta configuração MAX sem quantidade fixa", () => {
   const config = montarConfiguracao({
@@ -26,8 +26,6 @@ test("valida quantidade FIXA e limites de j", () => {
   }), /entre -k e \+k/);
 });
 
-test("normaliza IDs distintos e formata dezenas", () => {
-  assert.deepEqual(idsComparacao("3, 8, 12"), [3, 8, 12]);
-  assert.throws(() => idsComparacao("3, 3"), /dois IDs distintos/);
+test("formata dezenas", () => {
   assert.equal(formatarDezenas([1, 9, 10]), "01 · 09 · 10");
 });

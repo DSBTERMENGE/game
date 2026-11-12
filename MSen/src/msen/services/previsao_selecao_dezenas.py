@@ -9,16 +9,56 @@ import psycopg
 from msen.database.fonte_selecao_dezenas_repository import RepositorioFonteSelecaoDezenas
 from msen.database.pesquisa_selecao_repository import (
     AlvoPesquisaEntrada,
+    AvaliacaoDezenaPesquisaEntrada,
     RepositorioPesquisaSelecao,
 )
+from msen.modelos import ResultadoEntrada
 
-from .backtest_selecao_dezenas import (
-    _converter_avaliacao,
-    _listar_resultados_ate,
-)
 from .carga_historico_frequencia import assinatura_resultados
 from .configuracao_selecao_dezenas import ConfiguracaoSelecaoDezenas
-from .selecao_dezenas import selecionar_dezenas_para_alvo
+from .selecao_dezenas import AvaliacaoSelecaoDezena, selecionar_dezenas_para_alvo
+
+
+def _converter_avaliacao(
+    item: AvaliacaoSelecaoDezena,
+) -> AvaliacaoDezenaPesquisaEntrada:
+    return AvaliacaoDezenaPesquisaEntrada(
+        dezena=item.dezena, estado_avaliacao=item.estado_avaliacao,
+        ultima_ocorrencia=item.ultima_ocorrencia,
+        quantidade_intervalos=item.quantidade_intervalos,
+        media_intervalos=item.media_intervalos,
+        desvio_padrao=item.desvio_padrao,
+        centro_original=item.centro_original,
+        centro_ajustado=item.centro_ajustado,
+        limite_inferior_exato=item.limite_inferior_exato,
+        limite_superior_exato=item.limite_superior_exato,
+        limite_inferior=item.limite_inferior,
+        limite_superior=item.limite_superior,
+        distancia_normalizada=item.distancia_normalizada,
+        distancia_absoluta=item.distancia_absoluta,
+        posicao_ranking=item.posicao_ranking,
+        aprovada=item.aprovada, retornada=item.retornada,
+    )
+
+
+def _listar_resultados_ate(
+    conexao: psycopg.Connection, concurso_final: int
+) -> tuple[ResultadoEntrada, ...]:
+    with conexao.transaction():
+        with conexao.cursor() as cursor:
+            cursor.execute(
+                "SELECT data_resultado,numero_ap,res_01,res_02,res_03,res_04,res_05,res_06 "
+                "FROM resultados WHERE numero_ap<=%s ORDER BY numero_ap",
+                (concurso_final,),
+            )
+            itens = tuple(ResultadoEntrada.criar(
+                data_resultado=linha[0], numero_ap=linha[1], resultados=linha[2:8]
+            ) for linha in cursor.fetchall())
+    if len(itens) != concurso_final or any(
+        item.numero_ap != indice for indice, item in enumerate(itens, start=1)
+    ):
+        raise ValueError("Os resultados históricos não formam uma sequência completa.")
+    return itens
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,6 +82,55 @@ class RelatorioConferenciaPrevisoes:
 class RelatorioAtualizacaoPrevisoes:
     conferencia: RelatorioConferenciaPrevisoes
     nova_previsao: RelatorioPrevisaoFutura
+
+
+@dataclass(frozen=True, slots=True)
+class DetalhePrevisao:
+    id_alvo_selecao: int
+    numero_concurso_alvo: int
+    numero_concurso_corte: int
+    situacao: str
+    dezenas_retornadas: tuple[int, ...]
+    quantidade_aprovada: int
+    quantidade_retornada: int
+    quantidade_acertos: int | None
+    classe_acerto: int | None
+    quantidade_combinacoes_brutas: int
+    limite_nao_atingido: bool
+    motivo: str | None
+
+
+def detalhar_previsao(
+    conexao: psycopg.Connection, id_execucao_selecao: int
+) -> tuple[DetalhePrevisao, ...]:
+    with conexao.transaction():
+        with conexao.cursor() as cursor:
+            cursor.execute(
+                "SELECT a.id_alvo_selecao,a.numero_concurso_alvo,"
+                "a.numero_concurso_corte,a.situacao,"
+                "COALESCE(ARRAY_AGG(d.dezena ORDER BY d.dezena) "
+                "FILTER (WHERE d.retornada),ARRAY[]::SMALLINT[]),"
+                "a.quantidade_aprovada,a.quantidade_retornada,a.quantidade_acertos,"
+                "a.classe_acerto,a.quantidade_combinacoes_brutas,"
+                "a.limite_nao_atingido,a.motivo "
+                "FROM alvos_pesquisa_selecao a "
+                "JOIN execucoes_pesquisa_selecao e "
+                "ON e.id_execucao_selecao=a.id_execucao_selecao "
+                "LEFT JOIN avaliacoes_dezenas_pesquisa d "
+                "ON d.id_alvo_selecao=a.id_alvo_selecao "
+                "WHERE a.id_execucao_selecao=%s "
+                "AND e.tipo_execucao='PREVISAO_FUTURA' "
+                "GROUP BY a.id_alvo_selecao ORDER BY a.numero_concurso_alvo",
+                (id_execucao_selecao,),
+            )
+            return tuple(DetalhePrevisao(
+                id_alvo_selecao=linha[0], numero_concurso_alvo=linha[1],
+                numero_concurso_corte=linha[2], situacao=linha[3],
+                dezenas_retornadas=tuple(linha[4]), quantidade_aprovada=linha[5],
+                quantidade_retornada=linha[6], quantidade_acertos=linha[7],
+                classe_acerto=linha[8], quantidade_combinacoes_brutas=linha[9],
+                limite_nao_atingido=linha[10], motivo=linha[11],
+            ) for linha in cursor.fetchall())
 
 
 def emitir_previsao_futura(

@@ -16,23 +16,22 @@ const elementos = {
   mensagem: document.querySelector("#mensagem-graficos-auxiliares"),
   estadoGraficos: document.querySelector("#estado-area-graficos"),
   gradeGraficos: document.querySelector("#grade-graficos-historicos"),
-  retornos: document.querySelectorAll("#link-voltar-frequencias, #botao-voltar-frequencias"),
-  abrirAjuda: document.querySelector("#botao-ajuda-graficos"),
-  dialogoAjuda: document.querySelector("#dialogo-ajuda-graficos"),
+  retornos: document.querySelectorAll("#botao-voltar-frequencias"),
   dialogoAuxiliar: document.querySelector("#dialogo-grafico-auxiliar"),
   tituloAuxiliar: document.querySelector("#titulo-grafico-auxiliar"),
   legendaAuxiliar: document.querySelector("#legenda-grafico-auxiliar"),
   svgAuxiliar: document.querySelector("#svg-grafico-auxiliar"),
   detalheAuxiliar: document.querySelector("#detalhe-grafico-auxiliar"),
   abrirAjudaAuxiliar: document.querySelector("#botao-ajuda-grafico-auxiliar"),
-  dialogoAjudaGrafico: document.querySelector("#dialogo-ajuda-grafico"),
-  tituloAjudaGrafico: document.querySelector("#titulo-ajuda-grafico"),
-  conteudoAjudaGrafico: document.querySelector("#conteudo-ajuda-grafico"),
 };
 
 let dadosAuxiliaresAtuais = null;
 let tipoGraficoAuxiliarAtual = null;
-let acionadorAjudaGrafico = null;
+
+function urlAjudaGrafico(topico) {
+  const origem = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
+  return `/ajuda.html?origem=${origem}#${topico}`;
+}
 
 for (let dezena = 1; dezena <= 60; dezena += 1) {
   const opcao = document.createElement("option");
@@ -200,140 +199,12 @@ function abrirGraficoAuxiliar(tipo) {
     );
   }
   tipoGraficoAuxiliarAtual = tipo;
+  elementos.abrirAjudaAuxiliar.href = urlAjudaGrafico(
+    tipo === "distribuicao"
+      ? "pagina-graficos-frequencia-distribuicao"
+      : "pagina-graficos-frequencia-ordenado",
+  );
   elementos.dialogoAuxiliar.showModal();
-}
-
-function secaoAjuda(titulo, paragrafos = [], itens = []) {
-  const secao = document.createElement("section");
-  const cabecalho = document.createElement("h3");
-  cabecalho.textContent = titulo;
-  secao.append(cabecalho);
-  for (const texto of paragrafos) {
-    const paragrafo = document.createElement("p");
-    paragrafo.textContent = texto;
-    secao.append(paragrafo);
-  }
-  if (itens.length) {
-    const lista = document.createElement("ul");
-    for (const texto of itens) {
-      const item = document.createElement("li");
-      item.textContent = texto;
-      lista.append(item);
-    }
-    secao.append(lista);
-  }
-  return secao;
-}
-
-function conteudoAjudaEvolucao() {
-  return [
-    secaoAjuda("Finalidade", [
-      "Mostra como os intervalos entre ocorrências consecutivas da dezena e suas estatísticas acumuladas evoluíram ao longo dos concursos. Ajuda a observar estabilidade, mudanças de comportamento e intervalos excepcionalmente curtos ou longos.",
-    ]),
-    secaoAjuda("Como ler os eixos", [], [
-      "Eixo horizontal: número do concurso.",
-      "Eixo vertical: duração do intervalo, medida em concursos.",
-    ]),
-    secaoAjuda("Linhas e marcadores", [], [
-      "Intervalos: cada trecho horizontal representa a distância entre duas ocorrências consecutivas. A transição vertical tracejada inicia o próximo intervalo.",
-      "Média dos intervalos: média acumulada dos intervalos conhecidos até aquele momento.",
-      "Média menos desvio-padrão: referência inferior de dispersão.",
-      "Média mais desvio-padrão: referência superior de dispersão.",
-      "Losango com haste tracejada: intervalo estreito demais para aparecer claramente na escala horizontal.",
-    ]),
-    secaoAjuda("Como consultar", [
-      "Passe o mouse, use o foco do teclado ou clique nos marcadores para consultar os concursos inicial e final e a duração exata do intervalo.",
-    ]),
-    secaoAjuda("Exemplo de leitura", [
-      "Concursos 1246 → 1261 · intervalo 15 significa que a dezena ocorreu nos concursos 1246 e 1261, com distância de 15 concursos. Compare esse valor com a média e com as linhas de desvio-padrão para avaliar se foi comum ou distante do comportamento acumulado.",
-    ]),
-    secaoAjuda("Cuidados de interpretação", [
-      "O gráfico descreve o histórico. Média e desvio-padrão mudam quando novos intervalos são concluídos e não garantem quando acontecerá a próxima ocorrência.",
-    ]),
-  ];
-}
-
-function conteudoAjudaDistribuicao() {
-  return [
-    secaoAjuda("Finalidade", [
-      "Mostra com que frequência cada duração de intervalo ocorreu. Ajuda a identificar onde as ocorrências estão concentradas e a partir de qual duração os intervalos se tornam raros.",
-    ]),
-    secaoAjuda("Como ler os eixos", [], [
-      "Eixo horizontal: duração do intervalo em concursos.",
-      "Eixo vertical: percentual das ocorrências que tiveram aquela duração.",
-    ]),
-    secaoAjuda("Curvas e referências", [], [
-      "Distribuição observada: frequência percentual realmente encontrada para cada duração.",
-      "Curva normal teórica: referência matemática calculada com a mesma média e o mesmo desvio-padrão dos intervalos observados.",
-      "Média: duração média dos intervalos.",
-      "Média ± desvio-padrão: referências verticais de um desvio abaixo e acima da média.",
-    ]),
-    secaoAjuda("Como consultar", [
-      "Selecione um ponto da distribuição observada para consultar a duração, a quantidade de ocorrências e o percentual exato.",
-    ]),
-    secaoAjuda("Exemplo de leitura", [
-      "Intervalo 4: 28 ocorrências · 11,07% significa que 28 intervalos analisados duraram quatro concursos, representando 11,07% do total.",
-    ]),
-    secaoAjuda("Cuidados de interpretação", [
-      "A curva normal é apenas uma comparação teórica. Como intervalos são valores inteiros e a distribuição pode ser assimétrica e concentrada em durações pequenas, a distribuição observada não precisa acompanhar a curva normal.",
-      "O gráfico descreve frequências históricas e não garante quando acontecerá a próxima ocorrência.",
-    ]),
-  ];
-}
-
-function conteudoAjudaOrdenado() {
-  return [
-    secaoAjuda("Finalidade", [
-      "Ordena todos os intervalos do menor para o maior, preservando cada ocorrência repetida. Permite estimar visualmente qual percentual dos intervalos está concentrado até determinada proporção do maior intervalo.",
-    ]),
-    secaoAjuda("Como ler os eixos", [], [
-      "Eixo horizontal: percentual acumulado das ocorrências ordenadas.",
-      "Eixo vertical: duração do intervalo como percentual do maior intervalo observado.",
-      "Os dois eixos vão de 0% a 100%. As linhas finas de 5% formam apenas um quadriculado de referência; os pontos usam seus percentuais exatos e podem ficar entre as linhas.",
-    ]),
-    secaoAjuda("Como os pontos são calculados", [
-      "Depois de ordenar N intervalos, a posição horizontal do item i é calculada por i dividido por N, vezes 100. Sua altura é a duração daquele intervalo dividida pelo maior intervalo, vezes 100.",
-    ]),
-    secaoAjuda("Pontos, patamares e saltos", [], [
-      "Cada ponto vermelho representa uma ocorrência de intervalo.",
-      "Os pontos são igualmente espaçados na horizontal porque representam ocorrências consecutivas da lista ordenada.",
-      "Intervalos repetidos ficam na mesma altura e formam um patamar. Quanto maior o patamar, mais vezes essa duração ocorreu.",
-      "Um salto vertical maior pode indicar que as durações intermediárias não ocorreram; não significa necessariamente erro de ordenação.",
-      "O último ponto é sempre (100%, 100%), pois representa a última ocorrência ordenada e o maior intervalo observado.",
-    ]),
-    secaoAjuda("Como consultar um ponto", [
-      "Passe o mouse, use o foco do teclado ou clique em um ponto vermelho para exibir sua ordem, percentual acumulado, duração real em concursos e percentual do maior intervalo.",
-    ]),
-    secaoAjuda("Exemplo de leitura", [
-      "Ocorrência 32 de 253 · 12,65% acumulado · intervalo 2 · 4% do maior significa que este é o 32º intervalo da lista ordenada, completa 12,65% das ocorrências, durou dois concursos e equivale a 4% do maior intervalo da amostra.",
-    ]),
-    secaoAjuda("Cuidados de interpretação", [
-      "O gráfico descreve concentração e dispersão dos intervalos históricos. Ele não classifica automaticamente as dezenas nem garante maior probabilidade no próximo concurso.",
-    ]),
-  ];
-}
-
-function abrirAjudaGrafico(tipo, acionador) {
-  const titulos = {
-    evolucao: "Ajuda — Evolução dos intervalos",
-    distribuicao: "Ajuda — Curva de distribuição",
-    ordenado: "Ajuda — Ocorrências em ordem crescente",
-  };
-  acionadorAjudaGrafico = acionador;
-  elementos.tituloAjudaGrafico.textContent = titulos[tipo];
-  elementos.conteudoAjudaGrafico.replaceChildren();
-  if (tipo === "evolucao") {
-    elementos.conteudoAjudaGrafico.append(...conteudoAjudaEvolucao());
-  } else if (tipo === "distribuicao") {
-    elementos.conteudoAjudaGrafico.append(...conteudoAjudaDistribuicao());
-  } else if (tipo === "ordenado") {
-    elementos.conteudoAjudaGrafico.append(...conteudoAjudaOrdenado());
-  } else {
-    const aviso = document.createElement("p");
-    aviso.textContent = "O conteúdo explicativo deste gráfico será inserido na próxima subetapa específica.";
-    elementos.conteudoAjudaGrafico.append(aviso);
-  }
-  elementos.dialogoAjudaGrafico.showModal();
 }
 
 function controlesGraficosAuxiliares() {
@@ -347,11 +218,10 @@ function controlesGraficosAuxiliares() {
   ordenado.type = "button";
   ordenado.textContent = "Ocorrências em ordem crescente";
   ordenado.addEventListener("click", () => abrirGraficoAuxiliar("ordenado"));
-  const ajuda = document.createElement("button");
-  ajuda.type = "button";
-  ajuda.className = "botao-ajuda-evolucao-intervalos";
+  const ajuda = document.createElement("a");
+  ajuda.className = "botao-ajuda-evolucao-intervalos ajuda-contextual";
   ajuda.textContent = "Ajuda";
-  ajuda.addEventListener("click", () => abrirAjudaGrafico("evolucao", ajuda));
+  ajuda.href = urlAjudaGrafico("pagina-graficos-frequencia-evolucao");
   acoes.append(ajuda, distribuicao, ordenado);
   return acoes;
 }
@@ -463,26 +333,9 @@ async function consultarGraficos() {
 elementos.formulario.addEventListener("input", atualizarRetorno);
 elementos.formulario.addEventListener("change", atualizarRetorno);
 elementos.formulario.addEventListener("submit", (evento) => { evento.preventDefault(); consultarGraficos(); });
-elementos.abrirAjuda.addEventListener("click", () => elementos.dialogoAjuda.showModal());
-elementos.dialogoAjuda.addEventListener("click", (evento) => {
-  if (evento.target === elementos.dialogoAjuda) elementos.dialogoAjuda.close();
-});
 elementos.dialogoAuxiliar.addEventListener("close", limparGraficoAuxiliar);
 elementos.dialogoAuxiliar.addEventListener("click", (evento) => {
   if (evento.target === elementos.dialogoAuxiliar) elementos.dialogoAuxiliar.close();
-});
-elementos.abrirAjudaAuxiliar.addEventListener("click", () => {
-  if (tipoGraficoAuxiliarAtual) {
-    abrirAjudaGrafico(tipoGraficoAuxiliarAtual, elementos.abrirAjudaAuxiliar);
-  }
-});
-elementos.dialogoAjudaGrafico.addEventListener("click", (evento) => {
-  if (evento.target === elementos.dialogoAjudaGrafico) elementos.dialogoAjudaGrafico.close();
-});
-elementos.dialogoAjudaGrafico.addEventListener("close", () => {
-  elementos.conteudoAjudaGrafico.replaceChildren();
-  if (acionadorAjudaGrafico?.isConnected) acionadorAjudaGrafico.focus();
-  acionadorAjudaGrafico = null;
 });
 if (filtros) {
   atualizarRetorno();

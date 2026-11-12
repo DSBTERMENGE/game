@@ -1,6 +1,6 @@
 # Funcionamento vigente do Game / MSen
 
-Atualizado em 2026-10-30, após a subetapa 20.16.
+Atualizado em 2026-11-11, após a subetapa 28.5.
 
 Este é o documento funcional canônico. O comportamento confirmado pelo código,
 pelas migrações e pelos testes prevalece em caso de divergência.
@@ -381,7 +381,17 @@ Contratos detalhados: `docs/CONTRATO_SELECAO_DEZENAS.md`,
 
 Páginas: `index.html`, `cadastros.html`, `grupos-padroes.html`, `padroes.html`,
 `distribuicoes.html`, `screener.html`, `auditoria.html`, `frequencias.html`,
-`graficos-frequencias.html` e `selecao-dezenas.html`.
+`graficos-frequencias.html`, `selecao-dezenas.html` e
+`gestao-desenvolvimento.html` e `ajuda.html`.
+
+A Ajuda central possui índice lateral, busca por títulos, aliases e conteúdo,
+links diretos por tópico e retomada do último assunto consultado no navegador.
+O item `Ajuda` ocupa a última posição do menu principal. Os tópicos que ainda
+aguardam implantação funcional são identificados como limitações. Todas as
+páginas vigentes possuem explicação operacional central. Os acessos contextuais
+de Frequência, Gráficos, Seleção e Gestão abrem diretamente o tópico
+correspondente e oferecem retorno à origem quando ela é uma página interna
+conhecida. Os antigos modais locais não são mais executáveis.
 
 Rotas centrais desta etapa:
 
@@ -399,14 +409,23 @@ Rotas centrais desta etapa:
   identificador.
 - `GET|POST /api/selecao-dezenas/configuracoes`;
 - `POST /api/selecao-dezenas/previa`;
-- `POST /api/selecao-dezenas/backtests` e acompanhamento/cancelamento por
-  identificador;
-- `GET /api/selecao-dezenas/backtests/<id>/resumo|detalhes`;
-- `POST /api/selecao-dezenas/backtests/comparacao`;
+- `POST /api/selecao-dezenas/backtests` e acompanhamento ou
+  cancelamento por identificador do cálculo, sem persistir o relatório;
 - `POST /api/selecao-dezenas/previsoes`;
 - `GET|POST /api/selecao-dezenas/alvos/<id>/jogos[/previa]`.
+- `GET|POST /api/gestao-desenvolvimento` e operações específicas de consulta,
+  atualização, histórico, arquivamento e desarquivamento.
 
 As demais APIs vigentes estão indexadas em `docs/INDICE_DOCUMENTACAO.md`.
+
+A Gestão do desenvolvimento usa o CRUD navegável reutilizável. A inclusão de
+configurações da Seleção de dezenas reutiliza o fluxo menor de gravação
+confirmada, sem alterar a regra de que uma configuração salva é imutável.
+Cancelar ou apenas conferir não chama a API de criação.
+
+Na Gestão do desenvolvimento, o usuário escolhe a data do registro em um
+calendário. A Situação do trabalho permanece; não existem Prioridade, Origem ou
+escolha de ordenação. A lista segue sempre a ordem técnica de criação.
 
 ## 13. Limites atuais
 

@@ -10,6 +10,8 @@ rascunhos, protótipos e relatórios antigos como descrição atual do sistema.
 | Execução autorizada, etapas e testes | `PLANO_ETAPAS_E_TESTES.md` |
 | Visão geral e arquitetura do projeto | `PLANO_DO_PROJETO.md` |
 | Funcionamento atual explicado de ponta a ponta | `docs/funcionamento.md` |
+| Estrutura e linguagem da Ajuda central | `docs/CONTRATO_EDITORIAL_AJUDA.md` |
+| Auditoria das fontes da Ajuda | `docs/AUDITORIA_AJUDA_ETAPA_28_1.md` |
 | Decisões aprovadas e suas datas | `notas/decisoes.md` |
 | Funcionalidades existentes e pendentes | `notas/funcionalidades.md` |
 | Ponto exato de retomada entre sessões | `CONTINUIDADE_IA.md` |
@@ -20,10 +22,16 @@ rascunhos, protótipos e relatórios antigos como descrição atual do sistema.
 | API da Frequência das dezenas | `docs/API_FREQUENCIAS.md` |
 | Contrato da Frequência das dezenas | `docs/CONTRATO_FREQUENCIA_DEZENAS.md` |
 | Contrato da Seleção de dezenas | `docs/CONTRATO_SELECAO_DEZENAS.md` |
-| Backtest persistente atualmente em uso | `docs/CONTRATO_BACKTEST_SELECAO_DEZENAS.md` |
-| Novo backtest temporário aprovado para implantação paralela | `docs/CONTRATO_BACKTEST_TEMPORARIO_SELECAO_DEZENAS.md` |
-| Auditoria de banco do novo backtest temporário | `docs/AUDITORIA_BANCO_BACKTEST_TEMPORARIO.md` |
+| Backtest | `docs/CONTRATO_BACKTEST_SELECAO_DEZENAS.md` |
+| Auditoria de banco do Backtest | `docs/AUDITORIA_BANCO_BACKTEST.md` |
 | Quantidade de dezenas e formação de jogos | `docs/CONTRATO_QUANTIDADE_COMBINACOES.md` |
+| Motor da formação de jogos | `docs/CONTRATO_MOTOR_FORMACAO_JOGOS.md` |
+| Integração da formação com o Screener | `docs/CONTRATO_INTEGRACAO_SCREENER_FORMACAO_JOGOS.md` |
+| Estudo da classificação dos jogos | `docs/ESTUDO_CLASSIFICACAO_FORMACAO_JOGOS_26_6.md` |
+| CRUD interno reutilizável do Game | `docs/CONTRATO_CRUD_INTERNO_GAME.md` |
+| Gestão do desenvolvimento | `docs/CONTRATO_GESTAO_DESENVOLVIMENTO.md` |
+| API da Gestão do desenvolvimento | `docs/API_GESTAO_DESENVOLVIMENTO.md` |
+| Publicação da Gestão do desenvolvimento | `docs/PUBLICACAO_GESTAO_DESENVOLVIMENTO.md` |
 | Modelo das pesquisas da Seleção de dezenas | `docs/MODELO_PESQUISA_SELECAO_DEZENAS.md` |
 
 ## Documentos técnicos especializados

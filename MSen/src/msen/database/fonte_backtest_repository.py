@@ -1,4 +1,4 @@
-"""Fontes somente leitura para o backtest temporário da seleção de dezenas."""
+"""Fontes somente leitura para o Backtest da seleção de dezenas."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from msen.services.selecao_dezenas import EstatisticaDezenaCorte
 from .fonte_selecao_dezenas_repository import RepositorioFonteSelecaoDezenas
 
 
-class ErroFonteBacktestTemporario(RuntimeError):
+class ErroFonteBacktest(RuntimeError):
     def __init__(self, codigo: str, mensagem: str) -> None:
         super().__init__(mensagem)
         self.codigo = codigo
@@ -30,7 +30,7 @@ class ResultadoAlvoBacktest:
     dezenas: frozenset[int]
 
 
-class RepositorioFonteBacktestTemporario:
+class RepositorioFonteBacktest:
     """Entrega dados ordenados sem persistir resultados derivados."""
 
     def __init__(self, conexao: psycopg.Connection) -> None:
@@ -60,7 +60,7 @@ class RepositorioFonteBacktestTemporario:
             )
             quantidade, minimo, maximo = cursor.fetchone()
         if quantidade != concurso_final or minimo != 1 or maximo != concurso_final:
-            raise ErroFonteBacktestTemporario(
+            raise ErroFonteBacktest(
                 "PERIODO_INDISPONIVEL",
                 "Os resultados necessários não formam uma sequência completa.",
             )
@@ -69,7 +69,7 @@ class RepositorioFonteBacktestTemporario:
         self, concurso_inicial: int, concurso_final: int
     ) -> Iterator[ResultadoAlvoBacktest]:
         self._validar_periodo(concurso_inicial, concurso_final)
-        nome_cursor = f"resultados_backtest_temporario_{id(self):x}"
+        nome_cursor = f"resultados_backtest_{id(self):x}"
         with self._conexao.cursor(name=nome_cursor) as cursor:
             cursor.itersize = 100
             cursor.execute(
@@ -83,7 +83,7 @@ class RepositorioFonteBacktestTemporario:
                 quantidade += 1
                 yield ResultadoAlvoBacktest(linha[0], frozenset(linha[1:7]))
         if quantidade != concurso_final - concurso_inicial + 1:
-            raise ErroFonteBacktestTemporario(
+            raise ErroFonteBacktest(
                 "RESULTADO_ALVO_AUSENTE",
                 "Há concurso sem resultado no período solicitado.",
             )
@@ -108,7 +108,7 @@ class RepositorioFonteBacktestTemporario:
         numero_corte: int, itens: list[EstatisticaDezenaCorte]
     ) -> FotografiaCorteBacktest:
         if len(itens) != 60 or {item.dezena for item in itens} != set(range(1, 61)):
-            raise ErroFonteBacktestTemporario(
+            raise ErroFonteBacktest(
                 "FOTOGRAFIA_INCOMPLETA",
                 f"A fotografia do concurso {numero_corte} não contém as 60 dezenas.",
             )
@@ -117,7 +117,7 @@ class RepositorioFonteBacktestTemporario:
     def iterar_fotografias(
         self, concurso_inicial: int, concurso_final: int
     ) -> Iterator[FotografiaCorteBacktest]:
-        """Mantém em memória somente as 60 estatísticas do corte corrente."""
+        """Mantém somente as 60 estatísticas necessárias ao corte corrente."""
 
         self._validar_periodo(concurso_inicial, concurso_final)
         primeiro_corte = concurso_inicial - 1
@@ -133,7 +133,7 @@ class RepositorioFonteBacktestTemporario:
         if primeiro_corte > ultimo_corte:
             return
 
-        nome_cursor = f"backtest_temporario_{id(self):x}"
+        nome_cursor = f"backtest_{id(self):x}"
         with self._conexao.cursor(name=nome_cursor) as cursor:
             cursor.itersize = 60
             cursor.execute(
@@ -164,7 +164,7 @@ class RepositorioFonteBacktestTemporario:
 
         quantidade_esperada = ultimo_corte - primeiro_corte + 1
         if quantidade_grupos != quantidade_esperada:
-            raise ErroFonteBacktestTemporario(
+            raise ErroFonteBacktest(
                 "FOTOGRAFIA_AUSENTE",
                 "Há corte sem fotografia estatística no período solicitado.",
             )

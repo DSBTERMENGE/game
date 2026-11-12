@@ -1,4 +1,4 @@
-"""Audita, sem alterar dados, as leituras necessárias ao backtest temporário."""
+"""Audita, sem alterar dados, as leituras necessárias ao Backtest."""
 
 from __future__ import annotations
 

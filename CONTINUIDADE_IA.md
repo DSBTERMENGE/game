@@ -36,6 +36,44 @@ Ao terminar uma sessão relevante, atualizar as seções “Último trabalho” 
 9. Seguir `PLANO_ETAPAS_E_TESTES.md`: executar somente o item autorizado, testar,
    relatar a conclusão e pedir autorização antes do item seguinte.
 
+## Memória operacional da Gestão do desenvolvimento
+
+Ao retomar um assunto do Game, consultar os registros ativos relacionados pela
+API `GET /api/gestao-desenvolvimento`, usando pesquisa por título e filtros. Ler
+descrição, critérios e referências antes de propor alterações. O histórico pode
+ser consultado em `/api/gestao-desenvolvimento/{id}/historico`.
+
+Um registro é memória e organização: ele não autoriza sua implementação. As
+alterações continuam condicionadas à etapa expressamente autorizada pelo
+usuário. A IA pode propor melhorar um texto; gravar ou editar o registro exige a
+mesma autorização aplicável ao trabalho da sessão. Identificadores técnicos não
+devem ser apresentados como numeração funcional.
+
+Validação encerrada na etapa 27.6: o fluxo integrado de criação, repetição,
+conflito, conclusão, reabertura e arquivamento foi exercitado com rollback; o
+banco permaneceu sem registros de teste. O roteiro de publicação está em
+`docs/PUBLICACAO_GESTAO_DESENVOLVIMENTO.md`, mas não foi executado.
+
+A etapa 27.7 foi posteriormente autorizada e concluída com a primeira
+reutilização: a inclusão de configurações da Seleção de dezenas usa o fluxo
+comum de gravação confirmada. Grupos, subgrupos e padrões não foram migrados e
+continuam dependendo de análise e autorização próprias.
+
+A etapa 28 organizou horizontalmente a localização e os filtros da Gestão do
+desenvolvimento. `Localizar` oferece títulos, pesquisa por trecho e abre o
+primeiro resultado automaticamente. `Consultar arquivados` troca a consulta
+ativa pela arquivada. A validação não criou registros no banco.
+
+A etapa 29 foi concluída no código: Data em calendário substitui Prioridade,
+Origem e o seletor de ordenação foram removidos, Situação do trabalho permanece
+e a lista segue a criação. A migração 029 ainda não foi aplicada ao `games` e
+depende de autorização específica; até lá, não testar criação pela página.
+
+A etapa 29 foi concluída no código: Data em calendário substitui Prioridade,
+Origem e o seletor de ordenação foram removidos, Situação do trabalho permanece
+e a lista segue a criação. A migração 029 ainda não foi aplicada ao `games` e
+depende de autorização específica; até lá, não testar criação pela página.
+
 ## Estado atual em 2026-10-25
 
 - Existe um pacote Python mínimo em `MSen/src/msen`.
@@ -2318,3 +2356,100 @@ Próxima ação exata:
   Chrome e seis validadores integrados em PostgreSQL efêmero.
 - Documentação canônica e ajuda da página foram reconciliadas. Nenhum commit ou
   push foi executado; a próxima ação é a avaliação do usuário.
+
+## Conclusão — 2026-11-11 — subetapa 28.1
+
+- Foi concluído somente o inventário e a auditoria das fontes para a futura
+  Ajuda central; nenhuma interface, regra ou dado foi alterado.
+- O relatório `docs/AUDITORIA_AJUDA_ETAPA_28_1.md` relaciona as onze páginas às
+  Ajudas existentes e às principais fontes técnicas de conferência.
+- Foram confirmados resultados desde o concurso 1, primeira fotografia da
+  Frequência no concurso 500 e primeiro alvo do Backtest da Seleção no 500,
+  calculado com corte 499.
+- Ficou decidido que `Ajuda` será o último item do menu principal, alinhado à
+  esquerda, quando sua implementação for autorizada.
+- A próxima ação prevista é a subetapa 28.2, que depende de autorização.
+
+## Conclusão — 2026-11-11 — subetapa 28.2
+
+- Foi criado `docs/CONTRATO_EDITORIAL_AJUDA.md`, com árvore de conteúdo,
+  vocabulário inicial, modelo obrigatório dos tópicos, estados editoriais,
+  regras de linguagem, IDs estáveis, aliases e vínculo com etapas funcionais.
+- `Preparação do Screener` foi adotado como título editorial e `Screener` como
+  alias até eventual alteração autorizada da interface.
+- O índice documental, o plano e as decisões foram atualizados. Nenhuma página,
+  item de menu, modal, regra ou dado foi alterado.
+- A próxima ação prevista é a subetapa 28.3, que depende de autorização.
+
+## Conclusão — 2026-11-11 — subetapa 28.3
+
+- Foi criada `/ajuda.html`, com índice lateral, leitura à direita, pesquisa por
+  títulos, aliases e conteúdo, links diretos, retomada do último tópico e
+  retorno seguro para identificadores inexistentes.
+- `Ajuda` é o último item da barra de navegação em todas as páginas; a barra
+  admite rolagem horizontal quando não couber na largura disponível.
+- A estrutura é responsiva e acessível por teclado e foco. O conteúdo ficou
+  separado do HTML para permitir revisão sem duplicação.
+- Os modais antigos permanecem intactos. Tópicos ainda não migrados aparecem
+  como `Em desenvolvimento`.
+- Passaram 113 testes unitários do frontend e dois testes Chromium específicos,
+  um deles com largura de 390 px.
+- A próxima ação prevista é a subetapa 28.4, que depende de autorização.
+
+## Conclusão — 2026-11-11 — subetapa 28.4
+
+- Os conceitos gerais da Ajuda foram ampliados e conferidos contra código,
+  contratos, testes e as evidências de banco já levantadas na 28.1.
+- A Ajuda agora explica a linha do tempo 1/499/500, fórmulas e interpretação de
+  `k` e `j`, perfil e fotografia, configuração e assinatura, seleção
+  registrada, Backtest, Screener, validação, persistência e atualização.
+- Foram distinguidos a amostra de 5.000, o universo `C(60,6) = 50.063.860` e
+  as combinações `C(N,6)` formadas pelas dezenas selecionadas.
+- A renderização passou a aceitar listas e blocos de fórmula acessíveis e
+  roláveis sem misturar conteúdo com apresentação.
+- Passaram 114 testes unitários do frontend e dois testes Chromium específicos
+  da Ajuda. Nenhum cálculo, registro ou regra de negócio foi alterado.
+- A próxima ação prevista é a subetapa 28.5, que depende de autorização.
+
+## Conclusão — 2026-11-11 — subetapa 28.5
+
+- Todas as páginas vigentes receberam tópicos operacionais na Ajuda central:
+  Painel, Cadastros, Grupos, Padrões, Distribuições, Preparação do Screener,
+  Auditoria, Frequência, Gráficos, Seleção, Gestão e Ajuda.
+- Os textos explicam campos, comandos, resultados, persistência, sequência de
+  uso e bloqueios em linguagem operacional conferida contra HTML, JavaScript,
+  APIs, serviços e contratos.
+- Preparação do Screener e Seleção de dezenas foram marcadas com limitação
+  conhecida, sem anunciar processamento integral ou Screener de combinações
+  como disponíveis.
+- Os modais locais permanecem em funcionamento para a integração controlada da
+  28.6. Nenhuma regra de negócio foi alterada.
+- Passaram 115 testes unitários do frontend e dois testes Chromium da Ajuda.
+- A próxima ação prevista é a subetapa 28.6, que depende de autorização.
+
+## Conclusão — 2026-11-11 — subetapa 28.6
+
+- Frequência, Gráficos, Seleção e Gestão agora abrem a Ajuda central diretamente
+  no assunto correspondente; os três gráficos têm tópicos próprios.
+- A origem é aceita somente quando pertence a uma página interna conhecida e,
+  nesse caso, a Ajuda oferece retorno ao contexto anterior.
+- Os antigos modais deixaram de ser executáveis. Nenhuma regra de negócio,
+  cálculo ou dado foi alterado.
+- Passaram 116 testes unitários do frontend e dois testes Chromium da Ajuda.
+- A próxima ação prevista é a subetapa 28.7, que depende de autorização.
+
+## Conclusão — 2026-11-11 — subetapa 28.7 e Etapa 28
+
+- A Ajuda foi conferida contra código, contratos e testes e passa a ser a fonte
+  oficial de funcionamento do Game.
+- Busca, navegação lateral, links diretos, foco, teclado, responsividade,
+  tópico ausente, retorno seguro e acessos contextuais foram validados.
+- As cópias inativas dos textos locais foram removidas; o conteúdo editorial
+  vigente está centralizado em `frontend/js/ajuda-conteudo.js`.
+- Nenhuma lacuna funcional nova foi descoberta para registro na Gestão do
+  desenvolvimento. A falha encontrada em portas fixas pertencia apenas à
+  infraestrutura dos testes e foi corrigida sem alterar o produto.
+- Passaram 114 testes unitários do frontend, 70 testes Python direcionados e
+  47 fluxos Chromium. Nenhum banco foi alterado.
+- Toda mudança futura de comportamento visível deve atualizar e validar os
+  tópicos afetados antes de sua etapa ser considerada concluída.

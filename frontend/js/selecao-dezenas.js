@@ -1,29 +1,45 @@
-import { formatarDezenas, idsComparacao, montarConfiguracao } from "./selecao-dezenas-controles.js";
+import { formatarDezenas, montarConfiguracao } from "./selecao-dezenas-controles.js";
 import { criarModalAndamento } from "./modal-andamento.js";
+import { renderizarGraficosBacktest } from "./selecao-dezenas-graficos.js";
+import { criarFluxoCadastroConfirmado } from "./fluxo-cadastro-confirmado.js";
 
 const e = Object.fromEntries([
   "mensagem-selecao", "configuracao-gravada-selecao", "selecao-nome", "selecao-fator-k",
   "selecao-fator-j", "selecao-modo-quantidade", "selecao-quantidade",
   "selecao-versao", "estado-edicao-configuracao", "botao-previa-selecao", "botao-salvar-configuracao",
   "resultado-previa-selecao", "botao-atualizar-previsao", "resumo-previsao", "corpo-previsoes",
-  "form-backtest-selecao", "backtest-inicial", "backtest-final",
-  "estado-backtest", "resumo-backtest", "classes-backtest",
-  "form-comparacao-selecao", "comparacao-ids", "resultado-comparacao",
-  "corpo-detalhes-backtest", "painel-jogos", "resumo-jogos", "botao-gerar-jogos",
-  "botao-ajuda-selecao", "dialogo-ajuda-selecao",
+  "backtest-configuracao", "backtest-inicial", "estado-backtest",
+  "painel-jogos", "jogos-origem-concurso", "jogos-origem-configuracao",
+  "jogos-origem-dezenas", "jogos-origem-combinacoes", "jogos-quantidade-solicitada",
+  "jogos-valor-unitario", "jogos-valor-previsto", "estado-configuracao-jogos",
+  "botao-conferir-jogos", "dialogo-previa-jogos", "previa-jogos-concurso",
+  "previa-jogos-configuracao", "previa-jogos-dezenas", "previa-jogos-combinacoes",
+  "previa-jogos-quantidade", "previa-jogos-valor-unitario",
+  "previa-jogos-valor-previsto", "botao-iniciar-screener-jogos",
   "dialogo-confirmar-registro", "registro-configuracao", "registro-concurso",
   "registro-corte", "registro-quantidade", "registro-dezenas", "registro-combinacoes",
   "botao-cancelar-registro", "botao-confirmar-registro",
-  "dialogo-previa-backtest", "previa-backtest-resultados", "previa-backtest-periodo",
-  "previa-backtest-quantidade", "previa-backtest-configuracao", "botao-confirmar-backtest",
+  "dialogo-confirmar-configuracao", "configuracao-confirmar-nome",
+  "configuracao-confirmar-k", "configuracao-confirmar-j", "configuracao-confirmar-modo",
+  "configuracao-confirmar-quantidade", "configuracao-confirmar-versao",
+  "botao-confirmar-configuracao",
+  "botao-gerar-backtest", "relatorio-backtest",
+  "periodo-backtest", "resumo-backtest",
+  "classes-backtest", "grafico-backtest-quantidade", "grafico-backtest-acertos",
+  "botao-fechar-backtest", "dialogo-previa-backtest",
+  "previa-backtest-configuracao", "previa-backtest-resultados",
+  "previa-backtest-periodo", "previa-backtest-quantidade",
+  "botao-confirmar-backtest",
 ].map((id) => [id.replaceAll("-", "_"), document.getElementById(id)]));
 
 let configuracoes = [];
 let alvoJogos = null;
 let previaJogos = null;
-let solicitacaoBacktest = null;
 let solicitacaoRegistro = null;
 let modalBacktest = null;
+let solicitacaoBacktest = null;
+let idBacktest = null;
+let contextoBacktest = null;
 
 async function respostaJson(resposta) {
   const dados = await resposta.json().catch(() => ({}));
@@ -34,6 +50,7 @@ async function respostaJson(resposta) {
       FALHA_CONFIGURACAO: "Não foi possível salvar a configuração. Nenhuma configuração foi gravada.",
       CONFIGURACAO_INVALIDA: "Não foi possível usar a configuração. Confira os campos preenchidos.",
       CONFIGURACAO_NAO_ENCONTRADA: "A configuração salva não está mais disponível. Selecione outra configuração.",
+      NOME_CONFIGURACAO_EXISTENTE: "Já existe uma configuração salva com esse nome. Escolha outro nome.",
     };
     throw new Error(mensagens[codigo] || dados.erro?.mensagem || "Não foi possível concluir a operação. Tente novamente.");
   }
@@ -65,6 +82,7 @@ function definirEdicaoConfiguracao(editavel) {
   e.botao_atualizar_previsao.title = editavel
     ? "Salve a configuração antes de registrar uma seleção."
     : "Registrar a seleção produzida pela configuração salva.";
+  e.botao_gerar_backtest.title = "Calcular com a configuração escolhida no bloco Backtest.";
   e.estado_edicao_configuracao.textContent = editavel
     ? "Nova configuração: preencha e salve os campos antes de registrar uma seleção."
     : "Configuração salva: os campos estão protegidos contra alterações e a seleção pode ser registrada.";
@@ -91,10 +109,12 @@ async function carregarConfiguracoes() {
   const dados = await respostaJson(await fetch("/api/selecao-dezenas/configuracoes"));
   configuracoes = dados.configuracoes || [];
   e.configuracao_gravada_selecao.replaceChildren(new Option("Nova configuração", ""));
-  for (const item of configuracoes) e.configuracao_gravada_selecao.append(new Option(
-    `${item.id_configuracao_selecao} — ${item.configuracao.nome}`,
-    item.id_configuracao_selecao,
-  ));
+  e.backtest_configuracao.replaceChildren(new Option("Selecione uma configuração", ""));
+  for (const item of configuracoes) {
+    const rotulo = item.configuracao.nome;
+    e.configuracao_gravada_selecao.append(new Option(rotulo, item.id_configuracao_selecao));
+    e.backtest_configuracao.append(new Option(rotulo, item.id_configuracao_selecao));
+  }
   if (configuracoes.length) {
     const ultima = configuracoes.at(-1);
     e.configuracao_gravada_selecao.value = ultima.id_configuracao_selecao;
@@ -109,9 +129,7 @@ async function carregarConfiguracoes() {
 async function calcularPrevia() {
   const corpo = { configuracao: configuracaoFormulario() };
   const inicio = Number(e.backtest_inicial.value);
-  const final = Number(e.backtest_final.value);
   if (Number.isInteger(inicio)) corpo.concurso_inicial = inicio;
-  if (Number.isInteger(final) && final > 0) corpo.concurso_final = final;
   const dados = await respostaJson(await fetch("/api/selecao-dezenas/previa", {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(corpo),
   }));
@@ -121,19 +139,46 @@ async function calcularPrevia() {
     ? `Dados analíticos da configuração: último concurso cadastrado ${analise.concurso_corte}; concurso-alvo ${analise.concurso_alvo}; ${analise.quantidade_aprovada.toLocaleString("pt-BR")} dezenas aprovadas; ${analise.quantidade_retornada.toLocaleString("pt-BR")} dezenas retornadas (${formatarDezenas(analise.dezenas_retornadas)}); ${Number(analise.quantidade_combinacoes).toLocaleString("pt-BR")} combinações de seis. Esta análise é momentânea e não foi armazenada.`
     : "Dados analíticos da configuração indisponíveis: não existem resultados cadastrados.";
   if (analise) e.botao_atualizar_previsao.textContent = `Registrar previsão do concurso ${analise.concurso_alvo}`;
-  e.backtest_final.value ||= dados.backtest.concurso_final;
   mensagem("Configuração analisada sem salvar dados nem iniciar o backtest.", "sucesso");
 }
 
-async function salvarConfiguracao() {
-  const dados = await respostaJson(await fetch("/api/selecao-dezenas/configuracoes", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ configuracao: configuracaoFormulario() }),
-  }));
+function nomeNormalizado(nome) {
+  return nome.trim().toLocaleLowerCase("pt-BR");
+}
+
+function abrirConfirmacaoConfiguracao() {
+  const configuracao = configuracaoFormulario();
+  if (configuracoes.some((item) => nomeNormalizado(item.configuracao.nome) === nomeNormalizado(configuracao.nome))) {
+    throw new Error("Já existe uma configuração salva com esse nome. Escolha outro nome.");
+  }
+  fluxoConfiguracao.preparar(configuracao);
+  e.configuracao_confirmar_nome.textContent = configuracao.nome;
+  e.configuracao_confirmar_k.textContent = configuracao.fator_k;
+  e.configuracao_confirmar_j.textContent = configuracao.fator_j;
+  e.configuracao_confirmar_modo.textContent = configuracao.modo_quantidade;
+  e.configuracao_confirmar_quantidade.textContent = configuracao.modo_quantidade === "FIXA"
+    ? configuracao.quantidade_dezenas : "Máxima aprovada";
+  e.configuracao_confirmar_versao.textContent = configuracao.versao_calculo;
+  e.dialogo_confirmar_configuracao.showModal();
+  mensagem("Confira os parâmetros. Nenhuma configuração foi criada.");
+}
+
+async function confirmarSalvarConfiguracao() {
+  e.dialogo_confirmar_configuracao.close("confirmado");
+  const dados = await fluxoConfiguracao.confirmar();
+  if (!dados) return;
   preencherConfiguracao(dados.configuracao);
   await carregarConfiguracoes();
   mensagem("Configuração salva com sucesso. Os campos foram protegidos contra alterações.", "sucesso");
 }
+
+const fluxoConfiguracao = criarFluxoCadastroConfirmado({
+  validar: (configuracao) => montarConfiguracao(configuracao),
+  gravar: async (configuracao) => respostaJson(await fetch("/api/selecao-dezenas/configuracoes", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ configuracao }),
+  })),
+});
 
 function td(texto) { const celula = document.createElement("td"); celula.textContent = texto ?? "—"; return celula; }
 
@@ -157,17 +202,6 @@ function criarBotaoAlvo(item) {
   botao.disabled = item.quantidade_retornada < 6;
   botao.addEventListener("click", () => selecionarAlvoJogos(item));
   return botao;
-}
-
-function renderizarDetalhes(itens, corpo) {
-  corpo.replaceChildren();
-  for (const item of itens) {
-    const linha = document.createElement("tr");
-    linha.append(td(item.numero_concurso_alvo), td(item.numero_concurso_corte), td(rotuloSituacao(item.situacao)),
-      td(formatarDezenas(item.dezenas_retornadas)), td(item.quantidade_retornada),
-      td(item.quantidade_combinacoes_brutas));
-    const acao = td(""); acao.replaceChildren(criarBotaoAlvo(item)); linha.append(acao); corpo.append(linha);
-  }
 }
 
 async function abrirConfirmacaoRegistro() {
@@ -224,101 +258,209 @@ async function confirmarRegistro() {
     : `A seleção do concurso ${nova.concurso_alvo_inicial} já estava registrada para esta configuração. Nenhum dado foi alterado ou duplicado.`, "sucesso");
 }
 
-function renderizarResumoBacktest(resumo) {
-  const periodo = resumo.primeiro_avaliado == null
-    ? "nenhum concurso avaliável"
-    : `concursos ${resumo.primeiro_avaliado} a ${resumo.ultimo_avaliado}`;
-  const tamanho = resumo.minimo_dezenas == null
-    ? "sem conjunto avaliável"
-    : `conjuntos de ${resumo.minimo_dezenas} a ${resumo.maximo_dezenas} dezenas`;
-  e.resumo_backtest.textContent = `Execução ${resumo.id_execucao_selecao}: ${periodo}; ${resumo.avaliados.toLocaleString("pt-BR")} concursos avaliados e ${resumo.nao_avaliaveis} não avaliáveis; ${tamanho}, média de ${resumo.media_dezenas ?? "—"} dezenas e ${resumo.media_acertos_concurso ?? "—"} acertos por concurso.`;
-  e.classes_backtest.replaceChildren();
-  for (const item of resumo.classes || []) {
-    const quadro = document.createElement("div"); quadro.className = "selecao-classe";
-    quadro.innerHTML = `<span>${item.classe} acerto(s)</span><strong>${item.quantidade}</strong><span>${Number(item.percentual).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%</span>`;
-    e.classes_backtest.append(quadro);
-  }
+function configuracaoEstudoSelecionada() {
+  const identificador = Number(e.backtest_configuracao.value);
+  const item = configuracoes.find(
+    (configuracao) => configuracao.id_configuracao_selecao === identificador,
+  );
+  if (!item) throw new Error("Selecione uma configuração salva no bloco Backtest.");
+  return item;
 }
 
-async function carregarResultadoBacktest(idExecucao) {
-  const [resumo, detalhes] = await Promise.all([
-    respostaJson(await fetch(`/api/selecao-dezenas/backtests/${idExecucao}/resumo`)),
-    respostaJson(await fetch(`/api/selecao-dezenas/backtests/${idExecucao}/detalhes`)),
-  ]);
-  renderizarResumoBacktest(resumo); renderizarDetalhes(detalhes.detalhes, e.corpo_detalhes_backtest);
-  e.comparacao_ids.value = [e.comparacao_ids.value, idExecucao].filter(Boolean).join(", ");
+function descricaoConfiguracaoEstudo(item) {
+  const config = item.configuracao;
+  const modo = config.modo_quantidade === "FIXA"
+    ? `FIXA (${config.quantidade_dezenas} dezenas)` : "MAX";
+  return `${config.nome}; k=${config.fator_k}; j=${config.fator_j}; modo ${modo}; versão ${config.versao_calculo}`;
 }
 
 function corpoBacktest() {
-  const corpo = {
-    configuracao: configuracaoFormulario(),
-    concurso_inicial: Number(e.backtest_inicial.value),
+  const item = configuracaoEstudoSelecionada();
+  const inicio = Number(e.backtest_inicial.value);
+  if (!Number.isInteger(inicio) || inicio < 500) {
+    throw new Error("Informe um concurso inicial igual ou superior a 500.");
+  }
+  return {
+    id_configuracao_selecao: item.id_configuracao_selecao,
+    concurso_inicial: inicio,
+    itemConfiguracao: item,
   };
-  const final = Number(e.backtest_final.value);
-  if (Number.isInteger(final) && final >= 500) corpo.concurso_final = final;
-  return corpo;
 }
 
-async function abrirPreviaBacktest(evento) {
-  evento.preventDefault();
-  if (modalBacktest.estaExecutando()) throw new Error("Já existe um backtest em andamento.");
-  solicitacaoBacktest = corpoBacktest();
-  const previa = await respostaJson(await fetch("/api/selecao-dezenas/previa", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(solicitacaoBacktest),
-  }));
+async function abrirPreviaBacktest() {
+  if (modalBacktest.estaExecutando()) {
+    throw new Error("Já existe um relatório gráfico em andamento.");
+  }
+  e.estado_backtest.textContent = "Consultando o período disponível…";
+  const estudo = corpoBacktest();
+  solicitacaoBacktest = {
+    id_configuracao_selecao: estudo.id_configuracao_selecao,
+    concurso_inicial: estudo.concurso_inicial,
+  };
+  const previa = await respostaJson(await fetch(
+    "/api/selecao-dezenas/backtests/previa",
+    {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(solicitacaoBacktest),
+    },
+  ));
+  contextoBacktest = {
+    item: estudo.itemConfiguracao,
+    periodo: previa.periodo,
+  };
+  e.previa_backtest_configuracao.textContent = previa.configuracao.nome;
   e.previa_backtest_resultados.textContent = `${previa.resultados.quantidade.toLocaleString("pt-BR")} concursos — ${previa.resultados.primeiro} a ${previa.resultados.ultimo}`;
-  e.previa_backtest_periodo.textContent = `${previa.backtest.concurso_inicial} a ${previa.backtest.concurso_final}`;
-  e.previa_backtest_quantidade.textContent = previa.backtest.quantidade_alvos.toLocaleString("pt-BR");
-  e.previa_backtest_configuracao.textContent = descricaoParametros(solicitacaoBacktest.configuracao);
+  e.previa_backtest_periodo.textContent = `${previa.periodo.concurso_inicial} a ${previa.periodo.concurso_final}`;
+  e.previa_backtest_quantidade.textContent = previa.periodo.quantidade_concursos.toLocaleString("pt-BR");
   e.dialogo_previa_backtest.showModal();
-  mensagem("Prévia pronta. Confirme no formulário para iniciar o backtest.");
+  e.estado_backtest.textContent = `Conferência pronta: concursos ${previa.periodo.concurso_inicial} a ${previa.periodo.concurso_final}. Confirme para calcular.`;
+  mensagem("Dados do Backtest prontos para conferência.");
+}
+
+function metricaResumo(rotulo, valor) {
+  const item = document.createElement("div");
+  item.className = "backtest-relatorio__metrica";
+  const titulo = document.createElement("span"); titulo.textContent = rotulo;
+  const numeroMetrica = document.createElement("strong"); numeroMetrica.textContent = valor;
+  item.append(titulo, numeroMetrica);
+  return item;
+}
+
+function renderizarRelatorioBacktest(relatorio) {
+  const resumo = relatorio.resumo;
+  const identificacao = descricaoConfiguracaoEstudo(contextoBacktest.item);
+  e.relatorio_backtest.hidden = false;
+  e.periodo_backtest.textContent = `${identificacao}; concursos ${relatorio.concurso_inicial} a ${relatorio.concurso_final}; cálculo concluído em ${Number(relatorio.duracao_segundos).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} s.`;
+  e.resumo_backtest.replaceChildren(
+    metricaResumo("Testes efetuados", resumo.testes_efetuados.toLocaleString("pt-BR")),
+    metricaResumo("Mínimo de dezenas", resumo.minimo_dezenas.toLocaleString("pt-BR")),
+    metricaResumo("Máximo de dezenas", resumo.maximo_dezenas.toLocaleString("pt-BR")),
+    metricaResumo("Média de dezenas", Number(resumo.media_dezenas).toLocaleString("pt-BR", { maximumFractionDigits: 2 })),
+    metricaResumo("Média de acertos", Number(resumo.media_acertos).toLocaleString("pt-BR", { maximumFractionDigits: 2 })),
+    metricaResumo("Concursos com 4 a 6", `${resumo.concursos_premiados.toLocaleString("pt-BR")} (${Number(resumo.percentual_premiados).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%)`),
+  );
+  e.classes_backtest.replaceChildren();
+  for (const item of resumo.classes) {
+    const quadro = document.createElement("div");
+    quadro.className = `selecao-classe ${item.classe >= 4 ? "selecao-classe--premiada" : "selecao-classe--sem-premio"}`;
+    const rotulo = document.createElement("span"); rotulo.textContent = `${item.classe} acerto(s)`;
+    const quantidade = document.createElement("strong"); quantidade.textContent = item.quantidade.toLocaleString("pt-BR");
+    const percentual = document.createElement("span"); percentual.textContent = `${Number(item.percentual).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`;
+    quadro.append(rotulo, quantidade, percentual);
+    e.classes_backtest.append(quadro);
+  }
+  renderizarGraficosBacktest(
+    e.grafico_backtest_quantidade, e.grafico_backtest_acertos, relatorio.pontos,
+  );
+  e.relatorio_backtest.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 async function confirmarBacktest() {
   if (!solicitacaoBacktest || modalBacktest.estaExecutando()) return;
-  e.dialogo_previa_backtest.close();
-  e.estado_backtest.textContent = "Backtest em andamento; acompanhe o formulário de progresso.";
+  e.dialogo_previa_backtest.close("confirmado");
+  e.estado_backtest.textContent = "Calculando o Backtest…";
   const final = await modalBacktest.abrir();
   if (!final || typeof final !== "object") return;
-  e.estado_backtest.textContent = `${final.etapa} — ${final.concluido}/${final.total} em ${Number(final.duracao_segundos || 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} s.`;
-  if (final.estado === "CONCLUIDA") {
-    await carregarResultadoBacktest(final.resultado.id_execucao_selecao);
-    mensagem("Backtest concluído.", "sucesso");
+  if (final.estado === "CONCLUIDA" && final.resultado) {
+    idBacktest = final.id;
+    renderizarRelatorioBacktest(final.resultado);
+    e.estado_backtest.textContent = "Relatório concluído e exibido abaixo.";
+    mensagem("Relatório gráfico concluído.", "sucesso");
   } else if (final.estado === "CANCELADA") {
-    mensagem("Backtest cancelado com segurança.", "erro");
+    e.estado_backtest.textContent = "Cálculo cancelado.";
+    mensagem("Cálculo do Backtest cancelado.", "erro");
   }
 }
 
-async function comparar(evento) {
-  evento.preventDefault();
-  const dados = await respostaJson(await fetch("/api/selecao-dezenas/backtests/comparacao", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ids_execucoes: idsComparacao(e.comparacao_ids.value) }),
-  }));
-  const linhas = dados.pesquisas.map((item) => `Execução ${item.id_execucao_selecao}: ${item.avaliados} concursos; média ${item.media_acertos_concurso ?? "—"} acertos; custo ${Number(item.custo_combinatorio_total).toLocaleString("pt-BR")} jogos.`);
-  e.resultado_comparacao.textContent = `${dados.comparavel ? "Comparação equivalente." : `Comparação com ressalvas: ${(dados.ressalvas || []).join(" ")}`} ${linhas.join(" ")}`;
+async function descartarBacktest() {
+  if (idBacktest) {
+    await respostaJson(await fetch(
+      `/api/selecao-dezenas/backtests/${idBacktest}`,
+      { method: "DELETE" },
+    ));
+  }
+  idBacktest = null;
+  contextoBacktest = null;
+  e.relatorio_backtest.hidden = true;
+  e.resumo_backtest.replaceChildren();
+  e.classes_backtest.replaceChildren();
+  e.grafico_backtest_quantidade.replaceChildren();
+  e.grafico_backtest_acertos.replaceChildren();
+  e.estado_backtest.textContent = "Escolha uma configuração salva e o concurso inicial. O estudo seguirá automaticamente até o último concurso cadastrado.";
+  mensagem("Relatório fechado. Nenhum dado foi apagado do banco.");
 }
 
 async function selecionarAlvoJogos(item) {
   alvoJogos = item.id_alvo_selecao;
   previaJogos = await respostaJson(await fetch(`/api/selecao-dezenas/alvos/${alvoJogos}/jogos/previa`));
   e.painel_jogos.hidden = false;
-  e.resumo_jogos.textContent = `Concurso ${item.numero_concurso_alvo}: ${previaJogos.quantidade_dezenas} dezenas formarão ${Number(previaJogos.quantidade_combinacoes).toLocaleString("pt-BR")} jogos de seis dezenas.${previaJogos.volume_elevado ? " Volume elevado: será exigida confirmação adicional." : ""}`;
+  previaJogos.configuracao_nome = configuracaoFormulario().nome;
+  previaJogos.concurso = item.numero_concurso_alvo;
+  e.jogos_origem_concurso.textContent = item.numero_concurso_alvo;
+  e.jogos_origem_configuracao.textContent = previaJogos.configuracao_nome;
+  e.jogos_origem_dezenas.textContent = formatarDezenas(previaJogos.dezenas);
+  e.jogos_origem_combinacoes.textContent = Number(previaJogos.quantidade_combinacoes).toLocaleString("pt-BR");
+  e.jogos_quantidade_solicitada.value = "";
+  e.jogos_valor_unitario.value = "";
+  e.jogos_valor_previsto.textContent = "—";
+  e.estado_configuracao_jogos.textContent = "Informe a quantidade máxima e o valor unitário. Nenhuma combinação será processada ou gravada.";
+  e.painel_jogos.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
-async function gerarJogos() {
-  if (!alvoJogos || !previaJogos) return;
-  if (!window.confirm(`Deseja realmente salvar ${Number(previaJogos.quantidade_combinacoes).toLocaleString("pt-BR")} jogos?`)) return;
-  let confirmarVolume = false;
-  if (previaJogos.volume_elevado) confirmarVolume = window.confirm("Este é um volume elevado. Confirma novamente a gravação?");
-  if (previaJogos.volume_elevado && !confirmarVolume) return;
-  const dados = await respostaJson(await fetch(`/api/selecao-dezenas/alvos/${alvoJogos}/jogos`, {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ autorizar_persistencia: true, confirmar_volume_elevado: confirmarVolume }),
-  }));
-  e.resumo_jogos.textContent = `Lote ${dados.id_lote_jogos} concluído com ${Number(dados.quantidade_combinacoes).toLocaleString("pt-BR")} jogos.`;
-  mensagem("Jogos gerados e vinculados à pesquisa.", "sucesso");
+function centavosValorJogo(texto) {
+  const normalizado = texto.trim();
+  if (!/^\d+(?:[.,]\d{1,2})?$/.test(normalizado)) {
+    throw new Error("Informe o valor de um jogo com até duas casas decimais, por exemplo 5,00.");
+  }
+  const [inteiros, decimais = ""] = normalizado.replace(",", ".").split(".");
+  const centavos = BigInt(inteiros) * 100n + BigInt(decimais.padEnd(2, "0"));
+  if (centavos <= 0n) throw new Error("O valor de um jogo deve ser maior que zero.");
+  return centavos;
+}
+
+function formatarMoeda(centavos) {
+  const reais = centavos / 100n;
+  const fracao = String(centavos % 100n).padStart(2, "0");
+  return `R$ ${reais.toLocaleString("pt-BR")},${fracao}`;
+}
+
+function configuracaoFormacaoJogos() {
+  if (!alvoJogos || !previaJogos) throw new Error("Escolha primeiro um registro de dezenas em Formar jogos.");
+  const quantidade = Number(e.jogos_quantidade_solicitada.value);
+  if (!Number.isSafeInteger(quantidade) || quantidade < 1 || quantidade > 50_063_860) {
+    throw new Error("Informe um número máximo de jogos entre 1 e 50.063.860.");
+  }
+  const valorUnitarioCentavos = centavosValorJogo(e.jogos_valor_unitario.value);
+  return {
+    quantidade,
+    valorUnitarioCentavos,
+    valorPrevistoCentavos: BigInt(quantidade) * valorUnitarioCentavos,
+  };
+}
+
+function atualizarValorPrevisto() {
+  try {
+    const configuracao = configuracaoFormacaoJogos();
+    e.jogos_valor_previsto.textContent = formatarMoeda(configuracao.valorPrevistoCentavos);
+    e.estado_configuracao_jogos.textContent = "Valores preenchidos. Use Conferir configuração para revisar; nenhum processamento será iniciado.";
+  } catch (_erro) {
+    e.jogos_valor_previsto.textContent = "—";
+  }
+}
+
+function conferirFormacaoJogos() {
+  const configuracao = configuracaoFormacaoJogos();
+  e.jogos_valor_previsto.textContent = formatarMoeda(configuracao.valorPrevistoCentavos);
+  e.previa_jogos_concurso.textContent = previaJogos.concurso;
+  e.previa_jogos_configuracao.textContent = previaJogos.configuracao_nome;
+  e.previa_jogos_dezenas.textContent = formatarDezenas(previaJogos.dezenas);
+  e.previa_jogos_combinacoes.textContent = Number(previaJogos.quantidade_combinacoes).toLocaleString("pt-BR");
+  e.previa_jogos_quantidade.textContent = configuracao.quantidade.toLocaleString("pt-BR");
+  e.previa_jogos_valor_unitario.textContent = formatarMoeda(configuracao.valorUnitarioCentavos);
+  e.previa_jogos_valor_previsto.textContent = formatarMoeda(configuracao.valorPrevistoCentavos);
+  e.dialogo_previa_jogos.showModal();
+  e.estado_configuracao_jogos.textContent = "Configuração conferida. A execução do Screener será disponibilizada em uma etapa posterior.";
+  mensagem("Configuração dos jogos conferida sem processar combinações nem gravar dados.", "sucesso");
 }
 
 async function proteger(acao) { try { await acao(); } catch (erro) { mensagem(erro.message, "erro"); } }
@@ -335,7 +477,13 @@ e.configuracao_gravada_selecao.addEventListener("change", () => {
   }
 });
 e.botao_previa_selecao.addEventListener("click", () => proteger(calcularPrevia));
-e.botao_salvar_configuracao.addEventListener("click", () => proteger(salvarConfiguracao));
+e.botao_salvar_configuracao.addEventListener("click", () => proteger(abrirConfirmacaoConfiguracao));
+e.botao_confirmar_configuracao.addEventListener("click", () => proteger(confirmarSalvarConfiguracao));
+e.dialogo_confirmar_configuracao.addEventListener("close", () => {
+  if (e.dialogo_confirmar_configuracao.returnValue === "confirmado") return;
+  fluxoConfiguracao.cancelar();
+  mensagem("Salvamento cancelado. Nenhuma configuração foi criada.");
+});
 e.botao_atualizar_previsao.addEventListener("click", () => proteger(abrirConfirmacaoRegistro));
 e.botao_confirmar_registro.addEventListener("click", () => proteger(confirmarRegistro));
 e.dialogo_confirmar_registro.addEventListener("close", () => {
@@ -343,24 +491,52 @@ e.dialogo_confirmar_registro.addEventListener("close", () => {
   solicitacaoRegistro = null;
   mensagem("Operação cancelada. Nenhum dado foi gravado.");
 });
-e.form_backtest_selecao.addEventListener("submit", (evento) => proteger(() => abrirPreviaBacktest(evento)));
+e.botao_gerar_backtest.addEventListener("click", async () => {
+  try {
+    await abrirPreviaBacktest();
+  } catch (erro) {
+    e.estado_backtest.textContent = `Não foi possível preparar o relatório: ${erro.message}`;
+    mensagem(erro.message, "erro");
+  }
+});
 e.botao_confirmar_backtest.addEventListener("click", () => proteger(confirmarBacktest));
-e.form_comparacao_selecao.addEventListener("submit", (evento) => proteger(() => comparar(evento)));
-e.botao_gerar_jogos.addEventListener("click", () => proteger(gerarJogos));
-e.botao_ajuda_selecao.addEventListener("click", () => e.dialogo_ajuda_selecao.showModal());
+e.botao_fechar_backtest.addEventListener("click", () => proteger(descartarBacktest));
+e.jogos_quantidade_solicitada.addEventListener("input", atualizarValorPrevisto);
+e.jogos_valor_unitario.addEventListener("input", atualizarValorPrevisto);
+e.botao_conferir_jogos.addEventListener("click", () => proteger(conferirFormacaoJogos));
 
 modalBacktest = criarModalAndamento({
-  titulo: "Execução do backtest da seleção de dezenas",
-  iniciar: async () => respostaJson(await fetch("/api/selecao-dezenas/backtests", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(solicitacaoBacktest),
-  })),
-  consultar: async (id) => respostaJson(await fetch(`/api/selecao-dezenas/execucoes/${id}`)),
-  cancelar: async (id) => respostaJson(await fetch(`/api/selecao-dezenas/execucoes/${id}/cancelamento`, { method: "POST" })),
+  titulo: "Cálculo do Backtest",
+  descricao: () => {
+    if (!contextoBacktest) return "Preparando o cálculo do Backtest.";
+    const periodo = contextoBacktest.periodo;
+    return `${descricaoConfiguracaoEstudo(contextoBacktest.item)}; concursos ${periodo.concurso_inicial} a ${periodo.concurso_final}; ${periodo.quantidade_concursos.toLocaleString("pt-BR")} concursos.`;
+  },
+  iniciar: async () => respostaJson(await fetch(
+    "/api/selecao-dezenas/backtests",
+    {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(solicitacaoBacktest),
+    },
+  )),
+  consultar: async (id) => respostaJson(await fetch(
+    `/api/selecao-dezenas/backtests/${id}`,
+  )),
+  cancelar: async (id) => respostaJson(await fetch(
+    `/api/selecao-dezenas/backtests/${id}/cancelamento`,
+    { method: "POST" },
+  )),
   apresentarResultado: (resultado) => ({
     aprovado: true,
-    mensagem: `Backtest concluído. Pesquisa ${resultado.id_execucao_selecao} preservada para consulta e comparação.`,
+        mensagem: `${resultado.resumo.testes_efetuados.toLocaleString("pt-BR")} concursos calculados. Relatório pronto.`,
   }),
+});
+
+window.addEventListener("pagehide", () => {
+  if (!idBacktest) return;
+  fetch(`/api/selecao-dezenas/backtests/${idBacktest}`, {
+    method: "DELETE", keepalive: true,
+  }).catch(() => {});
 });
 
 proteger(carregarConfiguracoes);

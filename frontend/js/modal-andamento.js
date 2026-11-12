@@ -1,4 +1,5 @@
 const ESTADOS_TERMINAIS = new Set(["CONCLUIDA", "FALHOU", "CANCELADA"]);
+let proximoIdentificadorModal = 1;
 
 function segundos(valor) {
   return `${Number(valor || 0).toFixed(1)} s`;
@@ -6,7 +7,7 @@ function segundos(valor) {
 
 export function criarModalAndamento({
   titulo, iniciar, consultar, cancelar = null, intervaloMs = 500,
-  apresentarResultado = null,
+  apresentarResultado = null, descricao = null, confirmarCancelamento = false,
 }) {
   if (typeof iniciar !== "function" || typeof consultar !== "function") {
     throw new TypeError("O modal exige funções para iniciar e consultar a operação.");
@@ -17,12 +18,17 @@ export function criarModalAndamento({
   if (cancelar !== null && typeof cancelar !== "function") {
     throw new TypeError("cancelar deve ser função ou nulo.");
   }
+  if (descricao !== null && typeof descricao !== "string" && typeof descricao !== "function") {
+    throw new TypeError("descricao deve ser texto, função ou nulo.");
+  }
   const dialogo = document.createElement("dialog");
+  const identificadorTitulo = `modal-andamento-titulo-${proximoIdentificadorModal++}`;
   dialogo.className = "modal-andamento";
-  dialogo.setAttribute("aria-labelledby", "modal-andamento-titulo");
+  dialogo.setAttribute("aria-labelledby", identificadorTitulo);
   dialogo.innerHTML = `
     <section class="modal-andamento__conteudo">
-      <h2 id="modal-andamento-titulo"></h2>
+      <h2 id="${identificadorTitulo}"></h2>
+      <p class="modal-andamento__contexto" hidden></p>
       <p class="modal-andamento__etapa" aria-live="polite">Preparando operação…</p>
       <div class="modal-andamento__barra" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
         <div class="modal-andamento__progresso"></div>
@@ -40,7 +46,22 @@ export function criarModalAndamento({
     </section>`;
   dialogo.querySelector("h2").textContent = titulo;
   document.body.append(dialogo);
+  const dialogoConfirmarCancelamento = document.createElement("dialog");
+  const identificadorTituloCancelamento = `${identificadorTitulo}-cancelamento`;
+  dialogoConfirmarCancelamento.className = "modal-andamento modal-andamento--confirmacao";
+  dialogoConfirmarCancelamento.setAttribute("aria-labelledby", identificadorTituloCancelamento);
+  dialogoConfirmarCancelamento.innerHTML = `
+    <section class="modal-andamento__conteudo">
+      <h2 id="${identificadorTituloCancelamento}">Cancelar processamento?</h2>
+      <p>O trabalho será interrompido no próximo ponto seguro e os resultados parciais serão descartados.</p>
+      <div class="modal-andamento__acoes">
+        <button type="button" data-acao="continuar">Continuar processamento</button>
+        <button type="button" data-acao="confirmar">Confirmar cancelamento</button>
+      </div>
+    </section>`;
+  if (confirmarCancelamento) document.body.append(dialogoConfirmarCancelamento);
   const etapa = dialogo.querySelector(".modal-andamento__etapa");
+  const contexto = dialogo.querySelector(".modal-andamento__contexto");
   const barra = dialogo.querySelector("[role='progressbar']");
   const progresso = dialogo.querySelector(".modal-andamento__progresso");
   const quantidade = dialogo.querySelector(".modal-andamento__quantidade");
@@ -98,6 +119,9 @@ export function criarModalAndamento({
     executando = true;
     identificadorAtual = null;
     cancelamentoEnviado = false;
+    const textoContexto = typeof descricao === "function" ? descricao() : descricao;
+    contexto.hidden = !textoContexto;
+    contexto.textContent = textoContexto || "";
     renderizar({ estado: "AGUARDANDO", etapa: "Iniciando…", concluido: 0, total: 4, percentual: 0 });
     dialogo.showModal();
     try {
@@ -106,10 +130,12 @@ export function criarModalAndamento({
       renderizar(dados);
       return await aguardar(dados.id);
     } catch (falha) {
-      return renderizar({
+      const dadosFalha = {
         estado: "FALHOU", etapa: "Não foi possível iniciar", concluido: 0,
         total: 4, percentual: 0, erro: { mensagem: falha.message },
-      });
+      };
+      renderizar(dadosFalha);
+      return dadosFalha;
     }
   }
 
@@ -119,7 +145,7 @@ export function criarModalAndamento({
   fechar.addEventListener("click", () => {
     if (!executando) dialogo.close();
   });
-  botaoCancelar.addEventListener("click", async () => {
+  async function solicitarCancelamento() {
     if (!executando || cancelar === null || cancelamentoEnviado) return;
     cancelamentoEnviado = true;
     botaoCancelar.disabled = true;
@@ -132,6 +158,17 @@ export function criarModalAndamento({
       erro.hidden = false;
       erro.textContent = falha.message || "Não foi possível solicitar o cancelamento.";
     }
+  }
+  botaoCancelar.addEventListener("click", () => {
+    if (confirmarCancelamento) dialogoConfirmarCancelamento.showModal();
+    else solicitarCancelamento();
   });
+  if (confirmarCancelamento) {
+    dialogoConfirmarCancelamento.querySelector('[data-acao="continuar"]').addEventListener("click", () => dialogoConfirmarCancelamento.close());
+    dialogoConfirmarCancelamento.querySelector('[data-acao="confirmar"]').addEventListener("click", () => {
+      dialogoConfirmarCancelamento.close();
+      solicitarCancelamento();
+    });
+  }
   return { abrir, elemento: dialogo, estaExecutando: () => executando };
 }
