@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
 
 from msen.config import carregar_configuracao_banco
 from msen.database import abrir_conexao
@@ -46,9 +47,9 @@ class EstadoHomologacaoScreener:
 
 def validar_homologacao_screener(
     estado: EstadoHomologacaoScreener, *, codigos_carregados: set[str],
-    codigos_padroes_selecionados: set[str],
+    codigos_padroes_selecionados: set[str], exigir_liberacao: bool = True,
 ) -> None:
-    if not estado.atualizado:
+    if exigir_liberacao and not estado.atualizado:
         raise ErroHomologacaoScreener(
             "ALGORITMO_DESATUALIZADO", f"Validação e auditoria bloqueada: {estado.motivo}."
         )
@@ -90,6 +91,61 @@ def validar_homologacao_screener(
         raise ErroHomologacaoScreener(
             "PERFIS_DESATUALIZADOS", "Os perfis operacionais não correspondem aos resultados atuais."
         )
+
+
+def confirmar_cobertura_screener_no_banco(
+    *, codigos_carregados: set[str], codigos_padroes_selecionados: set[str],
+) -> EstadoHomologacaoScreener:
+    """Libera o Screener somente após repetir todas as verificações de cobertura."""
+
+    estado = consultar_homologacao_screener_no_banco()
+    if estado.atualizado:
+        return estado
+    if estado.motivo != "HOMOLOGACAO_CONCLUIDA_AGUARDANDO_COBERTURA":
+        validar_homologacao_screener(
+            estado, codigos_carregados=codigos_carregados,
+            codigos_padroes_selecionados=codigos_padroes_selecionados,
+        )
+    validar_homologacao_screener(
+        estado, codigos_carregados=codigos_carregados,
+        codigos_padroes_selecionados=codigos_padroes_selecionados,
+        exigir_liberacao=False,
+    )
+    definicoes = criar_registro_criterios_producao().listar()
+    conteudo_catalogo = "\n".join(
+        f"{item.codigo}:{item.assinatura_funcao}:{item.assinatura_regra}"
+        for item in definicoes
+    )
+    assinatura_catalogo = hashlib.sha256(
+        conteudo_catalogo.encode("utf-8")
+    ).hexdigest()
+    with abrir_conexao(carregar_configuracao_banco()) as conexao:
+        with conexao.transaction(), conexao.cursor() as cursor:
+            cursor.execute(
+                "UPDATE estado_algoritmo_selecao SET atualizado = TRUE, "
+                "motivo = 'TODAS_AS_CONDICOES_CONFIRMADAS', "
+                "assinatura_catalogo_homologado = %s, "
+                "homologado_em = CURRENT_TIMESTAMP, "
+                "cobertura_confirmada_em = CURRENT_TIMESTAMP, "
+                "alterado_em = CURRENT_TIMESTAMP WHERE id_estado = 1 "
+                "AND atualizado = FALSE "
+                "AND motivo = 'HOMOLOGACAO_CONCLUIDA_AGUARDANDO_COBERTURA' "
+                "AND quantidade_resultados = %s "
+                "AND assinatura_conjunto_resultados IS NOT NULL "
+                "AND perfis_atualizados_em IS NOT NULL",
+                (assinatura_catalogo, estado.total_resultados),
+            )
+            if cursor.rowcount != 1:
+                raise ErroHomologacaoScreener(
+                    "ESTADO_ALTERADO_DURANTE_CONFIRMACAO",
+                    "O estado mudou durante a confirmação; execute a validação novamente.",
+                )
+    confirmado = consultar_homologacao_screener_no_banco()
+    validar_homologacao_screener(
+        confirmado, codigos_carregados=codigos_carregados,
+        codigos_padroes_selecionados=codigos_padroes_selecionados,
+    )
+    return confirmado
 
 
 def consultar_homologacao_screener_no_banco() -> EstadoHomologacaoScreener:

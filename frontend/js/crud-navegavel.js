@@ -10,7 +10,15 @@ const ESTADOS = Object.freeze({
 
 const copiar = (valor) => valor == null ? valor : structuredClone(valor);
 
-function validarContrato({ campos, api }) {
+function mensagemDeFalha(falha, textoPadrao) {
+  const mensagem = String(falha?.message ?? "").trim();
+  if (!mensagem || falha instanceof TypeError || /cannot read properties/i.test(mensagem)) {
+    return textoPadrao;
+  }
+  return mensagem;
+}
+
+function validarContrato({ campos, api, usarArquivamento, usarExclusao }) {
   if (!Array.isArray(campos) || campos.length === 0) {
     throw new TypeError("O CRUD exige ao menos um campo configurado.");
   }
@@ -22,7 +30,10 @@ function validarContrato({ campos, api }) {
     if (nomes.has(campo.nome)) throw new TypeError(`Campo repetido: ${campo.nome}.`);
     nomes.add(campo.nome);
   }
-  for (const operacao of ["listar", "criar", "atualizar", "arquivar", "desarquivar"]) {
+  const operacoes = ["listar", "criar", "atualizar"];
+  if (usarArquivamento) operacoes.push("arquivar", "desarquivar");
+  if (usarExclusao) operacoes.push("excluir");
+  for (const operacao of operacoes) {
     if (typeof api?.[operacao] !== "function") {
       throw new TypeError(`O adaptador de API exige a operação ${operacao}.`);
     }
@@ -56,17 +67,25 @@ async function chavePadrao() {
 }
 
 export function criarControladorCrud({
-  campos, api, porPagina = 20, gerarChaveIdempotencia = chavePadrao,
+  campos, api, filtros = [], porPagina = 20, gerarChaveIdempotencia = chavePadrao,
   usarOrdenacao = true,
+  usarArquivamento = Boolean(api?.arquivar || api?.desarquivar),
+  usarExclusao = Boolean(api?.excluir),
+  obterIdentificador = (registro) => registro?.id_manutencao ?? registro?.id,
 }) {
-  validarContrato({ campos, api });
+  if (usarArquivamento && usarExclusao) {
+    throw new TypeError("Escolha arquivamento ou exclusão definitiva para o CRUD.");
+  }
+  validarContrato({ campos, api, usarArquivamento, usarExclusao });
   if (!Number.isInteger(porPagina) || porPagina < 1 || porPagina > 100) {
     throw new TypeError("porPagina deve ficar entre 1 e 100.");
   }
   const ouvintes = new Set();
   let estado = {
     modo: ESTADOS.CONSULTA, itens: [], total: 0, pagina: 1, porPagina,
-    busca: "", filtros: {}, ordenacao: usarOrdenacao ? "ATUALIZACAO" : null, arquivados: false,
+    busca: "",
+    filtros: Object.fromEntries(filtros.map((filtro) => [filtro.nome, filtro.valorInicial ?? null])),
+    ordenacao: usarOrdenacao ? "ATUALIZACAO" : null, arquivados: false,
     selecionado: null, rascunho: null, origemRascunho: null,
     erros: {}, mensagem: "", falha: null, ocupada: false,
   };
@@ -89,15 +108,23 @@ export function criarControladorCrud({
   async function carregar(mudancas = {}) {
     estado = { ...estado, ...mudancas, modo: ESTADOS.CARREGANDO_LISTA, ocupada: true, falha: null };
     publicar();
+    const filtroPendente = filtros.find((filtro) => filtro.obrigatorio && !estado.filtros[filtro.nome]);
+    if (filtroPendente) {
+      return alterarEstado({
+        modo: ESTADOS.CONSULTA, ocupada: false, itens: [], total: 0,
+        selecionado: null,
+        mensagem: `Selecione ${filtroPendente.rotulo.toLocaleLowerCase("pt-BR")} para consultar os registros.`,
+      });
+    }
     try {
       const resposta = await api.listar(consultaAtual());
       const registros = resposta.registros ?? [];
-      const idAtual = estado.selecionado?.id_manutencao ?? estado.selecionado?.id;
+      const idAtual = estado.selecionado ? obterIdentificador(estado.selecionado) : null;
       const tituloExato = estado.busca.trim().toLocaleLowerCase("pt-BR");
       const selecionado = registros.find((item) =>
         tituloExato && item.titulo?.toLocaleLowerCase("pt-BR") === tituloExato
       ) ?? registros.find((item) =>
-        (item.id_manutencao ?? item.id) === idAtual
+        obterIdentificador(item) === idAtual
       ) ?? registros[0] ?? null;
       return alterarEstado({
         modo: ESTADOS.CONSULTA, ocupada: false, itens: registros,
@@ -105,11 +132,15 @@ export function criarControladorCrud({
         mensagem: resposta.mensagem ?? "",
       });
     } catch (falha) {
-      return alterarEstado({ modo: ESTADOS.ERRO, ocupada: false, falha, mensagem: falha.message });
+      return alterarEstado({
+        modo: ESTADOS.ERRO, ocupada: false, falha,
+        mensagem: mensagemDeFalha(falha, "Não foi possível carregar os registros."),
+      });
     }
   }
 
   async function listarTitulos() {
+    if (filtros.some((filtro) => filtro.obrigatorio && !estado.filtros[filtro.nome])) return [];
     const consulta = { ...consultaAtual(), busca: "", pagina: 1, por_pagina: 100 };
     if (usarOrdenacao) consulta.ordenacao = "TITULO";
     const titulos = [];
@@ -188,7 +219,7 @@ export function criarControladorCrud({
       const registro = criando
         ? (await api.criar(copiar(estado.rascunho), await gerarChaveIdempotencia())).registro
         : (await api.atualizar(
-            estado.selecionado.id_manutencao ?? estado.selecionado.id,
+            obterIdentificador(estado.selecionado),
             copiar(estado.rascunho), estado.selecionado.versao_registro,
           )).registro;
       alterarEstado({
@@ -200,7 +231,7 @@ export function criarControladorCrud({
     } catch (falha) {
       return alterarEstado({
         modo: criando ? ESTADOS.NOVO : ESTADOS.EDICAO, ocupada: false,
-        falha, mensagem: falha.message || "Não foi possível salvar.",
+        falha, mensagem: mensagemDeFalha(falha, "Não foi possível salvar o registro."),
       });
     }
   }
@@ -213,10 +244,11 @@ export function criarControladorCrud({
   }
 
   async function definirArquivamento(arquivar) {
+    if (!usarArquivamento) throw new Error("Este cadastro não utiliza arquivamento.");
     if (!estado.selecionado || estado.ocupada) return publicar();
     alterarEstado({ ocupada: true, mensagem: arquivar ? "Arquivando…" : "Desarquivando…" });
     try {
-      const id = estado.selecionado.id_manutencao ?? estado.selecionado.id;
+      const id = obterIdentificador(estado.selecionado);
       const resposta = arquivar
         ? await api.arquivar(id, estado.selecionado.versao_registro)
         : await api.desarquivar(id, estado.selecionado.versao_registro);
@@ -224,13 +256,30 @@ export function criarControladorCrud({
       await carregar();
       return alterarEstado({ selecionado: resposta.registro });
     } catch (falha) {
-      return alterarEstado({ ocupada: false, falha, mensagem: falha.message });
+      return alterarEstado({ ocupada: false, falha, mensagem: mensagemDeFalha(falha, "Não foi possível alterar o arquivamento.") });
+    }
+  }
+
+  async function excluir() {
+    if (!usarExclusao) throw new Error("Este cadastro não utiliza exclusão definitiva.");
+    if (!estado.selecionado || estado.ocupada) return publicar();
+    alterarEstado({ ocupada: true, mensagem: "Excluindo…", falha: null });
+    try {
+      await api.excluir(
+        obterIdentificador(estado.selecionado),
+        estado.selecionado.versao_registro,
+      );
+      alterarEstado({ ocupada: false, selecionado: null, mensagem: "Registro excluído." });
+      await carregar();
+      return alterarEstado({ mensagem: "Registro excluído." });
+    } catch (falha) {
+      return alterarEstado({ ocupada: false, falha, mensagem: mensagemDeFalha(falha, "Não foi possível excluir o registro.") });
     }
   }
 
   return {
     carregar, novo, consultar, editar, alterarCampo, conferir, voltarDaConferencia,
-    salvar, cancelarEdicao, definirArquivamento, possuiAlteracoes, listarTitulos,
+    salvar, cancelarEdicao, definirArquivamento, excluir, possuiAlteracoes, listarTitulos,
     observar(ouvinte) { ouvintes.add(ouvinte); ouvinte(copiar(estado)); return () => ouvintes.delete(ouvinte); },
     obterEstado: () => copiar(estado),
     pesquisar(busca) { return carregar({ busca, pagina: 1 }); },
@@ -270,6 +319,10 @@ export function criarCrudNavegavel(configuracao) {
   const {
     raiz, titulo, descricao = "", campos, colunas = [], api, filtros = [],
     usarOrdenacao = true,
+    usarArquivamento = Boolean(api?.arquivar || api?.desarquivar),
+    usarExclusao = Boolean(api?.excluir),
+    obterIdentificador = (registro) => registro?.id_manutencao ?? registro?.id,
+    layout = "duas-colunas",
     ordenacoes = [
       { valor: "ATUALIZACAO", rotulo: "Atualização mais recente" },
       { valor: "PRIORIDADE", rotulo: "Prioridade" },
@@ -278,17 +331,21 @@ export function criarCrudNavegavel(configuracao) {
     ],
   } = configuracao;
   if (!(raiz instanceof Element)) throw new TypeError("raiz deve ser um elemento da página.");
+  if (!["duas-colunas", "vertical", "selecao"].includes(layout)) throw new TypeError("Layout do CRUD inválido.");
+  const layoutVertical = layout === "vertical";
+  const layoutSelecao = layout === "selecao";
   const controlador = criarControladorCrud(configuracao);
   const prefixoCampos = `crud-${crypto.randomUUID()}`;
   const idTituloConfirmacao = `${prefixoCampos}-confirmacao-titulo`;
   const idTitulos = `${prefixoCampos}-titulos`;
-  raiz.classList.add("crud-navegavel");
+  raiz.classList.add("crud-navegavel", `crud-navegavel--${layout}`);
   raiz.innerHTML = `
-    <header class="crud-navegavel__cabecalho"><div><h1>${escapar(titulo)}</h1><p>${escapar(descricao)}</p></div><button data-acao="novo" type="button">Novo registro</button></header>
-    <section class="crud-navegavel__consulta" aria-label="Localização e filtros"><label class="crud-navegavel__localizar">Localizar<input data-pesquisa type="search" list="${idTitulos}" autocomplete="off" placeholder="Selecione ou digite parte do título"><datalist id="${idTitulos}" data-titulos></datalist></label><div data-filtros>${filtros.map((filtro) => `<label>${escapar(filtro.rotulo)}<select data-filtro="${escapar(filtro.nome)}"><option value="">Todos</option>${filtro.opcoes.map((opcao) => { const item = typeof opcao === "string" ? { valor: opcao, rotulo: opcao } : opcao; return `<option value="${escapar(item.valor)}">${escapar(item.rotulo)}</option>`; }).join("")}</select></label>`).join("")}${usarOrdenacao ? `<label>Ordenar por<select data-ordenacao>${ordenacoes.map((item) => `<option value="${escapar(item.valor)}">${escapar(item.rotulo)}</option>`).join("")}</select></label>` : ""}<label class="crud-navegavel__arquivados"><input data-arquivados type="checkbox"> Consultar arquivados</label></div></section>
+    <header class="crud-navegavel__cabecalho"><div><h1>${escapar(titulo)}</h1><p>${escapar(descricao)}</p></div>${layoutVertical || layoutSelecao ? "" : '<button data-acao="novo" type="button">Novo registro</button>'}</header>
+    <section class="crud-navegavel__consulta" aria-label="Localização e filtros"><label class="crud-navegavel__localizar">Localizar<input data-pesquisa type="search" list="${idTitulos}" autocomplete="off" placeholder="Selecione ou digite parte do título"><datalist id="${idTitulos}" data-titulos></datalist></label><div data-filtros>${filtros.map((filtro) => `<label>${escapar(filtro.rotulo)}<select data-filtro="${escapar(filtro.nome)}"><option value="">${escapar(filtro.rotuloVazio ?? (filtro.obrigatorio ? `Selecione ${filtro.rotulo.toLocaleLowerCase("pt-BR")}` : "Todos"))}</option>${(filtro.opcoes ?? []).map((opcao) => { const item = typeof opcao === "string" ? { valor: opcao, rotulo: opcao } : opcao; return `<option value="${escapar(item.valor)}" ${item.valor === filtro.valorInicial ? "selected" : ""}>${escapar(item.rotulo)}</option>`; }).join("")}</select></label>`).join("")}${usarOrdenacao ? `<label>Ordenar por<select data-ordenacao>${ordenacoes.map((item) => `<option value="${escapar(item.valor)}">${escapar(item.rotulo)}</option>`).join("")}</select></label>` : ""}${usarArquivamento ? '<label class="crud-navegavel__arquivados"><input data-arquivados type="checkbox"> Consultar arquivados</label>' : ""}</div></section>
     <p class="crud-navegavel__mensagem" aria-live="polite"></p>
-    <div class="crud-navegavel__corpo"><section><table><thead><tr>${colunas.map((item) => `<th>${escapar(item.rotulo)}</th>`).join("")}</tr></thead><tbody data-lista></tbody></table><nav data-paginacao aria-label="Paginação"></nav></section><section data-formulario></section></div>
-    <dialog data-confirmar-arquivamento><h2>Confirmar arquivamento</h2><p>O registro continuará preservado e poderá ser desarquivado.</p><div class="crud-navegavel__acoes"><button data-acao="cancelar-arquivamento" type="button">Cancelar</button><button data-acao="confirmar-arquivamento" type="button">Confirmar arquivamento</button></div></dialog>
+    <div class="crud-navegavel__corpo">${layoutSelecao ? '<section class="crud-navegavel__seletor"><label>Registro<select data-seletor-registro aria-label="Registro"></select></label><output data-contador-registros aria-live="polite">0 registro(s)</output></section>' : `<section><table><thead><tr>${colunas.map((item) => `<th>${escapar(item.rotulo)}</th>`).join("")}</tr></thead><tbody data-lista></tbody></table><nav data-paginacao aria-label="Paginação"></nav></section>`}<section class="crud-navegavel__area-formulario">${layoutVertical || layoutSelecao ? '<div class="crud-navegavel__novo"><button data-acao="novo" type="button">Novo registro</button></div>' : ""}<div data-formulario></div></section></div>
+    ${usarArquivamento ? '<dialog data-confirmar-arquivamento><h2>Confirmar arquivamento</h2><p>O registro continuará preservado e poderá ser desarquivado.</p><div class="crud-navegavel__acoes"><button data-acao="cancelar-arquivamento" type="button">Cancelar</button><button data-acao="confirmar-arquivamento" type="button">Confirmar arquivamento</button></div></dialog>' : ""}
+    ${usarExclusao ? '<dialog data-confirmar-exclusao><h2>Confirmar exclusão</h2><p>O registro será excluído definitivamente. Deseja continuar?</p><div class="crud-navegavel__acoes"><button data-acao="cancelar-exclusao" type="button">Cancelar</button><button data-acao="confirmar-exclusao" type="button">Sim, excluir registro</button></div></dialog>' : ""}
     <dialog data-confirmacao aria-labelledby="${idTituloConfirmacao}"><h2 id="${idTituloConfirmacao}">Confirmar gravação</h2><p>Deseja salvar este registro?</p><div data-resumo></div><p>Nenhum dado será gravado antes da confirmação.</p><div><button data-acao="voltar" type="button">Cancelar</button><button data-acao="confirmar" type="button">Sim, salvar registro</button></div></dialog>
     <dialog data-descarte><h2>Descartar alterações?</h2><p>As alterações não salvas serão perdidas.</p><button data-acao="continuar" type="button">Continuar editando</button><button data-acao="descartar" type="button">Descartar alterações</button></dialog>`;
 
@@ -296,9 +353,12 @@ export function criarCrudNavegavel(configuracao) {
   const formulario = raiz.querySelector("[data-formulario]");
   const mensagem = raiz.querySelector("[aria-live]");
   const paginacao = raiz.querySelector("[data-paginacao]");
+  const seletorRegistro = raiz.querySelector("[data-seletor-registro]");
+  const contadorRegistros = raiz.querySelector("[data-contador-registros]");
   const confirmacao = raiz.querySelector("[data-confirmacao]");
   const descarte = raiz.querySelector("[data-descarte]");
   const confirmarArquivamento = raiz.querySelector("[data-confirmar-arquivamento]");
+  const confirmarExclusao = raiz.querySelector("[data-confirmar-exclusao]");
   const pesquisa = raiz.querySelector("[data-pesquisa]");
   const listaTitulos = raiz.querySelector("[data-titulos]");
   let atrasoPesquisa = null;
@@ -319,9 +379,19 @@ export function criarCrudNavegavel(configuracao) {
 
   function renderizar(estado) {
     mensagem.textContent = estado.mensagem;
-    lista.innerHTML = estado.itens.length ? estado.itens.map((item, indice) => `<tr>${colunas.map((coluna, colunaIndice) => `<td>${colunaIndice === 0 ? `<button type="button" data-item="${indice}">${escapar(item[coluna.campo])}</button>` : escapar(item[coluna.campo])}</td>`).join("")}</tr>`).join("") : `<tr><td colspan="${Math.max(1, colunas.length)}">Nenhum registro encontrado.</td></tr>`;
-    const paginas = Math.max(1, Math.ceil(estado.total / estado.porPagina));
-    paginacao.innerHTML = `<button type="button" data-pagina="${estado.pagina - 1}" ${estado.pagina <= 1 ? "disabled" : ""}>Anterior</button><span>Página ${estado.pagina} de ${paginas} · ${estado.total} registro(s)</span><button type="button" data-pagina="${estado.pagina + 1}" ${estado.pagina >= paginas ? "disabled" : ""}>Próxima</button>`;
+    mensagem.dataset.tipo = estado.falha ? "erro" : (estado.mensagem ? "informacao" : "");
+    if (layoutSelecao) {
+      const selecionado = estado.selecionado ? obterIdentificador(estado.selecionado) : "";
+      seletorRegistro.innerHTML = estado.itens.length
+        ? `<option value="">Selecione um registro</option>${estado.itens.map((item, indice) => `<option value="${indice}" ${obterIdentificador(item) === selecionado ? "selected" : ""}>${escapar(item.titulo)}</option>`).join("")}`
+        : '<option value="">Nenhum registro encontrado</option>';
+      seletorRegistro.disabled = estado.ocupada || estado.itens.length === 0;
+      contadorRegistros.textContent = `${estado.total} registro(s) encontrado(s)`;
+    } else {
+      lista.innerHTML = estado.itens.length ? estado.itens.map((item, indice) => `<tr>${colunas.map((coluna, colunaIndice) => `<td>${colunaIndice === 0 ? `<button type="button" data-item="${indice}">${escapar(item[coluna.campo])}</button>` : escapar(item[coluna.campo])}</td>`).join("")}</tr>`).join("") : `<tr><td colspan="${Math.max(1, colunas.length)}">Nenhum registro encontrado.</td></tr>`;
+      const paginas = Math.max(1, Math.ceil(estado.total / estado.porPagina));
+      paginacao.innerHTML = `<button type="button" data-pagina="${estado.pagina - 1}" ${estado.pagina <= 1 ? "disabled" : ""}>Anterior</button><span>Página ${estado.pagina} de ${paginas} · ${estado.total} registro(s)</span><button type="button" data-pagina="${estado.pagina + 1}" ${estado.pagina >= paginas ? "disabled" : ""}>Próxima</button>`;
+    }
     const editando = [ESTADOS.NOVO, ESTADOS.EDICAO].includes(estado.modo);
     const dados = editando ? estado.rascunho : estado.selecionado;
     const identidadeFormulario = [
@@ -334,18 +404,25 @@ export function criarCrudNavegavel(configuracao) {
       if (!dados) {
         formulario.innerHTML = "<p>Selecione um registro ou escolha Novo registro.</p>";
       } else {
-        const acaoArquivo = dados.arquivado_em ? '<button data-acao="desarquivar" type="button">Desarquivar</button>' : '<button data-acao="arquivar" type="button">Arquivar</button>';
-        formulario.innerHTML = `<form><fieldset ${editando ? "" : "disabled"}>${campos.map((campo) => controleCampo(campo, dados[campo.nome], estado.erros[campo.nome], !editando, prefixoCampos)).join("")}</fieldset><div class="crud-navegavel__acoes">${editando ? '<button data-acao="cancelar" type="button">Cancelar</button><button data-acao="conferir" type="button">Salvar registro</button>' : `<button data-acao="editar" type="button">Editar</button>${acaoArquivo}`}</div></form>`;
+        const acaoArquivo = usarArquivamento
+          ? (dados.arquivado_em ? '<button data-acao="desarquivar" type="button">Desarquivar</button>' : '<button data-acao="arquivar" type="button">Arquivar</button>')
+          : "";
+        const acaoExclusao = usarExclusao ? '<button data-acao="excluir" type="button">Excluir</button>' : "";
+        formulario.innerHTML = `<form><fieldset ${editando ? "" : "disabled"}>${campos.map((campo) => controleCampo(campo, dados[campo.nome], estado.erros[campo.nome], !editando, prefixoCampos)).join("")}</fieldset><div class="crud-navegavel__acoes">${editando ? '<button data-acao="cancelar" type="button">Cancelar</button><button data-acao="conferir" type="button">Salvar registro</button>' : `<button data-acao="editar" type="button">Editar</button>${acaoArquivo}${acaoExclusao}`}</div></form>`;
       }
     }
     if (estado.modo === ESTADOS.CONFERENCIA && !confirmacao.open) {
       confirmacao.querySelector("[data-resumo]").innerHTML = campos.map((campo) => `<p><strong>${escapar(campo.rotulo)}:</strong> ${escapar(estado.rascunho[campo.nome])}</p>`).join("");
       confirmacao.showModal();
     }
-    raiz.querySelector("[data-acao='novo']").disabled = estado.ocupada;
+    const filtroObrigatorioPendente = filtros.some(
+      (filtro) => filtro.obrigatorio && !estado.filtros[filtro.nome],
+    );
+    raiz.querySelector("[data-acao='novo']").disabled = estado.ocupada || filtroObrigatorioPendente;
     formulario.querySelectorAll("button").forEach((botao) => { botao.disabled = estado.ocupada; });
     confirmacao.querySelectorAll("button").forEach((botao) => { botao.disabled = estado.ocupada; });
-    confirmarArquivamento.querySelectorAll("button").forEach((botao) => { botao.disabled = estado.ocupada; });
+    confirmarArquivamento?.querySelectorAll("button").forEach((botao) => { botao.disabled = estado.ocupada; });
+    confirmarExclusao?.querySelectorAll("button").forEach((botao) => { botao.disabled = estado.ocupada; });
   }
 
   raiz.addEventListener("input", (evento) => {
@@ -361,7 +438,12 @@ export function criarCrudNavegavel(configuracao) {
     }
   });
   raiz.addEventListener("change", (evento) => {
-    if (evento.target.matches("[data-filtro]")) {
+    if (evento.target.matches("[data-seletor-registro]")) {
+      const indice = Number(evento.target.value);
+      if (evento.target.value !== "" && controlador.obterEstado().itens[indice]) {
+        controlador.consultar(controlador.obterEstado().itens[indice]);
+      }
+    } else if (evento.target.matches("[data-filtro]")) {
       const valores = Object.fromEntries([...raiz.querySelectorAll("[data-filtro]")].map((item) => [item.dataset.filtro, item.value || null]));
       controlador.carregar({ filtros: valores, pagina: 1 });
       atualizarTitulos();
@@ -403,6 +485,12 @@ export function criarCrudNavegavel(configuracao) {
     if (acao === "confirmar-arquivamento") {
       confirmarArquivamento.close();
       await controlador.definirArquivamento(true);
+    }
+    if (acao === "excluir") confirmarExclusao.showModal();
+    if (acao === "cancelar-exclusao") confirmarExclusao.close();
+    if (acao === "confirmar-exclusao") {
+      confirmarExclusao.close();
+      await controlador.excluir();
     }
   });
   pesquisa.addEventListener("search", (evento) => controlador.pesquisar(evento.target.value));

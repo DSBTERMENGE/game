@@ -54,6 +54,6 @@ test("Chrome serve o Screener oficial em três níveis", async ({ page }) => {
   await expect(page.locator("h1")).toHaveText("Sistema de preparação e aplicação do Screener");
   await expect(page.locator('[aria-current="page"]')).toHaveText("Preparação do Screener");
   await expect(page.locator("#botao-executar-extensivel")).toBeEnabled();
-  await expect(page.locator("#botao-aplicacao-screener")).toBeDisabled();
+  await expect(page.locator("#botao-aplicacao-screener")).toBeEnabled();
   await expect(page.locator("#corpo-validacoes-screener")).toHaveCount(0);
 });

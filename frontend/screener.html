@@ -16,8 +16,7 @@
       <details class="navegacao-menu">
         <summary>Cadastros</summary>
         <nav aria-label="Cadastros">
-          <a href="/cadastros.html">Visão geral</a>
-          <a href="/grupos-padroes.html">Grupos de padrões</a>
+          <a href="/grupos-padroes.html">Grupo</a>
           <a href="/padroes.html">Padrões</a>
         </nav>
       </details>
@@ -50,13 +49,12 @@
           </div>
           <button id="botao-executar-extensivel" type="button">Iniciar teste</button>
         </section>
-        <section class="prototipo-comando prototipo-comando--indisponivel" aria-labelledby="titulo-aplicacao-screener">
+        <section class="prototipo-comando" aria-labelledby="titulo-aplicacao-screener">
           <div>
             <h2 id="titulo-aplicacao-screener">Aplicação do Screener</h2>
-            <p>Analisará todas as 50.063.860 combinações depois da validação do progresso e do cancelamento seguro.</p>
+            <p>Analisa todas as 50.063.860 combinações. A operação pode ser demorada e pode ser cancelada.</p>
           </div>
-          <button id="botao-aplicacao-screener" type="button" disabled aria-describedby="estado-aplicacao-screener">Iniciar aplicação</button>
-          <small id="estado-aplicacao-screener">Ainda não disponível.</small>
+          <button id="botao-aplicacao-screener" type="button">Iniciar aplicação</button>
         </section>
         <div class="prototipo-acoes-detalhes">
           <button id="botao-abrir-todos" type="button" disabled>Abrir detalhes</button>
@@ -96,10 +94,11 @@
         <form method="dialog">
           <h2 id="titulo-confirmar-aplicacao-screener">Confirmar Aplicação do Screener</h2>
           <p>O mesmo motor analisará todas as 50.063.860 combinações de seis dezenas.</p>
-          <p>A aplicação integral ainda não está liberada.</p>
+          <p>O processamento pode durar várias horas. O progresso será exibido e o cancelamento descartará os resultados parciais.</p>
+          <p>Deseja realmente iniciar a aplicação integral?</p>
           <div class="dialogo-confirmacao-screener__acoes">
             <button value="cancelar" type="submit">Voltar</button>
-            <button value="confirmar" type="submit" disabled>Confirmar e iniciar aplicação</button>
+            <button id="botao-confirmar-aplicacao-screener" value="confirmar" type="submit">Confirmar e iniciar aplicação</button>
           </div>
         </form>
       </dialog>

@@ -5090,11 +5090,1253 @@ Validação do ajuste: 684 testes Python, 86 testes unitários do frontend, 3
 testes Playwright e o fluxo integrado da API com `k = 1` e `j = 0` numéricos
 foram aprovados.
 
+## Etapa 34 — Clareza da página Distribuições
+
+Objetivo: tornar os limites calculados do estudo visíveis nos gráficos e
+documentar, em linguagem operacional, a leitura da página e a configuração
+das faixas.
+
+### 34.1 — Limites visuais da faixa
+
+**Autorizada e concluída em 14/11/2026.**
+
+- Cada um dos dez gráficos passou a mostrar duas linhas verticais verdes e
+  tracejadas: uma na `Faixa mín.` e outra na `Faixa máx.`.
+- A linha azul tracejada da média e o preenchimento verde-claro da faixa foram
+  preservados, permitindo distinguir centro, limites e região do estudo.
+- Os limites visuais acompanham o método e as margens escolhidos no formulário
+  `Configuração das faixas do estudo`.
+- A geometria foi protegida para manter as linhas dentro da área visível do
+  gráfico quando um limite calculado ultrapassar o mínimo ou o máximo observado.
+
+Validação: 5 testes focados, 163 testes completos do frontend e inspeção no
+navegador conectado à aplicação real. O ensaio com margens 0,5 e 1,5 confirmou
+que a distância superior ficou três vezes maior que a inferior.
+
+Evidência: `MSen/tests/TESTE_ETAPA_34_1.md`.
+
+### 34.2 — Ajuda e exemplos da configuração das faixas
+
+**Autorizada e concluída em 14/11/2026.**
+
+- A Ajuda passou a explicar a finalidade da página e os dez perfis exibidos.
+- Barras observadas, curva normal de referência, linha azul da média, região
+  verde da faixa e linhas verdes dos limites foram identificadas separadamente.
+- `Mín./Máx.` foram diferenciados dos limites calculados `Faixa mín./Faixa
+  máx.`.
+- O formulário `Configuração das faixas do estudo` recebeu explicação campo a
+  campo, incluindo margens assimétricas, prévia, invalidação da prévia após
+  edição, salvamento local, cancelamento e atualização.
+- Os métodos por desvio-padrão e percentual da média receberam fórmulas e
+  exemplos numéricos simétricos e assimétricos.
+- A separação entre estudo visual, banco de dados e Screener ficou explícita.
+
+Validação: 20 testes focados e 164 testes completos do frontend aprovados.
+
+Evidência: `MSen/tests/TESTE_ETAPA_34_2.md`.
+
+### 34.3 — Validação final da página e da Ajuda
+
+**Autorizada e concluída em 14/11/2026.**
+
+- O Chrome conectado à aplicação real carregou 3.069 resultados e os dez
+  gráficos de Distribuições.
+- Foram confirmadas dez linhas inferiores e dez linhas superiores verdes e
+  tracejadas.
+- O método percentual com margens 10% e 20% gerou a prévia dos dez parâmetros,
+  foi salvo apenas no navegador e reapareceu corretamente depois da recarga.
+- A API permaneceu com `ativa_no_screener` falso e não houve gravação no banco.
+- O tópico Distribuições abriu diretamente na Ajuda e exibiu explicações,
+  fórmulas e exemplos da etapa 34.2.
+
+Validação: 1 teste integrado no Chrome e 164 testes completos do frontend,
+todos aprovados.
+
+Evidência: `MSen/tests/TESTE_ETAPA_34_3.md`.
+
+## Etapa 33 — Resumo das ocorrências das dezenas
+
+Objetivo: substituir o resumo lateral antigo por uma apresentação compacta das
+ocorrências das 60 dezenas, organizada em quatro colunas de quinze itens, sem
+alterar o tamanho do painel.
+
+### 33.1 — Eliminar o resumo anterior
+
+**Autorizada e concluída em 14/11/2026.**
+
+Quando somente Dezenas está marcada, o Painel agora substitui qualquer resumo
+de Média espacial, CG1, CG2 ou Quadrantes por um estado próprio denominado
+“Ocorrências das dezenas”. A grade com as 60 frequências ainda não foi criada.
+
+Foram aprovados 29 testes do Painel, a conferência no servidor real e os 157
+testes do frontend. Evidência em `MSen/tests/TESTE_ETAPA_33_1.md`.
+
+### 33.2 — Estrutura das 60 frequências
+
+**Autorizada e concluída em 14/11/2026.**
+
+Foi criada uma única rotina que conta as ocorrências das 60 dezenas e alimenta
+tanto as marcas desenhadas sobre o painel quanto o resumo lateral. O resumo foi
+estruturado em quatro colunas com quinze itens: 01–15, 16–30, 31–45 e 46–60.
+
+No histórico real, os 60 valores somaram 18.414 ocorrências. A inspeção mostrou
+que a estrutura está correta, mas os itens ainda quebram em duas linhas; fonte,
+espaçamento e encaixe pertencem à 33.3. Foram aprovados 33 testes direcionados,
+a conferência no servidor real e os 161 testes do frontend. Evidência em
+`MSen/tests/TESTE_ETAPA_33_2.md`.
+
+### 33.3 — Ajuste visual compacto
+
+**Autorizada e concluída em 14/11/2026.**
+
+O resumo das ocorrências passou a usar números tabulares, fonte e espaçamento
+compactos, quatro colunas de largura uniforme e itens sem quebra de linha. A
+largura externa permaneceu fixa em 13 rem, evitando que a troca dos valores
+desloque os demais blocos do Painel.
+
+No histórico real foram conferidas quatro colunas de quinze itens, sem quebra
+de linha e sem conteúdo cortado. Evidência em
+`MSen/tests/TESTE_ETAPA_33_3.md`.
+
+### 33.4 — Integração e validação
+
+**Autorizada e concluída em 14/11/2026.**
+
+Quando Dezenas é combinada com Média espacial, CG1, CG2 ou Quadrantes, o
+resumo agora preserva os dados analíticos e acrescenta abaixo a tabela das 60
+ocorrências. A lateral mantém a largura fixa e sua altura máxima acompanha a
+grade; quando o conteúdo combinado excede esse espaço, a consulta continua por
+rolagem interna, sem aumentar o Painel.
+
+A validação com todas as camadas confirmou 60 frequências sem corte, largura
+fixa de 208 px e altura equivalente à do mapa. Foram aprovados 33 testes
+direcionados, a conferência no servidor real e a suíte completa do frontend.
+Evidência em `MSen/tests/TESTE_ETAPA_33_4.md`.
+
+### 33.5 — Ajuda
+
+**Autorizada e concluída em 14/11/2026.**
+
+A Ajuda do Painel agora explica a contagem das ocorrências, a matriz visual de
+10 por 10, o gradiente calculado pela proximidade da média histórica e seu
+limite interpretativo. Também documenta as quatro colunas de quinze dezenas, o
+formato `dezena: quantidade`, a combinação com as demais manchas e a rolagem
+interna do resumo.
+
+Foram aprovados 13 testes direcionados, a conferência da página no servidor
+real e a suíte completa do frontend. Evidência em
+`MSen/tests/TESTE_ETAPA_33_5.md`.
+
+**A Etapa 33 está concluída.**
+
+## Etapa 31 — Reorganização e ampliação do Painel
+
+Objetivo: transformar o Painel em uma área de análise visual, separando as
+camadas geométricas existentes e acrescentando Polígono 2, quadrantes, manchas,
+gradientes e resumos históricos sem perder a navegação e a importação atuais.
+
+As subetapas de implementação devem permanecer próximas de oito minutos e
+dependem de autorização individual.
+
+### 31.1 — Especificação e inventário
+
+**Autorizada e concluída em 12/11/2026.**
+
+Foram inventariados a grade cartesiana, os cálculos Python, a API, os dados
+persistidos e as camadas atuais do Painel. Linha Poligonal, fechamento,
+Polígono 1, CG1, Média aritmética e Média espacial já existem e serão
+reutilizados. A mancha atual é construída no navegador, enquanto a geometria é
+consultada sob demanda para o concurso visível.
+
+Ficaram formalizados Polígono 2 e CG2, os quadrantes, o tratamento categórico de
+códigos como `3021`, os gradientes e a divisão futura dos controles em quadros.
+Nenhum código funcional, interface ou banco foi alterado. Evidência em
+`MSen/tests/TESTE_ETAPA_31_1.md`.
+
+### 31.2 — Separação das camadas existentes
+
+**Autorizada e concluída em 12/11/2026.**
+
+A Linha Poligonal passou a ser desenhada como a camada aberta dos cinco
+segmentos. O Polígono 1 passou a ser uma camada fechada completa com seis
+arestas, em substituição ao controle isolado da antiga linha de fechamento.
+As duas camadas possuem opções e cores próprias, podem ser mostradas juntas ou
+separadamente e continuam usando os cálculos geométricos existentes.
+
+A configuração visual passou à versão 2 e converte automaticamente as antigas
+preferências de Linha e Fechamento. Validação: 126 testes unitários do frontend
+e três fluxos Playwright aprovados. Evidência em
+`MSen/tests/TESTE_ETAPA_31_2.md`.
+
+### 31.3 — Primeira fase experimental do Polígono 2
+
+**Autorizada e concluída em 12/11/2026.**
+
+Foi criado um cálculo experimental separado. Para cada dezena, ele ordena as
+ligações por ângulo e conserva as duas que delimitam o maior setor externo. A
+união dessas escolhas informa as arestas restantes, o grau de cada dezena,
+conectividade, cruzamentos e atendimento ao circuito final, sem eliminar
+automaticamente os excedentes.
+
+Nos 3.069 concursos atuais, 379 chegaram diretamente a seis arestas válidas;
+1.540 ficaram com sete, 1.041 com oito e 109 com nove arestas. Os concursos 1,
+2, 6 e 12 ficaram registrados como exemplos para observação posterior. Foram
+aprovados quatro testes novos e 33 testes geométricos existentes. Nenhuma API,
+interface ou tabela foi alterada e
+a consulta histórica não realizou gravações. Evidência em
+`MSen/tests/TESTE_ETAPA_31_3.md`.
+
+### 31.4 — Conclusão do Polígono 2
+
+**Autorizada e concluída em 12/11/2026.**
+
+O diagnóstico experimental mostrou que a simples remoção das arestas excedentes
+não era suficiente: em 180 dos 3.069 concursos, a primeira eliminação já havia
+retirado uma aresta necessária ao circuito final. Por isso, a regra definitiva
+passou a avaliar diretamente todos os circuitos distintos das seis dezenas,
+rejeitar os que possuem cruzamentos e escolher o circuito simples de maior área.
+
+O resultado possui exatamente seis vértices, seis arestas, grau dois em cada
+vértice e um único circuito. A área e o CG2 são calculados com aritmética exata;
+a escolha, o desempate e a orientação são determinísticos. Os 3.069 concursos
+atuais produziram polígonos válidos em consulta somente leitura. Foram aprovados
+42 testes geométricos. Nenhuma API, interface ou tabela foi modificada nesta
+etapa. Evidência em `MSen/tests/TESTE_ETAPA_31_4.md`.
+
+### 31.5 — Quadrantes
+
+**Autorizada e concluída em 12/11/2026.**
+
+A grade foi dividida entre as colunas 05 e 06 e entre as linhas 21–30 e 31–40.
+Cada resultado agora pode ser classificado pelas contagens de Q1, Q2, Q3 e Q4 e
+pelo código categórico correspondente, como `3021`. O resumo histórico calcula
+quantidade e percentual de cada categoria, sem interpretar esse código como um
+número, e calcula média e desvio-padrão populacional separadamente para os
+quatro quadrantes.
+
+Nos 3.069 concursos atuais foram encontradas 80 categorias. As médias de Q1 a
+Q4 foram, respectivamente, 1,501466; 1,472141; 1,537309 e 1,489084. A categoria
+mais frequente foi `2112`, com 182 ocorrências. Os testes dos limites, do código,
+da ordem das dezenas, do resumo e das validações foram aprovados. Nenhuma API,
+interface, tabela ou linha do banco foi alterada. Evidência em
+`MSen/tests/TESTE_ETAPA_31_5.md`.
+
+### 31.6 — Reorganização visual do Painel
+
+**Autorizada e concluída em 12/11/2026.**
+
+Dados e navegação formam um quadro compacto à esquerda, imediatamente acima do
+mapa das dezenas. Voo dos pássaros, Manchas, Ocorrência das dezenas e
+Quadrantes foram retirados desse quadro e organizados na lateral direita,
+aproveitando o espaço livre sem empurrar o mapa para baixo. Os controles
+existentes foram redistribuídos sem mudar seus identificadores ou funcionamento.
+
+Em telas intermediárias e pequenas, a coluna lateral volta a ser empilhada para
+evitar rolagem horizontal. Mapa, cabeçalho do resultado e diálogo de aparência
+foram preservados.
+Foram aprovados 126 testes unitários do frontend e quatro fluxos Chromium.
+Nenhuma API, tabela ou linha do banco foi alterada. Evidência em
+`MSen/tests/TESTE_ETAPA_31_6.md`.
+
+### 31.7 — Voo e camadas geométricas
+
+**Autorizada e concluída em 12/11/2026.**
+
+O quadro Voo dos pássaros recebeu seleções independentes para Média espacial,
+Linha Poligonal, Polígono 1 e Polígono 2. A alteração de qualquer opção redesenha
+o concurso atual e é respeitada durante o Voo. A API geométrica sob demanda
+passou a entregar os seis vértices, a área e o CG2. O navegador desenha o novo
+contorno e seu centro de gravidade, enquanto o resumo vertical distingue Área
+P1, Área P2 e coordenadas do CG2.
+
+Foram aprovados 16 testes Python, 127 testes unitários do frontend e quatro
+fluxos Chromium. Nenhuma tabela ou linha do banco foi alterada. As médias e os
+desvios históricos serão ligados à persistência incremental na validação final,
+sem recalcular todo o histórico a cada abertura. Evidência em
+`MSen/tests/TESTE_ETAPA_31_7.md`.
+
+### 31.8 — Manchas e gradientes
+
+**Autorizada e concluída em 12/11/2026.**
+
+O quadro Manchas recebeu seleções independentes e combináveis para Média
+espacial, CG1, CG2 e Quadrantes. Pontos próximos são agrupados e sua concentração
+controla tamanho, opacidade e uma escala de azul até vermelho. A camada de
+Quadrantes colore as quatro áreas conforme a quantidade histórica de dezenas.
+
+Um contrato compacto fornece somente concurso, CG1 e CG2; Média espacial e
+quadrantes continuam sendo calculados a partir dos resultados já carregados.
+A consulta é somente leitura e reutiliza o cache geométrico. Foram aprovados 12
+testes da API, 128 testes unitários do frontend e o fluxo Chromium de mancha e
+limpeza. Nenhuma tabela ou linha do banco foi alterada. Evidência em
+`MSen/tests/TESTE_ETAPA_31_8.md`.
+
+### 31.9 — Gradiente das dezenas
+
+**Autorizada e concluída em 12/11/2026.**
+
+Esta primeira implementação foi revista pela subetapa 31.9.1, pois havia
+interpretado incorretamente a representação das ocorrências. A evidência da
+implementação inicial permanece em `MSen/tests/TESTE_ETAPA_31_9.md`.
+
+#### 31.9.1 — Correção do gradiente das dezenas
+
+**Autorizada e concluída em 12/11/2026.**
+
+Cada ocorrência voltou a ser representada por um círculo de 2 mm. Os círculos
+ocupam uma matriz 10 × 10 dentro da casa da dezena; a partir da 101ª ocorrência,
+as posições são reutilizadas e os círculos ficam sobrepostos, formando a mancha
+histórica prevista.
+
+A média de ocorrências é calculada entre as 60 dezenas. Quanto menor a distância
+absoluta entre a frequência de uma dezena e essa média, mais escura é sua
+tonalidade; quanto maior a distância, mais clara. O diâmetro não varia com a
+frequência. `Dezenas` passou a ser uma opção do quadro `Manchas`, permitindo sua
+exibição isolada ou combinada.
+
+Dezenas, Média espacial, CG1, CG2 e Quadrantes receberam cores-base distintas,
+preservando a identificação quando as camadas ficam sobrepostas. Foram
+aprovados 129 testes unitários do frontend e o fluxo Chromium de importação,
+desenho e limpeza. Nenhuma API, tabela ou linha do banco foi alterada. Evidência
+em `MSen/tests/TESTE_ETAPA_31_9_1.md`.
+
+#### 31.9.2 — Intensidade da Média espacial
+
+**Autorizada e concluída em 13/11/2026.**
+
+O extremo de maior concentração do gradiente da Média espacial ficou 30% mais
+escuro: sua luminosidade mínima passou de 34% para 24%. O extremo claro foi
+mantido em 82%, e os níveis intermediários continuam sendo interpolados entre
+os dois limites. Dezenas, CG1, CG2 e Quadrantes não foram alterados.
+
+Foram aprovados 129 testes unitários do frontend. Nenhuma API, tabela ou linha
+do banco foi alterada. Evidência em `MSen/tests/TESTE_ETAPA_31_9_2.md`.
+
+#### 31.9.3 — Aplicação visual do gradiente
+
+**Autorizada e concluída em 13/11/2026.**
+
+Foi removida a cor fixa do CSS que substituía as tonalidades calculadas pelo
+JavaScript para a Média espacial. A aplicação real passou a apresentar 36 cores
+e 44 níveis de opacidade no histórico atual, tornando visível a concentração.
+
+O teste do navegador passou a conferir a cor e a opacidade efetivamente
+renderizadas, além dos atributos SVG. Foram aprovados 129 testes unitários do
+frontend, o fluxo Chromium da mancha e a conferência na aplicação real da porta
+5050. Nenhuma API, tabela ou linha do banco foi alterada. Evidência em
+`MSen/tests/TESTE_ETAPA_31_9_3.md`.
+
+#### 31.9.4.1 — Restauração da mancha da Média espacial
+
+**Autorizada e concluída em 14/11/2026.**
+
+A Média espacial voltou ao comportamento anterior comprovado: cada concurso
+produz um círculo de 3 mm em sua coordenada decimal, sem arredondamento para
+passos de 0,25, agrupamento, alteração de raio ou redução de visibilidade. Cor
+laranja e opacidade 0,28 também foram restauradas.
+
+Na aplicação real foram confirmados 3.069 círculos e um único raio. Foram
+aprovados 129 testes unitários do frontend e o fluxo Chromium de importação,
+desenho e limpeza. Dezenas, CG1, CG2, Quadrantes, APIs e banco não foram
+alterados. Evidência em `MSen/tests/TESTE_ETAPA_31_9_4_1.md`.
+
+#### 31.9.4.2A — Contrato matemático da mancha das médias
+
+**Autorizada e concluída em 14/11/2026.**
+
+Foi criado um módulo matemático isolado, ainda não ligado à interface. Ele
+calcula centro médio, distância do centro à origem, distância exata de cada
+ponto ao centro, distância máxima, raios de 20%, 40% e 60% e quantidades nas
+quatro faixas. Coordenadas não são arredondadas, agrupadas ou removidas.
+
+O fator 0,12 permanece como intensidade mínima visível; a intensidade cresce
+linearmente em direção ao centro até duas vezes o fator. Alterar o fator escala
+toda a mancha na mesma proporção. No histórico atual, as quatro faixas contêm
+923, 1.306, 658 e 182 concursos. Foram aprovados cinco testes específicos e os
+134 testes do frontend. Nenhum desenho, API ou dado foi alterado. Evidência em
+`MSen/tests/TESTE_ETAPA_31_9_4_2A.md`.
+
+#### 31.9.4.2B — Função genérica de plotagem das médias
+
+**Autorizada e concluída em 14/11/2026.**
+
+Foi criada uma função isolada para desenhar um círculo SVG a partir da
+coordenada lógica decimal, do diâmetro em milímetros, da cor e da intensidade.
+A função converte a coordenada sem arredondá-la e cria exatamente um círculo
+para cada chamada. Pontos coincidentes continuam sendo registros independentes,
+sem agrupamento ou alteração de tamanho.
+
+O módulo ainda não foi importado pelo Painel; portanto, nenhuma mancha ou outro
+comportamento visual foi migrado nesta subetapa. Foram aprovados quatro testes
+específicos e os 138 testes do frontend. Evidência em
+`MSen/tests/TESTE_ETAPA_31_9_4_2B.md`.
+
+#### 31.9.4.2C — Configuração visual das manchas de médias
+
+**Autorizada e concluída em 14/11/2026.**
+
+A configuração visual passou à versão 3 e recebeu campos independentes para a
+cor da Média espacial, do CG1, do CG2 e dos círculos de referência, além do
+diâmetro dos pontos e do fator de intensidade. Os padrões são, respectivamente,
+marrom, roxo, azul, amarelo, 3 mm e 0,12.
+
+Preferências gravadas nas versões 1 e 2 continuam sendo lidas; os novos campos
+são completados com seus padrões sem apagar as escolhas anteriores. Os valores
+já podem ser editados e salvos no quadro de configuração, mas ainda não foram
+ligados ao desenho das manchas. Foram aprovados três testes específicos, 31
+testes direcionados e os 141 testes do frontend. Evidência em
+`MSen/tests/TESTE_ETAPA_31_9_4_2C.md`.
+
+#### 31.9.4.2D — Cálculo comum das manchas de médias
+
+**Autorizada e concluída em 14/11/2026.**
+
+Foi criada uma preparação comum para Média espacial, CG1 e CG2. A mesma função
+recebe os pontos e os parâmetros visuais de cada camada e retorna centro,
+distância à origem, distância máxima, pontos individuais com intensidade,
+faixas e referências circulares de 20%, 40% e 60%.
+
+Cada coordenada de entrada produz exatamente um ponto de saída, preservando os
+decimais. Pontos coincidentes permanecem separados por seu índice e não são
+agrupados, ampliados ou eliminados. Quadrantes e Dezenas não participam dessa
+função. O cálculo ainda não foi conectado ao desenho do Painel. Foram aprovados
+oito testes específicos e os 144 testes do frontend. Evidência em
+`MSen/tests/TESTE_ETAPA_31_9_4_2D.md`.
+
+#### 31.9.4.2E — Aplicação à mancha da Média espacial
+
+**Autorizada e concluída em 14/11/2026.**
+
+Apenas a Média espacial foi ligada ao cálculo e à plotagem comuns. Cada
+concurso gera um círculo marrom de diâmetro configurável em sua coordenada
+decimal, com intensidade calculada pela distância ao centro e pelo fator da
+configuração. Não há arredondamento, agrupamento nem variação de diâmetro pela
+frequência.
+
+A média das médias recebeu uma marca amarela. Três círculos amarelos finos
+identificam 20%, 40% e 60%, com os percentuais acompanhando suas curvas. O
+resumo lateral informa o centro e as quantidades acumuladas até cada nível.
+CG1, CG2, Quadrantes e Dezenas permaneceram inalterados. Foram aprovados 40
+testes direcionados e os 144 testes do frontend. Evidência em
+`MSen/tests/TESTE_ETAPA_31_9_4_2E.md`.
+
+**Ajuste visual autorizado em 14/11/2026:** a espessura dos círculos de
+referência passou de 1 para 1,5. O resumo deixou de acumular as faixas e passou
+a informar cada parcela com sua frequência `1:N`, em que `N` é o total de
+concursos dividido pela quantidade da faixa e arredondado para o inteiro mais
+próximo. Faixas vazias informam `sem ocorrência`. Foi confirmado por teste que
+0,12 é somente o padrão: o desenho usa o fator salvo pelo usuário. Após o
+ajuste, os 145 testes do frontend foram aprovados.
+
+#### 31.9.4.2F1 — Aplicação do mecanismo comum ao CG1
+
+**Autorizada e concluída em 14/11/2026.**
+
+O CG1 passou a usar a mesma função de preparação e a mesma função de plotagem
+da Média espacial, sem duplicação do algoritmo. Cada coordenada decimal
+disponível produz um ponto roxo individual, com diâmetro e fator de intensidade
+lidos da configuração salva. Coincidências não são agrupadas.
+
+O CG1 recebeu centro e referências amarelas de 20%, 40% e 60%, além de resumo
+próprio com as parcelas e frequências `1:N`. As referências usam uma classe
+comum e o atributo `data-mancha` para identificar sua origem. O CG2 permaneceu
+no mecanismo anterior. Foram aprovados 41 testes direcionados e os 145 testes
+do frontend. Evidência em `MSen/tests/TESTE_ETAPA_31_9_4_2F1.md`.
+
+#### 31.9.4.2F2 — Inspeção visual do CG1
+
+**Autorizada e concluída em 14/11/2026.**
+
+O Painel real da porta 5050 foi aberto no Chrome com somente o CG1 ativo. Foram
+confirmados 3.069 pontos roxos, um único diâmetro, intensidades iniciando no
+fator 0,12 salvo, centro amarelo, três referências e o resumo das quatro
+parcelas: 886, 1.359, 638 e 186, com frequências `1:3`, `1:2`, `1:5` e `1:17`.
+
+A captura confirmou distribuição contínua, referências visíveis e estabilidade
+do layout. Nenhum ajuste funcional foi necessário. O servidor isolado da suíte
+integrada não possui o mesmo conjunto geométrico da aplicação real e não foi
+usado como evidência desta inspeção. Evidência em
+`MSen/tests/TESTE_ETAPA_31_9_4_2F2.md`.
+
+#### 31.9.4.2F3 — Aplicação do mecanismo comum ao CG2
+
+**Autorizada e concluída em 14/11/2026.**
+
+O CG2 passou a usar a mesma preparação e a mesma plotagem da Média espacial e
+do CG1. Cada coordenada decimal disponível gera um ponto azul individual, com
+cor, diâmetro e fator de intensidade obtidos da configuração salva. Centro,
+referências amarelas e resumo de faixas também são produzidos pelo mecanismo
+comum.
+
+A antiga rotina exclusiva, que arredondava coordenadas em passos de 0,25,
+agrupava coincidências e variava o raio, foi removida por não possuir mais
+consumidores. Quadrantes e Dezenas permaneceram inalterados. Foram aprovados 41
+testes direcionados e os 145 testes do frontend. Evidência em
+`MSen/tests/TESTE_ETAPA_31_9_4_2F3.md`.
+
+#### 31.9.4.2F4 — Validação da sobreposição das três médias
+
+**Autorizada e concluída em 14/11/2026.**
+
+O Painel real foi inspecionado no Chrome com Média espacial, CG1 e CG2 ativas
+simultaneamente e Dezenas desativadas. Foram confirmados 3.069 pontos de cada
+camada, as três cores configuradas, três centros, nove referências e os três
+resumos sem instabilidade do layout.
+
+Tomando `(4,5; 2,5)` como origem dos eixos dos futuros quadrantes, as distâncias
+dos centros são aproximadamente 0,0033 para Média espacial, 0,0092 para CG1 e
+0,0097 para CG2. A inspeção confirma que as três médias históricas ficam muito
+próximas da origem imaginada. Nenhum código foi alterado nesta validação.
+Evidência em `MSen/tests/TESTE_ETAPA_31_9_4_2F4.md`.
+
+#### 31.9.4.2G — Validação técnica final das três manchas
+
+**Autorizada e concluída em 14/11/2026.**
+
+A auditoria confirmou que Média espacial, CG1 e CG2 usam uma única preparação e
+uma única plotagem, sem arredondamento por 0,25 ou função antiga de agrupamento.
+Configuração v3, migração das versões anteriores, coordenadas decimais, pontos
+coincidentes, intensidades, cores, diâmetro, centros, referências, resumos e
+sobreposição foram revalidados.
+
+Foram aprovados 44 testes direcionados e os 145 testes do frontend. A API real
+foi consultada sem escrita e retornou 3.069 resultados, 3.069 pontos, nenhum CG1
+inválido e nenhum CG2 inválido. O Python global não possui `pytest`, portanto a
+checagem da API foi feita diretamente contra o servidor real, sem instalar ou
+alterar dependências. Evidência em `MSen/tests/TESTE_ETAPA_31_9_4_2G.md`.
+
+#### 31.9.4.2G — Validação técnica final das três manchas
+
+**Autorizada e concluída em 14/11/2026.**
+
+A auditoria confirmou que Média espacial, CG1 e CG2 usam uma única preparação e
+uma única plotagem, sem arredondamento por 0,25 ou função antiga de agrupamento.
+Configuração v3, migração das versões anteriores, coordenadas decimais, pontos
+coincidentes, intensidades, cores, diâmetro, centros, referências, resumos e
+sobreposição foram revalidados.
+
+Foram aprovados 44 testes direcionados e os 145 testes do frontend. A API real
+foi consultada sem escrita e retornou 3.069 resultados, 3.069 pontos, nenhum CG1
+inválido e nenhum CG2 inválido. O Python global não possui `pytest`, portanto a
+checagem da API foi feita diretamente contra o servidor real, sem instalar ou
+alterar dependências. Evidência em `MSen/tests/TESTE_ETAPA_31_9_4_2G.md`.
+
+#### 31.9.4.2F3 — Aplicação do mecanismo comum ao CG2
+
+**Autorizada e concluída em 14/11/2026.**
+
+O CG2 passou a usar a mesma preparação e a mesma plotagem da Média espacial e
+do CG1. Cada coordenada decimal disponível gera um ponto azul individual, com
+cor, diâmetro e fator de intensidade obtidos da configuração salva. Centro,
+referências amarelas e resumo de faixas também são produzidos pelo mecanismo
+comum.
+
+A antiga rotina exclusiva, que arredondava coordenadas em passos de 0,25,
+agrupava coincidências e variava o raio, foi removida por não possuir mais
+consumidores. Quadrantes e Dezenas permaneceram inalterados. Foram aprovados 41
+testes direcionados e os 145 testes do frontend. Evidência em
+`MSen/tests/TESTE_ETAPA_31_9_4_2F3.md`.
+
+#### 31.9.4.2F2 — Inspeção visual do CG1
+
+**Autorizada e concluída em 14/11/2026.**
+
+O Painel real da porta 5050 foi aberto no Chrome com somente o CG1 ativo. Foram
+confirmados 3.069 pontos roxos, um único diâmetro, intensidades iniciando no
+fator 0,12 salvo, centro amarelo, três referências e o resumo das quatro
+parcelas: 886, 1.359, 638 e 186, com frequências `1:3`, `1:2`, `1:5` e `1:17`.
+
+A captura confirmou distribuição contínua, referências visíveis e estabilidade
+do layout. Nenhum ajuste funcional foi necessário. O servidor isolado da suíte
+integrada não possui o mesmo conjunto geométrico da aplicação real e não foi
+usado como evidência desta inspeção. Evidência em
+`MSen/tests/TESTE_ETAPA_31_9_4_2F2.md`.
+
+#### 31.9.4.2F1 — Aplicação do mecanismo comum ao CG1
+
+**Autorizada e concluída em 14/11/2026.**
+
+O CG1 passou a usar a mesma função de preparação e a mesma função de plotagem
+da Média espacial, sem duplicação do algoritmo. Cada coordenada decimal
+disponível produz um ponto roxo individual, com diâmetro e fator de intensidade
+lidos da configuração salva. Coincidências não são agrupadas.
+
+O CG1 recebeu centro e referências amarelas de 20%, 40% e 60%, além de resumo
+próprio com as parcelas e frequências `1:N`. As referências usam uma classe
+comum e o atributo `data-mancha` para identificar sua origem. O CG2 permaneceu
+no mecanismo anterior. Foram aprovados 41 testes direcionados e os 145 testes
+do frontend. Evidência em `MSen/tests/TESTE_ETAPA_31_9_4_2F1.md`.
+
+**Ajuste visual autorizado em 14/11/2026:** a espessura dos círculos de
+referência passou de 1 para 1,5. O resumo deixou de acumular as faixas e passou
+a informar cada parcela com sua frequência `1:N`, em que `N` é o total de
+concursos dividido pela quantidade da faixa e arredondado para o inteiro mais
+próximo. Faixas vazias informam `sem ocorrência`. Foi confirmado por teste que
+0,12 é somente o padrão: o desenho usa o fator salvo pelo usuário. Após o
+ajuste, os 145 testes do frontend foram aprovados.
+
+#### 31.9.4.2E — Aplicação à mancha da Média espacial
+
+**Autorizada e concluída em 14/11/2026.**
+
+Apenas a Média espacial foi ligada ao cálculo e à plotagem comuns. Cada
+concurso gera um círculo marrom de diâmetro configurável em sua coordenada
+decimal, com intensidade calculada pela distância ao centro e pelo fator da
+configuração. Não há arredondamento, agrupamento nem variação de diâmetro pela
+frequência.
+
+A média das médias recebeu uma marca amarela. Três círculos amarelos finos
+identificam 20%, 40% e 60%, com os percentuais acompanhando suas curvas. O
+resumo lateral informa o centro e as quantidades acumuladas até cada nível.
+CG1, CG2, Quadrantes e Dezenas permaneceram inalterados. Foram aprovados 40
+testes direcionados e os 144 testes do frontend. Evidência em
+`MSen/tests/TESTE_ETAPA_31_9_4_2E.md`.
+
+#### 31.9.4.2D — Cálculo comum das manchas de médias
+
+**Autorizada e concluída em 14/11/2026.**
+
+Foi criada uma preparação comum para Média espacial, CG1 e CG2. A mesma função
+recebe os pontos e os parâmetros visuais de cada camada e retorna centro,
+distância à origem, distância máxima, pontos individuais com intensidade,
+faixas e referências circulares de 20%, 40% e 60%.
+
+Cada coordenada de entrada produz exatamente um ponto de saída, preservando os
+decimais. Pontos coincidentes permanecem separados por seu índice e não são
+agrupados, ampliados ou eliminados. Quadrantes e Dezenas não participam dessa
+função. O cálculo ainda não foi conectado ao desenho do Painel. Foram aprovados
+oito testes específicos e os 144 testes do frontend. Evidência em
+`MSen/tests/TESTE_ETAPA_31_9_4_2D.md`.
+
+#### 31.9.4.2C — Configuração visual das manchas de médias
+
+**Autorizada e concluída em 14/11/2026.**
+
+A configuração visual passou à versão 3 e recebeu campos independentes para a
+cor da Média espacial, do CG1, do CG2 e dos círculos de referência, além do
+diâmetro dos pontos e do fator de intensidade. Os padrões são, respectivamente,
+marrom, roxo, azul, amarelo, 3 mm e 0,12.
+
+Preferências gravadas nas versões 1 e 2 continuam sendo lidas; os novos campos
+são completados com seus padrões sem apagar as escolhas anteriores. Os valores
+já podem ser editados e salvos no quadro de configuração, mas ainda não foram
+ligados ao desenho das manchas. Foram aprovados três testes específicos, 31
+testes direcionados e os 141 testes do frontend. Evidência em
+`MSen/tests/TESTE_ETAPA_31_9_4_2C.md`.
+
+#### 31.9.4.2B — Função genérica de plotagem das médias
+
+**Autorizada e concluída em 14/11/2026.**
+
+Foi criada uma função isolada para desenhar um círculo SVG a partir da
+coordenada lógica decimal, do diâmetro em milímetros, da cor e da intensidade.
+A função converte a coordenada sem arredondá-la e cria exatamente um círculo
+para cada chamada. Pontos coincidentes continuam sendo registros independentes,
+sem agrupamento ou alteração de tamanho.
+
+O módulo ainda não foi importado pelo Painel; portanto, nenhuma mancha ou outro
+comportamento visual foi migrado nesta subetapa. Foram aprovados quatro testes
+específicos e os 138 testes do frontend. Evidência em
+`MSen/tests/TESTE_ETAPA_31_9_4_2B.md`.
+
+### 31.10 — Ajuda do Painel
+
+**Autorizada e concluída em 14/11/2026.**
+
+A Ajuda do Painel foi completada com a distinção entre a visualização de cada
+concurso pelo Voo dos pássaros e o estudo histórico pelas Manchas. Foram
+explicados Média espacial, Linha Poligonal, Polígonos 1 e 2, CG1, CG2, níveis
+de concentração, proporções do resumo e a persistência da configuração visual
+somente após Salvar.
+
+Foram aprovados 14 testes direcionados, a conferência da página no servidor
+real e a suíte completa do frontend. Evidência em
+`MSen/tests/TESTE_ETAPA_31_10.md`.
+
+### 31.11 — Validação final
+
+**Autorizada e concluída em 14/11/2026.**
+
+O Painel foi revalidado no servidor real, sem gravação no banco. Foram
+conferidos os 3.069 resultados, os 3.069 pontos históricos, a geometria
+individual, Polígono 2, CG1, CG2, navegação, Voo dos pássaros, cinco camadas
+das Manchas, resumo combinado, estabilidade do layout, configuração visual e
+Ajuda.
+
+A integração real e os 163 testes do frontend foram aprovados. A suíte Python
+não pôde ser repetida nesta máquina porque o interpretador disponível não
+possui `pytest`; a indisponibilidade foi registrada e não apresentou erro de
+execução na API real. Evidência em `MSen/tests/TESTE_ETAPA_31_11.md`.
+
+**A página Painel está concluída.**
+
+## Etapa 32 — Quadrantes
+
+Objetivo: representar a distribuição histórica das dezenas nos quatro
+quadrantes por meio de eixos ortogonais, quatro quadrados proporcionais,
+classificação por cores e resumo numérico. O cálculo será integral e executado
+em memória antes de desenhar somente os quatro quadrados finais.
+
+### 32.1 — Conferência matemática e histórica
+
+**Autorizada e concluída em 14/11/2026.**
+
+A origem lógica foi fixada em `(4,5; 2,5)`, entre as colunas 5 e 6 e entre as
+linhas 3 e 4. Os intervalos são:
+
+- Q1: 06–10, 16–20 e 26–30;
+- Q2: 01–05, 11–15 e 21–25;
+- Q3: 31–35, 41–45 e 51–55;
+- Q4: 36–40, 46–50 e 56–60.
+
+Nos 3.069 concursos reais foram contadas 18.414 ocorrências, exatamente
+`3.069 × 6`, sem dezena inválida. O resultado foi Q1 = 4.608 (25,024438%),
+Q2 = 4.518 (24,535679%), Q3 = 4.718 (25,621809%) e Q4 = 4.570
+(24,818073%). A referência dinâmica é `18.414 ÷ 4 = 4.603,5`.
+
+Com a regra aprovada, os lados correspondem atualmente a 50,0489%, 49,0714%,
+51,2436% e 49,6361% da extensão disponível, respectivamente. A consulta e a
+contagem completas levaram cerca de 1,54 segundo, incluindo a transferência da
+API. Nenhum dado foi gravado e nenhuma interface foi alterada. Evidência em
+`MSen/tests/TESTE_ETAPA_32_1.md`.
+
+### 32.2 — Função de contagem integral
+
+**Autorizada e concluída em 14/11/2026.**
+
+Foi criado um módulo matemático isolado que classifica cada dezena, valida seis
+dezenas distintas por resultado e retorna quatro contadores, total, referência
+média e percentuais. O módulo aceita tanto o vetor `dezenas` quanto os seis
+campos `res_01` a `res_06`.
+
+A função ainda não foi importada pelo Painel e não desenha nem persiste dados.
+No histórico real reproduziu Q1 = 4.608, Q2 = 4.518, Q3 = 4.718 e Q4 = 4.570,
+total 18.414 e referência 4.603,5. Foram aprovados quatro testes específicos e
+os 149 testes do frontend. Evidência em `MSen/tests/TESTE_ETAPA_32_2.md`.
+
+### 32.3 — Eixos ortogonais
+
+**Autorizada e concluída em 14/11/2026.**
+
+Os eixos são calculados pelas bordas reais das células 05/06 e 21/31, sem
+coordenadas fixas. A linha vertical ocupa o intervalo entre as colunas 5 e 6;
+a horizontal ocupa o intervalo entre as linhas 3 e 4. Ambas atravessam de borda
+a borda o painel das dezenas, em verde, e acompanham suas dimensões reais.
+
+O cálculo também fornece para os quadrados o afastamento aprovado: metade da
+espessura do respectivo eixo mais 2 px. A camada é exibida somente quando
+Quadrantes está marcado e a mancha é desenhada; ao limpar ou voltar à exibição
+de um concurso, ela é removida. Foram aprovados seis testes matemáticos, 34
+testes direcionados, os 151 testes do frontend e a inspeção no Painel real.
+Evidência em `MSen/tests/TESTE_ETAPA_32_3.md`.
+
+### 32.4 — Escala dinâmica e dimensões
+
+**Autorizada e concluída em 14/11/2026.**
+
+Foi criada a função matemática que recebe a contagem integral e a geometria
+real dos eixos. Ela desconta o afastamento de cada borda, escolhe a menor das
+quatro extensões úteis e calcula `referência = total ÷ 4`,
+`passo = extensão disponível ÷ referência ÷ 2` e
+`lado = quantidade × passo`.
+
+No Painel real, a menor extensão útil foi 175,59375 px, a referência foi
+4.603,5 e o passo foi 0,019071766 px por ocorrência. Os lados calculados foram:
+Q1 = 87,882698 px; Q2 = 86,166239 px; Q3 = 89,980592 px; e Q4 = 87,157971 px.
+Foram aprovados oito testes matemáticos, 36 testes direcionados, os 153 testes
+do frontend e a conferência com os 3.069 concursos reais. Nenhum quadrado foi
+desenhado nesta etapa. Evidência em `MSen/tests/TESTE_ETAPA_32_4.md`.
+
+### 32.5 — Desenho dos quatro quadrados
+
+**Autorizada e concluída em 14/11/2026.**
+
+O Painel passou a contar integralmente as dezenas, calcular a escala e desenhar
+exatamente um quadrado em cada quadrante. Q1 cresce para cima e para a direita;
+Q2 para cima e para a esquerda; Q3 para baixo e para a esquerda; Q4 para baixo
+e para a direita. Os vértices internos respeitam o afastamento dos eixos.
+
+Nesta etapa foi aplicada uma aparência cinza neutra e provisória. Classificação,
+cores definitivas e textos pertencem à etapa 32.6. Foram aprovados nove testes
+matemáticos, 37 testes direcionados, os 154 testes do frontend e a inspeção no
+Painel real. Evidência em `MSen/tests/TESTE_ETAPA_32_5.md`.
+
+### 32.6 — Classificação, cores e textos
+
+**Autorizada e concluída em 14/11/2026.**
+
+Os quadrantes são ordenados pela quantidade histórica. O primeiro recebe
+verde-escuro, o segundo verde obtido pela redução de 50% da intensidade do
+primeiro, o terceiro amarelo e o quarto vermelho. Empates recebem a mesma
+posição e a mesma cor, sem desempate artificial.
+
+Cada quadrado apresenta quantidade e percentual com duas casas decimais,
+centralizados em branco. No histórico real: Q3 ficou em primeiro, Q1 em segundo,
+Q4 em terceiro e Q2 em quarto. Foram aprovados dez testes matemáticos, 38 testes
+direcionados, os 155 testes do frontend e a inspeção no Painel real. Evidência
+em `MSen/tests/TESTE_ETAPA_32_6.md`.
+
+### 32.7 — Integração e resumo
+
+**Autorizada e concluída em 14/11/2026.**
+
+O marcador Quadrantes controla eixos, quadrados, textos e resumo como uma única
+camada independente. A camada pode ser sobreposta a Dezenas, Média espacial,
+CG1 e CG2 sem eliminar seus elementos nem seus resumos. Ao desmarcar Quadrantes
+e redesenhar, somente seus próprios elementos são removidos.
+
+O resumo lateral passou a apresentar Q1 a Q4 com quantidade, percentual e
+posição classificatória, preservando abaixo dele os resumos das demais manchas
+marcadas. Foram aprovados 38 testes direcionados, os 155 testes do frontend e a
+integração no Painel real com todas as camadas. Evidência em
+`MSen/tests/TESTE_ETAPA_32_7.md`.
+
+### 32.8 — Validação real
+
+**Autorizada e concluída em 14/11/2026.**
+
+A visualização foi validada com os 3.069 concursos e 18.414 ocorrências reais.
+Foram conferidos contagem, classificação, lados, origem, alinhamento dos eixos,
+redimensionamento, isolamento do marcador e sobreposição das cinco camadas.
+
+No navegador de teste, Quadrantes isolado levou aproximadamente 278 ms e a
+sobreposição completa, aproximadamente 639 ms. Depois da mudança da janela de
+1.280 para 700 px, origem, eixos, quantidades, posições e dimensões permaneceram
+coerentes. Os 155 testes do frontend também foram aprovados. Nenhum defeito foi
+encontrado e nenhum dado foi gravado. Evidência em
+`MSen/tests/TESTE_ETAPA_32_8.md`.
+
+### 32.9 — Ajuda
+
+**Autorizada e concluída em 14/11/2026.**
+
+A Ajuda central do Painel recebeu quatro blocos curtos sobre Quadrantes: origem
+e divisão, significado e dimensão dos quadrados, cores e empates, e operação do
+marcador. O texto explica os intervalos de Q1 a Q4, as três fórmulas da escala,
+a recomposição integral após novos concursos, a ausência de persistência e a
+sobreposição com as demais manchas.
+
+A pesquisa da Ajuda encontra o Painel por “quadrantes” e “Q1 Q2 Q3 Q4”. Foram
+aprovados 12 testes específicos da Ajuda, quatro testes reais de navegador e os
+156 testes do frontend. Evidência em `MSen/tests/TESTE_ETAPA_32_9.md`.
+
+## Etapa 32 — Quadrantes
+
+Objetivo: representar a distribuição histórica das dezenas nos quatro
+quadrantes por meio de eixos ortogonais, quatro quadrados proporcionais,
+classificação por cores e resumo numérico. O cálculo será integral e executado
+em memória antes de desenhar somente os quatro quadrados finais.
+
+### 32.1 — Conferência matemática e histórica
+
+**Autorizada e concluída em 14/11/2026.**
+
+A origem lógica foi fixada em `(4,5; 2,5)`, entre as colunas 5 e 6 e entre as
+linhas 3 e 4. Os intervalos são:
+
+- Q1: 06–10, 16–20 e 26–30;
+- Q2: 01–05, 11–15 e 21–25;
+- Q3: 31–35, 41–45 e 51–55;
+- Q4: 36–40, 46–50 e 56–60.
+
+Nos 3.069 concursos reais foram contadas 18.414 ocorrências, exatamente
+`3.069 × 6`, sem dezena inválida. O resultado foi Q1 = 4.608 (25,024438%),
+Q2 = 4.518 (24,535679%), Q3 = 4.718 (25,621809%) e Q4 = 4.570
+(24,818073%). A referência dinâmica é `18.414 ÷ 4 = 4.603,5`.
+
+Com a regra aprovada, os lados correspondem atualmente a 50,0489%, 49,0714%,
+51,2436% e 49,6361% da extensão disponível, respectivamente. A consulta e a
+contagem completas levaram cerca de 1,54 segundo, incluindo a transferência da
+API. Nenhum dado foi gravado e nenhuma interface foi alterada. Evidência em
+`MSen/tests/TESTE_ETAPA_32_1.md`.
+
+### 32.2 — Função de contagem integral
+
+**Autorizada e concluída em 14/11/2026.**
+
+Foi criado um módulo matemático isolado que classifica cada dezena, valida seis
+dezenas distintas por resultado e retorna quatro contadores, total, referência
+média e percentuais. O módulo aceita tanto o vetor `dezenas` quanto os seis
+campos `res_01` a `res_06`.
+
+A função ainda não foi importada pelo Painel e não desenha nem persiste dados.
+No histórico real reproduziu Q1 = 4.608, Q2 = 4.518, Q3 = 4.718 e Q4 = 4.570,
+total 18.414 e referência 4.603,5. Foram aprovados quatro testes específicos e
+os 149 testes do frontend. Evidência em `MSen/tests/TESTE_ETAPA_32_2.md`.
+
+### 32.3 — Eixos ortogonais
+
+**Autorizada e concluída em 14/11/2026.**
+
+Os eixos são calculados pelas bordas reais das células 05/06 e 21/31, sem
+coordenadas fixas. A linha vertical ocupa o intervalo entre as colunas 5 e 6;
+a horizontal ocupa o intervalo entre as linhas 3 e 4. Ambas atravessam de borda
+a borda o painel das dezenas, em verde, e acompanham suas dimensões reais.
+
+O cálculo também fornece para os quadrados o afastamento aprovado: metade da
+espessura do respectivo eixo mais 2 px. A camada é exibida somente quando
+Quadrantes está marcado e a mancha é desenhada; ao limpar ou voltar à exibição
+de um concurso, ela é removida. Foram aprovados seis testes matemáticos, 34
+testes direcionados, os 151 testes do frontend e a inspeção no Painel real.
+Evidência em `MSen/tests/TESTE_ETAPA_32_3.md`.
+
+### 32.4 — Escala dinâmica e dimensões
+
+**Autorizada e concluída em 14/11/2026.**
+
+Foi criada a função matemática que recebe a contagem integral e a geometria
+real dos eixos. Ela desconta o afastamento de cada borda, escolhe a menor das
+quatro extensões úteis e calcula `referência = total ÷ 4`,
+`passo = extensão disponível ÷ referência ÷ 2` e
+`lado = quantidade × passo`.
+
+No Painel real, a menor extensão útil foi 175,59375 px, a referência foi
+4.603,5 e o passo foi 0,019071766 px por ocorrência. Os lados calculados foram:
+Q1 = 87,882698 px; Q2 = 86,166239 px; Q3 = 89,980592 px; e Q4 = 87,157971 px.
+Foram aprovados oito testes matemáticos, 36 testes direcionados, os 153 testes
+do frontend e a conferência com os 3.069 concursos reais. Nenhum quadrado foi
+desenhado nesta etapa. Evidência em `MSen/tests/TESTE_ETAPA_32_4.md`.
+
+### 32.5 — Desenho dos quatro quadrados
+
+**Autorizada e concluída em 14/11/2026.**
+
+O Painel passou a contar integralmente as dezenas, calcular a escala e desenhar
+exatamente um quadrado em cada quadrante. Q1 cresce para cima e para a direita;
+Q2 para cima e para a esquerda; Q3 para baixo e para a esquerda; Q4 para baixo
+e para a direita. Os vértices internos respeitam o afastamento dos eixos.
+
+Nesta etapa foi aplicada uma aparência cinza neutra e provisória. Classificação,
+cores definitivas e textos pertencem à etapa 32.6. Foram aprovados nove testes
+matemáticos, 37 testes direcionados, os 154 testes do frontend e a inspeção no
+Painel real. Evidência em `MSen/tests/TESTE_ETAPA_32_5.md`.
+
+### 32.6 — Classificação, cores e textos
+
+**Autorizada e concluída em 14/11/2026.**
+
+Os quadrantes são ordenados pela quantidade histórica. O primeiro recebe
+verde-escuro, o segundo verde obtido pela redução de 50% da intensidade do
+primeiro, o terceiro amarelo e o quarto vermelho. Empates recebem a mesma
+posição e a mesma cor, sem desempate artificial.
+
+Cada quadrado apresenta quantidade e percentual com duas casas decimais,
+centralizados em branco. No histórico real: Q3 ficou em primeiro, Q1 em segundo,
+Q4 em terceiro e Q2 em quarto. Foram aprovados dez testes matemáticos, 38 testes
+direcionados, os 155 testes do frontend e a inspeção no Painel real. Evidência
+em `MSen/tests/TESTE_ETAPA_32_6.md`.
+
+### 32.7 — Integração e resumo
+
+**Autorizada e concluída em 14/11/2026.**
+
+O marcador Quadrantes controla eixos, quadrados, textos e resumo como uma única
+camada independente. A camada pode ser sobreposta a Dezenas, Média espacial,
+CG1 e CG2 sem eliminar seus elementos nem seus resumos. Ao desmarcar Quadrantes
+e redesenhar, somente seus próprios elementos são removidos.
+
+O resumo lateral passou a apresentar Q1 a Q4 com quantidade, percentual e
+posição classificatória, preservando abaixo dele os resumos das demais manchas
+marcadas. Foram aprovados 38 testes direcionados, os 155 testes do frontend e a
+integração no Painel real com todas as camadas. Evidência em
+`MSen/tests/TESTE_ETAPA_32_7.md`.
+
+### 32.8 — Validação real
+
+**Autorizada e concluída em 14/11/2026.**
+
+A visualização foi validada com os 3.069 concursos e 18.414 ocorrências reais.
+Foram conferidos contagem, classificação, lados, origem, alinhamento dos eixos,
+redimensionamento, isolamento do marcador e sobreposição das cinco camadas.
+
+No navegador de teste, Quadrantes isolado levou aproximadamente 278 ms e a
+sobreposição completa, aproximadamente 639 ms. Depois da mudança da janela de
+1.280 para 700 px, origem, eixos, quantidades, posições e dimensões permaneceram
+coerentes. Os 155 testes do frontend também foram aprovados. Nenhum defeito foi
+encontrado e nenhum dado foi gravado. Evidência em
+`MSen/tests/TESTE_ETAPA_32_8.md`.
+
+### 32.9 — Ajuda
+
+**Autorizada e concluída em 14/11/2026.**
+
+A Ajuda central do Painel recebeu quatro blocos curtos sobre Quadrantes: origem
+e divisão, significado e dimensão dos quadrados, cores e empates, e operação do
+marcador. O texto explica os intervalos de Q1 a Q4, as três fórmulas da escala,
+a recomposição integral após novos concursos, a ausência de persistência e a
+sobreposição com as demais manchas.
+
+A pesquisa da Ajuda encontra o Painel por “quadrantes” e “Q1 Q2 Q3 Q4”. Foram
+aprovados 12 testes específicos da Ajuda, quatro testes reais de navegador e os
+156 testes do frontend. Evidência em `MSen/tests/TESTE_ETAPA_32_9.md`.
+
+## Etapa 30 — Cadastros de Grupo e Padrões
+
+**Concluída em 12/11/2026.**
+
+Objetivo: eliminar a página intermediária de Cadastros, abrir diretamente os
+formulários de Grupo e Subgrupo pelo submenu e, nas etapas seguintes, adequar
+esses formulários ao padrão de CRUD adotado em Gestão do desenvolvimento sem
+alterar suas regras de negócio.
+
+### 30.1 — Navegação direta e correção do submenu
+
+**Autorizada e concluída em 12/11/2026.**
+
+1. Corrigir o submenu `Cadastros`, que ficava oculto pelo corpo das páginas.
+2. Manter nele somente os acessos diretos `Grupo` e `Subgrupo`.
+3. Abrir o formulário correspondente imediatamente após a escolha.
+4. Retirar da navegação normal a etapa intermediária com dois botões.
+5. Preservar o endereço antigo de Cadastros apenas como redirecionamento para
+   Grupo, evitando quebrar favoritos ou referências existentes.
+6. Não alterar nesta etapa os formulários, APIs ou regras de Grupo e Subgrupo.
+
+Resultado: o submenu passou a ser posicionado em relação ao botão que o abriu,
+acima do conteúdo da página e dentro da largura visível da janela. Todas as
+páginas do menu usam os mesmos acessos diretos. O endereço antigo redireciona
+para Grupo. Passaram 115 testes unitários do frontend e os 11 fluxos principais
+em Chromium. Evidência em `MSen/tests/TESTE_ETAPA_30_1.md`.
+
+### 30.2 — Estrutura reutilizável do CRUD
+
+Analisar os comportamentos comuns dos formulários atuais e do módulo Gestão do
+desenvolvimento, definir a estrutura reutilizável e proteger as regras já
+existentes antes de modificar Grupo ou Subgrupo.
+
+**Autorizada e concluída em 12/11/2026.**
+
+A análise mostrou que o componente `crud-navegavel.js` já concentra estados de
+consulta, inclusão, edição, conferência, gravação e descarte, mas atualmente
+obriga todo cadastro a possuir arquivamento e usa conceitos específicos da
+Gestão do desenvolvimento. Grupo e Subgrupo, por sua vez, duplicam requisições,
+mensagens e ações em tabelas editáveis, porém possuem exclusão definitiva,
+códigos automáticos protegidos e regras próprias que precisam permanecer.
+
+Foi definida a evolução do componente por capacidades configuráveis: pesquisa,
+paginação, edição, exclusão ou arquivamento serão habilitados somente quando o
+cadastro os oferecer. A confirmação de gravação, validação, proteção contra
+perda de alterações, estados de carregamento e tratamento de erros formarão a
+base comum. Campos calculados do Subgrupo continuarão somente para leitura e o
+diagnóstico do perfil histórico continuará fora do CRUD.
+
+As APIs, tabelas e regras de negócio não precisam ser modificadas para essa
+adaptação. A proteção da migração será feita pelos testes existentes das APIs e
+pelos fluxos Chromium de inclusão, edição, exclusão, filtro, transferência entre
+grupos e proteção dos valores calculados. Evidência e contrato de migração em
+`MSen/tests/TESTE_ETAPA_30_2.md`.
+
+### 30.3 — Formulário de Grupo
+
+Aplicar a estrutura aprovada ao cadastro de Grupo, preservando sua lógica,
+validações e integrações. Depende de autorização própria.
+
+#### 30.3.1 — Capacidades opcionais do componente comum
+
+Permitir que o CRUD reutilizável opere sem arquivamento e com exclusão
+definitiva configurável, mantendo inalterado o módulo Gestão do desenvolvimento.
+
+**Autorizada e concluída em 12/11/2026.**
+
+O componente comum passou a aceitar três capacidades distintas: arquivamento,
+exclusão definitiva ou nenhuma delas. A opção é inferida do adaptador e também
+pode ser declarada explicitamente. Arquivamento e exclusão não podem ser
+ativados simultaneamente. Cadastros com exclusão recebem ação e modal próprios;
+cadastros sem arquivamento não exibem sua caixa de consulta nem seus comandos.
+
+Também foi acrescentada a obtenção configurável do identificador do registro,
+necessária para códigos como `PG_NNN` e `PD_NNN`. O fluxo de confirmação da
+gravação, validação posterior à confirmação, proteção do rascunho e tratamento
+de falhas foi preservado. Gestão do desenvolvimento continuou usando
+arquivamento sem alteração de seu adaptador. Passaram 18 testes direcionados e
+os 117 testes unitários do frontend. Evidência em
+`MSen/tests/TESTE_ETAPA_30_3_1.md`.
+
+#### 30.3.2 — Adaptação do cadastro de Grupo
+
+Substituir a edição direta na tabela pelo formulário navegável, com localização,
+consulta, novo registro, edição, confirmação de gravação e confirmação de
+exclusão.
+
+**Autorizada e concluída em 12/11/2026.**
+
+O cadastro de Grupo passou a usar o CRUD navegável comum. A página oferece
+localização pelo nome, lista paginada, consulta, novo registro, edição,
+confirmação antes da gravação, proteção contra descarte acidental e confirmação
+específica antes da exclusão definitiva.
+
+Um adaptador próprio traduz os campos visuais `Nome do grupo` e `Descrição` para
+o contrato existente da API, mantém o código `PG_NNN` como identificador
+protegido e realiza pesquisa e paginação sem exigir alteração no servidor ou no
+banco. As mensagens de conflito e dependência devolvidas pela API são
+preservadas para o usuário. Passaram os testes direcionados do componente, do
+adaptador, da página e da Gestão do desenvolvimento, além dos 120 testes
+unitários do frontend. Evidência em `MSen/tests/TESTE_ETAPA_30_3_2.md`.
+
+#### 30.3.3 — Validação do cadastro de Grupo
+
+Validar inclusão, consulta, alteração, duplicidade, campos obrigatórios,
+cancelamento, exclusão e bloqueio da exclusão de Grupo que possua dependências.
+
+**Autorizada e concluída em 12/11/2026.**
+
+Foi reproduzida a lista vazia observada após a atualização. O componente tentava
+obter `grupo_cod` antes de existir um registro selecionado, interrompendo o
+primeiro carregamento. A obtenção do identificador agora somente ocorre quando
+há seleção, e um teste de regressão protege especificamente essa abertura.
+
+O fluxo em navegador validou carregamento, inclusão, confirmação da gravação,
+edição, exclusão confirmada e recusa da exclusão de Grupo com dependências. A
+API preservou campos obrigatórios, proteção do código, duplicidade e mensagens
+seguras. Passaram 11 testes da API de Grupo, 121 testes unitários do frontend e
+os 11 fluxos principais em Chromium. Nenhum registro foi criado no banco real
+durante a validação. Evidência em `MSen/tests/TESTE_ETAPA_30_3_3.md`.
+
+#### 30.3.4 — Organização vertical e mensagens do cadastro de Grupo
+
+**Autorizada e concluída em 12/11/2026.**
+
+- A lista de registros passou a ocupar toda a largura disponível, com linhas
+  compactas para permitir a consulta de muitos Grupos sem consumo vertical
+  excessivo.
+- A paginação permanece imediatamente abaixo da lista.
+- O botão `Novo registro` foi posicionado abaixo da lista e alinhado à sua
+  margem esquerda.
+- O formulário passou a abrir abaixo desse botão, também alinhado à esquerda,
+  eliminando a antiga divisão lateral da página.
+- Mensagens de erro receberam fonte menor, cor própria e identificação visual.
+  Falhas técnicas internas, como erros JavaScript de propriedade nula, não são
+  mais apresentadas diretamente ao usuário.
+
+Validação: 122 testes unitários do frontend e o fluxo Playwright específico do
+cadastro de Grupo foram aprovados. A suíte completa do navegador não pôde ser
+reiniciada porque a porta de testes 4173 já estava ocupada por outro servidor;
+os testes que chegaram a executar falharam pela disputa da porta, não por
+comportamento do cadastro. Evidência em `MSen/tests/TESTE_ETAPA_30_3_4.md`.
+
+#### 30.3.5 — Consulta padronizada por seleção
+
+**Autorizada e concluída em 12/11/2026.**
+
+O componente CRUD comum recebeu um modo de consulta por seleção. Nesse padrão,
+o campo `Localizar` filtra os nomes, uma caixa apresenta os registros encontrados
+e a escolha de um nome carrega seus dados no formulário. Um contador permanece
+em posição fixa ao lado da caixa. A tabela e a paginação deixam de ser exibidas
+nesse modo, evitando listas extensas na página.
+
+O cadastro de Grupo passou a usar o novo padrão. Inclusão, alteração, confirmação,
+exclusão e mensagens foram preservadas. O adaptador entrega todos os Grupos para
+a caixa de seleção e aplica a pesquisa por trecho do nome. Subgrupo não foi
+alterado. Validação: 122 testes unitários do frontend e o fluxo específico do
+cadastro de Grupo em Chromium foram aprovados. Evidência em
+`MSen/tests/TESTE_ETAPA_30_3_5.md`.
+
+### 30.4 — Formulário de Padrões
+
+Aplicar a estrutura aprovada ao cadastro de Padrões, preservando o vínculo com
+Grupo, suas validações e integrações. Depende de autorização própria.
+
+#### 30.4.1 — Base comum para consulta dependente Grupo → Padrão
+
+**Autorizada e concluída em 12/11/2026.**
+
+O componente CRUD comum passou a aceitar filtros obrigatórios com valor inicial
+e mensagem operacional própria. Enquanto o Grupo obrigatório não estiver
+escolhido, o componente não consulta nem apresenta Padrões. Depois da escolha,
+o código do Grupo integra a consulta e a lista pode ser atualizada imediatamente.
+O mecanismo também impede que a localização sugira Padrões antes da escolha do
+Grupo.
+
+Essa preparação foi feita somente no componente comum. A página atual de Padrões
+permaneceu inalterada nesta subetapa. Validação: 123 testes unitários do frontend
+e o fluxo específico do cadastro de Grupo foram aprovados. Evidência em
+`MSen/tests/TESTE_ETAPA_30_4_1.md`.
+
+#### 30.4.2 — Cadastro de Padrões no padrão CRUD aprovado
+
+**Autorizada e concluída em 12/11/2026.**
+
+A página passou a usar o mesmo CRUD por seleção aprovado em Grupo. O usuário
+escolhe primeiro o Grupo e a caixa de Padrões passa a apresentar somente os
+registros vinculados a ele. A criação e a alteração enviam o `grupo_cod`
+selecionado; o backend continua convertendo esse código no `id_grupo` protegido
+pela chave estrangeira.
+
+O formulário apresenta somente Nome do padrão e Descrição. Inclusão, edição e
+exclusão usam as confirmações do componente comum. A antiga grade e o painel de
+estatísticas deixaram de fazer parte desse cadastro. Validação: 125 testes
+unitários do frontend e três fluxos Playwright específicos foram aprovados.
+Evidência em `MSen/tests/TESTE_ETAPA_30_4_2.md`.
+
+#### 30.4.3 — Validação integrada do vínculo Grupo → Padrão
+
+**Autorizada e concluída em 12/11/2026.**
+
+O fluxo completo do cadastro foi validado com a aplicação Flask e um banco
+PostgreSQL temporário. O teste escolheu um Grupo, criou um Padrão, confirmou no
+banco que o `id_grupo` salvo correspondia ao Grupo escolhido, alterou a
+descrição preservando o vínculo e excluiu o registro temporário.
+
+O banco efetivo do Game não recebeu gravações. O banco isolado foi removido ao
+final. Também foram aprovados os testes de API e repositório de Grupos e
+Padrões. Validação: um fluxo Playwright integrado e 34 testes Python aprovados.
+Evidência em `MSen/tests/TESTE_ETAPA_30_4_3.md`.
+
+#### 30.4.4 — Nomenclatura Padrões na navegação
+
+**Autorizada e concluída em 12/11/2026.**
+
+O submenu `Cadastros` e o item ativo da página passaram a usar o nome `Padrões`
+em todas as barras de navegação. A mudança é de apresentação: nomes físicos do
+banco e o conceito de subgrupo ainda utilizado pela Validação e Auditoria foram
+preservados para não afetar integrações existentes.
+
+Validação: 125 testes unitários do frontend e o fluxo Playwright de navegação
+entre Painel, Grupo e Padrões foram aprovados. Evidência em
+`MSen/tests/TESTE_ETAPA_30_4_4.md`.
+
+### 30.5 — Ajuda e encerramento
+
+Adequar a Ajuda à navegação e aos formulários aprovados e executar a validação
+final da etapa. Depende de autorização própria.
+
+#### 30.5.1 — Ajuda de Grupo e Padrões
+
+**Autorizada e concluída em 12/11/2026.**
+
+A Ajuda passou a descrever o acesso direto pelo submenu, a ordem Grupo →
+Padrões, a localização por seleção ou por parte do nome, as confirmações das
+operações persistentes e o vínculo obrigatório entre cada Padrão e seu Grupo.
+Também esclarece que consultar ou cancelar não altera dados, que o cadastro não
+implementa sozinho uma função do Screener e que os dados estatísticos pertencem
+à Validação e Auditoria.
+
+Foram retiradas as explicações da antiga página intermediária, da grade e do
+perfil estatístico que já não fazem parte desses formulários. Validação: 11
+testes específicos da Ajuda e 126 testes unitários do frontend aprovados.
+Evidência em `MSen/tests/TESTE_ETAPA_30_5_1.md`.
+
+#### 30.5.2 — Validação final e encerramento
+
+**Autorizada e concluída em 12/11/2026.**
+
+A navegação, os cadastros de Grupo e Padrões, o relacionamento `id_grupo`, as
+confirmações e a Ajuda foram revalidados em conjunto. Passaram 126 testes
+unitários do frontend, 34 testes Python de API e repositório, cinco fluxos de
+navegador e um fluxo integrado com aplicação Flask e PostgreSQL temporário.
+
+O teste integrado passou a aguardar explicitamente o término das requisições de
+criação, alteração e exclusão antes de consultar o resultado. O ajuste elimina
+uma condição de corrida do teste e não modifica o comportamento do cadastro.
+O banco efetivo do Game não recebeu gravações. Evidência em
+`MSen/tests/TESTE_ETAPA_30_5_2.md`.
+
 ## Etapa 29 — Preparação do Screener: teste e aplicação
 
-O Teste do Screener e a Aplicação do Screener usarão o mesmo motor. A diferença
-será o limite do laço: 5.000 combinações no teste e todas as 50.063.860
-combinações na aplicação integral. Ambos exigirão confirmação, acompanhamento
+**Concluída em 12/11/2026.**
+
+O Teste do Screener e a Aplicação do Screener usam o mesmo motor. A diferença
+é o limite do laço: 5.000 combinações no teste e todas as 50.063.860
+combinações na aplicação integral. Ambos exigem confirmação, acompanhamento
 do progresso e cancelamento que interrompa o processamento no servidor.
 
 ### 29.1 — Dois comandos e confirmação prévia
@@ -5165,15 +6407,225 @@ confirmação e cancelamento. Evidência em
 Identificar a causa real do bloqueio atual, melhorar a mensagem e validar o
 fluxo completo das 5.000 combinações.
 
+#### 29.4.1 — Diagnóstico do bloqueio
+
+**Autorizada e concluída em 11/11/2026.**
+
+O banco local possuía 3.069 resultados, 10 perfis atualizados e 19 critérios
+aprovados, mas o estado global permanecia desatualizado com o motivo
+`HOMOLOGACAO_CONCLUIDA_AGUARDANDO_COBERTURA`. Não existia um procedimento da
+aplicação para conferir a cobertura e concluir essa liberação.
+
+#### 29.4.2 — Liberação controlada da cobertura
+
+**Autorizada e concluída em 11/11/2026.**
+
+Foi criado o procedimento que aceita somente o estado de homologação concluída,
+repete a conferência de catálogo, assinaturas, critérios, perfis e filtros
+carregados e, somente depois, registra as evidências e libera o estado global.
+Estados diferentes continuam bloqueados e uma alteração concorrente impede a
+gravação. Passaram 24 testes Python direcionados.
+
+#### 29.4.3 — Validação integrada do Teste do Screener
+
+**Autorizada e concluída em 11/11/2026.**
+
+A liberação controlada foi aplicada ao banco local. O estado global passou para
+`TODAS_AS_CONDICOES_CONFIRMADAS`, cobrindo os 3.069 resultados atuais. O motor
+real analisou 5.000 combinações em 4,343 segundos, excluiu 4.586 e aprovou 414,
+com fechamento reconciliado. O endpoint assíncrono respondeu HTTP 202 e chegou
+a `CONCLUIDA`, 100%, sem erro e com os mesmos totais. Sete cenários Chromium
+validaram confirmação, conclusão, falha, bloqueio e cancelamento. A aplicação
+integral permaneceu desabilitada.
+
 ### 29.5 — Preparação e liberação controlada da aplicação integral
 
 Validar iteração por lotes, consumo de memória, progresso, cancelamento e
 proteção contra início acidental antes de habilitar a aplicação integral.
 
+#### 29.5.1 — Auditoria técnica do processamento integral
+
+Mapear pontos que materializam as combinações em memória, dependências do modo
+fixo de 5.000, estimativa de volume e alterações indispensáveis. Esta subetapa
+é somente leitura e não altera código, banco ou interface.
+
+**Autorizada e concluída em 11/11/2026.**
+
+Foram identificados três gargalos: o funil extensível converte o iterador inteiro
+em tupla; os dois funis conservam todas as combinações aprovadas; e o progresso
+é comunicado a cada 25 combinações. A configuração e o gerador também rejeitam
+qualquer limite diferente de 5.000, mesmo já existindo parte do contrato do modo
+integral. A materialização completa pode ultrapassar 4 GiB somente com as
+tuplas, e a frequência atual pode gerar aproximadamente dois milhões de
+atualizações por passagem. A comparação executa uma segunda passagem, portanto
+precisará de um novo iterador. Evidência em
+`MSen/tests/TESTE_ETAPA_29_5_1.md`.
+
+#### 29.5.2 — Iteração contínua e memória limitada
+
+Adaptar o motor para consumir combinações progressivamente, sem converter as
+50.063.860 combinações em tupla ou conservar as aprovadas integralmente na
+memória. Preservar o comportamento atual do teste de 5.000.
+
+**Autorizada e concluída em 11/11/2026.**
+
+Os dois funis agora percorrem o iterador uma única vez e podem conservar somente
+os contadores, sem guardar as combinações aprovadas. A retenção continua ativa
+por padrão para preservar testes e consumidores existentes. O funil extensível
+também confere se o iterador entregou o total declarado. Passaram 21 testes
+Python direcionados. O teste real preservou 5.000 analisadas, 4.586 excluídas,
+414 aprovadas e fechamento correto. Evidência em
+`MSen/tests/TESTE_ETAPA_29_5_2.md`.
+
+#### 29.5.3 — Execução integral no servidor
+
+Adicionar o escopo integral ao gerenciador assíncrono, com contadores
+cumulativos, progresso por lotes, ponto seguro de cancelamento e descarte do
+estado parcial. O endpoint não será ligado ao botão nesta subetapa.
+
+**Autorizada e concluída em 11/11/2026.**
+
+O servidor passou a aceitar o escopo integral somente com a frase técnica de
+confirmação, selecionar um executor separado e informar o universo de
+50.063.860 combinações. O executor usa `itertools.combinations` de modo
+preguiçoso, não guarda as aprovadas e não executa a comparação histórica da
+amostra. O mesmo gerenciador mantém progresso, cancelamento e descarte do
+resultado parcial. O botão integral permaneceu desabilitado. Passaram 36 testes
+Python direcionados; a regressão real preservou 5.000 analisadas, 4.586
+excluídas e 414 aprovadas. Evidência em
+`MSen/tests/TESTE_ETAPA_29_5_3.md`.
+
+#### 29.5.4 — Confirmação e comando da interface
+
+Habilitar o comando integral somente depois das proteções anteriores, com
+confirmação explícita informando 50.063.860 combinações, acompanhamento e
+confirmação adicional para cancelar.
+
+**Autorizada e concluída em 11/11/2026.**
+
+O comando integral foi habilitado e abre uma confirmação que informa o universo
+de 50.063.860 combinações, a possibilidade de várias horas de processamento e
+o descarte dos resultados parciais ao cancelar. Somente a confirmação positiva
+envia o escopo e a frase técnica exigidos pelo servidor. A aplicação reutiliza
+o modal de progresso e a segunda confirmação de cancelamento. Nenhuma execução
+integral foi iniciada. Passaram 114 testes unitários do frontend e 7 cenários
+Chromium direcionados. Evidência em `MSen/tests/TESTE_ETAPA_29_5_4.md`.
+
+**Autorizada e concluída em 11/11/2026.**
+
+O comando integral foi habilitado e abre uma confirmação que informa o universo
+de 50.063.860 combinações, a possibilidade de várias horas de processamento e
+o descarte dos resultados parciais ao cancelar. Somente a confirmação positiva
+envia o escopo e a frase técnica exigidos pelo servidor. A aplicação reutiliza
+o modal de progresso e a segunda confirmação de cancelamento. Nenhuma execução
+integral foi iniciada. Passaram 114 testes unitários do frontend e 7 cenários
+Chromium direcionados. Evidência em `MSen/tests/TESTE_ETAPA_29_5_4.md`.
+
+#### 29.5.5 — Validação limitada e estimativa
+
+Executar volumes progressivos e limitados para conferir equivalência,
+estabilidade da memória, velocidade, progresso e cancelamento sem executar o
+universo completo de 50.063.860 combinações.
+
+**Autorizada e concluída em 11/11/2026.**
+
+O motor e os filtros reais foram validados em prefixos controlados de 10.000,
+20.000 e 50.000 combinações, todos reconciliados. Após o aquecimento, a memória
+residente permaneceu próxima de 71 MiB e o pico do processo foi 72,15 MiB, sem
+crescimento proporcional ao volume. O progresso fechou nos totais informados e
+o cancelamento foi reconhecido após 10.000 itens. A projeção varia entre um
+melhor caso otimista de 0,68 hora e uma referência conservadora de 12,08 horas;
+a estimativa serve como referência técnica para a aplicação integral. Passaram
+36 testes de regressão. A validação limitada não precisou percorrer todo o
+universo. Evidência em `MSen/tests/TESTE_ETAPA_29_5_5.md`.
+
+#### 29.5.6 — Disponibilização da aplicação integral
+
+**Concluída e esclarecida em 12/11/2026.**
+
+A aplicação integral ficou pronta para processar as 50.063.860 combinações com
+o mesmo motor e os mesmos filtros usados no Teste do Screener. O processamento
+usa um iterador contínuo, não conserva a lista completa em memória e mantém
+confirmação prévia, progresso e cancelamento seguro. O botão `Iniciar aplicação`
+é parte intencional da funcionalidade e deve permanecer disponível para o
+usuário disparar o processamento quando considerar oportuno.
+
+#### 29.5.7 — Conferência e encerramento
+
+Conferir reconciliação, totais por filtro, cancelamento, mensagens e ausência
+de persistência indevida. Registrar a evidência sem liberar qualquer outra
+funcionalidade.
+
+**Conferência autorizada em 11/11/2026 e concluída em 12/11/2026.**
+
+Os ensaios limitados foram reconciliados, o cancelamento descartou o resultado
+parcial e não foram encontradas operações de persistência no executor. Foram
+aprovados 36 testes do servidor, 114 testes unitários do frontend e 7 cenários
+Chromium. O botão `Iniciar aplicação`, sua confirmação, o progresso e o
+cancelamento foram reconhecidos como partes corretas da aplicação integral.
+Evidência em `MSen/tests/TESTE_ETAPA_29_5_7.md`.
+
 ### 29.6 — Ajuda e validação final
 
 Consolidar a explicação e os testes de confirmação, progresso, cancelamento,
 resultado concluído e resultado interrompido.
+
+#### 29.6.1 — Correção da documentação técnica
+
+**Autorizada e concluída em 12/11/2026.**
+
+Corrigidos o plano e a evidência da subetapa 29.5.7 para registrar que a
+aplicação integral está pronta e que o botão `Iniciar aplicação` deve permanecer
+disponível. Nenhuma alteração foi feita no código da funcionalidade. A Ajuda ao
+usuário não informará circunstâncias internas da validação.
+
+#### 29.6.2 — Ajuda do usuário
+
+Explicar os dois modos do Screener, a confirmação da aplicação integral, o
+acompanhamento do progresso, o cancelamento e os cuidados durante uma execução
+longa.
+
+**Autorizada e concluída em 12/11/2026.**
+
+A Ajuda central passou a explicar o Teste do Screener com 5.000 combinações e a
+Aplicação do Screener com 50.063.860 combinações, deixando claro que ambos usam
+o mesmo motor. Também descreve confirmação, progresso, duração, cancelamento no
+próximo ponto seguro, descarte das contagens parciais, validação anterior à
+execução e os cuidados para manter computador, servidor e página disponíveis
+durante uma operação longa. Circunstâncias internas dos testes não foram
+incluídas na Ajuda. Passaram 10 testes do conteúdo e 4 cenários Chromium da
+Ajuda; os cenários visuais foram executados na porta livre 4183 porque a porta
+local padrão 4173 já estava ocupada.
+
+#### 29.6.3 — Validação final controlada
+
+Conferir, com testes automatizados, simulados e volumes limitados, botão,
+confirmação, comando, progresso, cancelamento, mensagens, reconciliação e
+ausência de gravação parcial.
+
+**Autorizada e concluída em 12/11/2026.**
+
+O motor e os filtros reais fecharam corretamente em limites de 10.000, 20.000 e
+50.000 combinações, e o cancelamento controlado foi reconhecido após 10.000
+itens sem devolver resultado parcial. Passaram 41 testes Python, 115 testes
+unitários do frontend e 7 cenários Chromium, cobrindo confirmação, comando,
+progresso, conclusão simulada, falha, bloqueios, cancelamento e mensagens. A
+aplicação integral permaneceu disponível e não precisou ser percorrida nesta
+validação. Evidência em `MSen/tests/TESTE_ETAPA_29_6_3.md`.
+
+#### 29.6.4 — Encerramento
+
+Registrar as evidências finais e declarar a preparação e a aplicação do
+Screener prontas para uso.
+
+**Autorizada e concluída em 12/11/2026.**
+
+A Etapa 29 foi encerrada com o Teste do Screener disponível para 5.000
+combinações e a Aplicação do Screener pronta para as 50.063.860 combinações.
+Ambos usam o mesmo motor e possuem confirmação, acompanhamento, duração e
+cancelamento seguro. A execução integral trabalha em fluxo contínuo sem manter
+o universo completo em memória. A Ajuda central foi atualizada e as evidências
+finais foram consolidadas em `MSen/tests/TESTE_ETAPA_29_6_4.md`.
 
 ## Etapa 28 — Ajuda central e fonte oficial de funcionamento
 

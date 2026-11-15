@@ -77,6 +77,18 @@ class FunilScreenerTestCase(unittest.TestCase):
             executar_funil(((1, 2, 3, 4, 5, 6),), (CriterioInvalido(),))
         self.assertEqual("CODIGO_DECISAO_DIVERGENTE", contexto.exception.codigo)
 
+    def test_fluxo_continuo_pode_descartar_as_aprovadas(self):
+        combinacoes = (
+            (1, 2, 3, 4, 5, 6),
+            (2, 3, 4, 5, 6, 7),
+        )
+        relatorio = executar_funil(
+            (item for item in combinacoes), (),
+            total_combinacoes=2, guardar_aprovadas=False,
+        )
+        self.assertEqual(2, relatorio.total_aprovado)
+        self.assertEqual((), relatorio.combinacoes_aprovadas)
+
 
 if __name__ == "__main__":
     unittest.main()

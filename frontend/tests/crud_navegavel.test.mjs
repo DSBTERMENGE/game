@@ -125,6 +125,64 @@ test("arquivamento usa versão e não chama exclusão", async () => {
   assert.equal("excluir" in api, false);
 });
 
+test("exclusão definitiva é opcional e usa o identificador configurado", async () => {
+  const { api, chamadas } = prepararApi();
+  delete api.arquivar;
+  delete api.desarquivar;
+  api.excluir = async (codigo, versao) => {
+    chamadas.push(["excluir", codigo, versao]);
+    return { mensagem: "Excluído." };
+  };
+  const crud = controlador(api, {
+    obterIdentificador: (registro) => registro.grupo_cod,
+  });
+  crud.consultar({ grupo_cod: "PG_007", titulo: "Grupo", descricao: "Texto" });
+  await crud.excluir();
+  assert.deepEqual(chamadas.find(([nome]) => nome === "excluir"), ["excluir", "PG_007", undefined]);
+  assert.equal(crud.obterEstado().mensagem, "Registro excluído.");
+});
+
+test("cadastro pode operar sem arquivamento nem exclusão", async () => {
+  const { api } = prepararApi();
+  delete api.arquivar;
+  delete api.desarquivar;
+  const crud = controlador(api);
+  await crud.carregar();
+  assert.equal(crud.obterEstado().selecionado.titulo, "Um");
+  await assert.rejects(() => crud.definirArquivamento(true), /não utiliza arquivamento/);
+  await assert.rejects(() => crud.excluir(), /não utiliza exclusão definitiva/);
+});
+
+test("identificador próprio não é chamado antes da primeira seleção", async () => {
+  const { api } = prepararApi();
+  const crud = controlador(api, {
+    obterIdentificador(registro) {
+      assert.ok(registro);
+      return registro.id_manutencao;
+    },
+  });
+  await crud.carregar();
+  assert.equal(crud.obterEstado().selecionado.id_manutencao, 1);
+});
+
+test("filtro obrigatório impede consulta até a escolha do registro relacionado", async () => {
+  const { api, chamadas } = prepararApi();
+  const crud = controlador(api, {
+    filtros: [{
+      nome: "grupo_cod", rotulo: "Grupo", obrigatorio: true,
+      opcoes: [{ valor: "PG_001", rotulo: "Sequenciais" }],
+    }],
+  });
+  await crud.carregar();
+  assert.equal(chamadas.some(([nome]) => nome === "listar"), false);
+  assert.equal(crud.obterEstado().total, 0);
+  assert.match(crud.obterEstado().mensagem, /Selecione grupo/);
+
+  await crud.filtrar({ grupo_cod: "PG_001" });
+  assert.equal(chamadas.some(([nome]) => nome === "listar"), true);
+  assert.equal(crud.obterEstado().filtros.grupo_cod, "PG_001");
+});
+
 test("falha preserva rascunho para correção", async () => {
   const { api } = prepararApi();
   api.criar = async () => { throw new Error("Título já utilizado."); };
@@ -139,10 +197,19 @@ test("falha preserva rascunho para correção", async () => {
   assert.match(crud.obterEstado().mensagem, /utilizado/);
 });
 
+test("falha técnica de carregamento recebe mensagem operacional", async () => {
+  const { api } = prepararApi();
+  api.listar = async () => { throw new TypeError("Cannot read properties of null"); };
+  const crud = controlador(api);
+  await crud.carregar();
+  assert.equal(crud.obterEstado().mensagem, "Não foi possível carregar os registros.");
+});
+
 test("contrato rejeita campos repetidos e adaptador incompleto", () => {
   const { api } = prepararApi();
   assert.throws(() => criarControladorCrud({ campos: [campos[0], campos[0]], api }), /repetido/);
   assert.throws(() => criarControladorCrud({ campos, api: {} }), /operação listar/);
+  assert.throws(() => criarControladorCrud({ campos, api, usarExclusao: true }), /arquivamento ou exclusão/);
 });
 
 test("camada visual possui lista, formulário, confirmação e acessibilidade", async () => {
@@ -157,7 +224,9 @@ test("camada visual possui lista, formulário, confirmação e acessibilidade", 
   assert.match(javascript, /Deseja salvar este registro\?/);
   assert.match(javascript, /Sim, salvar registro/);
   assert.match(javascript, /Confirmar arquivamento/);
+  assert.match(javascript, /Confirmar exclusão/);
   assert.match(javascript, /data-filtro/);
+  assert.match(javascript, /filtro\.obrigatorio/);
   assert.match(javascript, /data-ordenacao/);
   assert.match(javascript, />Localizar</);
   assert.match(javascript, /Consultar arquivados/);
@@ -168,6 +237,11 @@ test("camada visual possui lista, formulário, confirmação e acessibilidade", 
   assert.match(css, /crud-navegavel__campo--media/);
   assert.match(css, /crud-navegavel__campo--larga/);
   assert.match(css, /crud-navegavel__campo--total/);
+  assert.match(css, /crud-navegavel--vertical/);
+  assert.match(css, /crud-navegavel--selecao/);
+  assert.match(javascript, /data-seletor-registro/);
+  assert.match(javascript, /data-contador-registros/);
+  assert.match(css, /data-tipo="erro"/);
   assert.match(css, /@media \(max-width: 850px\)/);
   assert.match(css, /prefers-reduced-motion/);
 });

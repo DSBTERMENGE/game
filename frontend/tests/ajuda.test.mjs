@@ -26,6 +26,97 @@ test("busca ignora acentos e encontra títulos, aliases e conteúdo", () => {
   assert.deepEqual(buscarTopicos("assunto inexistente"), []);
 });
 
+test("ajuda do Screener descreve teste, aplicação integral e cancelamento", () => {
+  const topico = topicosAjuda.find((item) => item.id === "pagina-preparacao-screener");
+  const texto = JSON.stringify(topico);
+
+  assert.equal(topico.estado, "confirmado");
+  assert.match(texto, /5\.000 combinações/);
+  assert.match(texto, /50\.063\.860 combinações/);
+  assert.match(texto, /mesmo motor/);
+  assert.match(texto, /segundo ponto seguro|próximo ponto seguro/);
+  assert.match(texto, /servidor da aplicação funcionando/);
+  assert.doesNotMatch(texto, /aplicação integral permanece bloqueada/);
+});
+
+test("ajuda dos cadastros explica Grupo, Padrões e confirmações atuais", () => {
+  const cadastros = JSON.stringify(localizarTopico("pagina-cadastros"));
+  const grupos = JSON.stringify(localizarTopico("pagina-grupos-padroes"));
+  const padroes = JSON.stringify(localizarTopico("pagina-padroes"));
+
+  assert.match(cadastros, /acesso direto|diretamente o formulário/);
+  assert.match(grupos, /Localizar/);
+  assert.match(grupos, /parte de seu nome/);
+  assert.match(padroes, /Escolha primeiro o Grupo/);
+  assert.match(padroes, /somente os registros vinculados/);
+  assert.match(padroes, /confirmação positiva/);
+  assert.match(padroes, /Validação e Auditoria/);
+  assert.doesNotMatch(padroes, /Perfil de padrões|Limite %|Filtro e grade/);
+});
+
+test("ajuda do Painel explica integralmente a camada Quadrantes", () => {
+  const painel = JSON.stringify(localizarTopico("pagina-painel"));
+
+  assert.match(painel, /entre as dezenas 05 e 06/);
+  assert.match(painel, /entre as dezenas 21 e 31/);
+  assert.match(painel, /Q1 é a região superior direita/);
+  assert.match(painel, /referência = total de ocorrências ÷ 4/);
+  assert.match(painel, /lado do quadrado = quantidade do quadrante × passo/);
+  assert.match(painel, /não são gravados no banco/);
+  assert.match(painel, /Verde-escuro identifica a maior quantidade/);
+  assert.match(painel, /mesma posição e a mesma cor/);
+  assert.match(painel, /desmarque Quadrantes/);
+  assert.match(painel, /importar concursos novos/);
+});
+
+test("ajuda do Painel explica ocorrências das dezenas e resumo combinado", () => {
+  const painel = JSON.stringify(localizarTopico("pagina-painel"));
+
+  assert.match(painel, /matriz de 10 por 10/);
+  assert.match(painel, /mais de 100 ocorrências/);
+  assert.match(painel, /proximidade entre a quantidade daquela dezena e a média/);
+  assert.match(painel, /não classifica uma dezena como mais provável/);
+  assert.match(painel, /quatro colunas de quinze itens/);
+  assert.match(painel, /primeira coluna contém 01–15/);
+  assert.match(painel, /formato dezena: quantidade/);
+  assert.match(painel, /resumos dessas análises permanecem acima/);
+  assert.match(painel, /rolagem interna do resumo/);
+});
+
+test("ajuda do Painel diferencia voo, geometria, médias e configuração visual", () => {
+  const painel = JSON.stringify(localizarTopico("pagina-painel"));
+
+  assert.match(painel, /Voo trabalha|Voo dos pássaros apresenta um concurso por vez/);
+  assert.match(painel, /não é a média dos números sorteados/);
+  assert.match(painel, /Linha Poligonal liga as seis dezenas/);
+  assert.match(painel, /Polígono 1 acrescenta o fechamento/);
+  assert.match(painel, /Polígono 2 mostra o contorno fechado sem cruzamentos/);
+  assert.match(painel, /CG1 é o centro de gravidade do Polígono 1/);
+  assert.match(painel, /CG2 é o centro de gravidade do Polígono 2/);
+  assert.match(painel, /referências circulares de 20%, 40% e 60%/);
+  assert.match(painel, /proporção 1:n/);
+  assert.match(painel, /Salvar aplica os valores e os conserva neste navegador/);
+  assert.match(painel, /Fechar sem salvar mantém a última configuração gravada/);
+  assert.match(painel, /não alteram resultados, áreas, centros de gravidade ou dados do banco/);
+});
+
+test("ajuda de Distribuições explica gráficos, faixas, formulário e exemplos", () => {
+  const distribuicoes = JSON.stringify(localizarTopico("pagina-distribuicoes"));
+
+  assert.match(distribuicoes, /barras representam os valores realmente observados/);
+  assert.match(distribuicoes, /linha azul tracejada marca a média histórica/);
+  assert.match(distribuicoes, /duas linhas verdes tracejadas/);
+  assert.match(distribuicoes, /Mín\. e Máx\. são os menores e maiores valores que realmente ocorreram/);
+  assert.match(distribuicoes, /Faixa mín\. e Faixa máx\. são limites calculados/);
+  assert.match(distribuicoes, /margens devem ser iguais ou maiores que zero e podem ser diferentes/);
+  assert.match(distribuicoes, /Faixa mín\. = média − margem inferior × desvio-padrão/);
+  assert.match(distribuicoes, /margem inferior 0,5 e superior 1,5 produzem faixa de 27,5 a 37,5/);
+  assert.match(distribuicoes, /margem inferior 10% e superior 20% produzem faixa de 27 a 36/);
+  assert.match(distribuicoes, /prévia deixa de ser válida e deve ser calculada novamente/);
+  assert.match(distribuicoes, /salvo somente no navegador/);
+  assert.match(distribuicoes, /não ativa nem executa o Screener/);
+});
+
 test("conceitos comprovados possuem fórmulas, linha do tempo e persistência", () => {
   const faixa = localizarTopico("conceito-faixa-k-j");
   assert.ok(faixa.blocos.flatMap((bloco) => bloco.formulas ?? []).some((formula) => formula.includes("j × σ")));

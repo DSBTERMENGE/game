@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
@@ -12,6 +13,8 @@ from msen.screener import (
     FaixaEstatistica,
     FaixaGeometrica,
     FrequenciaPadraoFotografada,
+    CONFIRMACAO_INTEGRAL,
+    TOTAL_COMBINACOES,
     criar_adaptadores_ativos,
     criar_familia_estatistica,
     criar_familia_detectores_raros,
@@ -23,6 +26,7 @@ from msen.screener import (
     executar_funil,
     executar_funil_extensivel,
     gerar_amostra,
+    criar_iterador_combinacoes,
     serializar_quadro_consolidado,
 )
 from msen.screener.configuracao import (
@@ -32,6 +36,7 @@ from msen.screener.configuracao import (
 from msen.padroes import criar_registro_detectores_aprovados
 from msen.services.selecao_padroes import SelecaoPadroesRaros
 from msen.services.homologacao_screener import (
+    confirmar_cobertura_screener_no_banco,
     consultar_homologacao_screener_no_banco, validar_homologacao_screener,
 )
 
@@ -190,12 +195,15 @@ def gerar_quadro_screener_extensivel(
     limite_raridade: Decimal | int | str | None = None,
     informar_progresso: Callable[[str, int, int], None] | None = None,
     cancelado: Callable[[], bool] | None = None,
+    *,
+    processamento_integral: bool = False,
 ) -> dict[str, object]:
-    """Executa exatamente 5.000 combinações e compara com o funil anterior."""
+    """Executa a amostra ou o universo integral sem persistir resultados."""
 
     progresso = informar_progresso or (lambda _etapa, _concluido, _total: None)
     foi_cancelado = cancelado or (lambda: False)
-    progresso("Preparando filtros do Screener", 0, 10_000)
+    total_processamento = TOTAL_COMBINACOES if processamento_integral else 10_000
+    progresso("Preparando filtros do Screener", 0, total_processamento)
     if foi_cancelado():
         raise InterruptedError("Processamento do Screener cancelado.")
     raiz = Path(__file__).resolve().parents[3]
@@ -216,6 +224,13 @@ def gerar_quadro_screener_extensivel(
             "PROTECAO_INTEGRAL_INVALIDA",
             "O novo screener exige amostra de 5.000 e processamento integral bloqueado.",
         )
+    configuracao_execucao = (
+        replace(
+            configuracao, modo="integral",
+            confirmacao_processamento_integral=True,
+        )
+        if processamento_integral else configuracao
+    )
 
     distribuicoes = calcular_distribuicoes_no_banco(
         None, None, 10, "desvio_padrao", Decimal(1), Decimal(1)
@@ -236,8 +251,18 @@ def gerar_quadro_screener_extensivel(
         "GEO_CENTRO_X", "GEO_CENTRO_Y",
         *codigos_padroes_selecionados,
     }
+    estado_homologacao = consultar_homologacao_screener_no_banco()
+    if (
+        not estado_homologacao.atualizado
+        and estado_homologacao.motivo
+        == "HOMOLOGACAO_CONCLUIDA_AGUARDANDO_COBERTURA"
+    ):
+        estado_homologacao = confirmar_cobertura_screener_no_banco(
+            codigos_carregados=codigos_carregados,
+            codigos_padroes_selecionados=codigos_padroes_selecionados,
+        )
     validar_homologacao_screener(
-        consultar_homologacao_screener_no_banco(), codigos_carregados=codigos_carregados,
+        estado_homologacao, codigos_carregados=codigos_carregados,
         codigos_padroes_selecionados=codigos_padroes_selecionados,
     )
     grupos_padroes = _grupos_raros_fotografados(perfil_padroes, selecao_padroes)
@@ -317,25 +342,41 @@ def gerar_quadro_screener_extensivel(
                 for grupo in grupos_padroes
             },
         },
-        modo="amostra",
+        modo="integral" if processamento_integral else "amostra",
         semente=configuracao.semente,
-        limite_combinacoes=configuracao.limite_combinacoes,
+        limite_combinacoes=(
+            TOTAL_COMBINACOES if processamento_integral
+            else configuracao.limite_combinacoes
+        ),
         data_fotografia=date.today(),
     )
     envelope = envelopar_fotografia(fotografia)
-    amostra = gerar_amostra(configuracao)
+    combinacoes = (
+        criar_iterador_combinacoes(
+            configuracao_execucao,
+            confirmacao_integral=CONFIRMACAO_INTEGRAL,
+        )
+        if processamento_integral else gerar_amostra(configuracao_execucao)
+    )
+    total_execucao = TOTAL_COMBINACOES if processamento_integral else 5_000
 
     inicio = perf_counter()
     relatorio_novo = executar_funil_extensivel(
-        amostra,
+        combinacoes,
         familias,
         informar_progresso=lambda concluido, _total: progresso(
-            "Aplicando os filtros atuais", concluido, 10_000
+            "Aplicando os filtros atuais", concluido, total_processamento
         ),
         cancelado=foi_cancelado,
+        total_combinacoes=total_execucao,
+        guardar_aprovadas=not processamento_integral,
+        intervalo_progresso=10_000 if processamento_integral else 25,
     )
     duracao = perf_counter() - inicio
-    quadro = criar_quadro_consolidado(relatorio_novo, tipo_escopo="amostra")
+    quadro = criar_quadro_consolidado(
+        relatorio_novo,
+        tipo_escopo="integral" if processamento_integral else "amostra",
+    )
     dados = serializar_quadro_consolidado(quadro)
     familia_padroes_serializada = next(
         item for item in dados["familias"] if item["codigo"] == "PADROES"
@@ -355,22 +396,34 @@ def gerar_quadro_screener_extensivel(
         ],
     }
 
-    relatorio_anterior = executar_funil(
-        amostra,
-        criar_adaptadores_ativos(configuracao),
-        informar_progresso=lambda concluido, _total: progresso(
-            "Comparando com o resultado anterior", 5_000 + concluido, 10_000
-        ),
-        cancelado=foi_cancelado,
-        total_combinacoes=5_000,
-    )
     dados.update({
         "duracao_segundos": duracao,
         "fotografia": {
             "checksum_sha256": envelope.checksum_sha256,
             "conteudo_json": envelope.conteudo_json,
         },
-        "comparacao": {
+        "protecao": {
+            "limite_combinacoes": total_execucao,
+            "processamento_integral_bloqueado": not processamento_integral,
+            "confirmacao_processamento_integral": processamento_integral,
+        },
+        "aviso": (
+            "Aplicação integral concluída sem persistir combinações."
+            if processamento_integral
+            else "Ensaio experimental de 5.000; processamento integral bloqueado."
+        ),
+    })
+    if not processamento_integral:
+        relatorio_anterior = executar_funil(
+            gerar_amostra(configuracao_execucao),
+            criar_adaptadores_ativos(configuracao),
+            informar_progresso=lambda concluido, _total: progresso(
+                "Comparando com o resultado anterior", 5_000 + concluido, 10_000
+            ),
+            cancelado=foi_cancelado,
+            total_combinacoes=5_000,
+        )
+        dados["comparacao"] = {
             "mesma_amostra": True,
             "semente": configuracao.semente,
             "anterior": {
@@ -390,12 +443,16 @@ def gerar_quadro_screener_extensivel(
                 "com incidência histórica "
                 f"< {format(limite_efetivo, 'f')}%",
             ],
-        },
-        "protecao": {
-            "limite_combinacoes": 5_000,
-            "processamento_integral_bloqueado": True,
-            "confirmacao_processamento_integral": False,
-        },
-        "aviso": "Ensaio experimental de 5.000; processamento integral bloqueado.",
-    })
+        }
     return dados
+
+
+def gerar_quadro_screener_integral(
+    limite_raridade: Decimal | int | str | None = None,
+    informar_progresso: Callable[[str, int, int], None] | None = None,
+    cancelado: Callable[[], bool] | None = None,
+) -> dict[str, object]:
+    return gerar_quadro_screener_extensivel(
+        limite_raridade, informar_progresso, cancelado,
+        processamento_integral=True,
+    )

@@ -69,6 +69,9 @@ class ApiResultadosTestCase(unittest.TestCase):
         )
         self.assertEqual(6, len(analise["vertices"]))
         self.assertEqual(2, len(analise["regioes"]))
+        self.assertEqual(6, len(analise["poligono_2"]["vertices"]))
+        self.assertGreater(float(analise["poligono_2"]["area"]), 0)
+        self.assertIsNotNone(analise["poligono_2"]["centro_gravidade"])
 
     def test_reutiliza_geometria_da_mesma_combinacao(self):
         _analise_geometrica_json.cache_clear()
@@ -79,6 +82,16 @@ class ApiResultadosTestCase(unittest.TestCase):
 
         self.assertIs(primeira, segunda)
         self.assertEqual(1, _analise_geometrica_json.cache_info().hits)
+
+    def test_fornece_pontos_compactos_para_as_manchas(self):
+        item = persistido(1, 1, "01/01/2026", [1, 2, 3, 10, 11, 20])
+        resposta = self._cliente([item]).get("/api/resultados/manchas")
+        self.assertEqual(200, resposta.status_code)
+        corpo = resposta.get_json()
+        self.assertEqual(1, corpo["total"])
+        self.assertEqual(1, corpo["pontos"][0]["numero_ap"])
+        self.assertIsNotNone(corpo["pontos"][0]["centro_gravidade_1"])
+        self.assertIsNotNone(corpo["pontos"][0]["centro_gravidade_2"])
 
     def test_lista_pode_omitir_geometria_para_carga_inicial(self):
         item = persistido(1, 1, "01/01/2026", [1, 2, 3, 10, 11, 20])

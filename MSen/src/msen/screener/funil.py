@@ -65,6 +65,7 @@ def executar_funil(
     informar_progresso: Callable[[int, int], None] | None = None,
     cancelado: Callable[[], bool] | None = None,
     total_combinacoes: int | None = None,
+    guardar_aprovadas: bool = True,
 ) -> RelatorioFunil:
     """Executa critérios em ordem e encerra a combinação na primeira reprovação.
 
@@ -73,12 +74,15 @@ def executar_funil(
     com o total recebido.
     """
 
+    if not isinstance(guardar_aprovadas, bool):
+        raise TypeError("guardar_aprovadas deve ser booleano.")
     criterios_fixos = tuple(criterios)
     codigos = _validar_criterios(criterios_fixos)
     avaliacoes = dict.fromkeys(codigos, 0)
     exclusoes = dict.fromkeys(codigos, 0)
     aprovadas: list[Combinacao] = []
     total = 0
+    total_aprovado = 0
 
     for combinacao in combinacoes:
         if cancelado is not None and cancelado():
@@ -100,7 +104,9 @@ def executar_funil(
                 exclusoes[criterio.codigo] += 1
                 break
         else:
-            aprovadas.append(combinacao)
+            total_aprovado += 1
+            if guardar_aprovadas:
+                aprovadas.append(combinacao)
         if informar_progresso is not None and (
             total % 25 == 0
             or total_combinacoes is not None and total == total_combinacoes
@@ -115,7 +121,7 @@ def executar_funil(
 
     return RelatorioFunil(
         total_recebido=total,
-        total_aprovado=len(aprovadas),
+        total_aprovado=total_aprovado,
         ordem_criterios=codigos,
         avaliacoes_por_criterio=MappingProxyType(avaliacoes),
         exclusoes_por_criterio=MappingProxyType(exclusoes),

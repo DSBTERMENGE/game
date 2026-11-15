@@ -35,7 +35,9 @@ from .perfis_padroes import (
     perfis_padroes_api,
 )
 from .distribuicoes import calcular_distribuicoes_no_banco, distribuicoes_api
-from .screener_extensivel_service import gerar_quadro_screener_extensivel
+from .screener_extensivel_service import (
+    gerar_quadro_screener_extensivel, gerar_quadro_screener_integral,
+)
 from .execucoes_validacao import (
     GerenciadorExecucoesValidacao, execucoes_validacao_api,
 )
@@ -101,6 +103,7 @@ def criar_app(configuracao: Mapping[str, Any] | None = None) -> Flask:
         EXCLUIR_GRUPO_PADRAO=excluir_grupo_padrao_no_banco,
         LISTAR_GRUPOS_PADROES=listar_grupos_padroes_do_banco,
         GERAR_QUADRO_SCREENER=gerar_quadro_screener_extensivel,
+        GERAR_QUADRO_SCREENER_INTEGRAL=gerar_quadro_screener_integral,
         GERENCIADOR_SCREENER=GerenciadorExecucoesScreener(),
         CALCULAR_PERFIL_PADROES=calcular_perfil_no_banco,
         CALCULAR_DISTRIBUICOES=calcular_distribuicoes_no_banco,

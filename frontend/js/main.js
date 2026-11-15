@@ -3,10 +3,21 @@ import {
   carregarConfiguracaoVisual,
   vincularPainelConfiguracao,
 } from "./configuracao-visual.js";
+import { prepararManchaDeMedia } from "./manchas-medias.js";
+import { plotarCirculo } from "./plotagem-manchas.js";
+import { prepararOcorrenciasDasDezenas } from "./ocorrencias-dezenas-painel.js";
+import {
+  calcularDimensoesDosQuadrados,
+  calcularGeometriaDosEixos,
+  calcularRetangulosDosQuadrantes,
+  classificarQuadrantesPorQuantidade,
+  contarQuadrantes,
+} from "./quadrantes-painel.js";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const API_RESULTADOS = "/api/resultados?incluir_geometria=0";
 const API_IMPORTAR = "/api/resultados/importar";
+const API_MANCHAS = "/api/resultados/manchas";
 
 const grade = document.querySelector("#grade-dezenas");
 const mapa = document.querySelector("#mapa-dezenas");
@@ -26,6 +37,15 @@ const tempoVoo = document.querySelector("#tempo-voo");
 const botaoVoo = document.querySelector("#botao-voo");
 const botaoMancha = document.querySelector("#botao-mancha");
 const botaoLimpar = document.querySelector("#botao-limpar");
+const vooMostrarMedia = document.querySelector("#voo-mostrar-media");
+const vooMostrarLinha = document.querySelector("#voo-mostrar-linha");
+const vooMostrarPoligono1 = document.querySelector("#voo-mostrar-poligono-1");
+const vooMostrarPoligono2 = document.querySelector("#voo-mostrar-poligono-2");
+const manchaMostrarDezenas = document.querySelector("#mancha-mostrar-dezenas");
+const manchaMostrarMedia = document.querySelector("#mancha-mostrar-media");
+const manchaMostrarCg1 = document.querySelector("#mancha-mostrar-cg1");
+const manchaMostrarCg2 = document.querySelector("#mancha-mostrar-cg2");
+const manchaMostrarQuadrantes = document.querySelector("#mancha-mostrar-quadrantes");
 
 const estado = {
   resultados: [],
@@ -33,6 +53,8 @@ const estado = {
   vooAtivo: false,
   temporizadorVoo: null,
   configuracaoVisual: carregarConfiguracaoVisual(),
+  pontosManchas: new Map(),
+  visualizacaoMancha: false,
 };
 
 const formatarDezena = (numero) => String(numero).padStart(2, "0");
@@ -58,6 +80,7 @@ function ajustarCamada() {
 }
 
 function limparGrafico() {
+  estado.visualizacaoMancha = false;
   camadaMarcas.replaceChildren();
   jogoNumero.textContent = "—";
   coordenadaMediaSaida.textContent = "Média espacial: —";
@@ -132,6 +155,277 @@ function adicionarTrajeto(pontos, classe, fechado = false) {
   camadaMarcas.append(elemento);
 }
 
+function corDaCamada(matiz, intensidade, luminosidadeMinima = 34) {
+  const limitada = Math.max(0, Math.min(1, intensidade));
+  return `hsl(${matiz} 72% ${Math.round(82 - limitada * (82 - luminosidadeMinima))}%)`;
+}
+
+function desenharReferenciasDaMancha(mancha, destino) {
+  const centroPixel = coordenadaParaPixel(mancha.centro);
+  mancha.referencias.forEach((referencia) => {
+    const extremoPixel = coordenadaParaPixel({
+      x: mancha.centro.x + referencia.raio,
+      y: mancha.centro.y,
+    });
+    const raioPixel = Math.abs(extremoPixel.x - centroPixel.x);
+    const id = `referencia-mancha-${mancha.identificador}-${referencia.percentual}`;
+    const circulo = criarElementoSvg("circle");
+    circulo.setAttribute("id", id);
+    circulo.setAttribute("cx", String(centroPixel.x));
+    circulo.setAttribute("cy", String(centroPixel.y));
+    circulo.setAttribute("r", String(raioPixel));
+    circulo.setAttribute("class", "referencia-mancha-media");
+    circulo.setAttribute("data-mancha", mancha.identificador);
+    circulo.setAttribute("fill", "none");
+    circulo.setAttribute("stroke", referencia.cor);
+    destino.append(circulo);
+
+    const rotulo = criarElementoSvg("text");
+    rotulo.setAttribute("class", "rotulo-referencia-mancha-media");
+    rotulo.setAttribute("data-mancha", mancha.identificador);
+    rotulo.setAttribute("fill", referencia.cor);
+    const percurso = criarElementoSvg("textPath");
+    percurso.setAttribute("href", `#${id}`);
+    percurso.setAttribute("startOffset", "12.5%");
+    percurso.textContent = `${referencia.percentual}%`;
+    rotulo.append(percurso);
+    destino.append(rotulo);
+  });
+}
+
+function desenharManchaDeMediaConfigurada({ identificador, pontos, cor, classePontos, classeCentro }, destino) {
+  const pontosValidos = pontos.filter((ponto) => (
+    Number.isFinite(Number(ponto?.x)) && Number.isFinite(Number(ponto?.y))
+  ));
+  if (pontosValidos.length === 0) return null;
+  const mancha = prepararManchaDeMedia({
+    identificador,
+    pontos: pontosValidos,
+    cor,
+    corReferencias: estado.configuracaoVisual.corReferenciasMancha,
+    diametroMm: estado.configuracaoVisual.diametroPontosMancha,
+    fatorIntensidade: estado.configuracaoVisual.fatorIntensidadeMancha,
+  });
+
+  mancha.pontos.forEach((ponto) => plotarCirculo({
+    destino,
+    coordenada: ponto,
+    converterCoordenada: coordenadaParaPixel,
+    diametroMm: ponto.diametroMm,
+    cor: ponto.cor,
+    intensidade: ponto.intensidade,
+    classe: classePontos,
+  }));
+  plotarCirculo({
+    destino,
+    coordenada: mancha.centro,
+    converterCoordenada: coordenadaParaPixel,
+    diametroMm: mancha.pontos[0].diametroMm,
+    cor: estado.configuracaoVisual.corReferenciasMancha,
+    intensidade: 1,
+    classe: classeCentro,
+  });
+  desenharReferenciasDaMancha(mancha, destino);
+  return mancha;
+}
+
+function desenharManchaDaMediaEspacial(resultados, destino) {
+  return desenharManchaDeMediaConfigurada({
+    identificador: "media-espacial",
+    pontos: resultados.map((resultado) => calcularMediaEspacial(extrairDezenas(resultado))),
+    cor: estado.configuracaoVisual.corMediaEspacial,
+    classePontos: "marca-mancha-media",
+    classeCentro: "centro-mancha-media",
+  }, destino);
+}
+
+function desenharManchaDoCg1(resultados, destino) {
+  return desenharManchaDeMediaConfigurada({
+    identificador: "cg1",
+    pontos: resultados.map((resultado) => (
+      estado.pontosManchas.get(numeroDoResultado(resultado))?.centro_gravidade_1
+      ?? resultado.analise_geometrica?.centro_gravidade
+    )),
+    cor: estado.configuracaoVisual.corCg1,
+    classePontos: "marca-mancha-cg1",
+    classeCentro: "centro-mancha-cg1",
+  }, destino);
+}
+
+function desenharManchaDoCg2(resultados, destino) {
+  return desenharManchaDeMediaConfigurada({
+    identificador: "cg2",
+    pontos: resultados.map((resultado) => (
+      estado.pontosManchas.get(numeroDoResultado(resultado))?.centro_gravidade_2
+      ?? resultado.analise_geometrica?.poligono_2?.centro_gravidade
+    )),
+    cor: estado.configuracaoVisual.corCg2,
+    classePontos: "marca-mancha-cg2",
+    classeCentro: "centro-mancha-cg2",
+  }, destino);
+}
+
+function resumirFaixasDaMedia(mancha, titulo) {
+  const total = mancha.pontos.length;
+  const linhas = mancha.faixas.map((faixa, indice) => {
+    const intervalo = indice === 0
+      ? `Até ${faixa.ate}%`
+      : `De ${faixa.de}% a ${faixa.ate}%`;
+    const frequencia = faixa.quantidade > 0
+      ? `1:${Math.round(total / faixa.quantidade)}`
+      : "sem ocorrência";
+    return `${intervalo}: ${faixa.quantidade} (${frequencia})`;
+  });
+  const centro = mancha.centro;
+  return `${titulo}: (${centro.x.toFixed(2)}; ${centro.y.toFixed(2)})\n${linhas.join("\n")}`;
+}
+
+function resumirQuadrantes({ analise, classificacoes }) {
+  const linhas = analise.quadrantes.map((item) => {
+    const classificacao = classificacoes.get(item.quadrante);
+    const quantidade = item.quantidade.toLocaleString("pt-BR");
+    const percentual = item.percentual.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    return `Q${item.quadrante}: ${quantidade} (${percentual}%) — ${classificacao.posicao}º`;
+  });
+  return `Quadrantes:\n${linhas.join("\n")}`;
+}
+
+function obterGeometriaDosQuadrantes() {
+  return calcularGeometriaDosEixos({
+    mapa: mapa.getBoundingClientRect(),
+    dezena05: document.querySelector("#dezena-05").getBoundingClientRect(),
+    dezena06: document.querySelector("#dezena-06").getBoundingClientRect(),
+    dezena21: document.querySelector("#dezena-21").getBoundingClientRect(),
+    dezena31: document.querySelector("#dezena-31").getBoundingClientRect(),
+  });
+}
+
+function desenharEixosDosQuadrantes(destino, geometria = obterGeometriaDosQuadrantes()) {
+  [
+    ["vertical", geometria.eixoVertical],
+    ["horizontal", geometria.eixoHorizontal],
+  ].forEach(([nome, eixo]) => {
+    const retangulo = criarElementoSvg("rect");
+    [["x", eixo.x], ["y", eixo.y], ["width", eixo.largura], ["height", eixo.altura]].forEach(([atributo, valor]) => {
+      retangulo.setAttribute(atributo, String(valor));
+    });
+    retangulo.setAttribute("class", "eixo-quadrante");
+    retangulo.setAttribute("data-eixo", nome);
+    destino.append(retangulo);
+  });
+  return geometria;
+}
+
+function desenharQuadradosDosQuadrantes(resultados, destino, geometria) {
+  const analise = contarQuadrantes(resultados);
+  const dimensoes = calcularDimensoesDosQuadrados({ analise, geometria });
+  const retangulos = calcularRetangulosDosQuadrantes({ geometria, dimensoes });
+  const classificacoes = new Map(
+    classificarQuadrantesPorQuantidade(analise.quadrantes)
+      .map((item) => [item.quadrante, item]),
+  );
+  retangulos.forEach((dados) => {
+    const classificacao = classificacoes.get(dados.quadrante);
+    const retangulo = criarElementoSvg("rect");
+    [["x", dados.x], ["y", dados.y], ["width", dados.largura], ["height", dados.altura]].forEach(([atributo, valor]) => {
+      retangulo.setAttribute(atributo, String(valor));
+    });
+    retangulo.setAttribute("class", "quadrado-quadrante");
+    retangulo.setAttribute("data-quadrante", String(dados.quadrante));
+    retangulo.setAttribute("data-quantidade", String(dados.quantidade));
+    retangulo.setAttribute("data-posicao", String(classificacao.posicao));
+    retangulo.setAttribute("fill", classificacao.cor);
+    destino.append(retangulo);
+
+    const centroX = dados.x + dados.largura / 2;
+    const centroY = dados.y + dados.altura / 2;
+    [
+      ["quantidade", dados.quantidade.toLocaleString("pt-BR"), centroY - 3],
+      ["percentual", `${classificacao.percentual.toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}%`, centroY + 13],
+    ].forEach(([tipo, conteudo, y]) => {
+      const texto = criarElementoSvg("text");
+      texto.setAttribute("x", String(centroX));
+      texto.setAttribute("y", String(y));
+      texto.setAttribute("class", "rotulo-quadrante");
+      texto.setAttribute("data-quadrante", String(dados.quadrante));
+      texto.setAttribute("data-tipo", tipo);
+      texto.textContent = conteudo;
+      destino.append(texto);
+    });
+  });
+  return { analise, dimensoes, retangulos, classificacoes };
+}
+
+function desenharOcorrenciasDasDezenas(resultados, destino) {
+  const preparacao = prepararOcorrenciasDasDezenas(resultados.map(extrairDezenas));
+  const totais = new Map(preparacao.ocorrencias.map((item) => [item.dezena, item.quantidade]));
+  const media = resultados.reduce((total, resultado) => total + extrairDezenas(resultado).length, 0) / 60;
+  const maiorDistancia = Math.max(
+    1,
+    ...Array.from({ length: 60 }, (_, indice) => Math.abs((totais.get(indice + 1) ?? 0) - media)),
+  );
+  const raio = (2 / 25.4) * 96 / 2;
+
+  totais.forEach((quantidade, numero) => {
+    const proximidade = 1 - Math.abs(quantidade - media) / maiorDistancia;
+    const centro = centroDaDezena(numero);
+    const celula = document.querySelector(`#dezena-${formatarDezena(numero)}`);
+    const inicioX = centro.x - celula.clientWidth / 2 + raio + 2;
+    const inicioY = centro.y - celula.clientHeight / 2 + raio + 2;
+    const passoX = Math.max(0, (celula.clientWidth - 2 * raio - 4) / 9);
+    const passoY = Math.max(0, (celula.clientHeight - 2 * raio - 4) / 9);
+
+    for (let ocorrencia = 0; ocorrencia < quantidade; ocorrencia += 1) {
+      const posicao = ocorrencia % 100;
+      const circulo = criarElementoSvg("circle");
+      circulo.setAttribute("cx", String(inicioX + (posicao % 10) * passoX));
+      circulo.setAttribute("cy", String(inicioY + Math.floor(posicao / 10) * passoY));
+      circulo.setAttribute("r", String(raio));
+      circulo.setAttribute("class", "marca-ocorrencia-dezena");
+      circulo.setAttribute("fill", corDaCamada(138, proximidade));
+      circulo.setAttribute("fill-opacity", "0.38");
+      circulo.setAttribute("data-dezena", String(numero));
+      circulo.setAttribute("data-ocorrencias", String(quantidade));
+      circulo.setAttribute("data-proximidade-media", String(proximidade));
+      destino.append(circulo);
+    }
+  });
+}
+
+function desenharResumoDasOcorrencias(resultados, { substituir = true } = {}) {
+  const preparacao = prepararOcorrenciasDasDezenas(resultados.map(extrairDezenas));
+  if (substituir) resumoGeometricoSaida.replaceChildren();
+
+  const titulo = document.createElement("span");
+  titulo.className = "resumo-ocorrencias-dezenas__titulo";
+  titulo.textContent = "Ocorrências das dezenas";
+  resumoGeometricoSaida.append(titulo);
+
+  const gradeResumo = document.createElement("span");
+  gradeResumo.className = "resumo-ocorrencias-dezenas__grade";
+  preparacao.colunas.forEach((coluna, indice) => {
+    const elementoColuna = document.createElement("span");
+    elementoColuna.className = "resumo-ocorrencias-dezenas__coluna";
+    elementoColuna.dataset.coluna = String(indice + 1);
+    coluna.forEach(({ dezena, quantidade }) => {
+      const item = document.createElement("span");
+      item.className = "resumo-ocorrencias-dezenas__item";
+      item.dataset.dezena = String(dezena);
+      item.dataset.quantidade = String(quantidade);
+      item.textContent = `${formatarDezena(dezena)}: ${quantidade.toLocaleString("pt-BR")}`;
+      elementoColuna.append(item);
+    });
+    gradeResumo.append(elementoColuna);
+  });
+  resumoGeometricoSaida.append(gradeResumo);
+}
+
 function pontoNumerico(ponto) {
   const convertido = { x: Number(ponto?.x), y: Number(ponto?.y) };
   if (!Number.isFinite(convertido.x) || !Number.isFinite(convertido.y)) {
@@ -149,28 +443,47 @@ function desenharAnaliseGeometrica(resultado, dezenas) {
   if (estado.configuracaoVisual.mostrarRegioes) (analise?.regioes ?? []).forEach((regiao) => {
     adicionarTrajeto(regiao.map(pontoNumerico).map(coordenadaParaPixel), "regiao-geometrica", true);
   });
-  if (estado.configuracaoVisual.mostrarLinha) adicionarTrajeto(vertices, "linha-geometrica");
+  if (estado.configuracaoVisual.mostrarLinha && vooMostrarLinha.checked) {
+    adicionarTrajeto(vertices, "linha-geometrica");
+  }
 
-  if (estado.configuracaoVisual.mostrarFechamento) {
-    const fechamento = criarElementoSvg("line");
-    fechamento.setAttribute("x1", String(vertices.at(-1).x));
-    fechamento.setAttribute("y1", String(vertices.at(-1).y));
-    fechamento.setAttribute("x2", String(vertices[0].x));
-    fechamento.setAttribute("y2", String(vertices[0].y));
-    fechamento.setAttribute("class", "fechamento-geometrico");
-    camadaMarcas.append(fechamento);
+  if (estado.configuracaoVisual.mostrarPoligono1 && vooMostrarPoligono1.checked) {
+    adicionarTrajeto(vertices, "poligono-1-geometrico", true);
+  }
+
+  const poligono2 = analise?.poligono_2;
+  if (vooMostrarPoligono2.checked && poligono2) {
+    adicionarTrajeto(
+      poligono2.vertices.map(pontoNumerico).map(coordenadaParaPixel),
+      "poligono-2-geometrico",
+      true,
+    );
   }
 
   const raioVertices = (estado.configuracaoVisual.diametroVertices / 2 / 25.4) * 96;
-  if (estado.configuracaoVisual.mostrarVertices) vertices.forEach((vertice) => adicionarCirculo(
+  if (
+    estado.configuracaoVisual.mostrarVertices
+    && (vooMostrarPoligono1.checked || vooMostrarPoligono2.checked)
+  ) vertices.forEach((vertice) => adicionarCirculo(
     vertice, raioVertices, "vertice-geometrico",
   ));
 
-  if (estado.configuracaoVisual.mostrarCentroGravidade && analise?.centro_gravidade) {
+  if (
+    estado.configuracaoVisual.mostrarCentroGravidade
+    && vooMostrarPoligono1.checked
+    && analise?.centro_gravidade
+  ) {
     adicionarCirculo(
       coordenadaParaPixel(pontoNumerico(analise.centro_gravidade)),
       raioVertices * 1.35,
       "centro-gravidade",
+    );
+  }
+  if (vooMostrarPoligono2.checked && poligono2?.centro_gravidade) {
+    adicionarCirculo(
+      coordenadaParaPixel(pontoNumerico(poligono2.centro_gravidade)),
+      raioVertices * 1.35,
+      "centro-gravidade-2",
     );
   }
 
@@ -178,7 +491,10 @@ function desenharAnaliseGeometrica(resultado, dezenas) {
     const extensao = Number(analise.extensao_aberta).toFixed(3).replace(".", ",");
     const perimetro = Number(analise.perimetro_fechado).toFixed(3).replace(".", ",");
     const area = Number(analise.area_total).toFixed(3).replace(".", ",");
-    resumoGeometricoSaida.textContent = `Extensão: ${extensao} | Perímetro: ${perimetro} | Área: ${area} | Regiões: ${analise.quantidade_regioes}`;
+    const resumoPoligono2 = poligono2
+      ? `\nÁrea P2: ${Number(poligono2.area).toFixed(3).replace(".", ",")}\nCG2: (${Number(poligono2.centro_gravidade.x).toFixed(2)}; ${Number(poligono2.centro_gravidade.y).toFixed(2)})`
+      : "";
+    resumoGeometricoSaida.textContent = `Extensão: ${extensao}\nPerímetro: ${perimetro}\nÁrea P1: ${area}\nRegiões: ${analise.quantidade_regioes}${resumoPoligono2}`;
   } else {
     resumoGeometricoSaida.textContent = "Geometria: medidas ainda não fornecidas";
   }
@@ -211,6 +527,7 @@ function numeroDoResultado(resultado) {
 }
 
 function desenharResultado(resultado, { acumular = false } = {}) {
+  estado.visualizacaoMancha = false;
   const dezenas = extrairDezenas(resultado);
   const media = calcularMediaEspacial(dezenas);
 
@@ -224,7 +541,7 @@ function desenharResultado(resultado, { acumular = false } = {}) {
   if (estado.configuracaoVisual.mostrarResultado) dezenas.forEach((numero) => {
     adicionarCirculo(centroDaDezena(numero), raioResultado, "marca-resultado");
   });
-  if (estado.configuracaoVisual.mostrarMedia) adicionarCirculo(
+  if (estado.configuracaoVisual.mostrarMedia && vooMostrarMedia.checked) adicionarCirculo(
     coordenadaParaPixel(media), Math.max(7, raioResultado * 0.34), "marca-media",
   );
 
@@ -234,50 +551,66 @@ function desenharResultado(resultado, { acumular = false } = {}) {
 }
 
 function desenharMancha(resultados = estado.resultados) {
+  estado.visualizacaoMancha = true;
   interromperVoo(false);
   camadaMarcas.replaceChildren();
   ajustarCamada();
 
-  const diametroTresMilimetros = (3 / 25.4) * 96;
-  const raio = diametroTresMilimetros / 2;
-  const contadores = new Map();
   const fragmento = document.createDocumentFragment();
+  let quadrantesDesenhados = null;
 
-  resultados.forEach((resultado) => {
-    const dezenas = extrairDezenas(resultado);
-    dezenas.forEach((numero) => {
-      const ocorrencia = contadores.get(numero) ?? 0;
-      contadores.set(numero, ocorrencia + 1);
-      const centro = centroDaDezena(numero);
-      const celula = document.querySelector(`#dezena-${formatarDezena(numero)}`);
-      const colunas = Math.max(1, Math.floor((celula.clientWidth - 4) / diametroTresMilimetros));
-      const linhas = Math.max(1, Math.floor((celula.clientHeight - 4) / diametroTresMilimetros));
-      const posicao = ocorrencia % (colunas * linhas);
-      const coluna = posicao % colunas;
-      const linha = Math.floor(posicao / colunas);
-      const inicioX = centro.x - celula.clientWidth / 2 + raio + 2;
-      const inicioY = centro.y - celula.clientHeight / 2 + raio + 2;
-      adicionarCirculo(
-        { x: inicioX + coluna * diametroTresMilimetros, y: inicioY + linha * diametroTresMilimetros },
-        raio,
-        "marca-mancha-resultado",
-        fragmento,
-      );
-    });
-
-    adicionarCirculo(
-      coordenadaParaPixel(calcularMediaEspacial(dezenas)),
-      raio,
-      "marca-mancha-media",
+  if (manchaMostrarQuadrantes.checked) {
+    const geometriaQuadrantes = obterGeometriaDosQuadrantes();
+    quadrantesDesenhados = desenharQuadradosDosQuadrantes(
+      resultados,
       fragmento,
+      geometriaQuadrantes,
     );
-  });
+    desenharEixosDosQuadrantes(fragmento, geometriaQuadrantes);
+  }
+  if (manchaMostrarDezenas.checked) desenharOcorrenciasDasDezenas(resultados, fragmento);
+
+  let manchaMedia = null;
+  let manchaCg1 = null;
+  let manchaCg2 = null;
+  if (manchaMostrarMedia.checked) manchaMedia = desenharManchaDaMediaEspacial(resultados, fragmento);
+  if (manchaMostrarCg1.checked) manchaCg1 = desenharManchaDoCg1(resultados, fragmento);
+  if (manchaMostrarCg2.checked) manchaCg2 = desenharManchaDoCg2(resultados, fragmento);
 
   camadaMarcas.append(fragmento);
 
   jogoNumero.textContent = "Todos";
   coordenadaMediaSaida.textContent = `Mancha: ${resultados.length} resultados`;
+  const resumos = [];
+  if (quadrantesDesenhados) resumos.push(resumirQuadrantes(quadrantesDesenhados));
+  if (manchaMedia) resumos.push(resumirFaixasDaMedia(manchaMedia, "Média das médias"));
+  if (manchaCg1) resumos.push(resumirFaixasDaMedia(manchaCg1, "Média do CG1"));
+  if (manchaCg2) resumos.push(resumirFaixasDaMedia(manchaCg2, "Média do CG2"));
+  if (resumos.length > 0) {
+    resumoGeometricoSaida.textContent = resumos.join("\n\n");
+    if (manchaMostrarDezenas.checked) {
+      desenharResumoDasOcorrencias(resultados, { substituir: false });
+    }
+  } else if (manchaMostrarDezenas.checked) {
+    desenharResumoDasOcorrencias(resultados);
+  } else {
+    resumoGeometricoSaida.textContent = "Geometria: —";
+  }
   informar(`Mancha desenhada com ${resultados.length} resultados.`, "sucesso");
+}
+
+async function prepararEDesenharMancha() {
+  informar("Preparando as manchas históricas...");
+  try {
+    const resposta = await fetch(API_MANCHAS, { headers: { Accept: "application/json" } });
+    if (resposta.ok) {
+      const corpo = await resposta.json();
+      estado.pontosManchas = new Map((corpo.pontos ?? []).map((item) => [item.numero_ap, item]));
+    }
+  } catch (_erro) {
+    // Média espacial, quadrantes e ocorrências continuam disponíveis sem CG1/CG2.
+  }
+  desenharMancha();
 }
 
 function atualizarControles() {
@@ -444,7 +777,12 @@ seletorResultado.addEventListener("change", () => selecionarIndice(Number(seleto
 botaoAnterior.addEventListener("click", () => selecionarIndice(estado.indiceAtual - 1));
 botaoProximo.addEventListener("click", () => selecionarIndice(estado.indiceAtual + 1));
 botaoVoo.addEventListener("click", alternarVoo);
-botaoMancha.addEventListener("click", () => desenharMancha());
+botaoMancha.addEventListener("click", prepararEDesenharMancha);
+[vooMostrarMedia, vooMostrarLinha, vooMostrarPoligono1, vooMostrarPoligono2].forEach((campo) => {
+  campo.addEventListener("change", () => {
+    if (estado.indiceAtual >= 0) desenharResultado(estado.resultados[estado.indiceAtual]);
+  });
+});
 botaoLimpar.addEventListener("click", () => {
   interromperVoo(false);
   limparGrafico();
@@ -452,7 +790,9 @@ botaoLimpar.addEventListener("click", () => {
 });
 window.addEventListener("resize", () => {
   ajustarCamada();
-  if (estado.indiceAtual >= 0) {
+  if (estado.visualizacaoMancha) {
+    desenharMancha();
+  } else if (estado.indiceAtual >= 0) {
     desenharResultado(estado.resultados[estado.indiceAtual]);
   }
 });

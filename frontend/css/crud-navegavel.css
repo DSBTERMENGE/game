@@ -24,6 +24,26 @@
 .crud-navegavel__campo small { color: #a52222; }
 .crud-navegavel__mensagem { min-height: 1.5em; margin: 0; }
 .crud-navegavel__mensagem:empty { display: none; }
+.crud-navegavel__mensagem[data-tipo="erro"] { color: #a52222; font-size: .82rem; font-weight: 650; }
+.crud-navegavel__mensagem[data-tipo="erro"]::before { content: "Erro: "; }
+.crud-navegavel--vertical .crud-navegavel__corpo { grid-template-columns: minmax(0, 1fr); }
+.crud-navegavel--vertical th,
+.crud-navegavel--vertical td { padding: .28rem .45rem; line-height: 1.2; }
+.crud-navegavel--vertical td button { min-height: 1.6rem; padding: .08rem .2rem; }
+.crud-navegavel--vertical .crud-navegavel__area-formulario { display: grid; gap: .65rem; }
+.crud-navegavel--vertical .crud-navegavel__novo { display: flex; justify-content: flex-start; }
+.crud-navegavel--selecao .crud-navegavel__corpo { grid-template-columns: minmax(0, 1fr); }
+.crud-navegavel--selecao .crud-navegavel__seletor {
+  display: grid;
+  grid-template-columns: minmax(18rem, 32rem) 14rem;
+  gap: .75rem;
+  align-items: end;
+}
+.crud-navegavel--selecao .crud-navegavel__seletor label { display: grid; gap: .25rem; }
+.crud-navegavel--selecao .crud-navegavel__seletor select { width: 100%; }
+.crud-navegavel--selecao [data-contador-registros] { min-height: 2.7rem; display: flex; align-items: center; }
+.crud-navegavel--selecao .crud-navegavel__area-formulario { display: grid; gap: .65rem; }
+.crud-navegavel--selecao .crud-navegavel__novo { display: flex; justify-content: flex-start; }
 .crud-navegavel dialog { max-width: min(42rem, calc(100vw - 2rem)); border: 0; border-radius: .5rem; padding: 1.25rem; }
 .crud-navegavel dialog::backdrop { background: rgb(0 0 0 / 45%); }
 @media (max-width: 850px) {
@@ -33,6 +53,7 @@
   .crud-navegavel__localizar { grid-column: auto; }
   .crud-navegavel__campo--curta, .crud-navegavel__campo--media,
   .crud-navegavel__campo--larga, .crud-navegavel__campo--total { grid-column: 1 / -1; }
+  .crud-navegavel--selecao .crud-navegavel__seletor { grid-template-columns: 1fr; }
 }
 @media (max-width: 1450px) and (min-width: 851px) {
   .crud-navegavel__consulta { grid-template-columns: repeat(4, minmax(10rem, 1fr)); }

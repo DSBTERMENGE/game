@@ -236,6 +236,9 @@ def executar_funil_extensivel(
     *,
     informar_progresso: Callable[[int, int], None] | None = None,
     cancelado: Callable[[], bool] | None = None,
+    total_combinacoes: int | None = None,
+    guardar_aprovadas: bool = True,
+    intervalo_progresso: int = 25,
 ) -> RelatorioFunilExtensivel:
     """Executa famílias/filtros em ordem e para na primeira exclusão.
 
@@ -243,18 +246,29 @@ def executar_funil_extensivel(
     e filtros é definida pelo plano recebido, sem colunas ou códigos fixos.
     """
 
+    if total_combinacoes is not None and (
+        isinstance(total_combinacoes, bool)
+        or not isinstance(total_combinacoes, int)
+        or total_combinacoes < 0
+    ):
+        raise TypeError("total_combinacoes deve ser inteiro não negativo ou nulo.")
+    if not isinstance(guardar_aprovadas, bool):
+        raise TypeError("guardar_aprovadas deve ser booleano.")
+    if isinstance(intervalo_progresso, bool) or not isinstance(intervalo_progresso, int) or intervalo_progresso < 1:
+        raise TypeError("intervalo_progresso deve ser inteiro positivo.")
     plano = _validar_plano(familias)
-    combinacoes_fixas = tuple(combinacoes)
-    total = len(combinacoes_fixas)
+    total = 0
     avaliacoes = {
         filtro.codigo: 0 for familia in plano for filtro in familia.filtros
     }
     exclusoes = dict.fromkeys(avaliacoes, 0)
     aprovadas: list[Combinacao] = []
 
-    for indice, combinacao in enumerate(combinacoes_fixas, start=1):
+    total_aprovado = 0
+    for combinacao in combinacoes:
         if cancelado is not None and cancelado():
             raise InterruptedError("Processamento do Screener cancelado.")
+        total += 1
         excluida = False
         for familia in plano:
             for filtro in familia.filtros:
@@ -276,9 +290,20 @@ def executar_funil_extensivel(
             if excluida:
                 break
         if not excluida:
-            aprovadas.append(combinacao)
-        if informar_progresso is not None and (indice == total or indice % 25 == 0):
-            informar_progresso(indice, total)
+            total_aprovado += 1
+            if guardar_aprovadas:
+                aprovadas.append(combinacao)
+        if informar_progresso is not None and (
+            total % intervalo_progresso == 0
+            or total_combinacoes is not None and total == total_combinacoes
+        ):
+            informar_progresso(total, total_combinacoes or total)
+
+    if total_combinacoes is not None and total != total_combinacoes:
+        raise ErroContratoFunil(
+            "TOTAL_COMBINACOES_DIVERGENTE",
+            "O iterador terminou em quantidade diferente da informada.",
+        )
 
     saldo = total
     linhas_familias: list[LinhaFamilia] = []
@@ -317,8 +342,8 @@ def executar_funil_extensivel(
         )
     relatorio = RelatorioFunilExtensivel(
         total,
-        total - len(aprovadas),
-        len(aprovadas),
+        total - total_aprovado,
+        total_aprovado,
         tuple(linhas_familias),
         tuple(aprovadas),
     )

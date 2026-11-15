@@ -22,6 +22,12 @@ from .medidas import (
     consolidar_regioes,
     medir_regiao,
 )
+from .poligono2_experimental import (
+    ArestaExperimental,
+    DiagnosticoPoligono2Experimental,
+    analisar_poligono2_experimental,
+)
+from .poligono2 import ResultadoPoligono2, calcular_poligono2
 
 __all__ = [
     "MedidaRegiao", "PontoGeometrico", "RegiaoFechada", "ResultadoGeometrico",
@@ -31,4 +37,7 @@ __all__ = [
     "construir_percurso_fechado", "construir_vertices", "dividir_segmentos",
     "consolidar_regioes", "encontrar_intersecoes",
     "identificar_regioes_fechadas", "medir_regiao",
+    "ArestaExperimental", "DiagnosticoPoligono2Experimental",
+    "analisar_poligono2_experimental",
+    "ResultadoPoligono2", "calcular_poligono2",
 ]

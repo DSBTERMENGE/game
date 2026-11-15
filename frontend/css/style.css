@@ -8,6 +8,7 @@
   --destaque: #397780;
   --tamanho-celula: 1.5cm;
   --espaco-grade: 1mm;
+  --largura-resumo-resultado: 13rem;
   color-scheme: light;
   font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
@@ -60,7 +61,9 @@ h1 {
 
 .area-trabalho {
   display: grid;
+  grid-template-columns: minmax(36rem, max-content) minmax(18rem, 1fr);
   min-height: calc(100vh - 2.8rem);
+  align-items: start;
   align-content: start;
   gap: 0.65rem;
   padding: 0.65rem;
@@ -79,8 +82,99 @@ h1 {
 
 .comandos {
   display: grid;
-  width: min(100%, 65rem);
+  width: 100%;
+  gap: 0.4rem;
+}
+
+.quadro-controle {
+  min-width: 0;
+  padding: 0.6rem;
+  background: #f9fcfc;
+  border: 1px solid #c8d7da;
+  border-radius: 0.65rem;
+}
+
+.quadro-controle--futuro {
+  background: #f4f8f8;
+  border-style: dashed;
+}
+
+.quadro-controle h3 {
+  margin: 0 0 0.5rem;
+  color: #285e66;
+  font-size: 0.92rem;
+  line-height: 1.2;
+}
+
+.quadro-controle .grupo-comandos + .grupo-comandos { margin-top: 0.45rem; }
+
+.quadro-controle .texto-apoio { margin: 0.45rem 0 0; }
+
+.comandos,
+.painel {
+  grid-column: 1;
+}
+
+.comandos h2 {
+  margin-bottom: 0.05rem;
+}
+
+.comandos .mensagem-sistema {
+  margin-top: 0;
+}
+
+.controles-laterais {
+  display: grid;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
   gap: 0.55rem;
+}
+
+.controles-laterais .quadro-controle {
+  grid-column: auto;
+}
+
+.opcoes-camadas-voo,
+.opcoes-camadas-mancha {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.25rem 0.55rem;
+  margin-top: 0.5rem;
+}
+
+.opcoes-camadas-voo label,
+.opcoes-camadas-mancha label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+}
+
+.opcoes-camadas-voo input,
+.opcoes-camadas-mancha input { min-height: auto; }
+
+.marca-mancha-cg1,
+.marca-mancha-cg2,
+.marca-mancha-media {
+  stroke: rgb(23 33 43 / 0.22);
+  stroke-width: 0.6;
+}
+
+.mancha-quadrante { pointer-events: none; }
+
+.poligono-2-geometrico {
+  fill: transparent;
+  stroke: #b34d2e;
+  stroke-width: var(--espessura-linhas, 1mm);
+  stroke-linejoin: round;
+}
+
+.centro-gravidade-2 {
+  fill: #d45b38;
+  stroke: #7b2815;
+  stroke-width: 1.5;
 }
 
 .grupo-comandos {
@@ -148,10 +242,84 @@ select {
 
 .cabecalho-resultado {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.5rem 1.5rem;
+  grid-column: 2;
+  grid-row: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 0.18rem;
+  line-height: 1.2;
+  width: var(--largura-resumo-resultado);
+  min-width: var(--largura-resumo-resultado);
+  max-width: var(--largura-resumo-resultado);
+  max-height: calc(9cm + 5mm);
+  padding: 0.25rem 0.15rem;
+  overflow-y: auto;
+  scrollbar-color: #b8c2c7 transparent;
+  scrollbar-width: thin;
+}
+
+.cabecalho-resultado h2 { margin-bottom: 0; }
+
+#resumo-geometrico { white-space: pre-line; }
+
+.painel {
+  display: grid;
+  grid-template-columns: max-content var(--largura-resumo-resultado);
+  align-items: start;
+  gap: 0.8rem;
+}
+
+.painel .mapa-scroll {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.cabecalho-resultado h2,
+.cabecalho-resultado output {
+  width: 100%;
+  margin: 0;
+}
+
+#resumo-geometrico {
+  line-height: 1.55;
+}
+
+.resumo-ocorrencias-dezenas__titulo,
+.resumo-ocorrencias-dezenas__grade,
+.resumo-ocorrencias-dezenas__coluna,
+.resumo-ocorrencias-dezenas__item {
+  display: block;
+}
+
+.resumo-ocorrencias-dezenas__grade {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: 100%;
+  margin-top: 0.2rem;
+  column-gap: 0.28rem;
+}
+
+.resumo-ocorrencias-dezenas__titulo {
+  margin-top: 0.35rem;
+  padding-top: 0.3rem;
+  border-top: 1px solid #d2dadd;
+  font-size: 0.78rem;
+  font-weight: 650;
+  line-height: 1.1;
+}
+
+.resumo-ocorrencias-dezenas__coluna {
+  min-width: 0;
+}
+
+.resumo-ocorrencias-dezenas__item {
+  overflow: hidden;
+  font-size: 0.69rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.12;
+  text-overflow: clip;
+  white-space: nowrap;
 }
 
 h2 {
@@ -211,6 +379,28 @@ h2 {
   pointer-events: none;
 }
 
+.eixo-quadrante {
+  fill: #15803d;
+}
+
+.quadrado-quadrante {
+  fill-opacity: 1;
+  stroke: rgb(255 255 255 / 0.72);
+  stroke-width: 1;
+  pointer-events: none;
+}
+
+.rotulo-quadrante {
+  fill: #fff;
+  font-size: 12px;
+  font-weight: 750;
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: rgb(0 0 0 / 0.28);
+  stroke-width: 1px;
+  pointer-events: none;
+}
+
 .regiao-geometrica {
   fill: var(--cor-regioes, #6fcf97);
   fill-opacity: var(--opacidade-regioes, 0.12);
@@ -218,7 +408,7 @@ h2 {
 }
 
 .linha-geometrica,
-.fechamento-geometrico {
+.poligono-1-geometrico {
   fill: none;
   stroke: var(--cor-linha-geometrica, #25834f);
   stroke-linecap: round;
@@ -226,8 +416,8 @@ h2 {
   stroke-width: var(--espessura-linhas, 1mm);
 }
 
-.fechamento-geometrico {
-  stroke: var(--cor-fechamento-geometrico, #17663b);
+.poligono-1-geometrico {
+  stroke: var(--cor-poligono-1, #17663b);
   stroke-dasharray: 6 4;
 }
 
@@ -257,14 +447,27 @@ h2 {
   stroke-width: 2;
 }
 
-.marca-mancha-resultado {
-  fill: #397780;
-  fill-opacity: 0.32;
+.marca-ocorrencia-dezena {
+  stroke: rgb(15 23 42 / 0.45);
+  stroke-width: 0.75;
 }
 
-.marca-mancha-media {
-  fill: #e67e22;
-  fill-opacity: 0.28;
+.referencia-mancha-media {
+  fill: none;
+  stroke-width: 1.5;
+}
+
+.rotulo-referencia-mancha-media {
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.centro-mancha-media,
+.centro-mancha-cg1,
+.centro-mancha-cg2 {
+  stroke: #fff;
+  stroke-width: 1;
 }
 
 .dialogo-aparencia {
@@ -326,15 +529,66 @@ h2 {
   }
 
   .area-trabalho {
+    grid-template-columns: minmax(0, 1fr);
     min-height: calc(100vh - 2.8rem);
     padding: 0.4rem;
   }
 
-  .painel {
+  .comandos,
+  .painel,
+  .controles-laterais {
+    grid-column: 1;
+    grid-row: auto;
     width: 100%;
+  }
+
+  .controles-laterais {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .painel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cabecalho-resultado,
+  .painel .mapa-scroll {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .cabecalho-resultado {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem 1rem;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    max-height: none;
+    overflow-y: visible;
   }
 
   .grupo-comandos {
     align-items: stretch;
+  }
+
+}
+
+@media (min-width: 44.01rem) and (max-width: 78rem) {
+  .area-trabalho {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .comandos,
+  .painel,
+  .controles-laterais {
+    grid-column: 1;
+    grid-row: auto;
+    width: 100%;
+  }
+
+  .painel {
+    grid-template-columns: max-content var(--largura-resumo-resultado);
   }
 }

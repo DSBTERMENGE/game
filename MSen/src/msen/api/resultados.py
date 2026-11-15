@@ -23,6 +23,7 @@ from msen.importacao import ErroLeituraExcel
 from msen.geometria import (
     calcular_area_e_centro_gravidade,
     calcular_extensao_aberta,
+    calcular_poligono2,
     calcular_perimetro_fechado,
     construir_vertices,
 )
@@ -91,6 +92,7 @@ def _analise_geometrica_json(dezenas: tuple[int, ...]) -> dict[str, object]:
     """Calcula uma geometria determinística e a reutiliza nas próximas consultas."""
 
     geometria = calcular_area_e_centro_gravidade(dezenas)
+    poligono_2 = calcular_poligono2(dezenas)
     return {
         "vertices": [_ponto_json(ponto) for ponto in construir_vertices(dezenas)],
         "regioes": [
@@ -105,6 +107,16 @@ def _analise_geometrica_json(dezenas: tuple[int, ...]) -> dict[str, object]:
             None
             if geometria.centro_gravidade is None
             else _ponto_json(geometria.centro_gravidade)
+        ),
+        "poligono_2": (
+            None
+            if poligono_2 is None
+            else {
+                "dezenas": list(poligono_2.dezenas),
+                "vertices": [_ponto_json(ponto) for ponto in poligono_2.vertices],
+                "area": _fracao_texto(poligono_2.area),
+                "centro_gravidade": _ponto_json(poligono_2.centro_gravidade),
+            }
         ),
     }
 
@@ -193,6 +205,32 @@ def consultar_geometria(numero_ap: int):
             persistido.resultado.resultados
         ),
     )
+
+
+@resultados_api.get("/api/resultados/manchas")
+def consultar_pontos_das_manchas():
+    """Fornece somente os pontos históricos necessários às manchas do Painel."""
+
+    servico: Callable[[], tuple[ResultadoPersistido, ...]] = current_app.config[
+        "LISTAR_RESULTADOS"
+    ]
+    try:
+        persistidos = tuple(sorted(servico(), key=lambda item: item.numero_ap))
+    except (ErroConfiguracaoBanco, ErroConexaoBanco, ErroRepositorioResultado, psycopg.Error):
+        return _erro("BANCO_INDISPONIVEL", "Não foi possível consultar as manchas.", 503)
+
+    pontos = []
+    for persistido in persistidos:
+        analise = _analise_geometrica_json(persistido.resultado.resultados)
+        pontos.append({
+            "numero_ap": persistido.numero_ap,
+            "centro_gravidade_1": analise["centro_gravidade"],
+            "centro_gravidade_2": (
+                None if analise["poligono_2"] is None
+                else analise["poligono_2"]["centro_gravidade"]
+            ),
+        })
+    return jsonify(pontos=pontos, total=len(pontos))
 
 
 def _erro(codigo: str, mensagem: str, status: int):

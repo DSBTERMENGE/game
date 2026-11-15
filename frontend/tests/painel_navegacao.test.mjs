@@ -94,10 +94,14 @@ const ids = [
   "botao-selecionar-excel", "botao-importar-excel", "seletor-resultado",
   "botao-anterior", "botao-proximo", "tempo-voo", "botao-voo",
   "botao-mancha", "botao-aparencia", "botao-limpar", "dialogo-aparencia",
+  "voo-mostrar-media", "voo-mostrar-linha", "voo-mostrar-poligono-1", "voo-mostrar-poligono-2",
+  "mancha-mostrar-dezenas", "mancha-mostrar-media", "mancha-mostrar-cg1", "mancha-mostrar-cg2", "mancha-mostrar-quadrantes",
   "form-aparencia", "botao-fechar-aparencia", "botao-restaurar-aparencia",
-  "cor-linha", "cor-fechamento", "cor-vertices", "cor-resultado", "cor-media",
+  "cor-linha", "cor-poligono-1", "cor-vertices", "cor-resultado", "cor-media",
   "cor-centro-gravidade", "cor-regioes", "espessura-linhas", "diametro-vertices",
-  "opacidade-regioes", "mostrar-linha", "mostrar-fechamento", "mostrar-vertices",
+  "cor-media-espacial", "cor-cg1", "cor-cg2", "cor-referencias-mancha",
+  "opacidade-regioes", "diametro-pontos-mancha", "fator-intensidade-mancha",
+  "mostrar-linha", "mostrar-poligono-1", "mostrar-vertices",
   "mostrar-resultado", "mostrar-media", "mostrar-centro-gravidade", "mostrar-regioes",
 ];
 const elementos = Object.fromEntries(ids.map((id) => {
@@ -107,6 +111,15 @@ const elementos = Object.fromEntries(ids.map((id) => {
   return [id, elemento];
 }));
 elementos["tempo-voo"].value = "0.5";
+elementos["voo-mostrar-media"].checked = true;
+elementos["voo-mostrar-linha"].checked = true;
+elementos["voo-mostrar-poligono-1"].checked = true;
+elementos["voo-mostrar-poligono-2"].checked = true;
+elementos["mancha-mostrar-media"].checked = true;
+elementos["mancha-mostrar-cg1"].checked = false;
+elementos["mancha-mostrar-cg2"].checked = false;
+elementos["mancha-mostrar-quadrantes"].checked = false;
+elementos["mancha-mostrar-dezenas"].checked = true;
 
 globalThis.document = {
   querySelector: (seletor) => localizar(Object.values(elementos), seletor),
@@ -196,8 +209,17 @@ before(async () => {
 
 test("HTML possui controles necessários e aceita somente XLSX", async () => {
   const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
+  const css = await readFile(new URL("../css/style.css", import.meta.url), "utf8");
   for (const id of ids) assert.match(html, new RegExp(`id=["']${id}["']`));
   assert.match(html, /id="arquivo-excel"[^>]+accept="\.xlsx"/);
+  assert.match(html, /Dados e navegação/);
+  assert.match(html, /Voo dos pássaros/);
+  assert.match(html, /Manchas/);
+  assert.match(html, /id="mancha-mostrar-dezenas"[^>]*checked> Dezenas/);
+  assert.match(html, /Quadrantes/);
+  assert.match(css, /--largura-resumo-resultado:\s*13rem/);
+  assert.match(css, /\.painel\s*\{[\s\S]*grid-template-columns:\s*max-content var\(--largura-resumo-resultado\)/);
+  assert.match(css, /\.cabecalho-resultado\s*\{[\s\S]*flex-direction:\s*column/);
 });
 
 test("navegação separa Painel e Cadastros em uma barra compacta", async () => {
@@ -215,20 +237,22 @@ test("navegação separa Painel e Cadastros em uma barra compacta", async () => 
     assert.doesNotMatch(html, /class="navegacao-pagina"/);
     assert.match(html, /href="\/"[^>]*>Painel</);
     assert.match(html, /<summary>Cadastros<\/summary>/);
-    assert.match(html, /href="\/grupos-padroes\.html"/);
-    assert.match(html, /href="\/padroes\.html"/);
+    assert.match(html, /href="\/grupos-padroes\.html"[^>]*>Grupo<\/a>/);
+    assert.match(html, /href="\/padroes\.html"[^>]*>Padrões<\/a>/);
     assert.match(html, /href="\/auditoria\.html"[^>]*>Validação e auditoria</);
     assert.match(html, /href="\/frequencias\.html"[^>]*>Frequência das dezenas</);
     assert.match(html, /href="\/selecao-dezenas\.html"[^>]*>Seleção de dezenas</);
     assert.match(html, /href="\/ajuda\.html"[^>]*>Ajuda</);
     const barra = html.match(/<header class="barra-navegacao">([\s\S]*?)<\/header>/)?.[1] ?? "";
+    assert.doesNotMatch(barra, /Visão geral|href="\/cadastros\.html"/);
     const destinos = [...barra.matchAll(/href="([^"]+)"/g)].map((resultado) => resultado[1]);
     assert.equal(destinos.at(-1), "/ajuda.html");
     assert.match(html, /js\/navegacao\.js/);
   }
   assert.doesNotMatch(paginas[0], /painel-padroes|botao-cadastro-padroes/);
   assert.match(css, /\.barra-navegacao\s*\{[^}]*min-height:\s*2\.8rem/s);
-  assert.match(css, /\.navegacao-menu nav\s*\{[^}]*position:\s*absolute/s);
+  assert.match(css, /\.navegacao-menu nav\s*\{[^}]*position:\s*fixed/s);
+  assert.match(javascript, /function posicionarMenu/);
   assert.match(css, /\.pagina-conteudo\s*\{[^}]*height:\s*calc\(100vh - 2\.8rem\)/s);
   assert.doesNotMatch(javascript, /window\.history\.back|botaoVoltar/);
 });
@@ -246,52 +270,36 @@ test("página de auditoria mantém estrutura compacta e expõe validação", asy
   assert.match(css, /grid-template-rows:\s*auto auto auto auto minmax\(0,\s*1fr\)/);
 });
 
-test("cadastro de grupos usa grade compacta e arquivos separados", async () => {
+test("cadastro de grupos usa o CRUD navegável e adaptador separado", async () => {
   const html = await readFile(new URL("../grupos-padroes.html", import.meta.url), "utf8");
   const css = await readFile(new URL("../css/grupos-padroes.css", import.meta.url), "utf8");
   const javascript = await readFile(new URL("../js/grupos-padroes.js", import.meta.url), "utf8");
 
-  for (const id of [
-    "form-novo-grupo", "novo-grupo-nome", "novo-grupo-descr",
-    "mensagem-grupos", "tabela-grupos", "corpo-tabela-grupos",
-  ]) assert.match(html, new RegExp(`id=["']${id}["']`));
+  assert.match(html, /id=["']cadastro-grupos["']/);
+  assert.match(html, /css\/crud-navegavel\.css/);
   assert.match(html, /css\/grupos-padroes\.css/);
   assert.match(html, /js\/grupos-padroes\.js/);
-  assert.match(css, /\.pagina-grupos\s*\{[^}]*grid-template-rows:\s*auto auto minmax\(0, 1fr\)/s);
-  assert.match(css, /\.grupos-grade\s*\{[^}]*overflow:\s*auto/s);
-  assert.match(css, /#tabela-grupos th\s*\{[^}]*position:\s*sticky/s);
-  assert.match(javascript, /method:\s*"POST"/);
-  assert.match(javascript, /method:\s*"PUT"/);
-  assert.match(javascript, /method:\s*"DELETE"/);
-  assert.match(javascript, /window\.confirm/);
+  assert.match(javascript, /criarCrudNavegavel/);
+  assert.match(javascript, /criarApiGrupos/);
+  assert.match(javascript, /usarExclusao:\s*true/);
+  assert.match(javascript, /layout:\s*"selecao"/);
+  assert.match(javascript, /registro\.grupo_cod/);
+  assert.match(css, /#cadastro-grupos/);
 });
 
 test("cadastro de padrões usa grupo obrigatório e grade compacta", async () => {
   const html = await readFile(new URL("../padroes.html", import.meta.url), "utf8");
   const css = await readFile(new URL("../css/padroes.css", import.meta.url), "utf8");
   const javascript = await readFile(new URL("../js/padroes.js", import.meta.url), "utf8");
-  for (const id of [
-    "form-novo-padrao", "novo-padrao-grupo", "novo-padrao-nome",
-    "novo-padrao-descr", "filtro-grupo", "mensagem-padroes",
-    "tabela-padroes", "corpo-tabela-padroes", "perfil-padroes",
-    "form-perfil", "perfil-limite", "perfil-tipo-corte",
-    "perfil-indicadores", "tabela-perfil", "corpo-tabela-perfil",
-  ]) assert.match(html, new RegExp(`id=["']${id}["']`));
-  assert.match(css, /\.pagina-padroes\s*\{[^}]*grid-template-rows:\s*auto auto minmax\(0, 1fr\)/s);
-  assert.match(css, /\.padroes-grade\s*\{[^}]*overflow:\s*auto/s);
-  assert.match(css, /#tabela-padroes th\s*\{[^}]*position:\s*sticky/s);
-  assert.match(css, /#tabela-padroes th:nth-child\(5\)\s*\{\s*width:\s*5\.5rem/);
-  assert.match(css, /#tabela-padroes input,[^{]+\{[^}]*height:\s*4\.75rem/s);
-  assert.match(css, /#tabela-padroes th:nth-child\(2\)\s*\{\s*width:\s*20rem/);
-  assert.match(css, /#tabela-padroes th:nth-child\(3\)\s*\{\s*width:\s*22rem/);
-  assert.match(css, /\.perfil-padroes__painel\s*\{[^}]*position:\s*absolute/s);
-  assert.match(css, /\.perfil-padroes__grade\s*\{[^}]*overflow:\s*auto/s);
-  assert.match(javascript, /criarCampo\("textarea", padrao\.padrao_nome/);
-  assert.match(javascript, /grupo_cod:\s*grupoNovo\.value/);
-  assert.match(javascript, /grupo_cod:\s*grupo\.value/);
-  assert.match(javascript, /encodeURIComponent\(filtroGrupo\.value\)/);
-  assert.match(javascript, /api\/grupos-padroes\/PG_001\/perfil/i);
-  assert.match(javascript, /ativa_no_screener|screener inativo/i);
+  assert.match(html, /id=["']cadastro-padroes["']/);
+  assert.match(html, /css\/crud-navegavel\.css/);
+  assert.match(javascript, /criarCrudNavegavel/);
+  assert.match(javascript, /listarGruposParaFiltro/);
+  assert.match(javascript, /nome:\s*"grupo_cod"/);
+  assert.match(javascript, /obrigatorio:\s*true/);
+  assert.match(javascript, /layout:\s*"selecao"/);
+  assert.doesNotMatch(html, /Ocorrências|Intervalo médio|Desvio-padrão/);
+  assert.match(css, /#cadastro-padroes/);
 });
 
 test("nenhum resultado mantém navegação desabilitada e informa o estado", () => {
@@ -370,7 +378,7 @@ test("posiciona uma média inteira exatamente no centro correspondente", () => {
   assert.equal(elementos["coordenada-media"].textContent, "Média espacial: (1.00; 1.00)");
 });
 
-test("desenha percurso, fechamento, regiões e centro de gravidade", () => {
+test("desenha Linha Poligonal, Polígono 1, regiões e centro de gravidade", () => {
   window.gameAnalysis.desenharResultado({
     numero_ap: 1,
     dezenas: [1, 2, 3, 10, 11, 20],
@@ -388,15 +396,59 @@ test("desenha percurso, fechamento, regiões e centro de gravidade", () => {
       perimetro_fechado: "36.110770",
       area_total: "4.5",
       centro_gravidade: { x: "4.5", y: "0.5" },
+      poligono_2: {
+        vertices: [
+          { x: "0", y: "0" }, { x: "2", y: "0" }, { x: "9", y: "0" },
+          { x: "9", y: "1" }, { x: "0", y: "1" }, { x: "1", y: "0" },
+        ],
+        area: "8.5",
+        centro_gravidade: { x: "4.5", y: "0.5" },
+      },
     },
   });
 
   assert.equal(marcas("linha-geometrica").length, 1);
-  assert.equal(marcas("fechamento-geometrico").length, 1);
+  assert.equal(marcas("poligono-1-geometrico").length, 1);
+  assert.equal(marcas("poligono-2-geometrico").length, 1);
   assert.equal(marcas("regiao-geometrica").length, 2);
   assert.equal(marcas("vertice-geometrico").length, 6);
   assert.deepEqual(coordenadas(marcas("centro-gravidade")[0]), { x: 200, y: 40 });
-  assert.match(elementos["resumo-geometrico"].textContent, /Área: 4,500 \| Regiões: 2/);
+  assert.deepEqual(coordenadas(marcas("centro-gravidade-2")[0]), { x: 200, y: 40 });
+  assert.match(elementos["resumo-geometrico"].textContent, /Área P1: 4,500\nRegiões: 2/);
+  assert.match(elementos["resumo-geometrico"].textContent, /Área P2: 8,500\nCG2: \(4\.50; 0\.50\)/);
+});
+
+test("controles do Voo ocultam individualmente as quatro camadas", () => {
+  const resultado = {
+    numero_ap: 1,
+    dezenas: [1, 2, 3, 10, 11, 20],
+    analise_geometrica: {
+      vertices: [
+        { x: "0", y: "0" }, { x: "1", y: "0" }, { x: "2", y: "0" },
+        { x: "9", y: "0" }, { x: "0", y: "1" }, { x: "9", y: "1" },
+      ],
+      regioes: [], quantidade_regioes: 0, extensao_aberta: "1", perimetro_fechado: "2",
+      area_total: "3", centro_gravidade: null,
+      poligono_2: {
+        vertices: [
+          { x: "0", y: "0" }, { x: "2", y: "0" }, { x: "9", y: "0" },
+          { x: "9", y: "1" }, { x: "0", y: "1" }, { x: "1", y: "0" },
+        ],
+        area: "4", centro_gravidade: { x: "4", y: "0.5" },
+      },
+    },
+  };
+  ["voo-mostrar-media", "voo-mostrar-linha", "voo-mostrar-poligono-1", "voo-mostrar-poligono-2"]
+    .forEach((id) => { elementos[id].checked = false; });
+  window.gameAnalysis.desenharResultado(resultado);
+  assert.equal(circulos("marca-media").length, 0);
+  assert.equal(marcas("linha-geometrica").length, 0);
+  assert.equal(marcas("poligono-1-geometrico").length, 0);
+  assert.equal(marcas("poligono-2-geometrico").length, 0);
+  assert.equal(marcas("vertice-geometrico").length, 0);
+  assert.equal(circulos("centro-gravidade").length, 0);
+  ["voo-mostrar-media", "voo-mostrar-linha", "voo-mostrar-poligono-1", "voo-mostrar-poligono-2"]
+    .forEach((id) => { elementos[id].checked = true; });
 });
 
 test("salva configuração visual, reaplica e restaura os padrões", () => {
@@ -410,7 +462,7 @@ test("salva configuração visual, reaplica e restaura os padrões", () => {
   assert.equal(elementos["dialogo-aparencia"].open, false);
   assert.equal(elementos["mapa-dezenas"].style.valores["--cor-linha-geometrica"], "#123456");
   assert.equal(elementos["mapa-dezenas"].style.valores["--espessura-linhas"], "1.5mm");
-  assert.match(localStorage.getItem("msen.configuracaoVisual.v1"), /"mostrarLinha":false/);
+  assert.match(localStorage.getItem("msen.configuracaoVisual.v3"), /"mostrarLinha":false/);
   window.gameAnalysis.desenharResultado(resultado(1));
   assert.equal(marcas("linha-geometrica").length, 0);
 
@@ -545,7 +597,7 @@ test("redimensionamento durante o voo redesenha sem perder o temporizador", () =
   assert.equal(relogio.tarefas.size, 0);
 });
 
-test("mancha pequena distribui ocorrências lado a lado e inclui as médias", () => {
+test("ocorrências formam matrizes e usam gradiente pela distância da média", () => {
   redimensionarCelulas(40);
   const resultados = [
     { numero_ap: 301, dezenas: [1, 10, 20, 30, 40, 60] },
@@ -553,33 +605,117 @@ test("mancha pequena distribui ocorrências lado a lado e inclui as médias", ()
   ];
   window.gameAnalysis.desenharMancha(resultados);
 
-  const marcas = circulos("marca-mancha-resultado");
+  const marcas = circulos("marca-ocorrencia-dezena");
   const medias = circulos("marca-mancha-media");
-  const diametro = (3 / 25.4) * 96;
-  const primeira = coordenadas(marcas[0]);
-  const segundaOcorrenciaDaDezena01 = coordenadas(marcas[6]);
+  const dezena01 = marcas.find((marca) => marca.attributes["data-dezena"] === "1");
+  const dezena10 = marcas.find((marca) => marca.attributes["data-dezena"] === "10");
 
   assert.equal(marcas.length, 12);
   assert.equal(medias.length, 2);
-  assert.ok(Math.abs(segundaOcorrenciaDaDezena01.x - primeira.x - diametro) < 1e-10);
-  assert.equal(segundaOcorrenciaDaDezena01.y, primeira.y);
+  assert.equal(circulos("centro-mancha-media").length, 1);
+  assert.equal(circulos("referencia-mancha-media").length, 3);
+  assert.ok(medias.every((marca) => marca.attributes.fill === "#8b4513"));
+  assert.ok(medias.every((marca) => Number(marca.attributes["fill-opacity"]) >= 0.12));
+  assert.match(elementos["resumo-geometrico"].textContent, /Média das médias:/);
+  assert.match(elementos["resumo-geometrico"].textContent, /Até 20%: 0 \(sem ocorrência\)/);
+  assert.match(elementos["resumo-geometrico"].textContent, /De 60% a 100%: 2 \(1:1\)/);
+  assert.equal(dezena01.attributes["data-ocorrencias"], "2");
+  assert.equal(dezena10.attributes["data-ocorrencias"], "1");
+  assert.equal(dezena01.attributes.r, dezena10.attributes.r);
+  assert.ok(Number(dezena10.attributes["data-proximidade-media"]) > Number(dezena01.attributes["data-proximidade-media"]));
+  assert.notEqual(dezena01.attributes.fill, dezena10.attributes.fill);
   assert.equal(elementos["jogo-numero"].textContent, "Todos");
   assert.equal(elementos["mensagem-sistema"].textContent, "Mancha desenhada com 2 resultados.");
 });
 
-test("ao exceder a capacidade da célula, recomeça no primeiro ponto", () => {
+test("manchas combinam Média espacial, CG1, CG2 e quatro quadrantes", () => {
+  elementos["mancha-mostrar-cg1"].checked = true;
+  elementos["mancha-mostrar-cg2"].checked = true;
+  elementos["mancha-mostrar-quadrantes"].checked = true;
+  window.gameAnalysis.desenharMancha([{
+    numero_ap: 401,
+    dezenas: [1, 10, 20, 31, 41, 60],
+    analise_geometrica: {
+      centro_gravidade: { x: "2", y: "2" },
+      poligono_2: { centro_gravidade: { x: "3", y: "3" } },
+    },
+  }]);
+  assert.equal(circulos("marca-mancha-media").length, 1);
+  assert.equal(circulos("marca-mancha-cg1").length, 1);
+  assert.equal(circulos("marca-mancha-cg2").length, 1);
+  assert.equal(circulos("centro-mancha-cg1").length, 1);
+  assert.equal(circulos("centro-mancha-cg2").length, 1);
+  assert.equal(
+    circulos("referencia-mancha-media").filter((item) => item.attributes["data-mancha"] === "cg1").length,
+    3,
+  );
+  assert.equal(marcas("eixo-quadrante").length, 2);
+  assert.equal(marcas("quadrado-quadrante").length, 4);
+  assert.deepEqual(
+    marcas("quadrado-quadrante").map((item) => item.attributes["data-quadrante"]),
+    ["1", "2", "3", "4"],
+  );
+  assert.equal(marcas("rotulo-quadrante").length, 8);
+  assert.ok(marcas("quadrado-quadrante").every((item) => item.attributes.fill));
+  assert.match(circulos("marca-ocorrencia-dezena")[0].attributes.fill, /^hsl\(138 /);
+  assert.equal(circulos("marca-mancha-cg1")[0].attributes.fill, "#7566d9");
+  assert.equal(circulos("marca-mancha-cg2")[0].attributes.fill, "#2471a3");
+  assert.match(elementos["resumo-geometrico"].textContent, /Quadrantes:\nQ1: 2 \(33,33%\) — 1º/);
+  assert.match(elementos["resumo-geometrico"].textContent, /Q4: 1 \(16,67%\) — 2º/);
+  assert.match(elementos["resumo-geometrico"].textContent, /Média do CG1: \(2\.00; 2\.00\)/);
+  assert.match(elementos["resumo-geometrico"].textContent, /Média do CG2: \(3\.00; 3\.00\)/);
+  const tituloOcorrencias = elementos["resumo-geometrico"].children.at(-2);
+  const gradeOcorrencias = elementos["resumo-geometrico"].children.at(-1);
+  assert.equal(tituloOcorrencias.textContent, "Ocorrências das dezenas");
+  assert.equal(gradeOcorrencias.children.length, 4);
+  assert.ok(gradeOcorrencias.children.every((coluna) => coluna.children.length === 15));
+  assert.equal(
+    circulos("referencia-mancha-media").filter((item) => item.attributes["data-mancha"] === "cg2").length,
+    3,
+  );
+  elementos["mancha-mostrar-cg1"].checked = false;
+  elementos["mancha-mostrar-cg2"].checked = false;
+  elementos["mancha-mostrar-quadrantes"].checked = false;
+});
+
+test("a matriz 10 por 10 sobrepõe as ocorrências excedentes", () => {
   redimensionarCelulas(40);
-  const resultados = Array.from({ length: 10 }, (_, indice) => ({
+  const resultados = Array.from({ length: 110 }, (_, indice) => ({
     numero_ap: 400 + indice,
     dezenas: [1, 10, 20, 30, 40, 60],
   }));
   window.gameAnalysis.desenharMancha(resultados);
 
-  const ocorrencias01 = circulos("marca-mancha-resultado").filter(
-    (_marca, indice) => indice % 6 === 0,
-  );
-  assert.equal(ocorrencias01.length, 10);
-  assert.deepEqual(coordenadas(ocorrencias01[9]), coordenadas(ocorrencias01[0]));
+  const ocorrencias = circulos("marca-ocorrencia-dezena");
+  const ocorrencias01 = ocorrencias.filter((marca) => marca.attributes["data-dezena"] === "1");
+  assert.equal(ocorrencias.length, 660);
+  assert.equal(ocorrencias01.length, 110);
+  assert.deepEqual(coordenadas(ocorrencias01[100]), coordenadas(ocorrencias01[0]));
+});
+
+test("ocorrências podem ser ocultadas sem ocultar as manchas", () => {
+  elementos["mancha-mostrar-dezenas"].checked = false;
+  window.gameAnalysis.desenharMancha([{ numero_ap: 500, dezenas: [1, 2, 3, 4, 5, 6] }]);
+  assert.equal(circulos("marca-ocorrencia-dezena").length, 0);
+  assert.equal(circulos("marca-mancha-media").length, 1);
+  elementos["mancha-mostrar-dezenas"].checked = true;
+});
+
+test("somente Dezenas substitui o resumo deixado pela mancha anterior", () => {
+  elementos["mancha-mostrar-media"].checked = true;
+  elementos["mancha-mostrar-dezenas"].checked = true;
+  window.gameAnalysis.desenharMancha([{ numero_ap: 501, dezenas: [1, 2, 3, 4, 5, 6] }]);
+  assert.match(elementos["resumo-geometrico"].textContent, /Média das médias:/);
+
+  elementos["mancha-mostrar-media"].checked = false;
+  window.gameAnalysis.desenharMancha([{ numero_ap: 501, dezenas: [1, 2, 3, 4, 5, 6] }]);
+  assert.equal(elementos["resumo-geometrico"].children[0].textContent, "Ocorrências das dezenas");
+  const gradeResumo = elementos["resumo-geometrico"].children[1];
+  assert.equal(gradeResumo.children.length, 4);
+  assert.ok(gradeResumo.children.every((coluna) => coluna.children.length === 15));
+  assert.equal(gradeResumo.children[0].children[0].textContent, "01: 1");
+  assert.equal(gradeResumo.children[3].children[14].textContent, "60: 0");
+  elementos["mancha-mostrar-media"].checked = true;
 });
 
 test("desenha aproximadamente 3.000 resultados dentro dos limites locais", () => {
@@ -595,7 +731,7 @@ test("desenha aproximadamente 3.000 resultados dentro dos limites locais", () =>
 
   const duracao = performance.now() - inicio;
   const memoriaAdicional = process.memoryUsage().heapUsed - memoriaAntes;
-  assert.equal(circulos("marca-mancha-resultado").length, 18000);
+  assert.equal(circulos("marca-ocorrencia-dezena").length, 18000);
   assert.equal(circulos("marca-mancha-media").length, 3000);
   assert.ok(duracao < 2000, `desenho levou ${duracao.toFixed(1)} ms`);
   assert.ok(memoriaAdicional < 128 * 1024 * 1024, `consumo adicional: ${memoriaAdicional}`);

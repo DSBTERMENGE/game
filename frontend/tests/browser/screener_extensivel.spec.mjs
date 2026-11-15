@@ -236,7 +236,14 @@ test("exige confirmação e cancelar não inicia o teste", async ({ page }) => {
   await dialogo.getByRole("button", { name: "Cancelar" }).click();
   await expect(dialogo).toBeHidden();
   expect(requisicoes).toBe(0);
-  await expect(page.locator("#botao-aplicacao-screener")).toBeDisabled();
+  await expect(page.locator("#botao-aplicacao-screener")).toBeEnabled();
+  await page.locator("#botao-aplicacao-screener").click();
+  const dialogoIntegral = page.locator("#dialogo-confirmar-aplicacao-screener");
+  await expect(dialogoIntegral).toBeVisible();
+  await expect(dialogoIntegral).toContainText("50.063.860");
+  await expect(dialogoIntegral).toContainText("várias horas");
+  await dialogoIntegral.getByRole("button", { name: "Voltar" }).click();
+  expect(requisicoes).toBe(0);
 });
 
 test("confirma o cancelamento e descarta o resultado parcial", async ({ page }) => {

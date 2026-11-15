@@ -144,6 +144,18 @@ class ContratoFunilExtensivelTestCase(unittest.TestCase):
         self.assertTrue(relatorio.reconciliado)
         self.assertTrue(all(f.percentual_saldo_recebido == 0 for f in relatorio.familias))
 
+    def test_fluxo_continuo_pode_descartar_as_aprovadas(self) -> None:
+        relatorio = executar_funil_extensivel(
+            (item for item in self.combinacoes),
+            plano_base(),
+            total_combinacoes=len(self.combinacoes),
+            guardar_aprovadas=False,
+        )
+
+        self.assertTrue(relatorio.reconciliado)
+        self.assertGreater(relatorio.total_aprovado, 0)
+        self.assertEqual((), relatorio.combinacoes_aprovadas)
+
 
 if __name__ == "__main__":
     unittest.main()

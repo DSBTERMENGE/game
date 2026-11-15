@@ -26,6 +26,11 @@ test("painel de distribuições mantém dez gráficos em grade com rolagem inter
   assert.match(javascript, /GEO_CENTRO_GRAVIDADE_Y/);
   assert.match(javascript, /curva_normal_referencia/);
   assert.match(javascript, /grafico-faixa/);
+  assert.match(javascript, /grafico-limite-faixa--inferior/);
+  assert.match(javascript, /grafico-limite-faixa--superior/);
+  assert.match(javascript, /limiteInferiorX/);
+  assert.match(javascript, /limiteSuperiorX/);
+  assert.match(css, /\.grafico-limite-faixa\s*\{[^}]*stroke:\s*#16803c[^}]*stroke-dasharray:\s*4 2/s);
   assert.match(javascript, /salvarConfiguracaoDistribuicoes/);
   assert.match(javascript, /Calcule a prévia antes de salvar/);
 });

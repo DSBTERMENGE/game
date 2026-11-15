@@ -22,14 +22,14 @@ try {
   const conferirDesenho = async () => {
     const obtido = {
       linha: await page.locator("polyline.linha-geometrica").count(),
-      fechamento: await page.locator("line.fechamento-geometrico").count(),
+      poligono1: await page.locator("polygon.poligono-1-geometrico").count(),
       vertices: await page.locator("circle.vertice-geometrico").count(),
       regioes: await page.locator("polygon.regiao-geometrica").count(),
       centro: await page.locator("circle.centro-gravidade").count(),
       media: await page.locator("circle.marca-media").count(),
       resumo: await page.locator("#resumo-geometrico").textContent(),
     };
-    if (obtido.linha !== 1 || obtido.fechamento !== 1 || obtido.vertices !== 6) {
+    if (obtido.linha !== 1 || obtido.poligono1 !== 1 || obtido.vertices !== 6) {
       throw new Error(`Percurso incompleto: ${JSON.stringify(obtido)}`);
     }
     if (obtido.regioes < 1 || obtido.centro !== 1 || obtido.media !== 1) {

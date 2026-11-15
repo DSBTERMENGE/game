@@ -10,6 +10,8 @@ from uuid import uuid4
 from flask import Blueprint, current_app, jsonify, request
 
 from msen.screener import (
+    CONFIRMACAO_INTEGRAL,
+    TOTAL_COMBINACOES,
     ErroConfiguracaoScreener,
     validar_limite_raridade,
 )
@@ -32,7 +34,10 @@ class GerenciadorExecucoesScreener:
         self._cancelamentos: dict[str, Event] = {}
         self._ativa: str | None = None
 
-    def iniciar(self, limite_raridade, operacao: Callable | None = None) -> dict[str, object]:
+    def iniciar(
+        self, limite_raridade, operacao: Callable | None = None, *,
+        escopo: str = "amostra",
+    ) -> dict[str, object]:
         executar = operacao or self._operacao
         if executar is None:
             raise RuntimeError("Operação do Screener não configurada.")
@@ -45,7 +50,9 @@ class GerenciadorExecucoesScreener:
             agora = datetime.now(timezone.utc)
             self._execucoes[identificador] = {
                 "id": identificador, "estado": "AGUARDANDO",
-                "etapa": "Aguardando início", "concluido": 0, "total": 10_000,
+                "escopo": escopo,
+                "etapa": "Aguardando início", "concluido": 0,
+                "total": TOTAL_COMBINACOES if escopo == "integral" else 10_000,
                 "percentual": 0, "duracao_segundos": 0.0,
                 "iniciada_em": agora.isoformat(), "terminada_em": None,
                 "erro": None, "resultado": None, "_inicio": monotonic(),
@@ -164,10 +171,32 @@ def obter_quadro_screener():
 def iniciar_execucao_screener():
     dados = request.get_json(silent=True) or {}
     try:
+        if not isinstance(dados, dict) or set(dados).difference({
+            "limite_raridade", "escopo", "confirmacao_integral",
+        }):
+            return jsonify(erro={
+                "codigo": "CONFIGURACAO_EXECUCAO_INVALIDA",
+                "mensagem": "Informe somente limite, escopo e confirmação integral.",
+            }), 400
+        escopo = dados.get("escopo", "amostra")
+        if escopo not in {"amostra", "integral"}:
+            return jsonify(erro={
+                "codigo": "ESCOPO_INVALIDO",
+                "mensagem": "O escopo deve ser amostra ou integral.",
+            }), 400
+        if escopo == "integral" and dados.get("confirmacao_integral") != CONFIRMACAO_INTEGRAL:
+            return jsonify(erro={
+                "codigo": "CONFIRMACAO_INTEGRAL_AUSENTE",
+                "mensagem": "A aplicação integral exige a confirmação explícita do universo completo.",
+            }), 400
         limite = validar_limite_raridade(dados.get("limite_raridade", "10"))
         gerenciador = current_app.config["GERENCIADOR_SCREENER"]
+        executor = current_app.config[
+            "GERAR_QUADRO_SCREENER_INTEGRAL"
+            if escopo == "integral" else "GERAR_QUADRO_SCREENER"
+        ]
         return jsonify(gerenciador.iniciar(
-            limite, current_app.config["GERAR_QUADRO_SCREENER"]
+            limite, executor, escopo=escopo,
         )), 202
     except ExecucaoScreenerEmAndamento as erro:
         return jsonify(erro={"codigo": "EXECUCAO_EM_ANDAMENTO", "mensagem": str(erro)}), 409

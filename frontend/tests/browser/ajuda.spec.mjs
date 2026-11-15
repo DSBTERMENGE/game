@@ -53,6 +53,13 @@ test("Ajuda navega, pesquisa e aceita link direto", async ({ page }) => {
   await page.locator('#ajuda-resultados-busca a[href="#pagina-distribuicoes"]').click();
   await expect(page.getByRole("heading", { name: "Distribuições", exact: true })).toBeFocused();
   await expect(page.getByText(/guarda essa configuração apenas neste navegador/)).toBeVisible();
+
+  await busca.fill("quadrantes Q1 Q2 Q3 Q4");
+  await page.locator('#ajuda-resultados-busca a[href="#pagina-painel"]').click();
+  await expect(page.getByRole("heading", { name: "Painel", exact: true })).toBeFocused();
+  await expect(page.getByRole("heading", { name: "Quadrantes: origem e divisão" })).toBeVisible();
+  await expect(page.getByText(/eixo vertical passa entre as dezenas 05 e 06/)).toBeVisible();
+  await expect(page.getByText(/mesma posição e a mesma cor/)).toBeVisible();
 });
 
 test("Ajuda permanece utilizável em tela estreita e trata tópico ausente", async ({ page }) => {

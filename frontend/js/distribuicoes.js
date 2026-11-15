@@ -53,6 +53,7 @@ export function construirGeometriaGrafico(parametro) {
   const amplitude = maximo - minimo || 1;
   const maxFrequencia = Math.max(...histograma.map((item) => item.frequencia), 1);
   const x = (valor) => 12 + (numero(valor) - minimo) * 276 / amplitude;
+  const xVisivel = (valor) => Math.max(12, Math.min(288, x(valor)));
   const barras = histograma.map((item, indice) => ({
     x: 12 + indice * 276 / histograma.length + 1,
     y: 105 - item.frequencia * 88 / maxFrequencia,
@@ -68,8 +69,10 @@ export function construirGeometriaGrafico(parametro) {
   const inferior = numero(parametro.faixa.limite_inferior);
   const superior = numero(parametro.faixa.limite_superior);
   const faixa = {
-    x: Math.max(12, x(inferior)),
-    largura: Math.max(0, Math.min(288, x(superior)) - Math.max(12, x(inferior))),
+    x: xVisivel(inferior),
+    largura: Math.max(0, xVisivel(superior) - xVisivel(inferior)),
+    limiteInferiorX: xVisivel(inferior),
+    limiteSuperiorX: xVisivel(superior),
   };
   return { barras, normal, mediaX: x(parametro.media), faixa };
 }
@@ -96,6 +99,22 @@ function desenharGrafico(parametro) {
       `${indice ? "L" : "M"} ${ponto.x.toFixed(2)} ${ponto.y.toFixed(2)}`).join(" ");
     svg.append(elementoSvg("path", { class: "grafico-normal", d }));
   }
+  if (geometria.faixa) svg.append(
+    elementoSvg("line", {
+      class: "grafico-limite-faixa grafico-limite-faixa--inferior",
+      x1: geometria.faixa.limiteInferiorX,
+      x2: geometria.faixa.limiteInferiorX,
+      y1: 8,
+      y2: 105,
+    }),
+    elementoSvg("line", {
+      class: "grafico-limite-faixa grafico-limite-faixa--superior",
+      x1: geometria.faixa.limiteSuperiorX,
+      x2: geometria.faixa.limiteSuperiorX,
+      y1: 8,
+      y2: 105,
+    }),
+  );
   svg.append(
     elementoSvg("line", { class: "grafico-media", x1: geometria.mediaX, x2: geometria.mediaX, y1: 8, y2: 105 }),
     elementoSvg("line", { class: "grafico-eixo", x1: 12, x2: 288, y1: 105, y2: 105 }),

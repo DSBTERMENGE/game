@@ -6,6 +6,7 @@
     <title>Padrões — Game Analysis</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/navegacao.css">
+    <link rel="stylesheet" href="css/crud-navegavel.css">
     <link rel="stylesheet" href="css/padroes.css">
   </head>
   <body>
@@ -15,8 +16,7 @@
       <details class="navegacao-menu">
         <summary>Cadastros</summary>
         <nav aria-label="Cadastros">
-          <a href="/cadastros.html">Visão geral</a>
-          <a href="/grupos-padroes.html">Grupos de padrões</a>
+          <a href="/grupos-padroes.html">Grupo</a>
           <a href="/padroes.html" aria-current="page">Padrões</a>
         </nav>
       </details>
@@ -28,47 +28,7 @@
       <a class="navegacao-link" href="/gestao-desenvolvimento.html">Gestão do desenvolvimento</a>
       <a class="navegacao-link" href="/ajuda.html">Ajuda</a>
     </header>
-    <main class="pagina-conteudo pagina-padroes">
-      <form id="form-novo-padrao" class="padroes-barra">
-        <h1>Padrões</h1>
-        <label><span>Grupo</span><select id="novo-padrao-grupo" name="grupo_cod" required></select></label>
-        <label><span>Nome</span><input id="novo-padrao-nome" name="padrao_nome" maxlength="200" required></label>
-        <label class="padroes-barra__descricao"><span>Descrição</span><input id="novo-padrao-descr" name="padrao_descr" maxlength="4000" required></label>
-        <button id="botao-adicionar-padrao" type="submit">Adicionar</button>
-      </form>
-      <div class="padroes-filtro">
-        <label for="filtro-grupo">Filtrar grupo</label>
-        <select id="filtro-grupo"><option value="">Todos</option></select>
-        <p id="mensagem-padroes" role="status" aria-live="polite">Carregando padrões...</p>
-        <details id="perfil-padroes" class="perfil-padroes">
-          <summary><span>Perfil PG_001</span><small id="resumo-perfil">Abrir análise</small></summary>
-          <section class="perfil-padroes__painel" aria-label="Perfil histórico do grupo PG_001">
-            <form id="form-perfil" class="perfil-padroes__controles">
-              <label>Limite %<input id="perfil-limite" type="number" min="0" max="100" step="0.000001" value="10"></label>
-              <label>Corte<select id="perfil-tipo-corte"><option value="">Histórico completo</option><option value="numero">Concurso</option><option value="data">Data</option></select></label>
-              <label id="perfil-campo-numero" hidden>Até o concurso<input id="perfil-numero" type="number" min="1" step="1"></label>
-              <label id="perfil-campo-data" hidden>Até a data<input id="perfil-data" type="date"></label>
-              <button type="submit">Atualizar</button>
-              <p id="mensagem-perfil" role="status" aria-live="polite">Perfil ainda não consultado.</p>
-            </form>
-            <div id="perfil-indicadores" class="perfil-padroes__indicadores"></div>
-            <div class="perfil-padroes__grade" tabindex="0">
-              <table id="tabela-perfil"><thead><tr>
-                <th>Classe</th><th>Quantidade</th><th>% total</th><th>% classificados</th>
-                <th>Intervalo médio</th><th>Desvio-padrão</th><th>Diagnóstico</th>
-              </tr></thead><tbody id="corpo-tabela-perfil"></tbody></table>
-            </div>
-          </section>
-        </details>
-      </div>
-      <div class="padroes-grade" tabindex="0" aria-label="Grade de padrões cadastrados">
-        <table id="tabela-padroes"><thead><tr>
-          <th>Código</th><th>Grupo</th><th>Nome do padrão</th><th>Descrição</th>
-          <th>Ocorrências</th><th>Intervalo médio</th><th>Desvio-padrão</th>
-          <th>Função Python</th><th>Ações</th>
-        </tr></thead><tbody id="corpo-tabela-padroes"></tbody></table>
-      </div>
-    </main>
+    <main class="pagina-conteudo pagina-padroes"><div id="cadastro-padroes"></div></main>
     <script type="module" src="js/navegacao.js"></script>
     <script type="module" src="js/padroes.js"></script>
   </body>

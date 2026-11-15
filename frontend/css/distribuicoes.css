@@ -94,6 +94,11 @@
 .grafico-barra { fill: #6f9fa6; }
 .grafico-normal { fill: none; stroke: #c35d43; stroke-width: 1.5; }
 .grafico-media { stroke: #263f86; stroke-width: 1.5; stroke-dasharray: 4 2; }
+.grafico-limite-faixa {
+  stroke: #16803c;
+  stroke-width: 1.5;
+  stroke-dasharray: 4 2;
+}
 .grafico-eixo { stroke: #7d898d; stroke-width: 1; }
 
 .metricas-distribuicao {

@@ -9,6 +9,15 @@ from .estatisticas_linha import (
     calcular_soma,
 )
 from .frequencias import ErroAnaliseHistorica, FrequenciaResultado, calcular_frequencias
+from .quadrantes import (
+    DistribuicaoQuadrantes,
+    EstatisticaQuadrante,
+    FrequenciaCodigoQuadrantes,
+    ResumoHistoricoQuadrantes,
+    calcular_distribuicao_quadrantes,
+    calcular_resumo_historico_quadrantes,
+    identificar_quadrante,
+)
 from .resultado_calculado import (
     ResultadoCalculado,
     VERSAO_CALCULO_ATUAL,
@@ -27,6 +36,13 @@ __all__ = [
     "ErroAnaliseHistorica",
     "FrequenciaResultado",
     "calcular_frequencias",
+    "DistribuicaoQuadrantes",
+    "EstatisticaQuadrante",
+    "FrequenciaCodigoQuadrantes",
+    "ResumoHistoricoQuadrantes",
+    "calcular_distribuicao_quadrantes",
+    "calcular_resumo_historico_quadrantes",
+    "identificar_quadrante",
     "ResultadoCalculado",
     "VERSAO_CALCULO_ATUAL",
     "calcular_resultado",

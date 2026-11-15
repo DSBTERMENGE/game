@@ -4,6 +4,7 @@ from time import sleep
 
 from msen.api import criar_app
 from msen.api.screener import GerenciadorExecucoesScreener
+from msen.screener import CONFIRMACAO_INTEGRAL, TOTAL_COMBINACOES
 
 
 class ApiScreenerTestCase(unittest.TestCase):
@@ -73,6 +74,38 @@ class ApiScreenerTestCase(unittest.TestCase):
         )
         self.assertEqual(400, malformada.status_code)
         self.assertEqual([], self.execucoes)
+
+    def test_escopo_integral_exige_confirmacao_e_usa_executor_separado(self):
+        chamadas = []
+
+        def integral(limite, progresso, cancelado):
+            chamadas.append(limite)
+            self.assertFalse(cancelado())
+            progresso("Aplicando filtros atuais", TOTAL_COMBINACOES, TOTAL_COMBINACOES)
+            return {"resumo": {"total_analisado": TOTAL_COMBINACOES}}
+
+        app = criar_app({
+            "TESTING": True,
+            "GERAR_QUADRO_SCREENER_INTEGRAL": integral,
+            "GERENCIADOR_SCREENER": GerenciadorExecucoesScreener(),
+        })
+        cliente = app.test_client()
+        negada = cliente.post("/api/screener/execucoes", json={"escopo": "integral"})
+        self.assertEqual(400, negada.status_code)
+        inicio = cliente.post("/api/screener/execucoes", json={
+            "escopo": "integral", "confirmacao_integral": CONFIRMACAO_INTEGRAL,
+            "limite_raridade": "10",
+        })
+        self.assertEqual(202, inicio.status_code)
+        dados = inicio.get_json()
+        for _ in range(100):
+            dados = cliente.get(f"/api/screener/execucoes/{dados['id']}").get_json()
+            if dados["estado"] == "CONCLUIDA":
+                break
+            sleep(0.005)
+        self.assertEqual("integral", dados["escopo"])
+        self.assertEqual(TOTAL_COMBINACOES, dados["resultado"]["resumo"]["total_analisado"])
+        self.assertEqual([Decimal("10.000000")], chamadas)
 
 
 class GerenciadorExecucoesScreenerTestCase(unittest.TestCase):

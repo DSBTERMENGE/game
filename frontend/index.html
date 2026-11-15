@@ -15,8 +15,7 @@
       <details class="navegacao-menu">
         <summary>Cadastros</summary>
         <nav aria-label="Cadastros">
-          <a href="/cadastros.html">Visão geral</a>
-          <a href="/grupos-padroes.html">Grupos de padrões</a>
+          <a href="/grupos-padroes.html">Grupo</a>
           <a href="/padroes.html">Padrões</a>
         </nav>
       </details>
@@ -30,41 +29,68 @@
     </header>
 
     <main class="area-trabalho">
-      <section class="comandos" aria-labelledby="titulo-comandos">
-        <h2 id="titulo-comandos">Comandos</h2>
-
-        <div class="grupo-comandos">
+      <section class="comandos" aria-labelledby="titulo-dados-navegacao">
+        <h2 id="titulo-dados-navegacao">Dados e navegação</h2>
+          <div class="grupo-comandos">
           <input id="arquivo-excel" type="file" accept=".xlsx" hidden>
           <button id="botao-selecionar-excel" type="button">Selecionar Excel</button>
           <button id="botao-importar-excel" type="button" disabled>
             Importar, calcular e armazenar
           </button>
           <span id="nome-arquivo" class="texto-apoio">Nenhum arquivo selecionado</span>
-        </div>
+          </div>
 
-        <div class="grupo-comandos">
+          <div class="grupo-comandos">
           <label for="seletor-resultado">Resultado</label>
           <select id="seletor-resultado" disabled>
             <option value="">Nenhum resultado carregado</option>
           </select>
           <button id="botao-anterior" type="button" disabled>Anterior</button>
           <button id="botao-proximo" type="button" disabled>Próximo</button>
-        </div>
-
-        <div class="grupo-comandos">
-          <label for="tempo-voo">Tempo por resultado</label>
-          <input id="tempo-voo" type="number" min="0.1" max="30" step="0.1" value="0.5">
-          <span>s</span>
-          <button id="botao-voo" type="button" disabled>Iniciar voo dos pássaros</button>
-          <button id="botao-mancha" type="button" disabled>Desenhar mancha</button>
-          <button id="botao-aparencia" type="button">Aparência</button>
-          <button id="botao-limpar" type="button">Limpar gráfico</button>
-        </div>
-
+            <button id="botao-aparencia" type="button">Aparência</button>
+            <button id="botao-limpar" type="button">Limpar gráfico</button>
+          </div>
         <p id="mensagem-sistema" class="mensagem-sistema" role="status" aria-live="polite">
           Aguardando dados.
         </p>
       </section>
+
+      <aside class="controles-laterais" aria-label="Controles de análise">
+        <section class="quadro-controle" aria-labelledby="titulo-voo">
+          <h3 id="titulo-voo">Voo dos pássaros</h3>
+          <div class="grupo-comandos">
+          <label for="tempo-voo">Tempo por resultado</label>
+          <input id="tempo-voo" type="number" min="0.1" max="30" step="0.1" value="0.5">
+          <span>s</span>
+          <button id="botao-voo" type="button" disabled>Iniciar voo dos pássaros</button>
+          </div>
+          <div class="opcoes-camadas-voo" aria-label="Camadas do voo">
+            <label><input id="voo-mostrar-media" type="checkbox" checked> Média espacial</label>
+            <label><input id="voo-mostrar-linha" type="checkbox" checked> Linha Poligonal</label>
+            <label><input id="voo-mostrar-poligono-1" type="checkbox" checked> Polígono 1</label>
+            <label><input id="voo-mostrar-poligono-2" type="checkbox" checked> Polígono 2</label>
+          </div>
+        </section>
+
+        <section class="quadro-controle" aria-labelledby="titulo-manchas">
+          <h3 id="titulo-manchas">Manchas</h3>
+          <div class="grupo-comandos">
+            <button id="botao-mancha" type="button" disabled>Desenhar mancha</button>
+          </div>
+          <div class="opcoes-camadas-mancha" aria-label="Camadas das manchas">
+            <label><input id="mancha-mostrar-dezenas" type="checkbox" checked> Dezenas</label>
+            <label><input id="mancha-mostrar-media" type="checkbox" checked> Média espacial</label>
+            <label><input id="mancha-mostrar-cg1" type="checkbox"> CG1</label>
+            <label><input id="mancha-mostrar-cg2" type="checkbox"> CG2</label>
+            <label><input id="mancha-mostrar-quadrantes" type="checkbox"> Quadrantes</label>
+          </div>
+        </section>
+
+        <section class="quadro-controle quadro-controle--futuro" aria-labelledby="titulo-quadrantes">
+          <h3 id="titulo-quadrantes">Quadrantes</h3>
+          <p class="texto-apoio">Distribuição Q1, Q2, Q3 e Q4.</p>
+        </section>
+      </aside>
 
       <section class="painel" aria-labelledby="titulo-jogo">
         <div class="cabecalho-resultado">
@@ -97,23 +123,29 @@
         <fieldset class="aparencia-cores">
           <legend>Cores</legend>
           <label>Linha <input id="cor-linha" type="color"></label>
-          <label>Fechamento <input id="cor-fechamento" type="color"></label>
+          <label>Polígono 1 <input id="cor-poligono-1" type="color"></label>
           <label>Vértices <input id="cor-vertices" type="color"></label>
           <label>Resultado <input id="cor-resultado" type="color"></label>
           <label>Média <input id="cor-media" type="color"></label>
           <label>Centro de gravidade <input id="cor-centro-gravidade" type="color"></label>
           <label>Regiões <input id="cor-regioes" type="color"></label>
+          <label>Média espacial <input id="cor-media-espacial" type="color"></label>
+          <label>CG1 <input id="cor-cg1" type="color"></label>
+          <label>CG2 <input id="cor-cg2" type="color"></label>
+          <label>Referências das manchas <input id="cor-referencias-mancha" type="color"></label>
         </fieldset>
         <fieldset class="aparencia-medidas">
           <legend>Medidas</legend>
           <label>Espessura (mm) <input id="espessura-linhas" type="number" min="0.1" max="3" step="0.1"></label>
           <label>Diâmetro dos vértices (mm) <input id="diametro-vertices" type="number" min="1" max="10" step="0.5"></label>
           <label>Transparência das regiões <input id="opacidade-regioes" type="number" min="0" max="1" step="0.01"></label>
+          <label>Diâmetro dos pontos das manchas (mm) <input id="diametro-pontos-mancha" type="number" min="0.1" max="10" step="0.1"></label>
+          <label>Fator de intensidade das manchas <input id="fator-intensidade-mancha" type="number" min="0" max="0.5" step="0.01"></label>
         </fieldset>
         <fieldset class="aparencia-visibilidade">
           <legend>Elementos visíveis</legend>
-          <label><input id="mostrar-linha" type="checkbox"> Linha</label>
-          <label><input id="mostrar-fechamento" type="checkbox"> Fechamento</label>
+          <label><input id="mostrar-linha" type="checkbox"> Linha Poligonal</label>
+          <label><input id="mostrar-poligono-1" type="checkbox"> Polígono 1</label>
           <label><input id="mostrar-vertices" type="checkbox"> Vértices</label>
           <label><input id="mostrar-resultado" type="checkbox"> Resultado</label>
           <label><input id="mostrar-media" type="checkbox"> Média</label>

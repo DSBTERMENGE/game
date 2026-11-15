@@ -307,7 +307,7 @@ export const secoesAjuda = [
           },
           {
             titulo: "Aplicação do Screener",
-            paragrafos: ["Significa executar o funil no conjunto completo definido pela operação. O processamento integral das 50.063.860 combinações permanece bloqueado enquanto as condições de homologação e cobertura não estiverem liberadas."],
+            paragrafos: ["Executa o mesmo funil nas 50.063.860 combinações de 60 dezenas tomadas seis a seis. Antes de começar, o sistema exige a confirmação do usuário e verifica as condições de homologação e cobertura dos filtros."],
           },
           {
             titulo: "Uso posterior",
@@ -391,7 +391,7 @@ export const secoesAjuda = [
       {
         id: "pagina-painel",
         titulo: "Painel",
-        aliases: ["resultados", "importação", "voo dos pássaros", "mancha", "aparência"],
+        aliases: ["resultados", "importação", "voo dos pássaros", "mancha", "aparência", "quadrantes", "Q1 Q2 Q3 Q4", "ocorrências das dezenas", "gradiente das dezenas"],
         estado: "confirmado",
         resumo: "Importa resultados e apresenta cada sorteio sobre a grade geométrica das 60 dezenas.",
         blocos: [
@@ -422,6 +422,112 @@ export const secoesAjuda = [
             ],
           },
           {
+            titulo: "Voo dos pássaros e camadas de cada concurso",
+            paragrafos: ["O Voo dos pássaros apresenta um concurso por vez e avança no intervalo definido em Tempo por resultado. Durante o voo, o mesmo botão muda para Pausar voo dos pássaros e interrompe a sequência sem apagar os resultados."],
+            itens: [
+              "Média espacial mostra a média aritmética das coordenadas cartesianas das seis dezenas do concurso; não é a média dos números sorteados.",
+              "Linha Poligonal liga as seis dezenas na sequência crescente e permanece aberta.",
+              "Polígono 1 acrescenta o fechamento entre o último e o primeiro ponto da Linha Poligonal. Suas linhas podem formar regiões internas.",
+              "Polígono 2 mostra o contorno fechado sem cruzamentos que utiliza as seis dezenas como vértices. O resumo informa Área P2 e CG2.",
+              "Os marcadores permitem exibir ou ocultar cada uma dessas quatro camadas sem modificar o concurso nem os cálculos armazenados.",
+            ],
+          },
+          {
+            titulo: "Média espacial, CG1 e CG2",
+            paragrafos: ["As três medidas são coordenadas do painel, mas possuem origens diferentes. A Média espacial é obtida diretamente das seis posições; CG1 é o centro de gravidade do Polígono 1; CG2 é o centro de gravidade do Polígono 2."],
+            itens: [
+              "No concurso individual, os pontos identificam a posição calculada para aquele resultado.",
+              "No quadro Manchas, Média espacial, CG1 e CG2 reúnem as posições de todos os concursos carregados e podem ser vistas separadamente ou sobrepostas.",
+              "Cada mancha usa uma cor própria para que as três distribuições continuem distinguíveis quando forem combinadas.",
+            ],
+          },
+          {
+            titulo: "Como ler as manchas históricas",
+            paragrafos: ["Para cada medida marcada, o sistema desenha um círculo na coordenada decimal de cada concurso. Depois calcula a média dessas coordenadas, marca esse centro e traça referências circulares de 20%, 40% e 60% da maior distância observada até ele."],
+            itens: [
+              "A cor fica mais intensa perto do centro calculado e mais clara à medida que o ponto se afasta.",
+              "O resumo informa a coordenada média e quantos concursos ficaram até 20%, entre 20% e 40%, entre 40% e 60% e além de 60% da distância máxima.",
+              "A proporção 1:n no resumo facilita a leitura da frequência histórica dentro de cada faixa.",
+              "Os círculos, faixas e proporções descrevem os resultados carregados; não garantem a posição do próximo concurso.",
+            ],
+          },
+          {
+            titulo: "Configuração visual e salvamento",
+            paragrafos: ["Aparência permite ajustar cores, espessura das linhas, diâmetro dos vértices e pontos das manchas, transparência das regiões, fator de intensidade e elementos geométricos visíveis."],
+            itens: [
+              "Salvar aplica os valores e os conserva neste navegador para as próximas aberturas do sistema.",
+              "Fechar sem salvar mantém a última configuração gravada.",
+              "Restaurar padrão preenche o formulário com os valores originais; para torná-los efetivos e persistentes, escolha também Salvar.",
+              "As opções do quadro Aparência mudam somente a apresentação. Elas não alteram resultados, áreas, centros de gravidade ou dados do banco.",
+            ],
+          },
+          {
+            titulo: "Camada Dezenas: ocorrências e gradiente",
+            paragrafos: ["Ao marcar Dezenas e escolher Desenhar mancha, o sistema conta quantas vezes cada uma das 60 dezenas aparece em todos os resultados carregados. Cada ocorrência é representada por um pequeno círculo verde dentro da célula da respectiva dezena."],
+            itens: [
+              "Os círculos ocupam uma matriz de 10 por 10 dentro de cada dezena. Quando há mais de 100 ocorrências, as posições da matriz voltam a ser utilizadas e os novos círculos se sobrepõem aos anteriores.",
+              "Todos os círculos possuem o mesmo tamanho. A tonalidade é calculada pela proximidade entre a quantidade daquela dezena e a média de ocorrências das 60 dezenas.",
+              "Quanto mais próxima da média histórica estiver a quantidade, mais intensa será a tonalidade; quanto mais distante, mais clara ela será.",
+              "O gradiente descreve o histórico carregado. Ele não classifica uma dezena como mais provável e não garante ocorrência futura.",
+            ],
+          },
+          {
+            titulo: "Tabela de ocorrências e combinação das manchas",
+            paragrafos: ["O resumo à direita apresenta a quantidade exata de ocorrências de cada dezena. Para caber ao lado do painel sem deslocá-lo, as 60 dezenas são distribuídas em quatro colunas de quinze itens."],
+            itens: [
+              "A primeira coluna contém 01–15; a segunda, 16–30; a terceira, 31–45; e a quarta, 46–60.",
+              "Cada item usa o formato dezena: quantidade. Por exemplo, 01: 301 informa que a dezena 01 apareceu 301 vezes nos resultados carregados.",
+              "Quando somente Dezenas está marcada, o resumo mostra diretamente a tabela das 60 ocorrências.",
+              "Quando Dezenas é combinada com Média espacial, CG1, CG2 ou Quadrantes, os resumos dessas análises permanecem acima e a tabela das dezenas aparece abaixo.",
+              "Se o conteúdo combinado ultrapassar a altura do mapa, use a rolagem interna do resumo. O tamanho do Painel permanece inalterado.",
+              "Depois de importar resultados novos, escolha Desenhar mancha novamente para atualizar os pontos e as quantidades.",
+            ],
+          },
+          {
+            titulo: "Quadrantes: origem e divisão",
+            paragrafos: ["A camada Quadrantes divide o painel das dezenas com dois eixos verdes. O eixo vertical passa entre as dezenas 05 e 06. O eixo horizontal passa entre as dezenas 21 e 31. O encontro dessas linhas é a origem usada para desenhar os quatro quadrados."],
+            itens: [
+              "Q1 é a região superior direita: dezenas 06–10, 16–20 e 26–30.",
+              "Q2 é a região superior esquerda: dezenas 01–05, 11–15 e 21–25.",
+              "Q3 é a região inferior esquerda: dezenas 31–35, 41–45 e 51–55.",
+              "Q4 é a região inferior direita: dezenas 36–40, 46–50 e 56–60.",
+            ],
+          },
+          {
+            titulo: "O que os quadrados representam",
+            paragrafos: ["Ao desenhar a mancha, o sistema percorre todos os concursos carregados e conta em qual quadrante caiu cada dezena. Ele calcula primeiro as quatro quantidades e desenha somente um quadrado por quadrante. O lado maior indica maior incidência histórica; a área do quadrado não é o percentual, mas uma representação visual baseada no lado calculado."],
+            formulas: [
+              "referência = total de ocorrências ÷ 4",
+              "passo = menor extensão disponível ÷ referência ÷ 2",
+              "lado do quadrado = quantidade do quadrante × passo",
+            ],
+            itens: [
+              "A menor extensão disponível impede que algum quadrado ultrapasse a região que pode ocupá-lo.",
+              "A referência histórica ocupa aproximadamente metade da extensão disponível, deixando espaço para o crescimento após novos concursos.",
+              "A contagem é refeita com os resultados carregados; os valores da visualização não são gravados no banco.",
+            ],
+          },
+          {
+            titulo: "Cores, números e empates",
+            paragrafos: ["Dentro de cada quadrado aparecem a quantidade de dezenas contadas e seu percentual sobre o total. O resumo à direita repete Q1 a Q4 e informa também a posição classificatória."],
+            itens: [
+              "Verde-escuro identifica a maior quantidade.",
+              "Verde claro, com 50% da intensidade do primeiro, identifica a segunda maior.",
+              "Amarelo identifica a terceira maior e vermelho identifica a menor quantidade.",
+              "Se dois ou mais quadrantes tiverem a mesma quantidade, recebem a mesma posição e a mesma cor.",
+            ],
+          },
+          {
+            titulo: "Como usar Quadrantes",
+            itens: [
+              "Marque Quadrantes no quadro Manchas e escolha Desenhar mancha.",
+              "O marcador controla em conjunto os eixos, os quatro quadrados, seus textos e o trecho Quadrantes do resumo lateral.",
+              "Quadrantes pode ser marcado junto com Dezenas, Média espacial, CG1 e CG2. As camadas são sobrepostas e seus resumos permanecem separados.",
+              "Para retirar somente essa representação, desmarque Quadrantes e escolha novamente Desenhar mancha.",
+              "Depois de importar concursos novos, desenhe a mancha novamente para recalcular a distribuição com o histórico atualizado.",
+            ],
+          },
+          {
             titulo: "Sequência recomendada",
             paragrafos: ["Confira a planilha, importe, leia a mensagem final e selecione alguns concursos antes de usar voo ou mancha. Alterações na aparência não modificam os cálculos."],
           },
@@ -433,15 +539,15 @@ export const secoesAjuda = [
         titulo: "Cadastros",
         aliases: ["visão geral dos cadastros", "grupos", "padrões"],
         estado: "confirmado",
-        resumo: "Reúne os acessos aos cadastros usados para organizar os padrões.",
+        resumo: "O menu Cadastros oferece acesso direto aos formulários de Grupo e Padrões.",
         blocos: [
           {
-            titulo: "Uso",
-            paragrafos: ["A página é um índice. Grupos de padrões abre a organização conceitual; Padrões abre o cadastro das formas classificadas. Entrar nesta visão geral não grava nem altera dados."],
+            titulo: "Acesso aos formulários",
+            paragrafos: ["Abra Cadastros no menu principal e escolha Grupo ou Padrões. Não existe uma página intermediária: a opção escolhida abre diretamente o formulário correspondente."],
           },
           {
             titulo: "Ordem recomendada",
-            paragrafos: ["Cadastre primeiro o grupo e depois o padrão ligado a ele. Um nome e uma descrição não criam por si só uma função Python executável no Screener."],
+            paragrafos: ["Cadastre primeiro o Grupo. Depois abra Padrões, escolha esse Grupo e cadastre os padrões que pertencem a ele. Um nome e uma descrição não criam por si só uma função Python executável no Screener."],
           },
         ],
         relacionados: ["pagina-grupos-padroes", "pagina-padroes"],
@@ -449,21 +555,21 @@ export const secoesAjuda = [
       {
         id: "pagina-grupos-padroes",
         titulo: "Grupos de padrões",
-        aliases: ["grupo", "subgrupo", "cadastro de grupos"],
+        aliases: ["grupo", "cadastro de grupos", "categorias de padrões"],
         estado: "confirmado",
         resumo: "Cria e mantém as categorias conceituais às quais os padrões pertencem.",
         blocos: [
           {
-            titulo: "Novo grupo",
-            paragrafos: ["Preencha Nome e Descrição e use Adicionar. Os dois campos identificam o grupo para o usuário; o código exibido na tabela é controlado pelo sistema."],
+            titulo: "Localizar e consultar",
+            paragrafos: ["A caixa Localizar permite selecionar um Grupo existente ou digitar parte de seu nome. A lista é reduzida aos nomes que contêm o trecho digitado. Escolher um nome carrega o registro no formulário sem alterar o banco."],
           },
           {
-            titulo: "Grade e ações",
-            paragrafos: ["A grade mostra Código, Nome do grupo, Descrição e Ações. As ações permitem editar ou excluir conforme as proteções do banco. A exclusão pede confirmação e pode ser recusada quando existirem dependências."],
+            titulo: "Criar e alterar",
+            paragrafos: ["Use Novo registro para abrir um formulário vazio. Informe Nome do grupo e Descrição e escolha Salvar registro. A gravação somente ocorre depois da confirmação. Para alterar um Grupo existente, selecione-o, use Editar, faça a correção e confirme o salvamento."],
           },
           {
-            titulo: "Efeito nos dados",
-            paragrafos: ["Adicionar, editar e excluir são operações persistentes no PostgreSQL. Apenas abrir a página ou percorrer a grade não altera registros."],
+            titulo: "Excluir e proteger os dados",
+            paragrafos: ["A exclusão também exige confirmação e pode ser recusada quando houver Padrões vinculados ao Grupo. Localizar, selecionar, abrir um registro ou cancelar uma edição não grava dados. O código do Grupo é controlado pelo sistema."],
           },
         ],
         relacionados: ["pagina-cadastros", "pagina-padroes"],
@@ -471,34 +577,29 @@ export const secoesAjuda = [
       {
         id: "pagina-padroes",
         titulo: "Padrões",
-        aliases: ["subgrupos", "raridade", "perfil de padrões", "função Python"],
+        aliases: ["cadastro de padrões", "padrões por grupo", "função Python"],
         estado: "confirmado",
-        resumo: "Cadastra padrões, consulta suas ocorrências históricas e avalia sua raridade.",
+        resumo: "Cria e mantém Padrões, sempre vinculados ao Grupo ao qual pertencem.",
         blocos: [
           {
-            titulo: "Cadastrar um padrão",
-            paragrafos: ["Escolha o Grupo, informe Nome e Descrição e use Adicionar. O grupo é obrigatório porque todo padrão pertence a uma categoria conceitual."],
+            titulo: "Escolher o Grupo",
+            paragrafos: ["Escolha primeiro o Grupo. Esse campo é obrigatório e determina quais Padrões aparecem na caixa de seleção. Ao mudar o Grupo, a lista é atualizada imediatamente e passa a mostrar somente os registros vinculados à nova escolha."],
           },
           {
-            titulo: "Filtro e grade",
-            paragrafos: ["Filtrar grupo restringe as linhas exibidas. A grade informa código, grupo, nome, descrição, ocorrências, intervalo médio, desvio-padrão, situação da função Python e ações de manutenção."],
+            titulo: "Localizar e consultar",
+            paragrafos: ["Depois de escolher o Grupo, use Localizar para selecionar um Padrão ou digitar parte de seu nome. Escolher um nome carrega Nome do padrão e Descrição no formulário. A consulta não altera o registro."],
           },
           {
-            titulo: "Perfil de padrões",
-            itens: [
-              "Limite % define o teto usado para consultar classes raras.",
-              "Corte escolhe o histórico completo ou limita a consulta até um concurso ou uma data.",
-              "Atualizar recalcula a consulta do perfil para os filtros informados.",
-              "A tabela resume quantidade, porcentagens, intervalos e diagnóstico; consultar o perfil não cria a função do filtro.",
-            ],
+            titulo: "Criar, alterar e excluir",
+            paragrafos: ["Use Novo registro somente depois de escolher o Grupo. Informe Nome do padrão e Descrição e confirme o salvamento. Editar preserva o vínculo com o Grupo escolhido. Excluir pede confirmação antes de remover o registro. Cancelar ou fechar uma confirmação não grava nem exclui dados."],
           },
           {
             titulo: "Limite importante",
-            paragrafos: ["Cadastrar nome, descrição e grupo não implementa o critério do Screener. Cada padrão precisa de função Python registrada, testes, homologação e integração. A coluna Função Python mostra essa situação."],
+            paragrafos: ["Cadastrar nome, descrição e Grupo organiza o Padrão, mas não implementa o critério do Screener. Cada filtro precisa de função Python, testes, homologação e integração próprias. Os dados estatísticos e a conferência do funcionamento pertencem à Validação e Auditoria, não a este formulário."],
           },
           {
             titulo: "Efeito nos dados",
-            paragrafos: ["Inclusões e edições do cadastro são persistentes. O perfil é uma consulta sobre classificações já gravadas; a execução do Screener continua protegida pelas validações próprias."],
+            paragrafos: ["Somente a confirmação positiva de uma inclusão, alteração ou exclusão modifica o PostgreSQL. Consultar, trocar o Grupo, localizar um Padrão ou cancelar mantém os dados inalterados."],
           },
         ],
         relacionados: ["conceito-screener", "conceito-validacao", "pagina-preparacao-screener"],
@@ -506,30 +607,85 @@ export const secoesAjuda = [
       {
         id: "pagina-distribuicoes",
         titulo: "Distribuições",
-        aliases: ["distribuições históricas", "perfis operacionais", "configurar faixas"],
+        aliases: ["distribuições históricas", "perfis operacionais", "configurar faixas", "faixa mínima", "faixa máxima", "múltiplos do desvio-padrão", "percentual da média"],
         estado: "confirmado",
-        resumo: "Apresenta os perfis estatísticos e geométricos calculados sobre os resultados conhecidos.",
+        resumo: "Mostra como os parâmetros estatísticos e geométricos se distribuíram nos concursos conhecidos e permite estudar faixas de referência.",
         blocos: [
           {
-            titulo: "Gráficos",
-            paragrafos: ["A página mostra os dez perfis operacionais: quatro grandezas estatísticas e seis geométricas. Cada gráfico apresenta a distribuição histórica usada para estudar limites de aceitação."],
+            titulo: "Finalidade da página",
+            paragrafos: ["A página reúne dez perfis calculados sobre os resultados cadastrados: soma, média aritmética, mediana, desvio-padrão das dezenas, extensão aberta, perímetro fechado, quantidade de regiões, área total e as coordenadas X e Y do centro de gravidade. Ela permite observar o comportamento histórico e estudar limites; não calcula a probabilidade de um concurso específico."],
           },
           {
-            titulo: "Atualizar",
-            paragrafos: ["Atualizar recarrega do servidor os perfis correspondentes ao histórico completo. O comando não executa o Screener e não significa liberar seus filtros."],
-          },
-          {
-            titulo: "Configurar faixas",
+            titulo: "Como ler cada gráfico",
             itens: [
-              "Método define como as margens serão interpretadas no estudo.",
-              "Margem inferior e Margem superior ajustam cada lado da faixa.",
-              "Calcular prévia consulta os perfis e mostra os limites antes de qualquer salvamento local.",
-              "Salvar estudo somente fica disponível após uma prévia válida.",
+              "As barras representam os valores realmente observados nos concursos cadastrados.",
+              "A curva vermelha é somente uma referência visual de distribuição normal; ela não substitui as barras nem afirma que os dados seguem exatamente uma curva normal.",
+              "A linha azul tracejada marca a média histórica do parâmetro.",
+              "A área verde-clara mostra a faixa calculada para o estudo.",
+              "As duas linhas verdes tracejadas marcam exatamente a Faixa mín. e a Faixa máx.",
             ],
           },
           {
-            titulo: "Onde a configuração fica",
-            paragrafos: ["Salvar estudo guarda essa configuração apenas neste navegador. Ela não é uma configuração operacional do PostgreSQL e não ativa o Screener. Cancelar ou fechar descarta a edição aberta."],
+            titulo: "Valores apresentados abaixo do gráfico",
+            itens: [
+              "Média e Desvio descrevem o conjunto de valores observados para aquele parâmetro.",
+              "Mín. e Máx. são os menores e maiores valores que realmente ocorreram no histórico. Eles não são definidos pelo formulário.",
+              "Faixa mín. e Faixa máx. são limites calculados pelo método e pelas margens escolhidas no formulário.",
+              "Classes informa em quantos intervalos as barras do histograma foram organizadas.",
+              "Soma e média aritmética são equivalentes neste jogo, pois cada resultado contém seis dezenas e média = soma ÷ 6; por isso não constituem dois filtros independentes.",
+            ],
+          },
+          {
+            titulo: "Resumo da janela histórica",
+            paragrafos: ["Amostra informa quantos resultados participaram do cálculo. Concursos e Datas mostram o primeiro e o último registro considerados. Faixa identifica o método salvo e apresenta, entre parênteses, as margens inferior e superior. Se novos concursos forem cadastrados, use Atualizar para recalcular os perfis com o histórico disponível no servidor."],
+          },
+          {
+            titulo: "Formulário Configuração das faixas do estudo",
+            paragrafos: ["Configurar faixas abre o formulário usado para escolher como os limites serão calculados. A configuração vale para os dez perfis, mas cada perfil recebe limites próprios porque possui média e desvio diferentes."],
+            itens: [
+              "Método escolhe entre Múltiplos do desvio-padrão e Percentual da média.",
+              "Margem inferior determina quanto será subtraído da média para formar a Faixa mín.",
+              "Margem superior determina quanto será somado à média para formar a Faixa máx.",
+              "As margens devem ser iguais ou maiores que zero e podem ser diferentes, criando uma faixa assimétrica.",
+              "Os valores iniciais são método por desvio-padrão, margem inferior 1 e margem superior 1.",
+            ],
+          },
+          {
+            titulo: "Método Múltiplos do desvio-padrão",
+            paragrafos: ["Neste método, cada margem representa uma quantidade de desvios-padrão. Ele é útil quando se deseja relacionar a largura da faixa à dispersão histórica de cada parâmetro."],
+            formulas: [
+              "Faixa mín. = média − margem inferior × desvio-padrão",
+              "Faixa máx. = média + margem superior × desvio-padrão",
+            ],
+            itens: [
+              "Exemplo simétrico: média 30, desvio 5 e margens 1 e 1 produzem faixa de 25 a 35.",
+              "Exemplo assimétrico: média 30, desvio 5, margem inferior 0,5 e superior 1,5 produzem faixa de 27,5 a 37,5.",
+            ],
+          },
+          {
+            titulo: "Método Percentual da média",
+            paragrafos: ["Neste método, as margens são percentuais aplicados ao valor absoluto da média. O desvio-padrão continua sendo mostrado como informação histórica, mas não define os limites."],
+            formulas: [
+              "Faixa mín. = média − | média | × margem inferior ÷ 100",
+              "Faixa máx. = média + | média | × margem superior ÷ 100",
+            ],
+            itens: ["Exemplo: média 30, margem inferior 10% e superior 20% produzem faixa de 27 a 36."],
+          },
+          {
+            titulo: "Calcular prévia",
+            paragrafos: ["Calcular prévia consulta o histórico pela mesma API usada nos gráficos e exibe, em uma tabela, os limites inferior e superior dos dez parâmetros. A prévia serve para conferir o efeito das margens antes de salvar e não modifica o banco nem ativa o Screener. Se algum campo for alterado depois do cálculo, a prévia deixa de ser válida e deve ser calculada novamente."],
+          },
+          {
+            titulo: "Salvar, cancelar e atualizar",
+            itens: [
+              "Salvar estudo somente fica disponível depois de uma prévia válida. Ele conserva o método e as margens neste navegador e aplica imediatamente a prévia aos gráficos.",
+              "Cancelar, fechar pelo X ou sair sem salvar mantém a última configuração salva.",
+              "Atualizar recarrega do servidor os dez perfis usando a configuração que está salva no navegador.",
+            ],
+          },
+          {
+            titulo: "Efeito nos dados e no Screener",
+            paragrafos: ["A configuração deste formulário é um estudo visual salvo somente no navegador. Ela não altera os resultados cadastrados, não grava uma configuração operacional no PostgreSQL e não ativa nem executa o Screener. O aviso Estudo — screener inativo existe para tornar essa separação explícita."],
           },
         ],
         relacionados: ["conceito-perfil-fotografia", "pagina-preparacao-screener"],
@@ -538,12 +694,12 @@ export const secoesAjuda = [
         id: "pagina-preparacao-screener",
         titulo: "Preparação do Screener",
         aliases: ["Screener", "Executar 5000", "Teste do Screener", "Aplicação do Screener", "5.000", "limite de raridade", "amostra protegida"],
-        estado: "limitacao",
-        resumo: "Testa o funil de filtros nas primeiras 5.000 combinações; a aplicação integral permanece bloqueada.",
+        estado: "confirmado",
+        resumo: "Permite testar o funil em 5.000 combinações ou aplicá-lo às 50.063.860 combinações possíveis.",
         blocos: [
           {
-            titulo: "Finalidade atual",
-            paragrafos: ["A página permite verificar a integração dos filtros estatísticos, geométricos e de padrões em 5.000 combinações reproduzíveis. Ela ainda não oferece a aplicação integral em 50.063.860 combinações."],
+            titulo: "Finalidade",
+            paragrafos: ["A página usa o mesmo conjunto de filtros estatísticos, geométricos e de padrões em dois modos. O Teste do Screener permite uma conferência rápida em 5.000 combinações; a Aplicação do Screener percorre todas as 50.063.860 combinações possíveis."],
           },
           {
             titulo: "Limite de raridade",
@@ -555,7 +711,11 @@ export const secoesAjuda = [
           },
           {
             titulo: "Aplicação do Screener",
-            paragrafos: ["Usará o mesmo motor até a última combinação possível. O comando permanece desabilitado enquanto o teste, o acompanhamento do progresso e o cancelamento seguro não forem validados nas etapas próprias."],
+            paragrafos: [
+              "Analisa as 50.063.860 combinações com o mesmo motor e os mesmos filtros do teste. O comando abre uma confirmação que informa o tamanho do universo antes de iniciar o processamento.",
+              "A janela de andamento apresenta progresso e duração. Como a operação pode ser longa, mantenha o computador e o servidor da aplicação funcionando e conserve a página aberta para acompanhar o resultado.",
+              "O botão Cancelar solicita uma segunda confirmação. Se o cancelamento for confirmado, o servidor interrompe o laço no próximo ponto seguro e descarta as contagens parciais daquela execução.",
+            ],
           },
           {
             titulo: "Quadros de resultado",
@@ -567,12 +727,12 @@ export const secoesAjuda = [
             ],
           },
           {
-            titulo: "Bloqueio atual",
-            paragrafos: ["Antes do teste, o sistema confere estado global, catálogo, assinaturas, avaliações, perfis e cobertura. Se a Validação e auditoria informar algoritmo desatualizado, assinatura divergente ou cobertura pendente, o comando fica bloqueado. Essa trava impede que filtros ainda não validados produzam um resultado aparentemente válido; não significa que o Screener não encontrou combinações."],
+            titulo: "Validação anterior à execução",
+            paragrafos: ["Antes do teste ou da aplicação, o sistema confere estado global, catálogo, assinaturas, avaliações, perfis e cobertura. Se a Validação e auditoria informar algoritmo desatualizado, assinatura divergente ou cobertura pendente, o comando fica bloqueado. Essa trava impede que filtros ainda não validados produzam um resultado aparentemente válido; não significa que o Screener não encontrou combinações."],
           },
           {
             titulo: "Efeito nos dados",
-            paragrafos: ["O Teste do Screener produz um quadro de estudo e não grava as 5.000 combinações como resultados. O limite de raridade salvo no navegador é apenas uma preferência local."],
+            paragrafos: ["O Teste e a Aplicação do Screener produzem quadros de análise. As combinações e as contagens parciais não são gravadas como resultados no banco de dados. O limite de raridade salvo no navegador é apenas uma preferência local."],
           },
         ],
         relacionados: ["conceito-screener", "conceito-validacao", "pagina-validacao-auditoria", "referencia-quantidades"],

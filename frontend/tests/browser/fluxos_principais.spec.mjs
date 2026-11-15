@@ -25,6 +25,14 @@ const resultados = [
       perimetro_fechado: "36.110770",
       area_total: "4.5",
       centro_gravidade: { x: "4.5", y: "0.5" },
+      poligono_2: {
+        vertices: [
+          { x: "0", y: "0" }, { x: "2", y: "0" }, { x: "9", y: "0" },
+          { x: "9", y: "1" }, { x: "0", y: "1" }, { x: "1", y: "0" },
+        ],
+        area: "8.5",
+        centro_gravidade: { x: "4.5", y: "0.5" },
+      },
     },
   },
   {
@@ -73,6 +81,7 @@ test.beforeAll(async () => {
       "/auditoria.html": ["auditoria.html", "text/html; charset=utf-8"],
       "/css/style.css": ["css/style.css", "text/css; charset=utf-8"],
       "/css/navegacao.css": ["css/navegacao.css", "text/css; charset=utf-8"],
+      "/css/crud-navegavel.css": ["css/crud-navegavel.css", "text/css; charset=utf-8"],
       "/css/grupos-padroes.css": ["css/grupos-padroes.css", "text/css; charset=utf-8"],
       "/css/padroes.css": ["css/padroes.css", "text/css; charset=utf-8"],
       "/css/screener.css": ["css/screener.css", "text/css; charset=utf-8"],
@@ -80,8 +89,11 @@ test.beforeAll(async () => {
       "/js/main.js": ["js/main.js", "text/javascript; charset=utf-8"],
       "/js/configuracao-visual.js": ["js/configuracao-visual.js", "text/javascript; charset=utf-8"],
       "/js/navegacao.js": ["js/navegacao.js", "text/javascript; charset=utf-8"],
+      "/js/crud-navegavel.js": ["js/crud-navegavel.js", "text/javascript; charset=utf-8"],
       "/js/grupos-padroes.js": ["js/grupos-padroes.js", "text/javascript; charset=utf-8"],
+      "/js/grupos-padroes-api.js": ["js/grupos-padroes-api.js", "text/javascript; charset=utf-8"],
       "/js/padroes.js": ["js/padroes.js", "text/javascript; charset=utf-8"],
+      "/js/padroes-api.js": ["js/padroes-api.js", "text/javascript; charset=utf-8"],
       "/js/screener-extensivel.js": ["js/screener-extensivel.js", "text/javascript; charset=utf-8"],
       "/js/screener-extensivel-contrato.js": ["js/screener-extensivel-contrato.js", "text/javascript; charset=utf-8"],
     };
@@ -290,10 +302,15 @@ test("carrega, desenha, seleciona e navega circularmente", async ({ page }) => {
   await expect(page.locator("circle.marca-resultado")).toHaveCount(6);
   await expect(page.locator("circle.marca-media")).toHaveCount(1);
   await expect(page.locator("polyline.linha-geometrica")).toHaveCount(1);
-  await expect(page.locator("line.fechamento-geometrico")).toHaveCount(1);
+  await expect(page.locator("polygon.poligono-1-geometrico")).toHaveCount(1);
   await expect(page.locator("polygon.regiao-geometrica")).toHaveCount(2);
   await expect(page.locator("circle.centro-gravidade")).toHaveCount(1);
-  await expect(page.locator("#resumo-geometrico")).toContainText("Área: 4,500");
+  await expect(page.locator("#resumo-geometrico")).toContainText("Área P1: 4,500");
+  await expect(page.locator("#resumo-geometrico")).toContainText("Área P2: 8,500");
+  await expect(page.locator("polygon.poligono-2-geometrico")).toHaveCount(1);
+  await page.locator("#voo-mostrar-poligono-2").uncheck();
+  await expect(page.locator("polygon.poligono-2-geometrico")).toHaveCount(0);
+  await page.locator("#voo-mostrar-poligono-2").check();
 
   await page.locator("#botao-anterior").click();
   await expect(page.locator("#jogo-numero")).toHaveText("2");
@@ -326,6 +343,25 @@ test("configuração visual persiste após recarregar a página", async ({ page 
   expect(corAplicada).toBe("#123456");
 });
 
+test("Linha Poligonal e Polígono 1 podem ser exibidos separadamente", async ({ page }) => {
+  await simularApi(page);
+  await page.goto("/");
+
+  await page.locator("#botao-aparencia").click();
+  await page.locator("#mostrar-linha").uncheck();
+  await page.locator("#mostrar-poligono-1").check();
+  await page.locator('#form-aparencia button[type="submit"]').click();
+  await expect(page.locator("polyline.linha-geometrica")).toHaveCount(0);
+  await expect(page.locator("polygon.poligono-1-geometrico")).toHaveCount(1);
+
+  await page.locator("#botao-aparencia").click();
+  await page.locator("#mostrar-linha").check();
+  await page.locator("#mostrar-poligono-1").uncheck();
+  await page.locator('#form-aparencia button[type="submit"]').click();
+  await expect(page.locator("polyline.linha-geometrica")).toHaveCount(1);
+  await expect(page.locator("polygon.poligono-1-geometrico")).toHaveCount(0);
+});
+
 
 test("inicia, avança e pausa o voo", async ({ page }) => {
   await simularApi(page);
@@ -356,8 +392,16 @@ test("seleciona Excel, importa, desenha mancha e limpa", async ({ page }) => {
   );
 
   await page.locator("#botao-mancha").click();
-  await expect(page.locator("circle.marca-mancha-resultado")).toHaveCount(12);
+  await expect(page.locator("circle.marca-ocorrencia-dezena")).toHaveCount(12);
   await expect(page.locator("circle.marca-mancha-media")).toHaveCount(2);
+  const aparenciaRestaurada = await page.locator("circle.marca-mancha-media").first().evaluate((circulo) => ({
+    raio: circulo.getAttribute("r"),
+    cor: getComputedStyle(circulo).fill,
+    opacidade: getComputedStyle(circulo).fillOpacity,
+  }));
+  expect(Number(aparenciaRestaurada.raio)).toBeCloseTo((3 / 25.4) * 96 / 2, 8);
+  expect(aparenciaRestaurada.cor).toBe("rgb(230, 126, 34)");
+  expect(aparenciaRestaurada.opacidade).toBe("0.28");
   await expect(page.locator("#jogo-numero")).toHaveText("Todos");
 
   await page.locator("#botao-limpar").click();
@@ -371,20 +415,35 @@ test("menu horizontal navega entre Painel e páginas de Cadastros", async ({ pag
   await page.goto("/");
   await expect(page.locator(".barra-navegacao")).toBeVisible();
   await page.locator(".navegacao-menu summary").click();
-  await page.locator('.navegacao-menu a[href="/cadastros.html"]').click();
-  await expect(page).toHaveURL(/cadastros\.html$/);
-  await expect(page.locator('[aria-current="page"]')).toHaveText("Visão geral");
+  const menu = page.locator(".navegacao-menu nav");
+  await expect(menu).toBeVisible();
+  await expect.poll(() => page.locator(".navegacao-menu").evaluate(
+    (elemento) => elemento.style.getPropertyValue("--navegacao-menu-top"),
+  )).not.toBe("");
+  const posicao = await page.evaluate(() => {
+    const barra = document.querySelector(".barra-navegacao").getBoundingClientRect();
+    const elemento = document.querySelector(".navegacao-menu nav");
+    const painel = elemento.getBoundingClientRect();
+    return {
+      barraFim: barra.bottom,
+      painelFim: painel.bottom,
+      posicao: getComputedStyle(elemento).position,
+    };
+  });
+  expect(posicao.posicao).toBe("fixed");
+  expect(posicao.painelFim).toBeGreaterThan(posicao.barraFim);
 
-  await page.locator('a[href="/grupos-padroes.html"]').last().click();
+  await menu.getByRole("link", { name: "Grupo", exact: true }).click();
   await expect(page).toHaveURL(/grupos-padroes\.html$/);
-  await expect(page.locator('[aria-current="page"]')).toHaveText("Grupos de padrões");
+  await expect(page.locator('[aria-current="page"]')).toHaveText("Grupo");
 
   await page.locator(".navegacao-menu summary").click();
-  await page.locator('a[href="/cadastros.html"]').click();
-  await expect(page).toHaveURL(/cadastros\.html$/);
-  await page.locator('a[href="/padroes.html"]').last().click();
+  await page.locator(".navegacao-menu nav").getByRole("link", { name: "Padrões", exact: true }).click();
   await expect(page).toHaveURL(/padroes\.html$/);
   await expect(page.locator('[aria-current="page"]')).toHaveText("Padrões");
+
+  await page.goto("/cadastros.html");
+  await expect(page).toHaveURL(/grupos-padroes\.html$/);
 
   await page.locator('a[href="/auditoria.html"]').click();
   await expect(page).toHaveURL(/auditoria\.html$/);
@@ -400,115 +459,107 @@ test("menu horizontal navega entre Painel e páginas de Cadastros", async ({ pag
 });
 
 
-test("grade de grupos permite incluir, editar e excluir", async ({ page }) => {
+test("cadastro de grupos permite localizar, incluir, editar e excluir com confirmação", async ({ page }) => {
   await simularApiGrupos(page);
   await page.goto("/grupos-padroes.html");
 
-  await expect(page.locator("#corpo-tabela-grupos tr")).toHaveCount(1);
-  await expect(page.locator("#mensagem-grupos")).toHaveText("1 grupo(s) carregado(s).");
+  const seletor = page.getByLabel("Registro", { exact: true });
+  const contador = page.locator("[data-contador-registros]");
+  await expect(seletor).toContainText("Dezenas sequenciais");
+  await expect(contador).toHaveText("1 registro(s) encontrado(s)");
+  const organizacao = await page.evaluate(() => {
+    const seletor = document.querySelector(".crud-navegavel__seletor").getBoundingClientRect();
+    const novo = document.querySelector(".crud-navegavel__novo").getBoundingClientRect();
+    const formulario = document.querySelector("[data-formulario]").getBoundingClientRect();
+    const contador = document.querySelector("[data-contador-registros]").getBoundingClientRect();
+    return { seletorFim: seletor.bottom, novoTopo: novo.top, formularioTopo: formulario.top, contadorTopo: contador.top };
+  });
+  expect(organizacao.novoTopo).toBeGreaterThanOrEqual(organizacao.seletorFim);
+  expect(organizacao.formularioTopo).toBeGreaterThanOrEqual(organizacao.novoTopo);
+  expect(organizacao.contadorTopo).toBeLessThan(organizacao.seletorFim);
 
-  await page.locator("#novo-grupo-nome").fill("Mesma coluna");
-  await page.locator("#novo-grupo-descr").fill("Padrões na mesma coluna.");
-  await page.locator("#botao-adicionar-grupo").click();
+  await page.getByRole("button", { name: "Novo registro" }).click();
+  await page.getByLabel("Nome do grupo").fill("Mesma coluna");
+  await page.getByLabel("Descrição").fill("Padrões na mesma coluna.");
+  await page.getByRole("button", { name: "Salvar registro" }).click();
+  await page.getByRole("button", { name: "Sim, salvar registro" }).click();
+  await expect(seletor).toContainText("Mesma coluna");
 
-  const novo = page.locator('#corpo-tabela-grupos tr[data-codigo="PG_002"]');
-  await expect(novo).toHaveCount(1);
-  await novo.getByLabel("Nome de PG_002").fill("Mesma coluna da matriz");
-  await novo.locator('button[data-acao="salvar"]').click();
-  await expect(page.locator("#mensagem-grupos")).toHaveText("PG_002 atualizado.");
-  await expect(novo.getByLabel("Nome de PG_002")).toHaveValue("Mesma coluna da matriz");
+  await page.getByLabel("Localizar").fill("Mesma");
+  await expect(page.locator("[data-contador-registros]")).toHaveText("1 registro(s) encontrado(s)");
+  await expect(seletor.locator("option")).toHaveCount(2);
+  await page.getByLabel("Localizar").fill("");
+  await expect(page.locator("[data-contador-registros]")).toHaveText("2 registro(s) encontrado(s)");
+  await seletor.selectOption({ label: "Mesma coluna" });
 
-  page.once("dialog", (dialogo) => dialogo.accept());
-  await novo.locator('button[data-acao="excluir"]').click();
-  await expect(novo).toHaveCount(0);
-  await expect(page.locator("#mensagem-grupos")).toHaveText("PG_002 excluído.");
+  await page.getByRole("button", { name: "Editar" }).click();
+  await page.getByLabel("Nome do grupo").fill("Mesma coluna da matriz");
+  await page.getByRole("button", { name: "Salvar registro" }).click();
+  await page.getByRole("button", { name: "Sim, salvar registro" }).click();
+  await expect(seletor).toContainText("Mesma coluna da matriz");
 
-  const ocupado = page.locator('#corpo-tabela-grupos tr[data-codigo="PG_001"]');
-  page.once("dialog", (dialogo) => dialogo.accept());
-  await ocupado.locator('button[data-acao="excluir"]').click();
-  await expect(ocupado).toHaveCount(1);
-  await expect(page.locator("#mensagem-grupos")).toHaveText(
-    "Não foi possível concluir: O grupo possui padrões e não pode ser excluído.",
+  await page.getByRole("button", { name: "Excluir" }).click();
+  await page.getByRole("button", { name: "Sim, excluir registro" }).click();
+  await expect(seletor).not.toContainText("Mesma coluna da matriz");
+
+  await seletor.selectOption({ label: "Dezenas sequenciais" });
+  await page.getByRole("button", { name: "Excluir" }).click();
+  await page.getByRole("button", { name: "Sim, excluir registro" }).click();
+  await expect(seletor).toContainText("Dezenas sequenciais");
+  await expect(page.locator(".crud-navegavel__mensagem")).toHaveText(
+    "O grupo possui padrões e não pode ser excluído.",
   );
 });
 
 
-test("grade de padrões filtra, inclui, transfere e protege estatísticas", async ({ page }) => {
+test("cadastro de Padrões filtra pelo Grupo e preserva o relacionamento", async ({ page }) => {
   await simularApi(page);
   await simularApiGrupos(page, true);
   await page.goto("/padroes.html");
 
-  await expect(page.locator("#corpo-tabela-padroes tr")).toHaveCount(3);
-  const primeira = page.locator('#corpo-tabela-padroes tr[data-codigo="PD_001"]');
-  await expect(primeira.locator("td").nth(4)).toHaveText("1192");
-  await expect(primeira.locator("td").nth(5)).toHaveText("2,575147");
-  await expect(primeira.locator("select")).toHaveValue("PG_001");
+  const grupo = page.locator('[data-filtro="grupo_cod"]');
+  const padrao = page.locator("[data-seletor-registro]");
+  await expect(page.getByRole("button", { name: "Novo registro" })).toBeDisabled();
+  await grupo.selectOption("PG_001");
+  await expect(padrao.locator("option")).toHaveCount(4);
+  await expect(padrao).toContainText("Duas dezenas sequenciais");
 
-  await page.locator("#novo-padrao-grupo").selectOption("PG_002");
-  await page.locator("#novo-padrao-nome").fill("Duas dezenas na coluna");
-  await page.locator("#novo-padrao-descr").fill("Descrição futura.");
-  await page.locator("#botao-adicionar-padrao").click();
-  const novo = page.locator('#corpo-tabela-padroes tr[data-codigo="PD_004"]');
-  await expect(novo).toHaveCount(1);
-  await expect(novo.locator("select")).toHaveValue("PG_002");
-  await expect(novo.locator("td").nth(4)).toHaveText("—");
+  await grupo.selectOption("PG_002");
+  await expect(page.locator("[data-contador-registros]")).toHaveText("0 registro(s) encontrado(s)");
+  await page.getByRole("button", { name: "Novo registro" }).click();
+  await page.getByLabel("Nome do padrão").fill("Duas dezenas na coluna");
+  await page.getByLabel("Descrição").fill("Descrição futura.");
+  await page.getByRole("button", { name: "Salvar registro" }).click();
+  await page.getByRole("button", { name: "Sim, salvar registro" }).click();
+  await expect(padrao).toContainText("Duas dezenas na coluna");
 
-  await novo.locator("select").selectOption("PG_001");
-  await novo.getByLabel("Nome de PD_004").fill("Padrão transferido");
-  await novo.locator('button[data-acao="salvar"]').click();
-  await expect(page.locator("#mensagem-padroes")).toHaveText("PD_004 atualizado.");
-  await expect(novo.locator("select")).toHaveValue("PG_001");
-
-  await page.locator("#filtro-grupo").selectOption("PG_002");
-  await expect(page.locator("#corpo-tabela-padroes tr")).toHaveCount(0);
-  await page.locator("#filtro-grupo").selectOption("");
-  await expect(page.locator("#corpo-tabela-padroes tr")).toHaveCount(4);
-
-  page.once("dialog", (dialogo) => dialogo.accept());
-  await novo.locator('button[data-acao="excluir"]').click();
-  await expect(novo).toHaveCount(0);
+  await grupo.selectOption("PG_001");
+  await expect(padrao).not.toContainText("Duas dezenas na coluna");
+  await expect(page.locator("#tabela-padroes, #perfil-padroes")).toHaveCount(0);
 });
 
 
-test("perfil de padrões abre sobre a grade e mostra diagnóstico sem ativar filtro", async ({ page }) => {
+test("cadastro de Padrões não exibe dados estatísticos", async ({ page }) => {
   await simularApi(page);
   await simularApiGrupos(page, true);
-  const consultas = await simularPerfilPadroes(page);
   await page.goto("/padroes.html");
-  await page.locator("#perfil-padroes summary").click();
-
-  await expect(page.locator("#corpo-tabela-perfil tr")).toHaveCount(3);
-  await expect(page.locator("#resumo-perfil")).toHaveText("3.069 resultados");
-  await expect(page.locator("#perfil-indicadores")).toContainText("PD_002, PD_003");
-  await expect(page.locator("#mensagem-perfil")).toContainText("screener inativo");
-  await expect(page.locator('#corpo-tabela-perfil tr[data-raro="true"]')).toHaveCount(2);
-
-  const geometria = await page.evaluate(() => {
-    const painel = document.querySelector(".perfil-padroes__painel").getBoundingClientRect();
-    const grade = document.querySelector(".padroes-grade").getBoundingClientRect();
-    return { painelTopo: painel.top, gradeTopo: grade.top, posicao: getComputedStyle(document.querySelector(".perfil-padroes__painel")).position };
-  });
-  expect(geometria.posicao).toBe("absolute");
-  expect(geometria.painelTopo).toBeLessThan(geometria.gradeTopo + 60);
-
-  await page.locator("#perfil-tipo-corte").selectOption("numero");
-  await page.locator("#perfil-numero").fill("100");
-  await page.locator("#form-perfil button").click();
-  await expect.poll(() => consultas.length).toBe(2);
-  expect(consultas[1]).toContain("numero_ap_ate=100");
+  await expect(page.getByText("Ocorrências", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Intervalo médio", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Desvio-padrão", { exact: true })).toHaveCount(0);
 });
 
 
-test("página de padrões conserva espaço e contém suas rolagens", async ({ page }) => {
+test("página de Padrões conserva espaço com muitos registros", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await simularCatalogoExtenso(page);
   await page.goto("/padroes.html");
-  await expect(page.locator("#corpo-tabela-padroes tr")).toHaveCount(45);
+  await page.locator('[data-filtro="grupo_cod"]').selectOption("PG_001");
+  await expect(page.locator("[data-contador-registros]")).toHaveText(/^[1-9][0-9]* registro\(s\) encontrado\(s\)$/);
 
   const antes = await page.evaluate(() => {
     const barra = document.querySelector(".barra-navegacao").getBoundingClientRect();
     const pagina = document.querySelector(".pagina-conteudo").getBoundingClientRect();
-    const grade = document.querySelector(".padroes-grade");
+    const grade = document.querySelector(".crud-navegavel__corpo");
     return {
       alturaBarra: barra.height,
       topoPagina: pagina.top,
@@ -517,17 +568,13 @@ test("página de padrões conserva espaço e contém suas rolagens", async ({ pa
       gradeDireita: grade.getBoundingClientRect().right,
       gradeBaixo: grade.getBoundingClientRect().bottom,
       gradeAltura: grade.clientHeight,
-      rolagemHorizontal: grade.scrollWidth > grade.clientWidth,
-      rolagemVertical: grade.scrollHeight > grade.clientHeight,
     };
   });
   expect(antes.alturaBarra).toBeLessThanOrEqual(46);
   expect(antes.corpoLargura).toBeLessThanOrEqual(antes.janelaLargura);
   expect(antes.gradeDireita).toBeLessThanOrEqual(1280);
   expect(antes.gradeBaixo).toBeLessThanOrEqual(720);
-  expect(antes.gradeAltura).toBeGreaterThan(300);
-  expect(antes.rolagemHorizontal).toBe(true);
-  expect(antes.rolagemVertical).toBe(true);
+  expect(antes.gradeAltura).toBeGreaterThan(100);
 
   await page.locator(".navegacao-menu summary").click();
   const depoisMenu = await page.evaluate(() => ({
@@ -537,14 +584,6 @@ test("página de padrões conserva espaço e contém suas rolagens", async ({ pa
   expect(depoisMenu.alturaBarra).toBe(antes.alturaBarra);
   expect(depoisMenu.topoPagina).toBe(antes.topoPagina);
 
-  const fixacao = await page.evaluate(() => {
-    const grade = document.querySelector(".padroes-grade");
-    grade.scrollTop = 500;
-    const topoGrade = grade.getBoundingClientRect().top;
-    const topoCabecalho = document.querySelector("#tabela-padroes th").getBoundingClientRect().top;
-    return { topoGrade, topoCabecalho };
-  });
-  expect(Math.abs(fixacao.topoCabecalho - fixacao.topoGrade)).toBeLessThanOrEqual(2);
 });
 
 
@@ -553,9 +592,10 @@ test("páginas compactas não alargam a janela estreita", async ({ page }) => {
   await simularCatalogoExtenso(page);
   for (const caminho of ["/grupos-padroes.html", "/padroes.html"]) {
     await page.goto(caminho);
+    if (caminho === "/padroes.html") await page.locator('[data-filtro="grupo_cod"]').selectOption("PG_001");
     const medidas = await page.evaluate(() => {
-      const grade = document.querySelector(".grupos-grade, .padroes-grade");
-      const barraFormulario = document.querySelector(".grupos-barra, .padroes-barra");
+      const grade = document.querySelector(".crud-navegavel__corpo");
+      const barraFormulario = document.querySelector(".crud-navegavel__consulta");
       return {
         documento: document.documentElement.scrollWidth,
         janela: window.innerWidth,
@@ -566,8 +606,6 @@ test("páginas compactas não alargam a janela estreita", async ({ page }) => {
       };
     });
     expect(medidas.documento).toBeLessThanOrEqual(medidas.janela);
-    expect(medidas.barraRola).toBe(true);
-    expect(medidas.gradeRola).toBe(true);
     expect(medidas.gradeDireita).toBeLessThanOrEqual(700);
     expect(medidas.gradeBaixo).toBeLessThanOrEqual(600);
   }
@@ -576,9 +614,9 @@ test("páginas compactas não alargam a janela estreita", async ({ page }) => {
 
 test("menu Screener abre diretamente o funil oficial em três níveis", async ({ page }) => {
   await page.goto("/screener.html");
-  await expect(page.locator("h1")).toHaveText("Screener");
-  await expect(page.locator('[aria-current="page"]')).toHaveText("Screener");
-  await expect(page.locator("#botao-executar-extensivel")).toHaveText("Executar 5.000");
+  await expect(page.locator("h1")).toHaveText("Sistema de preparação e aplicação do Screener");
+  await expect(page.locator('[aria-current="page"]')).toHaveText("Preparação do Screener");
+  await expect(page.locator("#botao-executar-extensivel")).toHaveText("Iniciar teste");
   await expect(page.locator("#corpo-validacoes-screener")).toHaveCount(0);
   await expect(page.getByText("Abrir novo funil")).toHaveCount(0);
   await expect(page.getByText("Screener atual")).toHaveCount(0);

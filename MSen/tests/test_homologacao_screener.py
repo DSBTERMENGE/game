@@ -43,6 +43,17 @@ class TestHomologacaoScreener(unittest.TestCase):
         perfis = self.estado.perfis[:-1]
         self.assertEqual("PERFIS_DESATUALIZADOS", self.erro(replace(self.estado, perfis=perfis)))
 
+    def test_confirmacao_pode_conferir_cobertura_antes_da_liberacao(self):
+        validar_homologacao_screener(
+            replace(
+                self.estado, atualizado=False,
+                motivo="HOMOLOGACAO_CONCLUIDA_AGUARDANDO_COBERTURA",
+            ),
+            codigos_carregados=self.codigos,
+            codigos_padroes_selecionados=self.padroes,
+            exigir_liberacao=False,
+        )
+
     def test_bloqueia_funcao_nova_alterada_pendente_ou_com_n(self):
         original = self.estado.criterios[0]
         cenarios = (

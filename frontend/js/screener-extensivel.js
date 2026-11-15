@@ -168,6 +168,8 @@ const botaoExecutar = document.querySelector("#botao-executar-extensivel");
 const botaoAplicacao = document.querySelector("#botao-aplicacao-screener");
 const dialogoConfirmarTeste = document.querySelector("#dialogo-confirmar-teste-screener");
 const botaoConfirmarTeste = document.querySelector("#botao-confirmar-teste-screener");
+const dialogoConfirmarAplicacao = document.querySelector("#dialogo-confirmar-aplicacao-screener");
+const botaoConfirmarAplicacao = document.querySelector("#botao-confirmar-aplicacao-screener");
 const botaoAbrirTodos = document.querySelector("#botao-abrir-todos");
 const botaoFecharTodos = document.querySelector("#botao-fechar-todos");
 const limiteRaridade = document.querySelector("#limite-raridade-extensivel");
@@ -200,9 +202,34 @@ const modalTeste = criarModalAndamento({
   },
 });
 
+const modalAplicacao = criarModalAndamento({
+  titulo: "Aplicação do Screener",
+  descricao: "Aplicação dos filtros atuais sobre todas as 50.063.860 combinações possíveis.",
+  confirmarCancelamento: true,
+  iniciar: async () => respostaJson(await fetch("/api/screener/execucoes", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      limite_raridade: limiteRaridade.value,
+      escopo: "integral",
+      confirmacao_integral: "PROCESSAR_50063860_COMBINACOES",
+    }),
+  })),
+  consultar: async (id) => respostaJson(await fetch(`/api/screener/execucoes/${encodeURIComponent(id)}`)),
+  cancelar: async (id) => respostaJson(await fetch(
+    `/api/screener/execucoes/${encodeURIComponent(id)}/cancelamento`, { method: "POST" },
+  )),
+  apresentarResultado: (dados) => {
+    renderizarQuadroExtensivel(dados);
+    texto("#extensivel-comparacao", "Aplicação integral concluída; a comparação histórica pertence somente ao Teste do Screener.");
+    detalhesDisponiveis = true;
+    return { aprovado: true, mensagem: "Aplicação integral concluída. Os resultados estão disponíveis na página." };
+  },
+});
+
 function atualizarControles(processando = false) {
   botaoExecutar.disabled = processando || bloqueadoPelaValidacao;
-  botaoAplicacao.disabled = true;
+  botaoAplicacao.disabled = processando || bloqueadoPelaValidacao;
   limiteRaridade.disabled = processando;
   botaoAbrirTodos.disabled = processando || !detalhesDisponiveis;
   botaoFecharTodos.disabled = processando || !detalhesDisponiveis;
@@ -250,6 +277,30 @@ async function executarAmostra() {
   }
 }
 
+async function executarAplicacaoIntegral() {
+  if (bloqueadoPelaValidacao) {
+    texto("#mensagem-extensivel", MENSAGEM_VALIDACAO_PENDENTE);
+    return;
+  }
+  if (!limiteRaridade.checkValidity()) {
+    limiteRaridade.reportValidity();
+    texto("#mensagem-extensivel", "Informe um limite de raridade entre 0% e 100%.");
+    return;
+  }
+  atualizarControles(true);
+  texto("#mensagem-extensivel", "Aplicação em andamento: analisando 50.063.860 combinações...");
+  try {
+    const final = await modalAplicacao.abrir();
+    if (final?.estado === "CANCELADA") {
+      texto("#mensagem-extensivel", "Aplicação cancelada. Os resultados parciais foram descartados.");
+    } else if (final?.estado === "FALHOU") {
+      texto("#mensagem-extensivel", `Não foi possível concluir a aplicação: ${final.erro?.mensagem || "falha não identificada"}.`);
+    }
+  } finally {
+    atualizarControles(false);
+  }
+}
+
 botaoAbrirTodos.addEventListener("click", () => {
   document.querySelectorAll(".prototipo-nivel").forEach((item) => { item.open = true; });
 });
@@ -270,6 +321,16 @@ botaoExecutar.addEventListener("click", () => {
 });
 botaoConfirmarTeste.addEventListener("click", () => {
   queueMicrotask(executarAmostra);
+});
+botaoAplicacao.addEventListener("click", () => {
+  if (bloqueadoPelaValidacao) {
+    texto("#mensagem-extensivel", MENSAGEM_VALIDACAO_PENDENTE);
+    return;
+  }
+  dialogoConfirmarAplicacao.showModal();
+});
+botaoConfirmarAplicacao.addEventListener("click", () => {
+  queueMicrotask(executarAplicacaoIntegral);
 });
 atualizarControles(false);
 carregarEstadoValidacao();
