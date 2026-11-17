@@ -35,9 +35,13 @@ from msen.screener.configuracao import (
     validar_limite_raridade,
 )
 from msen.modelos import ResultadoEntrada
+from msen.config import carregar_configuracao_banco
+from msen.database import abrir_conexao
 from msen.padroes import (
+    calcular_categorias_diagonais,
     criar_fotografia_historica_diagonal,
     criar_registro_detectores_aprovados,
+    resolver_funcao_detectora,
 )
 from msen.services.selecao_padroes import SelecaoPadroesRaros
 from msen.services.homologacao_screener import (
@@ -59,6 +63,32 @@ class ErroEnsaioExtensivel(RuntimeError):
     def __init__(self, codigo: str, mensagem: str) -> None:
         super().__init__(mensagem)
         self.codigo = codigo
+
+
+ID_PADRAO_DIAGONAL = 19
+
+
+def _carregar_analisador_diagonal():
+    """Resolve pelo id_padrao a função categórica cadastrada para a diagonal."""
+
+    with abrir_conexao(carregar_configuracao_banco()) as conexao:
+        with conexao.cursor() as cursor:
+            cursor.execute(
+                "SELECT funcao_detectora FROM padroes_subgrupo WHERE id_padrao=%s",
+                (ID_PADRAO_DIAGONAL,),
+            )
+            linha = cursor.fetchone()
+    if linha is None:
+        raise ErroEnsaioExtensivel(
+            "PADRAO_DIAGONAL_AUSENTE", "O padrão diagonal não foi encontrado."
+        )
+    analisador = resolver_funcao_detectora(linha[0])
+    if analisador is not calcular_categorias_diagonais:
+        raise ErroEnsaioExtensivel(
+            "FUNCAO_DIAGONAL_DIVERGENTE",
+            "A função cadastrada para o padrão diagonal diverge da função homologada.",
+        )
+    return analisador
 
 
 def _carregar_fotografia_diagonal():
@@ -321,8 +351,9 @@ def gerar_quadro_screener_extensivel(
         registro=criar_registro_detectores_aprovados(),
     )
     fotografia_diagonal = _carregar_fotografia_diagonal()
+    analisador_diagonal = _carregar_analisador_diagonal()
     familia_padroes = acrescentar_filtro_diagonal(
-        familia_padroes, fotografia_diagonal, limite_efetivo
+        familia_padroes, fotografia_diagonal, limite_efetivo, analisador_diagonal
     )
     familias = (familia_estatistica, familia_geometrica, familia_padroes)
 

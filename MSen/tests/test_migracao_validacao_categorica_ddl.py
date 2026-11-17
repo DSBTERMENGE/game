@@ -13,11 +13,12 @@ SQL = ARQUIVO.read_text(encoding="utf-8")
 
 
 class MigracaoValidacaoCategoricaDDLTestCase(unittest.TestCase):
-    def test_035_e_a_ultima_migracao_descoberta(self) -> None:
+    def test_035_permanece_na_sequencia_de_migracoes(self) -> None:
         migracoes = descobrir_migracoes(MIGRACOES)
 
-        self.assertEqual("035", migracoes[-1].versao)
-        self.assertEqual(ARQUIVO, migracoes[-1].caminho)
+        encontrada = next(item for item in migracoes if item.versao == "035")
+        self.assertEqual(ARQUIVO, encontrada.caminho)
+        self.assertEqual("036", migracoes[-1].versao)
 
     def test_amplia_tipo_sem_remover_os_tipos_existentes(self) -> None:
         self.assertIn(

@@ -14,11 +14,14 @@ from msen.geometria import (
     calcular_area_e_centro_gravidade, calcular_extensao_aberta,
     calcular_perimetro_fechado,
 )
-from msen.padroes import criar_registro_detectores_aprovados
+from msen.padroes import (
+    calcular_categorias_diagonais,
+    criar_registro_detectores_aprovados,
+)
 
 from .criterios import (
     calcular_area_total, calcular_centro_gravidade_x,
-    calcular_centro_gravidade_y, calcular_categorias_diagonais,
+    calcular_centro_gravidade_y,
     calcular_quantidade_regioes,
 )
 

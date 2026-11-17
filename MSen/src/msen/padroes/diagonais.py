@@ -137,3 +137,12 @@ def analisar_assinaturas_diagonais(
         referencias=referencias,
         assinaturas=assinaturas,
     )
+
+
+def calcular_categorias_diagonais(dezenas: tuple[int, ...]) -> str:
+    """Devolve a assinatura categórica persistível do arranjo diagonal."""
+
+    analise = analisar_assinaturas_diagonais(dezenas)
+    if analise.sem_referencia_longa:
+        return CATEGORIA_SEM_REFERENCIA_LONGA
+    return "|".join(item.codigo for item in analise.assinaturas)

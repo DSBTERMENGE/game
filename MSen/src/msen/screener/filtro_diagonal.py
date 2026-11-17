@@ -2,11 +2,11 @@
 
 from dataclasses import dataclass
 from decimal import Decimal
+from collections.abc import Callable
 
 from msen.padroes import (
-    CATEGORIA_SEM_REFERENCIA_LONGA,
     FotografiaHistoricaDiagonal,
-    analisar_assinaturas_diagonais,
+    calcular_categorias_diagonais,
 )
 
 from .configuracao import validar_limite_raridade
@@ -30,24 +30,36 @@ class ComparacaoCategoriaDiagonal:
     rara: bool
 
 
-def _categorias_da_combinacao(combinacao: Combinacao) -> tuple[str, ...]:
-    analise = analisar_assinaturas_diagonais(combinacao)
-    if analise.sem_referencia_longa:
-        return (CATEGORIA_SEM_REFERENCIA_LONGA,)
-    return tuple(item.codigo for item in analise.assinaturas)
+AnalisadorCategoriaDiagonal = Callable[[tuple[int, ...]], str]
+
+
+def _categorias_da_combinacao(
+    combinacao: Combinacao,
+    analisador: AnalisadorCategoriaDiagonal,
+) -> tuple[str, ...]:
+    categoria = analisador(combinacao)
+    if not isinstance(categoria, str) or not categoria.strip():
+        raise TypeError("A função diagonal deve devolver uma categoria preenchida.")
+    categorias = tuple(categoria.strip().split("|"))
+    if any(not item for item in categorias) or len(categorias) != len(set(categorias)):
+        raise ValueError("A função diagonal devolveu categorias inválidas.")
+    return categorias
 
 
 def avaliar_filtro_diagonal(
     combinacao: Combinacao,
     fotografia: FotografiaHistoricaDiagonal,
     limite_raridade: Decimal | int | float | str,
+    analisador: AnalisadorCategoriaDiagonal = calcular_categorias_diagonais,
 ) -> DecisaoFiltro:
     """Produz uma única decisão a partir de todas as categorias calculadas."""
 
     if not isinstance(fotografia, FotografiaHistoricaDiagonal):
         raise TypeError("fotografia deve ser uma FotografiaHistoricaDiagonal.")
     limite = validar_limite_raridade(limite_raridade)
-    categorias = _categorias_da_combinacao(combinacao)
+    if not callable(analisador):
+        raise TypeError("analisador deve ser uma função chamável.")
+    categorias = _categorias_da_combinacao(combinacao, analisador)
     comparacoes: list[ComparacaoCategoriaDiagonal] = []
     for codigo in categorias:
         try:
@@ -100,6 +112,7 @@ def acrescentar_filtro_diagonal(
     familia_padroes: DefinicaoFamilia,
     fotografia: FotografiaHistoricaDiagonal,
     limite_raridade: Decimal | int | float | str,
+    analisador: AnalisadorCategoriaDiagonal = calcular_categorias_diagonais,
 ) -> DefinicaoFamilia:
     """Acrescenta uma única avaliação diagonal ao fim da família de padrões."""
 
@@ -110,6 +123,8 @@ def acrescentar_filtro_diagonal(
     if not isinstance(fotografia, FotografiaHistoricaDiagonal):
         raise TypeError("fotografia deve ser uma FotografiaHistoricaDiagonal.")
     limite = validar_limite_raridade(limite_raridade)
+    if not callable(analisador):
+        raise TypeError("analisador deve ser uma função chamável.")
     if any(
         filtro.codigo == CODIGO_FILTRO_DIAGONAL
         for filtro in familia_padroes.filtros
@@ -117,7 +132,7 @@ def acrescentar_filtro_diagonal(
         raise ValueError("O filtro diagonal já pertence à família.")
 
     def avaliar(combinacao: Combinacao) -> DecisaoFiltro:
-        return avaliar_filtro_diagonal(combinacao, fotografia, limite)
+        return avaliar_filtro_diagonal(combinacao, fotografia, limite, analisador)
 
     ordem = max((filtro.ordem for filtro in familia_padroes.filtros), default=0) + 1
     diagonal = DefinicaoFiltro(

@@ -30,6 +30,7 @@ from .diagonais import (
     PASSO_DIAGONAL_ESQUERDA,
     POSICOES_REFERENCIA,
     analisar_assinaturas_diagonais,
+    calcular_categorias_diagonais,
 )
 from .distribuicao_diagonais import (
     CODIGOS_ASSINATURAS_DIAGONAIS,
@@ -138,6 +139,7 @@ __all__ = [
     "FotografiaHistoricaDiagonal",
     "criar_fotografia_historica_diagonal",
     "analisar_assinaturas_diagonais",
+    "calcular_categorias_diagonais",
     "detectar_duas_dezenas_sequenciais",
     "detectar_tres_dezenas_sequenciais",
     "detectar_mais_de_tres_dezenas_sequenciais",

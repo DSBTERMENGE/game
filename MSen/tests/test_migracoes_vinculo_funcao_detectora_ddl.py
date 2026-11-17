@@ -23,7 +23,7 @@ class MigracoesVinculoFuncaoDetectoraDDLTest(unittest.TestCase):
     def test_migracoes_estao_na_ordem_esperada(self):
         versoes = tuple(item.versao for item in descobrir_migracoes(MIGRACOES))
         self.assertEqual(("031", "032"), versoes[30:32])
-        self.assertEqual("035", versoes[-1])
+        self.assertEqual("036", versoes[-1])
 
     def test_031_adiciona_colunas_e_integridade_relacional(self):
         for trecho in (
