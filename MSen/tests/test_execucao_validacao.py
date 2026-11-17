@@ -8,7 +8,42 @@ from msen.services import (
     comparar_resultado_padrao,
 )
 from msen.services.motor_validacao import _motivo_global
+from msen.services.execucao_validacao import SQL_CRITERIOS_PADRAO
+from msen.services.execucao_validacao import _resolver_detector_criterio
 from msen.validacao import criar_registro_criterios_producao
+
+
+class TestVinculoDiretoCriterioPadrao(unittest.TestCase):
+    def test_consulta_usa_ids_sem_extrair_codigo_textual(self):
+        self.assertIn("p.id_padrao = c.id_padrao", SQL_CRITERIOS_PADRAO)
+        self.assertIn("p.id_grupo = c.id_grupo", SQL_CRITERIOS_PADRAO)
+        self.assertNotIn("padrao_cod", SQL_CRITERIOS_PADRAO)
+        self.assertNotIn("SUBSTRING", SQL_CRITERIOS_PADRAO)
+
+    def test_consulta_carrega_funcao_detectora_persistida(self):
+        self.assertIn("p.funcao_detectora", SQL_CRITERIOS_PADRAO)
+
+    def test_resolve_funcao_persistida_quando_homologada(self):
+        definicao = next(
+            item for item in criar_registro_criterios_producao().listar()
+            if item.codigo == "PAD_PD_001"
+        )
+        self.assertIs(
+            definicao.funcao,
+            _resolver_detector_criterio(definicao, definicao.funcao_python),
+        )
+
+    def test_rejeita_funcao_persistida_divergente(self):
+        definicao = next(
+            item for item in criar_registro_criterios_producao().listar()
+            if item.codigo == "PAD_PD_001"
+        )
+        with self.assertRaises(ErroExecucaoValidacao) as contexto:
+            _resolver_detector_criterio(
+                definicao,
+                "msen.padroes.sequenciais.detectar_tres_dezenas_sequenciais",
+            )
+        self.assertEqual("FUNCAO_DIVERGENTE", contexto.exception.codigo)
 
 
 class TestComparacaoResultadoNumerico(unittest.TestCase):

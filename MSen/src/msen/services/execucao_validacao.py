@@ -6,13 +6,39 @@ from decimal import Decimal, ROUND_HALF_UP
 import psycopg
 
 from msen.modelos import ResultadoEntrada
+from msen.padroes import ErroResolucaoDetector, resolver_funcao_detectora
 from msen.validacao import DefinicaoCriterio, criar_registro_criterios_producao
+
+
+SQL_CRITERIOS_PADRAO = (
+    "SELECT c.id_criterio, c.codigo, c.assinatura_funcao, c.id_grupo, "
+    "p.id_padrao, p.funcao_detectora FROM criterios_validacao c "
+    "JOIN padroes_subgrupo p ON p.id_padrao = c.id_padrao "
+    "AND p.id_grupo = c.id_grupo "
+    "WHERE c.categoria = 'PADRAO' AND c.ativo ORDER BY c.codigo FOR UPDATE OF c"
+)
 
 
 class ErroExecucaoValidacao(RuntimeError):
     def __init__(self, codigo: str, mensagem: str) -> None:
         super().__init__(mensagem)
         self.codigo = codigo
+
+
+def _resolver_detector_criterio(
+    definicao: DefinicaoCriterio, funcao_detectora: str | None
+):
+    """Confere o catálogo homologado e resolve a função persistida."""
+
+    if funcao_detectora != definicao.funcao_python:
+        raise ErroExecucaoValidacao(
+            "FUNCAO_DIVERGENTE",
+            f"A função persistida de {definicao.codigo} diverge do catálogo homologado.",
+        )
+    try:
+        return resolver_funcao_detectora(funcao_detectora)
+    except ErroResolucaoDetector as erro:
+        raise ErroExecucaoValidacao(erro.codigo, str(erro)) from erro
 
 
 @dataclass(frozen=True, slots=True)
@@ -284,26 +310,24 @@ def executar_criterios_padroes(
     resultados: list[ResultadoExecucaoCriterio] = []
     with conexao.transaction():
         with conexao.cursor() as cursor:
-            cursor.execute(
-                "SELECT c.id_criterio, c.codigo, c.assinatura_funcao, c.id_grupo, "
-                "p.id_padrao FROM criterios_validacao c "
-                "JOIN padroes_subgrupo p ON p.id_grupo = c.id_grupo "
-                "AND p.padrao_cod = SUBSTRING(c.codigo FROM 5) "
-                "WHERE c.categoria = 'PADRAO' AND c.ativo ORDER BY c.codigo FOR UPDATE OF c"
-            )
+            cursor.execute(SQL_CRITERIOS_PADRAO)
             criterios = cursor.fetchall()
             if not criterios or {linha[1] for linha in criterios} != set(definicoes):
                 raise ErroExecucaoValidacao(
                     "CATALOGO_DIVERGENTE",
                     "O catálogo de padrões diverge do registro de produção.",
                 )
-            for id_criterio, codigo, assinatura_banco, id_grupo, id_padrao in criterios:
+            for (
+                id_criterio, codigo, assinatura_banco, id_grupo,
+                id_padrao, funcao_detectora,
+            ) in criterios:
                 definicao = definicoes[codigo]
                 if assinatura_banco.strip() != definicao.assinatura_funcao:
                     raise ErroExecucaoValidacao(
                         "ASSINATURA_DIVERGENTE",
                         f"A assinatura registrada de {codigo} não corresponde ao código atual.",
                     )
+                detector = _resolver_detector_criterio(definicao, funcao_detectora)
                 cursor.execute(
                     "SELECT a.id_resultado, a.referencia_conferida, "
                     "a.estado_padrao_esperado, a.id_padrao_esperado, r.data_resultado, "
@@ -342,7 +366,7 @@ def executar_criterios_padroes(
                     )
                     estado, id_calculado, aprovado = comparar_resultado_padrao(
                         estado_esperado=linha[2], id_padrao_esperado=linha[3],
-                        detectado=definicao.funcao(entrada.resultados),
+                        detectado=detector(entrada.resultados),
                         id_padrao_criterio=id_padrao,
                     )
                     cursor.execute(
