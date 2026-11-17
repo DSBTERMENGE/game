@@ -9,21 +9,25 @@ test.skip(
 test("Chrome executa e reconcilia a amostra real do funil oficial", async ({ page }) => {
   await page.goto("/screener.html");
   await page.locator("#botao-executar-extensivel").click();
+  await expect(page.locator("#dialogo-confirmar-teste-screener")).toBeVisible();
+  await page.locator("#botao-confirmar-teste-screener").click();
 
   await expect(page.locator(".prototipo-nivel")).toHaveCount(3, { timeout: 30_000 });
   await expect(page.locator("#extensivel-total-analisado")).toHaveText("5.000");
-  await expect(page.locator("#extensivel-total-excluido")).toHaveText("4.586");
-  await expect(page.locator("#extensivel-total-aprovado")).toHaveText("414");
+  await expect(page.locator("#extensivel-total-excluido")).toHaveText("4.633");
+  await expect(page.locator("#extensivel-total-aprovado")).toHaveText("367");
   await expect(page.locator("#extensivel-reconciliacao")).toContainText("Fechamento correto");
   await expect(page.locator("#extensivel-comparacao")).toContainText("anterior: 4.409");
-  await expect(page.locator("#mensagem-extensivel")).toContainText("Amostra protegida reconciliada");
+  await expect(page.locator("#mensagem-extensivel")).toContainText("Teste do Screener concluído");
   await expect(page.locator("#botao-executar-extensivel")).toBeEnabled();
 
   const saldos = await page.locator(".prototipo-nivel > summary span:last-child b").allTextContents();
-  expect(saldos).toEqual(["2.001", "423", "414"]);
+  expect(saldos).toEqual(["2.001", "423", "367"]);
 
+  await page.locator(".modal-andamento[open] .modal-andamento__fechar").click();
   await page.locator(".prototipo-nivel--padroes summary").first().click();
   await expect(page.locator(".padrao-grupo")).toHaveCount(3);
   await expect(page.locator(".padrao-aplicado")).toHaveCount(5);
   await expect(page.locator(".padrao-nao-aplicado")).toHaveCount(0);
+  await expect(page.getByText("PAD_PG_004", { exact: false })).toBeVisible();
 });

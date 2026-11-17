@@ -28,7 +28,7 @@ const quadro = {
   familias: [
     { codigo: "ESTATISTICA", nome: "Estatística", ordem: 1, entrada: 100, exclusoes: 10, saldo: 90, percentual_total_inicial: "10", percentual_saldo_recebido: "10", filtros: [filtro("EST", 100, 10)] },
     { codigo: "GEOMETRIA", nome: "Geometria", ordem: 2, entrada: 90, exclusoes: 10, saldo: 80, percentual_total_inicial: "10", percentual_saldo_recebido: "11.111111", filtros: [filtro("GEO", 90, 10)] },
-    { codigo: "PADROES", nome: "Padrões", ordem: 3, entrada: 80, exclusoes: 10, saldo: 70, percentual_total_inicial: "10", percentual_saldo_recebido: "12.5", filtros: [filtro("PAD", 80, 10)] },
+    { codigo: "PADROES", nome: "Padrões", ordem: 3, entrada: 80, exclusoes: 10, saldo: 70, percentual_total_inicial: "10", percentual_saldo_recebido: "12.5", filtros: [filtro("PAD_PD_003", 80, 10), filtro("PAD_PD_005", 70, 0), filtro("PAD_PD_009", 70, 0)] },
   ],
   fechamento: { equacao: "total_analisado = total_excluido + total_aprovado", lado_esquerdo: 100, lado_direito: 100, valido: true },
   detalhes_padroes: {
@@ -60,6 +60,22 @@ test("contrato aceita somente quadro reconciliado nas três famílias", () => {
       fechamento: { ...quadro.detalhes_padroes.fechamento, saldo: 999 },
     },
   }), false);
+});
+
+test("contrato separa padrões individuais do filtro diagonal categórico", () => {
+  const comDiagonal = structuredClone(quadro);
+  const familia = comDiagonal.familias[2];
+  familia.filtros.push(filtro("PAD_PG_004", 70, 7));
+  familia.exclusoes = 17;
+  familia.saldo = 63;
+  comDiagonal.resumo.total_excluido = 37;
+  comDiagonal.resumo.total_aprovado = 63;
+  comDiagonal.resumo.percentual_excluido = "37.000000";
+  comDiagonal.resumo.percentual_aprovado = "63.000000";
+
+  assert.equal(validarQuadroExtensivel(comDiagonal), true);
+  comDiagonal.detalhes_padroes.fechamento.saldo = 63;
+  assert.equal(validarQuadroExtensivel(comDiagonal), false);
 });
 
 test("interface explica que cadastro não substitui função Python", async () => {

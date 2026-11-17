@@ -18,11 +18,26 @@ export function validarDetalhesPadroes(detalhes, familia) {
     exclusoes += grupo.exclusoes;
     saldo = grupo.saldo;
   }
-  return exclusoes === familia.exclusoes
-    && saldo === familia.saldo
+  let encontrouFiltroPosterior = false;
+  let saldoAposDetalhes = familia.saldo;
+  const filtrosDetalhados = new Set();
+  for (const filtro of familia.filtros) {
+    const codigoPadrao = filtro.codigo.replace(/^PAD_/, "");
+    if (codigos.has(codigoPadrao)) {
+      if (encontrouFiltroPosterior) return false;
+      filtrosDetalhados.add(codigoPadrao);
+    } else if (!encontrouFiltroPosterior) {
+      encontrouFiltroPosterior = true;
+      saldoAposDetalhes = filtro.entrada;
+    }
+  }
+  if (filtrosDetalhados.size !== codigos.size) return false;
+  const exclusoesDetalhadas = familia.entrada - saldoAposDetalhes;
+  return exclusoes === exclusoesDetalhadas
+    && saldo === saldoAposDetalhes
     && detalhes.fechamento.entrada === familia.entrada
-    && detalhes.fechamento.exclusoes === familia.exclusoes
-    && detalhes.fechamento.saldo === familia.saldo;
+    && detalhes.fechamento.exclusoes === exclusoesDetalhadas
+    && detalhes.fechamento.saldo === saldoAposDetalhes;
 }
 
 export function validarQuadroExtensivel(dados) {
