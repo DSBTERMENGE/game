@@ -5,6 +5,8 @@ from msen.database import ErroRepositorioPadrao, PadraoPersistido, RepositorioPa
 from msen.database.padroes_repository import (
     _linha_para_padrao,
     _validar_codigo,
+    _validar_funcao_detectora,
+    _validar_id_padrao,
     _validar_texto,
 )
 
@@ -77,6 +79,16 @@ class MapeamentoRepositorioPadroesTestCase(unittest.TestCase):
     def test_repositorio_exige_conexao_psycopg(self):
         with self.assertRaises(TypeError):
             RepositorioPadroes(object())  # type: ignore[arg-type]
+
+    def test_valida_id_e_funcao_detectora_antes_do_sql(self):
+        funcao = "msen.padroes.sequenciais.detectar_duas_dezenas_sequenciais"
+        self.assertEqual(7, _validar_id_padrao(7))
+        self.assertEqual(funcao, _validar_funcao_detectora(f"  {funcao}  "))
+        self.assertIsNone(_validar_funcao_detectora(None))
+        for identificador in (True, 0, -1, "1"):
+            with self.subTest(identificador=identificador):
+                with self.assertRaises((TypeError, ValueError)):
+                    _validar_id_padrao(identificador)  # type: ignore[arg-type]
 
     def test_erro_preserva_codigo_funcional_sem_dados_de_conexao(self):
         erro = ErroRepositorioPadrao(

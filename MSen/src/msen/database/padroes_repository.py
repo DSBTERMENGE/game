@@ -8,7 +8,7 @@ from typing import Any
 import psycopg
 
 from msen.database.grupos_padroes_repository import _validar_codigo_grupo
-from msen.padroes import EstatisticaPadrao
+from msen.padroes import EstatisticaPadrao, resolver_funcao_detectora
 
 
 COLUNAS_PADRAO = """
@@ -23,12 +23,20 @@ FORMATO_CODIGO = re.compile(r"PD_[0-9]{3,}")
 class ErroRepositorioPadrao(RuntimeError):
     """Representa uma falha segura ao acessar a tabela `padroes`."""
 
-    def __init__(self, codigo: str, mensagem: str, *, padrao_cod: str | None = None):
+    def __init__(
+        self,
+        codigo: str,
+        mensagem: str,
+        *,
+        padrao_cod: str | None = None,
+        id_padrao: int | None = None,
+    ):
         """Cria o erro sem incluir SQL, conexão ou credenciais na mensagem."""
 
         super().__init__(mensagem)
         self.codigo = codigo
         self.padrao_cod = padrao_cod
+        self.id_padrao = id_padrao
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,6 +82,26 @@ def _validar_texto(nome: str, valor: str) -> str:
     return valor.strip()
 
 
+def _validar_id_padrao(id_padrao: int) -> int:
+    if isinstance(id_padrao, bool) or not isinstance(id_padrao, int):
+        raise TypeError("id_padrao deve ser inteiro.")
+    if id_padrao <= 0:
+        raise ValueError("id_padrao deve ser positivo.")
+    return id_padrao
+
+
+def _validar_funcao_detectora(funcao_detectora: str | None) -> str | None:
+    if funcao_detectora is None:
+        return None
+    if not isinstance(funcao_detectora, str):
+        raise TypeError("funcao_detectora deve ser texto ou nula.")
+    funcao = funcao_detectora.strip()
+    if len(funcao) > 500:
+        raise ValueError("funcao_detectora deve possuir no máximo 500 caracteres.")
+    resolver_funcao_detectora(funcao)
+    return funcao
+
+
 def _validar_limite_percentual(valor: Decimal | int | str) -> Decimal:
     """Normaliza um limite de 0% a 100% usado em consulta parametrizada."""
 
@@ -106,6 +134,15 @@ class RepositorioPadroes:
             f"SELECT {COLUNAS_PADRAO} FROM padroes_subgrupo p "
             "JOIN padroes_grupo g USING (id_grupo) WHERE p.padrao_cod = %s",
             (padrao_cod,),
+        )
+        return cursor.fetchone()
+
+    @staticmethod
+    def _selecionar_por_id(cursor, id_padrao: int):
+        cursor.execute(
+            f"SELECT {COLUNAS_PADRAO} FROM padroes_subgrupo p "
+            "JOIN padroes_grupo g USING (id_grupo) WHERE p.id_padrao = %s",
+            (id_padrao,),
         )
         return cursor.fetchone()
 
@@ -211,7 +248,11 @@ class RepositorioPadroes:
             ) from None
 
     def criar(
-        self, padrao_nome: str, padrao_descr: str, grupo_cod: str
+        self,
+        padrao_nome: str,
+        padrao_descr: str,
+        grupo_cod: str,
+        funcao_detectora: str | None = None,
     ) -> PadraoPersistido:
         """Cria um cadastro com código automático que nunca será reutilizado.
 
@@ -231,6 +272,7 @@ class RepositorioPadroes:
         nome = _validar_texto("padrao_nome", padrao_nome)
         descricao = _validar_texto("padrao_descr", padrao_descr)
         codigo_grupo = _validar_codigo_grupo(grupo_cod)
+        funcao = _validar_funcao_detectora(funcao_detectora)
         try:
             with self._conexao.transaction():
                 with self._conexao.cursor() as cursor:
@@ -240,9 +282,9 @@ class RepositorioPadroes:
                     codigo = f"PD_{numero:03d}"
                     cursor.execute(
                         "INSERT INTO padroes_subgrupo "
-                        "(id_grupo, padrao_cod, padrao_nome, padrao_descr) "
-                        "VALUES (%s, %s, %s, %s)",
-                        (id_grupo, codigo, nome, descricao),
+                        "(id_grupo, padrao_cod, padrao_nome, padrao_descr, "
+                        "funcao_detectora) VALUES (%s, %s, %s, %s, %s)",
+                        (id_grupo, codigo, nome, descricao, funcao),
                     )
                     return _linha_para_padrao(
                         self._selecionar_por_codigo(cursor, codigo)
@@ -256,6 +298,39 @@ class RepositorioPadroes:
         except psycopg.Error:
             raise ErroRepositorioPadrao(
                 "FALHA_CADASTRO", "Não foi possível cadastrar o padrão."
+            ) from None
+
+    def atualizar_funcao_detectora(
+        self, id_padrao: int, funcao_detectora: str | None
+    ) -> PadraoPersistido:
+        """Altera somente a função detectora usando o identificador interno."""
+
+        identificador = _validar_id_padrao(id_padrao)
+        funcao = _validar_funcao_detectora(funcao_detectora)
+        try:
+            with self._conexao.transaction():
+                with self._conexao.cursor() as cursor:
+                    cursor.execute(
+                        "UPDATE padroes_subgrupo SET funcao_detectora = %s "
+                        "WHERE id_padrao = %s RETURNING id_padrao",
+                        (funcao, identificador),
+                    )
+                    if cursor.fetchone() is None:
+                        raise ErroRepositorioPadrao(
+                            "PADRAO_NAO_ENCONTRADO",
+                            "O padrão não foi encontrado.",
+                            id_padrao=identificador,
+                        )
+                    return _linha_para_padrao(
+                        self._selecionar_por_id(cursor, identificador)
+                    )
+        except ErroRepositorioPadrao:
+            raise
+        except psycopg.Error:
+            raise ErroRepositorioPadrao(
+                "FALHA_ATUALIZACAO_FUNCAO",
+                "Não foi possível atualizar a função detectora.",
+                id_padrao=identificador,
             ) from None
 
     def atualizar_textos(

@@ -16,6 +16,7 @@ from .resultados import (
     resultados_api,
 )
 from .padroes import (
+    atualizar_funcao_detectora_no_banco,
     criar_padrao_no_banco,
     editar_padrao_no_banco,
     excluir_padrao_no_banco,
@@ -96,6 +97,7 @@ def criar_app(configuracao: Mapping[str, Any] | None = None) -> Flask:
         BUSCAR_RESULTADO=buscar_resultado_do_banco,
         CRIAR_PADRAO=criar_padrao_no_banco,
         EDITAR_PADRAO=editar_padrao_no_banco,
+        ATUALIZAR_FUNCAO_DETECTORA=atualizar_funcao_detectora_no_banco,
         EXCLUIR_PADRAO=excluir_padrao_no_banco,
         LISTAR_PADROES=listar_padroes_do_banco,
         CRIAR_GRUPO_PADRAO=criar_grupo_padrao_no_banco,

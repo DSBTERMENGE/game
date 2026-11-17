@@ -57,6 +57,9 @@ class ApiPadroesTestCase(unittest.TestCase):
             "EDITAR_PADRAO": lambda codigo, nome, descricao, grupo_cod: padrao(
                 codigo, nome, descricao, grupo_cod=grupo_cod
             ),
+            "ATUALIZAR_FUNCAO_DETECTORA": lambda identificador, funcao: padrao(
+                identificador=identificador, funcao_detectora=funcao
+            ),
             "EXCLUIR_PADRAO": lambda codigo: padrao(codigo),
         }
         configuracao.update(servicos)
@@ -83,6 +86,10 @@ class ApiPadroesTestCase(unittest.TestCase):
         self.assertEqual(2, corpo["total"])
         self.assertEqual("15.000000", corpo["padroes"][0]["intervalo_medio"])
         self.assertTrue(corpo["padroes"][0]["detector_implementado"])
+        self.assertEqual(
+            "msen.padroes.sequenciais.detectar_duas_dezenas_sequenciais",
+            corpo["padroes"][0]["funcao_detectora"],
+        )
         self.assertEqual("PG_001", corpo["padroes"][0]["grupo_cod"])
         self.assertEqual("Dezenas sequenciais", corpo["padroes"][0]["grupo_nome"])
         self.assertFalse(corpo["padroes"][1]["detector_implementado"])
@@ -162,6 +169,45 @@ class ApiPadroesTestCase(unittest.TestCase):
             [("PD_001", "Nome revisto", "Texto revisto", "PG_002")], recebidos
         )
         self.assertEqual(2, resposta.get_json()["padrao"]["num_oco"])
+
+    def test_atualiza_funcao_detectora_por_id(self):
+        recebidos = []
+        funcao = "msen.padroes.sequenciais.detectar_duas_dezenas_sequenciais"
+
+        def atualizar(identificador, nome_funcao):
+            recebidos.append((identificador, nome_funcao))
+            return padrao(identificador=identificador, funcao_detectora=nome_funcao)
+
+        resposta = self._cliente(ATUALIZAR_FUNCAO_DETECTORA=atualizar).put(
+            "/api/padroes/id/7/funcao-detectora",
+            json={"funcao_detectora": f"  {funcao}  "},
+        )
+
+        self.assertEqual(200, resposta.status_code)
+        self.assertEqual([(7, funcao)], recebidos)
+        self.assertEqual(funcao, resposta.get_json()["padrao"]["funcao_detectora"])
+        self.assertTrue(resposta.get_json()["padrao"]["detector_implementado"])
+
+    def test_remove_funcao_detectora_por_id(self):
+        resposta = self._cliente().put(
+            "/api/padroes/id/7/funcao-detectora",
+            json={"funcao_detectora": None},
+        )
+
+        self.assertEqual(200, resposta.status_code)
+        self.assertIsNone(resposta.get_json()["padrao"]["funcao_detectora"])
+        self.assertFalse(resposta.get_json()["padrao"]["detector_implementado"])
+
+    def test_rejeita_funcao_detectora_inexistente(self):
+        resposta = self._cliente().put(
+            "/api/padroes/id/7/funcao-detectora",
+            json={"funcao_detectora": "msen.padroes.sequenciais.inexistente"},
+        )
+
+        self.assertEqual(400, resposta.status_code)
+        self.assertEqual(
+            "FUNCAO_NAO_ENCONTRADA", resposta.get_json()["erro"]["codigo"]
+        )
 
     def test_exclui_e_devolve_o_registro_removido(self):
         resposta = self._cliente().delete("/api/padroes/PD_001")

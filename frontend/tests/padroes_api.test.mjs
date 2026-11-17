@@ -25,13 +25,29 @@ test("criação e alteração preservam o Grupo escolhido", async () => {
   const fetchImpl = async (url, opcoes = {}) => {
     chamadas.push([url, opcoes]);
     if (!opcoes.method) return resposta({ padroes: [] });
-    return resposta({ padrao: { padrao_cod: "PD_010", padrao_nome: "Nome", padrao_descr: "Descrição", grupo_cod: "PG_002" } });
+    return resposta({ padrao: {
+      id_padrao: 10, padrao_cod: "PD_010", padrao_nome: "Nome",
+      padrao_descr: "Descrição", grupo_cod: "PG_002",
+      funcao_detectora: url.includes("funcao-detectora")
+        ? "msen.padroes.sequenciais.detectar_duas_dezenas_sequenciais" : null,
+    } });
   };
   const api = criarApiPadroes(fetchImpl);
   await api.listar({ grupo_cod: "PG_002", busca: "" });
   await api.criar({ titulo: "Nome", descricao: "Descrição" });
-  await api.atualizar("PD_010", { titulo: "Nome", descricao: "Descrição" });
-  for (const [, opcoes] of chamadas.filter(([, opcoes]) => opcoes.method)) {
-    assert.equal(JSON.parse(opcoes.body).grupo_cod, "PG_002");
-  }
+  const atualizado = await api.atualizar("PD_010", {
+    titulo: "Nome", descricao: "Descrição",
+    funcaoDetectora: "msen.padroes.sequenciais.detectar_duas_dezenas_sequenciais",
+  });
+  assert.equal(JSON.parse(chamadas[1][1].body).grupo_cod, "PG_002");
+  assert.equal(chamadas[2][0], "/api/padroes/PD_010");
+  assert.equal(chamadas[3][0], "/api/padroes/id/10/funcao-detectora");
+  assert.equal(
+    JSON.parse(chamadas[3][1].body).funcao_detectora,
+    "msen.padroes.sequenciais.detectar_duas_dezenas_sequenciais",
+  );
+  assert.equal(
+    atualizado.registro.funcaoDetectora,
+    "msen.padroes.sequenciais.detectar_duas_dezenas_sequenciais",
+  );
 });

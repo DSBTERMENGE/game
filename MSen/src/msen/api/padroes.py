@@ -82,6 +82,17 @@ def excluir_padrao_no_banco(codigo: str) -> PadraoPersistido:
         return RepositorioPadroes(conexao).excluir(codigo)
 
 
+def atualizar_funcao_detectora_no_banco(
+    id_padrao: int, funcao_detectora: str | None
+) -> PadraoPersistido:
+    """Altera a função detectora usando o identificador interno do padrão."""
+
+    with abrir_conexao(carregar_configuracao_banco()) as conexao:
+        return RepositorioPadroes(conexao).atualizar_funcao_detectora(
+            id_padrao, funcao_detectora
+        )
+
+
 def _decimal_texto(valor: Decimal | None) -> str | None:
     return None if valor is None else format(valor, "f")
 
@@ -102,6 +113,7 @@ def serializar_padrao(padrao: PadraoPersistido) -> dict[str, object]:
         "padrao_cod": padrao.padrao_cod,
         "padrao_nome": padrao.padrao_nome,
         "padrao_descr": padrao.padrao_descr,
+        "funcao_detectora": padrao.funcao_detectora,
         "num_oco": padrao.num_oco,
         "intervalo_medio": _decimal_texto(padrao.intervalo_medio),
         "desv_padrao": _decimal_texto(padrao.desv_padrao),
@@ -171,6 +183,26 @@ def _dados_da_requisicao() -> tuple[str, str, str]:
             "GRUPO_INVALIDO", "O grupo do padrão deve ser informado."
         )
     return nome.strip(), descricao.strip(), _validar_codigo_grupo(grupo_cod)
+
+
+def _funcao_da_requisicao() -> str | None:
+    dados = request.get_json(silent=True)
+    if not isinstance(dados, dict) or set(dados) != {"funcao_detectora"}:
+        raise ErroEntradaPadrao(
+            "JSON_INVALIDO",
+            "Informe somente o campo funcao_detectora como texto ou nulo.",
+        )
+    funcao = dados["funcao_detectora"]
+    if funcao is None:
+        return None
+    if not isinstance(funcao, str) or not funcao.strip() or len(funcao.strip()) > 500:
+        raise ErroEntradaPadrao(
+            "FUNCAO_INVALIDA",
+            "A função detectora deve ser um texto preenchido de até 500 caracteres.",
+        )
+    normalizada = funcao.strip()
+    resolver_funcao_detectora(normalizada)
+    return normalizada
 
 
 def _tratar_erro_repositorio(erro: ErroRepositorioPadrao):
@@ -268,3 +300,24 @@ def excluir_padrao(codigo: str):
             "BANCO_INDISPONIVEL", "Não foi possível excluir o padrão.", 503
         )
     return jsonify(padrao=serializar_padrao(excluido), mensagem="Padrão excluído.")
+
+
+@padroes_api.put("/api/padroes/id/<int:id_padrao>/funcao-detectora")
+def atualizar_funcao_detectora(id_padrao: int):
+    """Define ou remove a função detectora do padrão identificado pelo ID."""
+
+    try:
+        funcao = _funcao_da_requisicao()
+        servico = current_app.config["ATUALIZAR_FUNCAO_DETECTORA"]
+        atualizado = servico(id_padrao, funcao)
+    except (ErroEntradaPadrao, ErroResolucaoDetector) as erro:
+        return _erro(erro.codigo, str(erro), 400)
+    except ErroRepositorioPadrao as erro:
+        return _tratar_erro_repositorio(erro)
+    except (ErroConfiguracaoBanco, ErroConexaoBanco, psycopg.Error):
+        return _erro(
+            "BANCO_INDISPONIVEL",
+            "Não foi possível atualizar a função detectora.",
+            503,
+        )
+    return jsonify(padrao=serializar_padrao(atualizado))

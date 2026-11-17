@@ -408,7 +408,7 @@ export function criarCrudNavegavel(configuracao) {
           ? (dados.arquivado_em ? '<button data-acao="desarquivar" type="button">Desarquivar</button>' : '<button data-acao="arquivar" type="button">Arquivar</button>')
           : "";
         const acaoExclusao = usarExclusao ? '<button data-acao="excluir" type="button">Excluir</button>' : "";
-        formulario.innerHTML = `<form><fieldset ${editando ? "" : "disabled"}>${campos.map((campo) => controleCampo(campo, dados[campo.nome], estado.erros[campo.nome], !editando, prefixoCampos)).join("")}</fieldset><div class="crud-navegavel__acoes">${editando ? '<button data-acao="cancelar" type="button">Cancelar</button><button data-acao="conferir" type="button">Salvar registro</button>' : `<button data-acao="editar" type="button">Editar</button>${acaoArquivo}${acaoExclusao}`}</div></form>`;
+        formulario.innerHTML = `<form><fieldset ${editando ? "" : "disabled"}>${campos.map((campo) => controleCampo(campo, dados[campo.nome], estado.erros[campo.nome], !editando || (campo.apenasEdicao && !estado.selecionado), prefixoCampos)).join("")}</fieldset><div class="crud-navegavel__acoes">${editando ? '<button data-acao="cancelar" type="button">Cancelar</button><button data-acao="conferir" type="button">Salvar registro</button>' : `<button data-acao="editar" type="button">Editar</button>${acaoArquivo}${acaoExclusao}`}</div></form>`;
       }
     }
     if (estado.modo === ESTADOS.CONFERENCIA && !confirmacao.open) {

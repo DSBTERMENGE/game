@@ -13,6 +13,12 @@ const campos = [
     obrigatorio: true, largura: "total",
     validar: (valor) => String(valor).length > 4000 ? "Descrição aceita no máximo 4.000 caracteres." : "",
   },
+  {
+    nome: "funcaoDetectora", rotulo: "Função detectora", tipo: "texto",
+    obrigatorio: false, largura: "total", apenasEdicao: true,
+    validar: (valor) => String(valor ?? "").trim().length > 500
+      ? "Função detectora aceita no máximo 500 caracteres." : "",
+  },
 ];
 
 async function iniciar() {
@@ -21,7 +27,7 @@ async function iniciar() {
     criarCrudNavegavel({
       raiz,
       titulo: "Padrões",
-      descricao: "Cadastre os padrões e mantenha cada um vinculado ao seu Grupo.",
+      descricao: "Cadastre os padrões, vincule-os ao Grupo e informe a função detectora quando ela estiver implementada.",
       campos,
       colunas: [{ campo: "titulo", rotulo: "Nome do padrão" }],
       filtros: [{
