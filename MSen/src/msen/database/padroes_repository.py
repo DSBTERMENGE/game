@@ -15,7 +15,7 @@ COLUNAS_PADRAO = """
 p.id_padrao, p.padrao_cod, p.padrao_nome, p.padrao_descr,
 p.num_oco, p.intervalo_medio, p.desv_padrao,
 p.id_grupo, g.grupo_cod, g.grupo_nome,
-p.total_sorteios, p.percentual_ocorrencia
+p.total_sorteios, p.percentual_ocorrencia, p.funcao_detectora
 """
 FORMATO_CODIGO = re.compile(r"PD_[0-9]{3,}")
 
@@ -47,13 +47,14 @@ class PadraoPersistido:
     grupo_nome: str | None = None
     total_sorteios: int | None = None
     percentual_ocorrencia: Decimal | None = None
+    funcao_detectora: str | None = None
 
 
 def _linha_para_padrao(linha: tuple[Any, ...]) -> PadraoPersistido:
-    """Converte as doze colunas esperadas em um padrão persistido."""
+    """Converte as treze colunas esperadas em um padrão persistido."""
 
-    if len(linha) != 12:
-        raise ValueError("A consulta de padrão deve retornar exatamente 12 colunas.")
+    if len(linha) != 13:
+        raise ValueError("A consulta de padrão deve retornar exatamente 13 colunas.")
     return PadraoPersistido(*linha)
 
 

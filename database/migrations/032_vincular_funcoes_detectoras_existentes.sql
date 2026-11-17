@@ -24,7 +24,18 @@ INSERT INTO vinculos_detectores_migracao (padrao_cod, funcao_detectora) VALUES
 DO $$
 DECLARE
     quantidade INTEGER;
+    total_criterios INTEGER;
 BEGIN
+    SELECT COUNT(*)
+      INTO total_criterios
+      FROM criterios_validacao
+     WHERE categoria = 'PADRAO';
+
+    IF total_criterios NOT IN (0, 9) THEN
+        RAISE EXCEPTION
+            'Migração 032 interrompida: catálogo de critérios está parcial.';
+    END IF;
+
     SELECT COUNT(*)
       INTO quantidade
       FROM vinculos_detectores_migracao v
@@ -45,7 +56,7 @@ BEGIN
        AND c.categoria = 'PADRAO'
        AND c.funcao_python = v.funcao_detectora;
 
-    IF quantidade <> 9 THEN
+    IF quantidade <> total_criterios THEN
         RAISE EXCEPTION
             'Migração 032 interrompida: critério, grupo ou função divergente.';
     END IF;
@@ -69,7 +80,13 @@ UPDATE criterios_validacao c
 DO $$
 DECLARE
     quantidade INTEGER;
+    total_criterios INTEGER;
 BEGIN
+    SELECT COUNT(*)
+      INTO total_criterios
+      FROM criterios_validacao
+     WHERE categoria = 'PADRAO';
+
     SELECT COUNT(*)
       INTO quantidade
       FROM vinculos_detectores_migracao v
@@ -82,7 +99,7 @@ BEGIN
        AND c.codigo = 'PAD_' || p.padrao_cod
        AND c.funcao_python = p.funcao_detectora;
 
-    IF quantidade <> 9 THEN
+    IF quantidade <> total_criterios THEN
         RAISE EXCEPTION
             'Migração 032 interrompida: a conferência final dos vínculos falhou.';
     END IF;

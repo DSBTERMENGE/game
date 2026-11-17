@@ -47,6 +47,10 @@ class MigracoesVinculoFuncaoDetectoraDDLTest(unittest.TestCase):
         }
         self.assertEqual(catalogo, gravados)
 
+    def test_032_aceita_catalogo_novo_vazio_mas_rejeita_estado_parcial(self):
+        self.assertIn("total_criterios NOT IN (0, 9)", SQL_032)
+        self.assertIn("quantidade <> total_criterios", SQL_032)
+
     def test_esquema_novo_contem_colunas_restricoes_e_funcoes(self):
         esquema = ESQUEMA.read_text(encoding="utf-8")
         for trecho in (

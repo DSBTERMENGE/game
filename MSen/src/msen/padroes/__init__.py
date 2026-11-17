@@ -49,6 +49,11 @@ from .registro import (
     DetectorNaoRegistrado,
     RegistroDetectores,
 )
+from .resolvedor import (
+    ErroResolucaoDetector,
+    executar_funcao_detectora,
+    resolver_funcao_detectora,
+)
 from .sequenciais import (
     AnaliseSequencial,
     analisar_dezenas_sequenciais,
@@ -65,6 +70,7 @@ __all__ = [
     "DetectorNaoRegistrado",
     "DetectorPadrao",
     "ErroAnalisePadrao",
+    "ErroResolucaoDetector",
     "EstatisticaPadrao",
     "RegistroDetectores",
     "CODIGO_DUAS_SEQUENCIAIS",
@@ -87,6 +93,8 @@ __all__ = [
     "criar_registro_detectores_mesma_coluna",
     "criar_registro_detectores_mesma_linha",
     "criar_registro_detectores_aprovados",
+    "resolver_funcao_detectora",
+    "executar_funcao_detectora",
     "detectar_duas_dezenas_sequenciais",
     "detectar_tres_dezenas_sequenciais",
     "detectar_mais_de_tres_dezenas_sequenciais",

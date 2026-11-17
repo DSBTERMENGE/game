@@ -17,6 +17,9 @@ def padrao(
     id_grupo=1,
     grupo_cod="PG_001",
     grupo_nome="Dezenas sequenciais",
+    funcao_detectora=(
+        "msen.padroes.sequenciais.detectar_duas_dezenas_sequenciais"
+    ),
 ):
     return PadraoPersistido(
         identificador,
@@ -29,6 +32,9 @@ def padrao(
         id_grupo,
         grupo_cod,
         grupo_nome,
+        None,
+        None,
+        funcao_detectora,
     )
 
 
@@ -45,6 +51,7 @@ class ApiPadroesTestCase(unittest.TestCase):
                 num_oco=None,
                 intervalo=None,
                 desvio=None,
+                funcao_detectora=None,
                 grupo_cod=grupo_cod,
             ),
             "EDITAR_PADRAO": lambda codigo, nome, descricao, grupo_cod: padrao(
@@ -66,6 +73,7 @@ class ApiPadroesTestCase(unittest.TestCase):
                 num_oco=None,
                 intervalo=None,
                 desvio=None,
+                funcao_detectora=None,
             ),
         )
         resposta = self._cliente(LISTAR_PADROES=lambda: itens).get("/api/padroes")
@@ -77,8 +85,17 @@ class ApiPadroesTestCase(unittest.TestCase):
         self.assertTrue(corpo["padroes"][0]["detector_implementado"])
         self.assertEqual("PG_001", corpo["padroes"][0]["grupo_cod"])
         self.assertEqual("Dezenas sequenciais", corpo["padroes"][0]["grupo_nome"])
-        self.assertTrue(corpo["padroes"][1]["detector_implementado"])
+        self.assertFalse(corpo["padroes"][1]["detector_implementado"])
         self.assertIsNone(corpo["padroes"][1]["num_oco"])
+
+    def test_funcao_inexistente_nao_e_apresentada_como_implementada(self):
+        item = padrao(
+            funcao_detectora="msen.padroes.sequenciais.funcao_inexistente"
+        )
+        resposta = self._cliente(LISTAR_PADROES=lambda: (item,)).get("/api/padroes")
+
+        self.assertEqual(200, resposta.status_code)
+        self.assertFalse(resposta.get_json()["padroes"][0]["detector_implementado"])
 
     def test_filtra_listagem_por_grupo(self):
         recebidos = []

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import psycopg
 
 from msen.database import RepositorioValidacao
-from msen.validacao import RegistroCriteriosValidacao
+from msen.validacao import DefinicaoCriterio, RegistroCriteriosValidacao
 
 
 class ExclusaoCriteriosNaoConfirmada(RuntimeError):
@@ -28,6 +28,37 @@ class ResultadoSincronizacaoCriterios:
             self.incluidos, self.implementacoes_alteradas,
             self.regras_alteradas, self.excluidos,
         ))
+
+
+def _resolver_id_padrao(
+    definicao: DefinicaoCriterio,
+    id_grupo: int | None,
+    id_padrao_atual: int | None,
+    padroes: dict[int, tuple[int, str]],
+) -> int | None:
+    """Resolve o vínculo pelo ID atual ou pela função dentro do grupo."""
+
+    if definicao.categoria != "PADRAO":
+        return None
+    if id_grupo is None:
+        raise ValueError(f"O critério {definicao.codigo} não possui grupo.")
+    if id_padrao_atual is not None:
+        if padroes.get(id_padrao_atual) != (id_grupo, definicao.funcao_python):
+            raise ValueError(
+                f"O vínculo direto do critério {definicao.codigo} está divergente."
+            )
+        return id_padrao_atual
+
+    candidatos = tuple(
+        id_padrao
+        for id_padrao, vinculo in padroes.items()
+        if vinculo == (id_grupo, definicao.funcao_python)
+    )
+    if len(candidatos) != 1:
+        raise ValueError(
+            f"O critério {definicao.codigo} não possui um padrão inequívoco."
+        )
+    return candidatos[0]
 
 
 def sincronizar_criterios_validacao(
@@ -61,8 +92,17 @@ def sincronizar_criterios_validacao(
                 raise ValueError(f"Grupos do registro não cadastrados: {faltantes!r}")
 
             cursor.execute(
+                "SELECT id_padrao, id_grupo, funcao_detectora "
+                "FROM padroes_subgrupo WHERE funcao_detectora IS NOT NULL"
+            )
+            padroes = {
+                id_padrao: (id_grupo, funcao_detectora)
+                for id_padrao, id_grupo, funcao_detectora in cursor.fetchall()
+            }
+
+            cursor.execute(
                 "SELECT id_criterio, codigo, assinatura_funcao, assinatura_regra, "
-                "categoria, tipo_resultado, precisao_decimal, id_grupo "
+                "categoria, tipo_resultado, precisao_decimal, id_grupo, id_padrao "
                 "FROM criterios_validacao ORDER BY codigo"
             )
             existentes = {
@@ -71,6 +111,7 @@ def sincronizar_criterios_validacao(
                     "regra": linha[3].strip(),
                     "categoria": linha[4], "tipo": linha[5],
                     "precisao": linha[6], "id_grupo": linha[7],
+                    "id_padrao": linha[8],
                 }
                 for linha in cursor.fetchall()
             }
@@ -84,17 +125,23 @@ def sincronizar_criterios_validacao(
                     else grupos[definicao.grupo_codigo]
                 )
                 atual = existentes.get(codigo)
+                id_padrao = _resolver_id_padrao(
+                    definicao,
+                    id_grupo,
+                    None if atual is None else atual["id_padrao"],
+                    padroes,
+                )
                 if atual is None:
                     cursor.execute(
                         "INSERT INTO criterios_validacao "
                         "(codigo, nome, categoria, funcao_python, tipo_resultado, "
-                        "precisao_decimal, id_grupo, assinatura_funcao, "
+                        "precisao_decimal, id_grupo, id_padrao, assinatura_funcao, "
                         "assinatura_regra, estado) VALUES "
-                        "(%s, %s, %s, %s, %s, %s, %s, %s, %s, 'PENDENTE')",
+                        "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'PENDENTE')",
                         (
                             definicao.codigo, definicao.nome, definicao.categoria,
                             definicao.funcao_python, definicao.tipo_resultado,
-                            definicao.precisao_decimal, id_grupo,
+                            definicao.precisao_decimal, id_grupo, id_padrao,
                             definicao.assinatura_funcao, definicao.assinatura_regra,
                         ),
                     )
@@ -107,11 +154,11 @@ def sincronizar_criterios_validacao(
                     continue
                 estrutura_atual = (
                     atual["categoria"], atual["tipo"],
-                    atual["precisao"], atual["id_grupo"],
+                    atual["precisao"], atual["id_grupo"], atual["id_padrao"],
                 )
                 estrutura_nova = (
                     definicao.categoria, definicao.tipo_resultado,
-                    definicao.precisao_decimal, id_grupo,
+                    definicao.precisao_decimal, id_grupo, id_padrao,
                 )
                 if estrutura_atual != estrutura_nova:
                     raise ValueError(
@@ -120,13 +167,15 @@ def sincronizar_criterios_validacao(
                 cursor.execute(
                     "UPDATE criterios_validacao SET nome = %s, categoria = %s, "
                     "funcao_python = %s, tipo_resultado = %s, precisao_decimal = %s, "
-                    "id_grupo = %s, assinatura_funcao = %s, assinatura_regra = %s, "
+                    "id_grupo = %s, id_padrao = %s, assinatura_funcao = %s, "
+                    "assinatura_regra = %s, "
                     "estado = 'PENDENTE', atualizado_em = CURRENT_TIMESTAMP "
                     "WHERE id_criterio = %s",
                     (
                         definicao.nome, definicao.categoria, definicao.funcao_python,
                         definicao.tipo_resultado, definicao.precisao_decimal, id_grupo,
-                        definicao.assinatura_funcao, definicao.assinatura_regra,
+                        id_padrao, definicao.assinatura_funcao,
+                        definicao.assinatura_regra,
                         atual["id"],
                     ),
                 )

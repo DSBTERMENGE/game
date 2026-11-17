@@ -15,7 +15,7 @@ from msen.database import (
     RepositorioPadroes,
     abrir_conexao,
 )
-from msen.padroes import criar_registro_detectores_aprovados
+from msen.padroes import ErroResolucaoDetector, resolver_funcao_detectora
 
 
 padroes_api = Blueprint("padroes_api", __name__)
@@ -28,6 +28,7 @@ CAMPOS_PROTEGIDOS = frozenset(
         "id_grupo",
         "grupo_nome",
         "padrao_cod",
+        "funcao_detectora",
         "num_oco",
         "intervalo_medio",
         "desv_padrao",
@@ -88,7 +89,11 @@ def _decimal_texto(valor: Decimal | None) -> str | None:
 def serializar_padrao(padrao: PadraoPersistido) -> dict[str, object]:
     """Converte uma linha persistida no contrato JSON do frontend."""
 
-    registro = criar_registro_detectores_aprovados()
+    try:
+        resolver_funcao_detectora(padrao.funcao_detectora)
+        detector_implementado = True
+    except ErroResolucaoDetector:
+        detector_implementado = False
     return {
         "id_padrao": padrao.id_padrao,
         "id_grupo": padrao.id_grupo,
@@ -100,7 +105,7 @@ def serializar_padrao(padrao: PadraoPersistido) -> dict[str, object]:
         "num_oco": padrao.num_oco,
         "intervalo_medio": _decimal_texto(padrao.intervalo_medio),
         "desv_padrao": _decimal_texto(padrao.desv_padrao),
-        "detector_implementado": registro.contem(padrao.padrao_cod),
+        "detector_implementado": detector_implementado,
     }
 
 

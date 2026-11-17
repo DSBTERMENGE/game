@@ -10,7 +10,7 @@ from msen.database.padroes_repository import (
 
 
 class MapeamentoRepositorioPadroesTestCase(unittest.TestCase):
-    def test_mapeia_as_doze_colunas_sem_converter_decimais_para_float(self):
+    def test_mapeia_as_treze_colunas_sem_converter_decimais_para_float(self):
         padrao = _linha_para_padrao(
             (
                 1,
@@ -25,6 +25,7 @@ class MapeamentoRepositorioPadroesTestCase(unittest.TestCase):
                 "Sequenciais",
                 3069,
                 Decimal("0.065168"),
+                "msen.padroes.sequenciais.detectar_duas_dezenas_sequenciais",
             )
         )
 
@@ -42,6 +43,7 @@ class MapeamentoRepositorioPadroesTestCase(unittest.TestCase):
                 "Sequenciais",
                 3069,
                 Decimal("0.065168"),
+                "msen.padroes.sequenciais.detectar_duas_dezenas_sequenciais",
             ),
             padrao,
         )
@@ -50,6 +52,10 @@ class MapeamentoRepositorioPadroesTestCase(unittest.TestCase):
         self.assertEqual(3069, padrao.total_sorteios)
         self.assertEqual(Decimal("0.065168"), padrao.percentual_ocorrencia)
         self.assertEqual("PG_001", padrao.grupo_cod)
+        self.assertEqual(
+            "msen.padroes.sequenciais.detectar_duas_dezenas_sequenciais",
+            padrao.funcao_detectora,
+        )
 
     def test_rejeita_quantidade_incorreta_de_colunas(self):
         with self.assertRaises(ValueError):
