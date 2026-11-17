@@ -175,3 +175,135 @@ Esse conteúdo pode receber melhorias de redação na interface, mas não pode s
 reduzido a uma descrição genérica como “verifica diagonais”. Mudança da regra,
 do significado de D/E, das referências ou da política de ausência exige
 atualização simultânea desta documentação, da descrição no banco e dos testes.
+
+## Contrato aplicado ao banco
+
+A avaliação categórica pertence ao grupo, pois uma única função analisa todas
+as assinaturas. A migração 034 acrescentou a `padroes_grupo`:
+
+| Campo | Tipo | Regra |
+|---|---|---|
+| `tipo_avaliacao` | `VARCHAR(30)` | Obrigatório; padrão `BOOLEANO` |
+| `funcao_analisadora` | `VARCHAR(500)` | Nulo para grupo booleano; obrigatório para grupo categórico |
+
+Valores inicialmente permitidos para `tipo_avaliacao`:
+
+- `BOOLEANO`: funcionamento atual, com `funcao_detectora` em cada padrão;
+- `CATEGORICO_PERCENTUAL`: uma função do grupo retorna categorias que são
+  comparadas com uma distribuição histórica calculada em memória.
+
+As restrições devem garantir:
+
+```text
+BOOLEANO               → funcao_analisadora é nula
+CATEGORICO_PERCENTUAL  → funcao_analisadora é texto preenchido
+```
+
+O grupo diagonal deverá ficar com:
+
+```text
+grupo_cod          = PG_004
+grupo_nome         = Arranjos diagonais
+tipo_avaliacao     = CATEGORICO_PERCENTUAL
+funcao_analisadora = msen.padroes.diagonais.analisar_assinaturas_diagonais
+```
+
+`PD_013` permanecerá como único item cadastral desse grupo, com nome
+`Configurações diagonais xDyE`, descrição funcional completa e
+`funcao_detectora` nula. Sua ausência de função booleana não significa que o
+filtro esteja pendente: a disponibilidade vem da função analisadora do grupo.
+
+Os demais grupos recebem `BOOLEANO` e continuam usando as funções detectoras
+individuais já persistidas. A migração não altera sua execução.
+
+Não serão criados:
+
+- campos de coordenadas;
+- colunas na tabela `resultados`;
+- tabela persistente com as tuplas;
+- registros para cada combinação testada;
+- 21 padrões ou funções independentes.
+
+A distribuição `arranjo → ocorrências/percentual` será uma fotografia imutável
+em memória durante cada execução. O relatório e `Ver tuplas` usam essa mesma
+fotografia, sem fórmula paralela.
+
+## Reorganização exata do catálogo
+
+A migração localiza os registros pelos códigos estáveis, nunca pelos IDs
+internos observados numa instalação específica.
+
+### Registros mantidos e transformados
+
+`PG_004` será mantido com o mesmo `id_grupo` e `grupo_cod`, recebendo:
+
+```text
+grupo_nome         = Arranjos diagonais
+tipo_avaliacao     = CATEGORICO_PERCENTUAL
+funcao_analisadora = msen.padroes.diagonais.analisar_assinaturas_diagonais
+```
+
+Sua descrição explicará que o filtro calcula P2–P5, produz assinaturas `xDyE`,
+monta a distribuição histórica em memória e compara todas as assinaturas da
+combinação com o limite global do Screener.
+
+`PD_013` será mantido com o mesmo `id_padrao` e `padrao_cod`, associado a
+`PG_004`, recebendo:
+
+```text
+padrao_nome       = Configurações diagonais xDyE
+funcao_detectora  = NULL
+```
+
+Sua descrição conterá o procedimento obrigatório definido neste contrato e
+informará o comando `Ver tuplas`.
+
+### Registros removidos
+
+Serão excluídos os padrões ainda não implementados:
+
+```text
+PD_014, PD_015, PD_016, PD_017, PD_018, PD_019,
+PD_020, PD_021, PD_022, PD_023, PD_024, PD_025, PD_026
+```
+
+Depois da remoção de seus sete padrões, `PG_006` será excluído. Nenhum registro
+será transferido entre grupos. Os códigos removidos não serão reutilizados e as
+sequências do PostgreSQL não serão reduzidas.
+
+Partindo do catálogo atual, a reorganização reduz o total de 11 para 10 grupos
+e de 49 para 36 padrões.
+
+### Pré-condições de segurança
+
+A migração aborta integralmente se:
+
+- `PG_004`, `PG_006` ou qualquer padrão de `PD_013` a `PD_026` estiver ausente;
+- algum padrão a remover possuir função, ocorrência, denominador ou percentual;
+- houver classificação histórica, critério ou avaliação referenciando esses
+  grupos e padrões;
+- `PD_013` estiver associado a outro grupo;
+- os nomes existentes indicarem que os códigos já foram reaproveitados por uma
+  alteração posterior.
+
+A migração histórica 033 não será editada. Em instalação nova, ela cria o
+catálogo anterior e a migração seguinte executa esta reorganização, preservando
+um histórico reproduzível.
+
+## Estado verificado após a migração 034
+
+Em 17/11/2026, a migração 034 foi validada primeiro em banco temporário e,
+depois, aplicada ao banco local `games`. A auditoria confirmou:
+
+- 10 grupos e 36 padrões no catálogo;
+- `PG_004` com tipo `CATEGORICO_PERCENTUAL` e função analisadora cadastrada;
+- `PD_013` como único padrão de `PG_004`, sem função detectora booleana;
+- ausência de `PG_006` e dos padrões `PD_014` a `PD_026`;
+- segunda execução do executor sem reaplicação da migração;
+- os mesmos nomes, descrições e totais nas APIs usadas pela página
+  `grupos-padroes.html`.
+
+Esse estado cadastral não significa que o filtro esteja operacional no
+Screener. A função analisadora, a fotografia histórica em memória, a decisão
+do funil e a visualização `Ver tuplas` ainda precisam ser implementadas e
+validadas em etapas próprias.
