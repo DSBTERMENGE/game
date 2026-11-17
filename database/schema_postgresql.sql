@@ -600,6 +600,7 @@ CREATE TABLE IF NOT EXISTS padroes_subgrupo (
     padrao_cod VARCHAR(20) NOT NULL,
     padrao_nome VARCHAR(200) NOT NULL,
     padrao_descr TEXT NOT NULL,
+    funcao_detectora VARCHAR(500),
     num_oco INTEGER,
     total_sorteios INTEGER,
     percentual_ocorrencia NUMERIC(9,6),
@@ -613,6 +614,8 @@ CREATE TABLE IF NOT EXISTS padroes_subgrupo (
         CHECK (BTRIM(padrao_nome) <> ''),
     CONSTRAINT ck_padroes_padrao_descr_preenchida
         CHECK (BTRIM(padrao_descr) <> ''),
+    CONSTRAINT ck_padroes_funcao_detectora_preenchida
+        CHECK (funcao_detectora IS NULL OR BTRIM(funcao_detectora) <> ''),
     CONSTRAINT ck_padroes_num_oco
         CHECK (num_oco IS NULL OR num_oco >= 0),
     CONSTRAINT ck_padroes_total_sorteios
@@ -770,6 +773,20 @@ CROSS JOIN (
 WHERE grupo.grupo_cod = 'PG_003'
 ON CONFLICT (padrao_cod) DO NOTHING;
 
+UPDATE padroes_subgrupo
+SET funcao_detectora = CASE padrao_cod
+    WHEN 'PD_001' THEN 'msen.padroes.sequenciais.detectar_duas_dezenas_sequenciais'
+    WHEN 'PD_002' THEN 'msen.padroes.sequenciais.detectar_tres_dezenas_sequenciais'
+    WHEN 'PD_003' THEN 'msen.padroes.sequenciais.detectar_mais_de_tres_dezenas_sequenciais'
+    WHEN 'PD_004' THEN 'msen.padroes.mesma_coluna.detectar_duas_dezenas_na_mesma_coluna'
+    WHEN 'PD_005' THEN 'msen.padroes.mesma_coluna.detectar_tres_dezenas_na_mesma_coluna'
+    WHEN 'PD_006' THEN 'msen.padroes.mesma_coluna.detectar_mais_de_tres_dezenas_na_mesma_coluna'
+    WHEN 'PD_007' THEN 'msen.padroes.mesma_linha.detectar_duas_dezenas_na_mesma_linha'
+    WHEN 'PD_008' THEN 'msen.padroes.mesma_linha.detectar_tres_dezenas_na_mesma_linha'
+    WHEN 'PD_009' THEN 'msen.padroes.mesma_linha.detectar_mais_de_tres_dezenas_na_mesma_linha'
+END
+WHERE padrao_cod BETWEEN 'PD_001' AND 'PD_009';
+
 CREATE SEQUENCE IF NOT EXISTS padroes_subgrupo_codigo_seq
     AS BIGINT MINVALUE 1 START WITH 10;
 
@@ -855,8 +872,8 @@ CREATE TABLE IF NOT EXISTS criterios_validacao (
     tipo_resultado VARCHAR(20) NOT NULL,
     precisao_decimal SMALLINT,
     id_grupo BIGINT,
+    id_padrao BIGINT,
     assinatura_funcao CHAR(64) NOT NULL,
-    assinatura_regra CHAR(64) NOT NULL,
     assinatura_regra CHAR(64) NOT NULL,
     estado VARCHAR(20) NOT NULL DEFAULT 'PENDENTE',
     ativo BOOLEAN NOT NULL DEFAULT TRUE,
@@ -865,6 +882,7 @@ CREATE TABLE IF NOT EXISTS criterios_validacao (
 
     CONSTRAINT uk_criterios_validacao_codigo UNIQUE (codigo),
     CONSTRAINT uk_criterios_validacao_id_grupo UNIQUE (id_criterio, id_grupo),
+    CONSTRAINT uk_criterios_validacao_id_padrao UNIQUE (id_padrao),
     CONSTRAINT ck_criterios_validacao_codigo_preenchido CHECK (BTRIM(codigo) <> ''),
     CONSTRAINT ck_criterios_validacao_nome_preenchido CHECK (BTRIM(nome) <> ''),
     CONSTRAINT ck_criterios_validacao_funcao_preenchida
@@ -888,13 +906,17 @@ CREATE TABLE IF NOT EXISTS criterios_validacao (
         CHECK (assinatura_funcao ~ '^[0-9a-f]{64}$'),
     CONSTRAINT ck_criterios_validacao_assinatura_regra
         CHECK (assinatura_regra ~ '^[0-9a-f]{64}$'),
-    CONSTRAINT ck_criterios_validacao_assinatura_regra
-        CHECK (assinatura_regra ~ '^[0-9a-f]{64}$'),
     CONSTRAINT ck_criterios_validacao_estado
         CHECK (estado IN ('PENDENTE', 'APROVADO', 'REPROVADO')),
+    CONSTRAINT ck_criterios_validacao_id_padrao_categoria
+        CHECK (id_padrao IS NULL OR categoria = 'PADRAO'),
     CONSTRAINT fk_criterios_validacao_grupo
         FOREIGN KEY (id_grupo) REFERENCES padroes_grupo (id_grupo)
-        ON UPDATE RESTRICT ON DELETE CASCADE
+        ON UPDATE RESTRICT ON DELETE CASCADE,
+    CONSTRAINT fk_criterios_validacao_padrao_grupo
+        FOREIGN KEY (id_grupo, id_padrao)
+        REFERENCES padroes_subgrupo (id_grupo, id_padrao)
+        ON UPDATE RESTRICT ON DELETE RESTRICT
 );
 
 CREATE TABLE IF NOT EXISTS avaliacoes_validacao (

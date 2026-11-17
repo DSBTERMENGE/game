@@ -18,8 +18,10 @@ class MigracaoOrigemHistoricoFrequenciaDDLTestCase(unittest.TestCase):
         cls.sql = MIGRACAO.read_text(encoding="utf-8")
         cls.esquema = ESQUEMA.read_text(encoding="utf-8")
 
-    def test_020_e_a_ultima_migracao(self) -> None:
-        self.assertEqual("029", descobrir_migracoes(MIGRACOES)[-1].versao)
+    def test_020_permanece_na_sequencia(self) -> None:
+        versoes = tuple(item.versao for item in descobrir_migracoes(MIGRACOES))
+        self.assertIn("020", versoes)
+        self.assertEqual("032", versoes[-1])
 
     def test_guarda_assinatura_e_quantidade_da_origem(self) -> None:
         for trecho in (
