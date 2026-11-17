@@ -23,7 +23,7 @@ class MigracoesVinculoFuncaoDetectoraDDLTest(unittest.TestCase):
     def test_migracoes_estao_na_ordem_esperada(self):
         versoes = tuple(item.versao for item in descobrir_migracoes(MIGRACOES))
         self.assertEqual(("031", "032"), versoes[30:32])
-        self.assertEqual("036", versoes[-1])
+        self.assertEqual("037", versoes[-1])
 
     def test_031_adiciona_colunas_e_integridade_relacional(self):
         for trecho in (
@@ -46,7 +46,8 @@ class MigracoesVinculoFuncaoDetectoraDDLTest(unittest.TestCase):
             )
             for codigo in registro.codigos_registrados()
         }
-        self.assertEqual(catalogo, gravados)
+        self.assertEqual(gravados, {codigo: catalogo[codigo] for codigo in gravados})
+        self.assertIn("PD_011", catalogo)
 
     def test_032_aceita_catalogo_novo_vazio_mas_rejeita_estado_parcial(self):
         self.assertIn("total_criterios NOT IN (0, 9)", SQL_032)

@@ -15,15 +15,18 @@ def funcao_exemplo(valor):
 class RegistroCriteriosValidacaoTestCase(unittest.TestCase):
     def test_registro_de_producao_cobre_as_tres_categorias(self):
         definicoes = criar_registro_criterios_producao().listar()
-        self.assertEqual(20, len(definicoes))
+        self.assertEqual(21, len(definicoes))
         self.assertEqual(
             {"ESTATISTICA", "GEOMETRIA", "PADRAO"},
             {item.categoria for item in definicoes},
         )
-        self.assertEqual(10, sum(item.categoria == "PADRAO" for item in definicoes))
+        self.assertEqual(11, sum(item.categoria == "PADRAO" for item in definicoes))
         diagonal = next(item for item in definicoes if item.codigo == "PAD_PG_004")
         self.assertEqual("CATEGORICO", diagonal.tipo_resultado)
         self.assertEqual("PG_004", diagonal.grupo_codigo)
+        duas_linhas = next(item for item in definicoes if item.codigo == "PAD_PD_011")
+        self.assertEqual("PADRAO", duas_linhas.tipo_resultado)
+        self.assertEqual("PG_007", duas_linhas.grupo_codigo)
 
     def test_nomes_estatisticos_identificam_as_grandezas_calculadas(self):
         definicoes = criar_registro_criterios_producao().listar()

@@ -63,6 +63,7 @@ def referencias_padroes(dezenas: tuple[int, ...]) -> dict[str, bool]:
     horizontal = _maior_bloco_horizontal(dezenas)
     vertical = _maior_bloco_vertical(dezenas)
     linha = _maior_ocupacao_linha(dezenas)
+    quantidade_linhas = len({(numero - 1) // 10 for numero in dezenas})
     return {
         "PAD_PD_001": horizontal == 2,
         "PAD_PD_002": horizontal == 3,
@@ -73,6 +74,7 @@ def referencias_padroes(dezenas: tuple[int, ...]) -> dict[str, bool]:
         "PAD_PD_007": linha == 2,
         "PAD_PD_008": linha == 3,
         "PAD_PD_009": linha > 3,
+        "PAD_PD_011": quantidade_linhas == 2,
     }
 
 

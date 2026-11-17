@@ -9,6 +9,7 @@ from msen.database import RepositorioPadroes, RepositorioResultados
 from msen.database.padroes_repository import PadraoPersistido
 from msen.modelos import ResultadoEntrada
 from msen.padroes import (
+    calcular_estatistica_duas_linhas,
     calcular_estatisticas_mesma_coluna,
     calcular_estatisticas_mesma_linha,
     calcular_estatisticas_sequenciais,
@@ -66,6 +67,7 @@ def recalcular_padroes_iniciais(
             *calcular_estatisticas_sequenciais(serie),
             *calcular_estatisticas_mesma_coluna(serie),
             *calcular_estatisticas_mesma_linha(serie),
+            calcular_estatistica_duas_linhas(serie),
         )
         estatisticas = {item.padrao_cod: item for item in calculadas}
         cadastrados = repositorio_padroes.listar()

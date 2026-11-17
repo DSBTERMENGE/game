@@ -28,6 +28,7 @@ class OraculoReferenciasIndependentesTestCase(unittest.TestCase):
             "PAD_PD_007": (1, 2, 11, 21, 31, 41),
             "PAD_PD_008": (1, 2, 3, 11, 21, 31),
             "PAD_PD_009": (1, 2, 3, 4, 11, 21),
+            "PAD_PD_011": (1, 2, 3, 11, 12, 13),
         }
         for codigo, dezenas in casos.items():
             with self.subTest(codigo=codigo):

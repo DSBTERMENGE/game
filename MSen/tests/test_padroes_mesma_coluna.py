@@ -105,9 +105,9 @@ class DetectoresMesmaColunaTestCase(unittest.TestCase):
 
 
 class EstatisticasMesmaColunaTestCase(unittest.TestCase):
-    def test_catalogo_unificado_contem_os_seis_detectores(self):
+    def test_catalogo_unificado_contem_os_detectores_aprovados(self):
         self.assertEqual(
-            tuple(f"PD_{numero:03d}" for numero in range(1, 10)),
+            (*tuple(f"PD_{numero:03d}" for numero in range(1, 10)), "PD_011"),
             criar_registro_detectores_aprovados().codigos_registrados(),
         )
 

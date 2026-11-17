@@ -20,6 +20,11 @@ from .estatisticas import (
     calcular_estatistica_padrao,
 )
 from .entrada import validar_dezenas
+from .duas_linhas import (
+    CODIGO_DEZENAS_EM_DUAS_LINHAS,
+    calcular_estatistica_duas_linhas,
+    detectar_dezenas_em_duas_linhas,
+)
 from .diagonais import (
     AnaliseAssinaturasDiagonais,
     AnaliseReferenciaDiagonal,
@@ -122,6 +127,9 @@ __all__ = [
     "resolver_funcao_detectora",
     "executar_funcao_detectora",
     "validar_dezenas",
+    "detectar_dezenas_em_duas_linhas",
+    "CODIGO_DEZENAS_EM_DUAS_LINHAS",
+    "calcular_estatistica_duas_linhas",
     "AnaliseAssinaturasDiagonais",
     "AnaliseReferenciaDiagonal",
     "AssinaturaDiagonal",

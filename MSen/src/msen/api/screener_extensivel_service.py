@@ -146,10 +146,6 @@ def _grupos_raros_fotografados(perfil, selecao: SelecaoPadroesRaros):
         return ()
     por_grupo: dict[str, list] = {}
     for padrao in selecao.padroes:
-        if padrao.grupo_cod not in {"PG_001", "PG_002", "PG_003"}:
-            raise ErroEnsaioExtensivel(
-                "GRUPO_PADRAO_INVALIDO", "Um padrão raro pertence a grupo não suportado."
-            )
         por_grupo.setdefault(padrao.grupo_cod, []).append(padrao)
     grupos = []
     for grupo_cod, padroes in sorted(por_grupo.items()):
@@ -509,7 +505,7 @@ def gerar_quadro_screener_extensivel(
                 "ordem nova: estatística, geometria e grupos de padrões",
                 "faixas novas: média histórica ± 1 desvio-padrão para todas as medidas",
                 "geometria nova: cinco filtros, contra apenas extensão no funil anterior",
-                "padrões novos: detectores selecionados de PG_001, PG_002 e PG_003 "
+                "padrões novos: detectores aprovados selecionados por incidência histórica "
                 "com incidência histórica "
                 f"< {format(limite_efetivo, 'f')}%",
             ],

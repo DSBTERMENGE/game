@@ -18,7 +18,7 @@ class MigracaoValidacaoCategoricaDDLTestCase(unittest.TestCase):
 
         encontrada = next(item for item in migracoes if item.versao == "035")
         self.assertEqual(ARQUIVO, encontrada.caminho)
-        self.assertEqual("036", migracoes[-1].versao)
+        self.assertEqual("037", migracoes[-1].versao)
 
     def test_amplia_tipo_sem_remover_os_tipos_existentes(self) -> None:
         self.assertIn(

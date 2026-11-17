@@ -1,10 +1,16 @@
 from datetime import date
 from decimal import Decimal
 import unittest
+from types import SimpleNamespace
 
-from msen.api.screener_extensivel_service import ErroEnsaioExtensivel, _detalhar_padroes
+from msen.api.screener_extensivel_service import (
+    ErroEnsaioExtensivel,
+    _detalhar_padroes,
+    _grupos_raros_fotografados,
+)
 from msen.database import PadraoPersistido
 from msen.screener import FrequenciaPadraoFotografada, criar_grupo_padroes_fotografado
+from msen.services.selecao_padroes import SelecaoPadroesRaros
 
 
 class DetalhamentoPadroesScreenerTests(unittest.TestCase):
@@ -110,6 +116,29 @@ class DetalhamentoPadroesScreenerTests(unittest.TestCase):
             {"entrada": 100, "exclusoes": 18, "saldo": 82, "valido": True},
             dados["fechamento"],
         )
+
+    def test_aceita_grupo_novo_quando_padrao_ja_foi_selecionado(self):
+        padrao = PadraoPersistido(
+            17, "PD_011", "Dezenas em duas linhas", "Descrição", 32,
+            Decimal("84.709677"), Decimal("67.912274"), 8,
+            "PG_007", "Dezenas em duas linhas", 3069, Decimal("1.042685"),
+        )
+        perfil = SimpleNamespace(
+            total_resultados=3069,
+            numero_ap_inicial=1,
+            numero_ap_final=3069,
+            data_inicial=date(1996, 3, 11),
+            data_final=date(2026, 11, 14),
+        )
+        selecao = SelecaoPadroesRaros(
+            Decimal("10"), 3069, "<", (padrao,)
+        )
+
+        grupos = _grupos_raros_fotografados(perfil, selecao)
+
+        self.assertEqual(1, len(grupos))
+        self.assertEqual("PG_007", grupos[0].grupo_cod)
+        self.assertEqual(("PD_011",), grupos[0].padroes_excludentes)
 
 
 if __name__ == "__main__":
