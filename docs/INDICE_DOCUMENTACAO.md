@@ -18,6 +18,7 @@ rascunhos, protótipos e relatórios antigos como descrição atual do sistema.
 | Estrutura consolidada do PostgreSQL | `database/schema_postgresql.sql` |
 | Histórico incremental do PostgreSQL | `database/migrations/` |
 | Contrato da homologação das funções | `docs/CONTRATO_HOMOLOGACAO_FUNCOES.md` |
+| Contrato das funções detectoras de padrões | `docs/CONTRATO_DETECTORES_PADROES.md` |
 | API da Validação e auditoria | `docs/API_VALIDACAO.md` |
 | API da Frequência das dezenas | `docs/API_FREQUENCIAS.md` |
 | Contrato da Frequência das dezenas | `docs/CONTRATO_FREQUENCIA_DEZENAS.md` |

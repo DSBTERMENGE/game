@@ -28,6 +28,17 @@ from .poligono2_experimental import (
     analisar_poligono2_experimental,
 )
 from .poligono2 import ResultadoPoligono2, calcular_poligono2
+from .operacoes import (
+    VetorGeometrico,
+    calcular_distancia_quadrada,
+    calcular_produto_escalar,
+    calcular_produto_vetorial,
+    calcular_vetor,
+    ponto_pertence_ao_segmento,
+    sao_colineares,
+    sao_paralelos,
+    sao_perpendiculares,
+)
 
 __all__ = [
     "MedidaRegiao", "PontoGeometrico", "RegiaoFechada", "ResultadoGeometrico",
@@ -40,4 +51,8 @@ __all__ = [
     "ArestaExperimental", "DiagnosticoPoligono2Experimental",
     "analisar_poligono2_experimental",
     "ResultadoPoligono2", "calcular_poligono2",
+    "VetorGeometrico", "calcular_distancia_quadrada",
+    "calcular_produto_escalar", "calcular_produto_vetorial",
+    "calcular_vetor", "ponto_pertence_ao_segmento", "sao_colineares",
+    "sao_paralelos", "sao_perpendiculares",
 ]

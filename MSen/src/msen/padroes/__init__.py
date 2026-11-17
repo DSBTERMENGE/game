@@ -19,6 +19,7 @@ from .estatisticas import (
     EstatisticaPadrao,
     calcular_estatistica_padrao,
 )
+from .entrada import validar_dezenas
 from .iniciais import (
     CODIGO_DUAS_SEQUENCIAIS,
     CODIGO_MAIS_DE_TRES_SEQUENCIAIS,
@@ -95,6 +96,7 @@ __all__ = [
     "criar_registro_detectores_aprovados",
     "resolver_funcao_detectora",
     "executar_funcao_detectora",
+    "validar_dezenas",
     "detectar_duas_dezenas_sequenciais",
     "detectar_tres_dezenas_sequenciais",
     "detectar_mais_de_tres_dezenas_sequenciais",
