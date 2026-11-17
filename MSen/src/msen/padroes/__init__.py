@@ -20,6 +20,12 @@ from .estatisticas import (
     calcular_estatistica_padrao,
 )
 from .entrada import validar_dezenas
+from .diagonais import (
+    AnaliseAssinaturasDiagonais,
+    AnaliseReferenciaDiagonal,
+    AssinaturaDiagonal,
+    analisar_assinaturas_diagonais,
+)
 from .iniciais import (
     CODIGO_DUAS_SEQUENCIAIS,
     CODIGO_MAIS_DE_TRES_SEQUENCIAIS,
@@ -97,6 +103,10 @@ __all__ = [
     "resolver_funcao_detectora",
     "executar_funcao_detectora",
     "validar_dezenas",
+    "AnaliseAssinaturasDiagonais",
+    "AnaliseReferenciaDiagonal",
+    "AssinaturaDiagonal",
+    "analisar_assinaturas_diagonais",
     "detectar_duas_dezenas_sequenciais",
     "detectar_tres_dezenas_sequenciais",
     "detectar_mais_de_tres_dezenas_sequenciais",

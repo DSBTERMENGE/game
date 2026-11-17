@@ -876,3 +876,22 @@
 - A Etapa 28 estabelece `frontend/js/ajuda-conteudo.js` como fonte editorial
   oficial. Alterações futuras de comportamento visível exigem atualização e
   teste dos tópicos afetados antes do encerramento da respectiva etapa.
+
+## 2026-11-17 — Arranjos diagonais categóricos no Screener
+
+- O estudo diagonal é um único filtro categórico, não dois filtros separados
+  por inclinação e não 21 funções booleanas independentes.
+- `D` representa a diagonal de passo 9 e `E` a diagonal de passo 11. As
+  referências são P2 a P5 das seis dezenas ordenadas e não entram na contagem.
+- V, V invertido e X são apenas aparências dos pontos nas duas diagonais; a
+  posição relativa e as lacunas não subdividem uma assinatura `xDyE`.
+- A mesma função analisa a tabela `resultados` e as combinações do Screener.
+  Antes do funil, ela produz em memória pares de arranjo e percentual histórico.
+- Uma combinação é eliminada quando ao menos um arranjo calculado possui
+  percentual estritamente menor que o limite global informado no Screener.
+  Arranjo ausente do histórico equivale a zero por cento.
+- A interface deverá oferecer `Ver tuplas`, exibindo ocorrências, denominador e
+  percentuais usados. A decisão do relatório deverá listar todas as comparações.
+- O cadastro no banco deverá explicar o procedimento; descrição genérica não é
+  suficiente. Regra, documentação, descrição persistida e testes devem mudar
+  juntos para impedir que este estudo precise ser reconstruído em manutenção.
