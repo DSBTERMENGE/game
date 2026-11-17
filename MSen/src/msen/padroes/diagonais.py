@@ -1,10 +1,18 @@
 """Análise das assinaturas formadas pelas diagonais que cruzam uma dezena."""
 
 from dataclasses import dataclass
+from functools import cache
 
 from msen.calculos import calcular_coordenada
 
 from .entrada import validar_dezenas
+
+
+CATEGORIA_SEM_REFERENCIA_LONGA = "SEM_REFERENCIA_LONGA"
+PASSO_DIAGONAL_DIREITA = 9
+PASSO_DIAGONAL_ESQUERDA = 11
+POSICOES_REFERENCIA = (2, 3, 4, 5)
+COMPRIMENTO_MINIMO_DIAGONAL = 4
 
 
 @dataclass(frozen=True, slots=True, order=True)
@@ -59,6 +67,7 @@ class AnaliseAssinaturasDiagonais:
         return not self.assinaturas
 
 
+@cache
 def _diagonais_da_dezena(
     dezena: int,
 ) -> tuple[tuple[int, ...], tuple[int, ...]]:
@@ -82,7 +91,10 @@ def _analisar_referencia(
     dezena = dezenas[posicao - 1]
     direita, esquerda = _diagonais_da_dezena(dezena)
     assinatura = None
-    if len(direita) >= 4 and len(esquerda) >= 4:
+    if (
+        len(direita) >= COMPRIMENTO_MINIMO_DIAGONAL
+        and len(esquerda) >= COMPRIMENTO_MINIMO_DIAGONAL
+    ):
         outras = set(dezenas) - {dezena}
         assinatura = AssinaturaDiagonal(
             direita=len(outras.intersection(direita)),
@@ -108,7 +120,8 @@ def analisar_assinaturas_diagonais(
 
     ordenadas = validar_dezenas(dezenas)
     referencias = tuple(
-        _analisar_referencia(ordenadas, posicao) for posicao in range(2, 6)
+        _analisar_referencia(ordenadas, posicao)
+        for posicao in POSICOES_REFERENCIA
     )
     assinaturas = tuple(
         sorted(

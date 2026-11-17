@@ -25,6 +25,7 @@ class ReferenciaAprovada:
     id_padrao: int | None
     origem: str
     revisor: str
+    categoria: str | None = None
 
 
 def _id_positivo(nome: str, valor: int) -> int:
@@ -47,7 +48,8 @@ def _metadados(origem: str, revisor: str, observacao: str | None):
 
 def _buscar_avaliacao(cursor, id_resultado: int, id_criterio: int):
     cursor.execute(
-        "SELECT c.codigo, c.categoria, c.id_grupo, a.referencia_conferida "
+        "SELECT c.codigo, c.categoria, c.id_grupo, a.referencia_conferida, "
+        "c.tipo_resultado "
         "FROM avaliacoes_validacao a JOIN criterios_validacao c USING (id_criterio) "
         "WHERE a.id_resultado = %s AND a.id_criterio = %s FOR UPDATE OF a",
         (id_resultado, id_criterio),
@@ -97,10 +99,10 @@ def aprovar_referencia_numerica(
 
     with conexao.transaction():
         with conexao.cursor() as cursor:
-            codigo, categoria, _id_grupo, _conferida = _buscar_avaliacao(
+            codigo, categoria, _id_grupo, _conferida, tipo_resultado = _buscar_avaliacao(
                 cursor, id_resultado, id_criterio
             )
-            if categoria == "PADRAO":
+            if categoria == "PADRAO" or tipo_resultado == "CATEGORICO":
                 raise ErroReferenciaValidacao(
                     "TIPO_INCOMPATIVEL", "Critério de padrão exige referência de padrão."
                 )
@@ -145,10 +147,14 @@ def aprovar_referencia_padrao(
 
     with conexao.transaction():
         with conexao.cursor() as cursor:
-            codigo, categoria, id_grupo, _conferida = _buscar_avaliacao(
+            codigo, categoria, id_grupo, _conferida, tipo_resultado = _buscar_avaliacao(
                 cursor, id_resultado, id_criterio
             )
-            if categoria != "PADRAO" or id_grupo is None:
+            if (
+                categoria != "PADRAO"
+                or tipo_resultado != "PADRAO"
+                or id_grupo is None
+            ):
                 raise ErroReferenciaValidacao(
                     "TIPO_INCOMPATIVEL", "Critério numérico exige referência numérica."
                 )
@@ -180,4 +186,73 @@ def aprovar_referencia_padrao(
             )
     return ReferenciaAprovada(
         id_resultado, id_criterio, codigo, estado, None, id_padrao, origem, revisor
+    )
+
+
+def aprovar_referencia_categorica(
+    conexao: psycopg.Connection,
+    *,
+    id_resultado: int,
+    id_criterio: int,
+    categoria_esperada: str,
+    origem: str,
+    revisor: str,
+    observacao: str | None = None,
+) -> ReferenciaAprovada:
+    """Grava uma resposta categórica independente e imutável."""
+
+    if not isinstance(conexao, psycopg.Connection):
+        raise TypeError("A aprovação exige uma conexão Psycopg válida.")
+    _id_positivo("id_resultado", id_resultado)
+    _id_positivo("id_criterio", id_criterio)
+    if not isinstance(categoria_esperada, str) or not categoria_esperada.strip():
+        raise ValueError("categoria_esperada deve ser texto preenchido.")
+    categoria_normalizada = categoria_esperada.strip()
+    if len(categoria_normalizada) > 200:
+        raise ValueError("categoria_esperada aceita no máximo 200 caracteres.")
+    origem, revisor, observacao = _metadados(origem, revisor, observacao)
+
+    with conexao.transaction(), conexao.cursor() as cursor:
+        codigo, categoria, id_grupo, _conferida, tipo_resultado = _buscar_avaliacao(
+            cursor, id_resultado, id_criterio
+        )
+        if (
+            categoria != "PADRAO"
+            or tipo_resultado != "CATEGORICO"
+            or id_grupo is None
+        ):
+            raise ErroReferenciaValidacao(
+                "TIPO_INCOMPATIVEL",
+                "O critério informado não aceita referência categórica.",
+            )
+        cursor.execute(
+            "UPDATE avaliacoes_validacao SET referencia_conferida=TRUE, "
+            "categoria_esperada=%s, referencia_origem=%s, "
+            "referencia_revisor=%s, referencia_observacao=%s, "
+            "referencia_conferida_em=CURRENT_TIMESTAMP "
+            "WHERE id_resultado=%s AND id_criterio=%s",
+            (
+                categoria_normalizada,
+                origem,
+                revisor,
+                observacao,
+                id_resultado,
+                id_criterio,
+            ),
+        )
+        cursor.execute(
+            "UPDATE estado_algoritmo_selecao SET atualizado=FALSE, "
+            "motivo='REFERENCIAS_OU_CALCULOS_PENDENTES', "
+            "alterado_em=CURRENT_TIMESTAMP WHERE id_estado=1"
+        )
+    return ReferenciaAprovada(
+        id_resultado,
+        id_criterio,
+        codigo,
+        "CATEGORIA_IDENTIFICADA",
+        None,
+        None,
+        origem,
+        revisor,
+        categoria_normalizada,
     )

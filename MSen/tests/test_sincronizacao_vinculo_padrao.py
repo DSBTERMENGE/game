@@ -5,6 +5,7 @@ import unittest
 from msen.padroes import detectar_duas_dezenas_sequenciais
 from msen.services.sincronizacao_validacao import _resolver_id_padrao
 from msen.validacao import DefinicaoCriterio
+from msen.validacao import criar_definicao_criterio_diagonal
 
 
 def definicao_padrao():
@@ -48,6 +49,13 @@ class SincronizacaoVinculoPadraoTest(unittest.TestCase):
             "EST_TESTE", "Teste", "ESTATISTICA", sum, "INTEIRO", "Regra."
         )
         self.assertIsNone(_resolver_id_padrao(numerico, None, None, {}))
+
+    def test_criterio_categorico_pertence_ao_grupo_sem_id_padrao(self):
+        categorico = criar_definicao_criterio_diagonal()
+
+        self.assertIsNone(_resolver_id_padrao(categorico, 4, None, {}))
+        with self.assertRaisesRegex(ValueError, "não pode possuir padrão individual"):
+            _resolver_id_padrao(categorico, 4, 13, {13: (4, categorico.funcao_python)})
 
 
 if __name__ == "__main__":

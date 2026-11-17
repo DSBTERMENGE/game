@@ -64,6 +64,7 @@ from .carga_amostras_validacao import (
 from .referencias_validacao import (
     ErroReferenciaValidacao,
     ReferenciaAprovada,
+    aprovar_referencia_categorica,
     aprovar_referencia_numerica,
     aprovar_referencia_padrao,
 )
@@ -72,9 +73,11 @@ from .execucao_validacao import (
     RelatorioExecucaoValidacao,
     ResultadoExecucaoCriterio,
     calcular_valor_criterio,
+    comparar_resultado_categorico,
     comparar_resultado_padrao,
     comparar_resultado_numerico,
     executar_criterios_padroes,
+    executar_criterio_categorico,
     executar_criterios_numericos,
 )
 from .motor_validacao import RelatorioMotorValidacao, atualizar_validacao_e_auditoria
@@ -216,15 +219,18 @@ __all__ = [
     "carregar_amostras_iniciais_validacao",
     "ErroReferenciaValidacao",
     "ReferenciaAprovada",
+    "aprovar_referencia_categorica",
     "aprovar_referencia_numerica",
     "aprovar_referencia_padrao",
     "ErroExecucaoValidacao",
     "RelatorioExecucaoValidacao",
     "ResultadoExecucaoCriterio",
     "calcular_valor_criterio",
+    "comparar_resultado_categorico",
     "comparar_resultado_padrao",
     "comparar_resultado_numerico",
     "executar_criterios_padroes",
+    "executar_criterio_categorico",
     "executar_criterios_numericos",
     "RelatorioMotorValidacao",
     "atualizar_validacao_e_auditoria",

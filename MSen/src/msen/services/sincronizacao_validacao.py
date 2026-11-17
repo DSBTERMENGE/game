@@ -42,6 +42,12 @@ def _resolver_id_padrao(
         return None
     if id_grupo is None:
         raise ValueError(f"O critério {definicao.codigo} não possui grupo.")
+    if definicao.tipo_resultado == "CATEGORICO":
+        if id_padrao_atual is not None:
+            raise ValueError(
+                f"O critério categórico {definicao.codigo} não pode possuir padrão individual."
+            )
+        return None
     if id_padrao_atual is not None:
         if padroes.get(id_padrao_atual) != (id_grupo, definicao.funcao_python):
             raise ValueError(
@@ -184,9 +190,11 @@ def sincronizar_criterios_validacao(
                         "UPDATE avaliacoes_validacao SET referencia_conferida = FALSE, "
                         "estado_valor_esperado = NULL, valor_esperado = NULL, "
                         "estado_padrao_esperado = NULL, "
-                        "id_padrao_esperado = NULL, valor_calculado = NULL, "
+                        "id_padrao_esperado = NULL, categoria_esperada = NULL, "
+                        "valor_calculado = NULL, "
                         "estado_valor_calculado = NULL, "
                         "estado_padrao_calculado = NULL, id_padrao_calculado = NULL, "
+                        "categoria_calculada = NULL, "
                         "executado = FALSE, assinatura_executada = NULL, aprovado = NULL, "
                         "diferenca = NULL, calculado_em = NULL, referencia_origem = NULL, "
                         "referencia_revisor = NULL, referencia_observacao = NULL, "
@@ -199,6 +207,7 @@ def sincronizar_criterios_validacao(
                         "UPDATE avaliacoes_validacao SET estado_valor_calculado = NULL, "
                         "valor_calculado = NULL, "
                         "estado_padrao_calculado = NULL, id_padrao_calculado = NULL, "
+                        "categoria_calculada = NULL, "
                         "executado = FALSE, assinatura_executada = NULL, aprovado = NULL, "
                         "diferenca = NULL, calculado_em = NULL WHERE id_criterio = %s",
                         (atual["id"],),

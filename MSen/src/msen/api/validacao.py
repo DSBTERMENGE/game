@@ -1,8 +1,13 @@
 """Consulta paginada da página de Validação e auditoria."""
 
 from flask import Blueprint, Response, current_app, jsonify, request
+import psycopg
 
 from msen.services.exportacao_validacao import serializar_csv, serializar_json
+from msen.services import (
+    ErroReferenciaValidacao,
+    aprovar_referencia_categorica,
+)
 
 from msen.config import carregar_configuracao_banco
 from msen.database import abrir_conexao
@@ -11,6 +16,12 @@ from msen.database import abrir_conexao
 validacao_api = Blueprint("validacao_api", __name__)
 CATEGORIAS = frozenset({"ESTATISTICA", "GEOMETRIA", "PADRAO"})
 SITUACOES = frozenset({"S", "N", "PENDENTE"})
+CAMPOS_OBRIGATORIOS_REFERENCIA_CATEGORICA = frozenset({
+    "id_resultado", "id_criterio", "categoria_esperada", "origem", "revisor",
+})
+CAMPOS_REFERENCIA_CATEGORICA = (
+    CAMPOS_OBRIGATORIOS_REFERENCIA_CATEGORICA | {"observacao"}
+)
 
 
 class ErroConsultaValidacao(ValueError):
@@ -48,11 +59,18 @@ def consultar_validacao_no_banco(filtros: dict[str, object]) -> dict[str, object
         return consultar_validacao(conexao, filtros)
 
 
+def aprovar_referencia_categorica_no_banco(dados: dict[str, object]):
+    with abrir_conexao(carregar_configuracao_banco()) as conexao:
+        return aprovar_referencia_categorica(conexao, **dados)
+
+
 def _hipotese_diagnostica(
     *, assinatura_atual: str, assinatura_executada: str | None,
     estado_esperado: str | None, estado_calculado: str | None,
     valor_esperado: str | None, valor_calculado: str | None,
     subgrupo_esperado: str | None, subgrupo_calculado: str | None,
+    categoria_esperada: str | None = None,
+    categoria_calculada: str | None = None,
 ) -> str:
     if assinatura_executada != assinatura_atual:
         return "A implementação executada não corresponde à assinatura atual; recalcule antes de analisar a fórmula."
@@ -60,6 +78,8 @@ def _hipotese_diagnostica(
         return "A função discordou sobre a existência do valor ou do padrão; revise o caso-limite e a regra de ausência."
     if subgrupo_esperado != subgrupo_calculado:
         return "O detector retornou subgrupo diferente do esperado; revise exclusividade, maior bloco e vínculo com o grupo."
+    if categoria_esperada != categoria_calculada:
+        return "A resposta categórica divergiu; revise as referências elegíveis e a ordem canônica das assinaturas."
     if valor_esperado != valor_calculado:
         return "O valor numérico divergiu; revise fórmula, ordenação das dezenas, precisão e arredondamento contratado."
     return "A divergência exige inspeção da assinatura, dos estados persistidos e da regra do critério."
@@ -95,7 +115,8 @@ def consultar_relatorio(conexao) -> dict[str, object]:
             "a.estado_valor_calculado, a.valor_calculado::text, "
             "a.estado_padrao_esperado, pe.padrao_cod, pe.padrao_nome, "
             "a.estado_padrao_calculado, pc.padrao_cod, pc.padrao_nome, "
-            "a.diferenca::text FROM avaliacoes_validacao a "
+            "a.categoria_esperada, a.categoria_calculada, a.diferenca::text "
+            "FROM avaliacoes_validacao a "
             "JOIN amostras_validacao am USING (id_resultado) "
             "JOIN resultados r USING (id_resultado) "
             "JOIN criterios_validacao c USING (id_criterio) "
@@ -126,8 +147,12 @@ def consultar_relatorio(conexao) -> dict[str, object]:
         })
     divergencias = []
     for linha in linhas_divergentes:
-        estado_esperado = linha[14] or linha[18]
-        estado_calculado = linha[16] or linha[21]
+        estado_esperado = linha[14] or linha[18] or (
+            "CATEGORIA_IDENTIFICADA" if linha[24] is not None else None
+        )
+        estado_calculado = linha[16] or linha[21] or (
+            "CATEGORIA_IDENTIFICADA" if linha[25] is not None else None
+        )
         divergencias.append({
             "criterio": {"codigo": linha[0], "nome": linha[1], "categoria": linha[2]},
             "assinatura_atual": linha[3].strip(),
@@ -135,16 +160,19 @@ def consultar_relatorio(conexao) -> dict[str, object]:
             "numero_ap": linha[5], "dezenas": list(linha[6:12]),
             "grupo": None if linha[12] is None else {"codigo": linha[12], "nome": linha[13]},
             "esperado": {"estado": estado_esperado, "valor": linha[15],
-                          "subgrupo_codigo": linha[19], "subgrupo_nome": linha[20]},
+                          "subgrupo_codigo": linha[19], "subgrupo_nome": linha[20],
+                          "categoria": linha[24]},
             "calculado": {"estado": estado_calculado, "valor": linha[17],
-                           "subgrupo_codigo": linha[22], "subgrupo_nome": linha[23]},
-            "diferenca": linha[24],
+                           "subgrupo_codigo": linha[22], "subgrupo_nome": linha[23],
+                           "categoria": linha[25]},
+            "diferenca": linha[26],
             "hipotese_diagnostica": _hipotese_diagnostica(
                 assinatura_atual=linha[3].strip(),
                 assinatura_executada=None if linha[4] is None else linha[4].strip(),
                 estado_esperado=estado_esperado, estado_calculado=estado_calculado,
                 valor_esperado=linha[15], valor_calculado=linha[17],
                 subgrupo_esperado=linha[19], subgrupo_calculado=linha[22],
+                categoria_esperada=linha[24], categoria_calculada=linha[25],
             ),
         })
     fechamento = {
@@ -219,7 +247,8 @@ def consultar_validacao(conexao, filtros: dict[str, object]) -> dict[str, object
             "a.valor_esperado::text, a.estado_valor_calculado, "
             "a.valor_calculado::text, a.estado_padrao_esperado, pe.padrao_cod, "
             "pe.padrao_nome, a.estado_padrao_calculado, pc.padrao_cod, "
-            "pc.padrao_nome, a.aprovado" + base +
+            "pc.padrao_nome, a.categoria_esperada, a.categoria_calculada, "
+            "a.aprovado" + base +
             " ORDER BY am.ordem, c.categoria, c.codigo LIMIT %s OFFSET %s",
             (*parametros, limite, (pagina - 1) * limite),
         )
@@ -244,11 +273,17 @@ def consultar_validacao(conexao, filtros: dict[str, object]) -> dict[str, object
             "criterio": {"codigo": linha[8], "nome": linha[9],
                           "categoria": linha[10], "estado": linha[11]},
             "grupo": None if linha[12] is None else {"codigo": linha[12], "nome": linha[13]},
-            "esperado": {"estado": linha[14] or linha[18], "valor": linha[15],
-                          "subgrupo_codigo": linha[19], "subgrupo_nome": linha[20]},
-            "calculado": {"estado": linha[16] or linha[21], "valor": linha[17],
-                           "subgrupo_codigo": linha[22], "subgrupo_nome": linha[23]},
-            "aprovado": linha[24],
+            "esperado": {"estado": linha[14] or linha[18] or (
+                              "CATEGORIA_IDENTIFICADA" if linha[24] is not None else None
+                          ), "valor": linha[15],
+                          "subgrupo_codigo": linha[19], "subgrupo_nome": linha[20],
+                          "categoria": linha[24]},
+            "calculado": {"estado": linha[16] or linha[21] or (
+                               "CATEGORIA_IDENTIFICADA" if linha[25] is not None else None
+                           ), "valor": linha[17],
+                           "subgrupo_codigo": linha[22], "subgrupo_nome": linha[23],
+                           "categoria": linha[25]},
+            "aprovado": linha[26],
         })
     total_paginas = max(1, (total_filtrado + limite - 1) // limite)
     return {
@@ -299,6 +334,41 @@ def obter_quadro_validacao():
 @validacao_api.get("/api/validacao/relatorio")
 def obter_relatorio_validacao():
     return jsonify(current_app.config["CONSULTAR_RELATORIO_VALIDACAO"]())
+
+
+@validacao_api.post("/api/validacao/referencias/categoricas")
+def registrar_referencia_categorica():
+    dados = request.get_json(silent=True)
+    if (
+        not isinstance(dados, dict)
+        or not CAMPOS_OBRIGATORIOS_REFERENCIA_CATEGORICA.issubset(dados)
+        or set(dados).difference(CAMPOS_REFERENCIA_CATEGORICA)
+    ):
+        return jsonify(erro={
+            "codigo": "JSON_INVALIDO",
+            "mensagem": "Informe exatamente os campos da referência categórica.",
+        }), 400
+    try:
+        referencia = current_app.config["APROVAR_REFERENCIA_CATEGORICA"](dados)
+    except (TypeError, ValueError) as erro:
+        return jsonify(erro={"codigo": "DADOS_INVALIDOS", "mensagem": str(erro)}), 400
+    except ErroReferenciaValidacao as erro:
+        status = 404 if erro.codigo == "AVALIACAO_AUSENTE" else 409
+        return jsonify(erro={"codigo": erro.codigo, "mensagem": str(erro)}), status
+    except psycopg.Error:
+        return jsonify(erro={
+            "codigo": "BANCO_INDISPONIVEL",
+            "mensagem": "Não foi possível registrar a referência.",
+        }), 503
+    return jsonify(referencia={
+        "id_resultado": referencia.id_resultado,
+        "id_criterio": referencia.id_criterio,
+        "codigo_criterio": referencia.codigo_criterio,
+        "estado": referencia.estado,
+        "categoria": referencia.categoria,
+        "origem": referencia.origem,
+        "revisor": referencia.revisor,
+    }), 201
 
 
 @validacao_api.get("/api/validacao/exportacao")

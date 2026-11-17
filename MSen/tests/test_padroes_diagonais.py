@@ -1,5 +1,6 @@
 """Testes da análise de assinaturas diagonais."""
 
+from dataclasses import FrozenInstanceError
 import unittest
 
 from msen.padroes.diagonais import (
@@ -9,6 +10,12 @@ from msen.padroes.diagonais import (
 
 
 class AssinaturasDiagonaisTestCase(unittest.TestCase):
+    def test_analisa_exatamente_as_quatro_referencias_intermediarias(self) -> None:
+        analise = analisar_assinaturas_diagonais((1, 4, 10, 20, 30, 60))
+
+        self.assertEqual((2, 3, 4, 5), tuple(r.posicao for r in analise.referencias))
+        self.assertEqual((4, 10, 20, 30), tuple(r.dezena for r in analise.referencias))
+
     def test_constroi_arrays_direita_e_esquerda_da_referencia(self) -> None:
         analise = analisar_assinaturas_diagonais((1, 4, 10, 20, 30, 60))
         referencia = analise.referencias[0]
@@ -34,6 +41,20 @@ class AssinaturasDiagonaisTestCase(unittest.TestCase):
         self.assertEqual(26, referencia.dezena)
         self.assertEqual(AssinaturaDiagonal(0, 0), referencia.assinatura)
 
+    def test_lacunas_de_18_continuam_na_diagonal_direita(self) -> None:
+        analise = analisar_assinaturas_diagonais((1, 17, 20, 35, 53, 60))
+        referencia = analise.referencias[2]
+
+        self.assertEqual(35, referencia.dezena)
+        self.assertEqual(AssinaturaDiagonal(2, 0), referencia.assinatura)
+
+    def test_lacunas_de_22_continuam_na_diagonal_esquerda(self) -> None:
+        analise = analisar_assinaturas_diagonais((1, 4, 26, 48, 50, 60))
+        referencia = analise.referencias[1]
+
+        self.assertEqual(26, referencia.dezena)
+        self.assertEqual(AssinaturaDiagonal(0, 2), referencia.assinatura)
+
     def test_seis_dezenas_na_esquerda_produzem_0d5e(self) -> None:
         analise = analisar_assinaturas_diagonais((4, 15, 26, 37, 48, 59))
 
@@ -57,6 +78,39 @@ class AssinaturasDiagonaisTestCase(unittest.TestCase):
 
         self.assertEqual((AssinaturaDiagonal(0, 5),), analise.assinaturas)
 
+    def test_consolida_multiplas_assinaturas_em_ordem_estavel(self) -> None:
+        analise = analisar_assinaturas_diagonais((1, 7, 25, 29, 44, 49))
+
+        self.assertEqual(
+            ("0D0E", "0D1E", "1D0E", "1D1E"),
+            tuple(item.codigo for item in analise.assinaturas),
+        )
+        self.assertEqual(
+            ("1D1E", "1D0E", "0D1E", "0D0E"),
+            tuple(
+                referencia.assinatura.codigo
+                for referencia in analise.referencias
+                if referencia.assinatura is not None
+            ),
+        )
+
+    def test_limite_do_volante_nao_conecta_extremos_da_mesma_linha(self) -> None:
+        analise = analisar_assinaturas_diagonais((1, 10, 19, 28, 37, 55))
+        referencia = analise.referencias[0]
+
+        self.assertEqual(10, referencia.dezena)
+        self.assertEqual((10, 19, 28, 37, 46, 55), referencia.diagonal_direita)
+        self.assertEqual((10,), referencia.diagonal_esquerda)
+        self.assertFalse(referencia.elegivel)
+
+    def test_retorno_e_objetos_internos_sao_imutaveis(self) -> None:
+        analise = analisar_assinaturas_diagonais((15, 17, 26, 35, 37, 60))
+
+        with self.assertRaises(FrozenInstanceError):
+            analise.dezenas_ordenadas = (1, 2, 3, 4, 5, 6)  # type: ignore[misc]
+        with self.assertRaises(FrozenInstanceError):
+            analise.assinaturas[0].direita = 5  # type: ignore[misc]
+
     def test_codigo_da_assinatura_segue_notacao_curta(self) -> None:
         self.assertEqual("2D2E", AssinaturaDiagonal(2, 2).codigo)
 
@@ -73,6 +127,22 @@ class AssinaturasDiagonaisTestCase(unittest.TestCase):
     def test_rejeita_entrada_invalida_pelo_contrato_compartilhado(self) -> None:
         with self.assertRaises(ValueError):
             analisar_assinaturas_diagonais((4, 15, 26, 37, 48, 48))
+
+    def test_rejeita_quantidade_faixa_e_tipos_invalidos(self) -> None:
+        casos = (
+            ((1, 2, 3, 4, 5), ValueError),
+            ((1, 2, 3, 4, 5, 6, 7), ValueError),
+            ((0, 2, 3, 4, 5, 6), ValueError),
+            ((1, 2, 3, 4, 5, 61), ValueError),
+            ((1, 2, 3, 4, 5, True), TypeError),
+            ((1, 2, 3, 4, 5, 6.0), TypeError),
+            ("010203040506", TypeError),
+            ({1, 2, 3, 4, 5, 6}, TypeError),
+        )
+        for entrada, erro in casos:
+            with self.subTest(entrada=entrada, erro=erro):
+                with self.assertRaises(erro):
+                    analisar_assinaturas_diagonais(entrada)  # type: ignore[arg-type]
 
 
 if __name__ == "__main__":

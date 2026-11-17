@@ -2,6 +2,7 @@ import unittest
 
 from msen.api import criar_app
 from msen.api.validacao import _hipotese_diagnostica
+from msen.services import ReferenciaAprovada
 
 
 class TestApiValidacao(unittest.TestCase):
@@ -27,6 +28,11 @@ class TestApiValidacao(unittest.TestCase):
                 "conjunto_referencias": {"algoritmo": "sha256", "identificador": "abc", "quantidade": 0},
                 "registros": [],
             },
+            "APROVAR_REFERENCIA_CATEGORICA": lambda dados: ReferenciaAprovada(
+                dados["id_resultado"], dados["id_criterio"], "PAD_PG_004",
+                "CATEGORIA_IDENTIFICADA", None, None, dados["origem"],
+                dados["revisor"], dados["categoria_esperada"],
+            ),
         })
         self.cliente = self.app.test_client()
 
@@ -90,6 +96,38 @@ class TestApiValidacao(unittest.TestCase):
         invalida = self.cliente.get("/api/validacao/exportacao?formato=xlsx")
         self.assertEqual(400, invalida.status_code)
         self.assertEqual("FORMATO_INVALIDO", invalida.json["erro"]["codigo"])
+
+    def test_registra_referencia_categorica(self):
+        resposta = self.cliente.post(
+            "/api/validacao/referencias/categoricas",
+            json={
+                "id_resultado": 7,
+                "id_criterio": 20,
+                "categoria_esperada": "0D0E|1D1E",
+                "origem": "HUMANO",
+                "revisor": "Revisor",
+            },
+        )
+
+        self.assertEqual(201, resposta.status_code)
+        self.assertEqual("PAD_PG_004", resposta.json["referencia"]["codigo_criterio"])
+        self.assertEqual("0D0E|1D1E", resposta.json["referencia"]["categoria"])
+
+    def test_rejeita_corpo_categorico_incompleto_ou_com_campo_extra(self):
+        for corpo in (
+            {},
+            {
+                "id_resultado": 7, "id_criterio": 20,
+                "categoria_esperada": "0D0E", "origem": "HUMANO",
+                "revisor": "R", "campo_extra": True,
+            },
+        ):
+            with self.subTest(corpo=corpo):
+                resposta = self.cliente.post(
+                    "/api/validacao/referencias/categoricas", json=corpo
+                )
+                self.assertEqual(400, resposta.status_code)
+                self.assertEqual("JSON_INVALIDO", resposta.json["erro"]["codigo"])
 
 
 if __name__ == "__main__":

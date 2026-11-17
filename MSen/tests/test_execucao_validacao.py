@@ -5,12 +5,15 @@ from decimal import Decimal
 from msen.modelos import ResultadoEntrada
 from msen.services import (
     ErroExecucaoValidacao, calcular_valor_criterio, comparar_resultado_numerico,
-    comparar_resultado_padrao,
+    comparar_resultado_categorico, comparar_resultado_padrao,
 )
 from msen.services.motor_validacao import _motivo_global
 from msen.services.execucao_validacao import SQL_CRITERIOS_PADRAO
 from msen.services.execucao_validacao import _resolver_detector_criterio
-from msen.validacao import criar_registro_criterios_producao
+from msen.validacao import (
+    criar_definicao_criterio_diagonal,
+    criar_registro_criterios_producao,
+)
 
 
 class TestVinculoDiretoCriterioPadrao(unittest.TestCase):
@@ -144,6 +147,47 @@ class TestComparacaoResultadoPadrao(unittest.TestCase):
                 estado_esperado="SEM_CORRESPONDENCIA", id_padrao_esperado=None,
                 detectado=1, id_padrao_criterio=7,
             )
+
+
+class TestComparacaoResultadoCategorico(unittest.TestCase):
+    def test_respostas_identicas_sao_aprovadas(self):
+        self.assertEqual(
+            ("0D0E|1D1E", "S"),
+            comparar_resultado_categorico(
+                categoria_esperada="0D0E|1D1E",
+                categoria_calculada="0D0E|1D1E",
+            ),
+        )
+
+    def test_qualquer_diferenca_reprova_sem_comparacao_parcial(self):
+        self.assertEqual(
+            ("0D0E", "N"),
+            comparar_resultado_categorico(
+                categoria_esperada="0D0E|1D1E",
+                categoria_calculada="0D0E",
+            ),
+        )
+
+    def test_rejeita_referencia_pendente_e_retorno_invalido(self):
+        with self.assertRaises(ErroExecucaoValidacao):
+            comparar_resultado_categorico(
+                categoria_esperada="", categoria_calculada="0D0E"
+            )
+        for calculada in (None, "", 1):
+            with self.subTest(calculada=calculada), self.assertRaises(TypeError):
+                comparar_resultado_categorico(
+                    categoria_esperada="0D0E", categoria_calculada=calculada
+                )
+
+    def test_adaptador_executa_criterio_diagonal_sobre_as_dezenas(self):
+        definicao = criar_definicao_criterio_diagonal()
+        entrada = ResultadoEntrada.criar(
+            data_resultado=date(2026, 1, 1),
+            numero_ap=1,
+            resultados=(4, 15, 26, 37, 48, 59),
+        )
+
+        self.assertEqual("0D5E", calcular_valor_criterio(definicao, entrada))
 
 
 class TestConsolidacaoMotorValidacao(unittest.TestCase):

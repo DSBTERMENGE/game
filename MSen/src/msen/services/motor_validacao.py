@@ -8,8 +8,8 @@ import psycopg
 from msen.validacao import criar_registro_criterios_producao
 
 from .execucao_validacao import (
-    RelatorioExecucaoValidacao, executar_criterios_numericos,
-    executar_criterios_padroes,
+    RelatorioExecucaoValidacao, executar_criterio_categorico,
+    executar_criterios_numericos, executar_criterios_padroes,
 )
 from .sincronizacao_validacao import (
     ResultadoSincronizacaoCriterios, sincronizar_criterios_validacao,
@@ -53,32 +53,46 @@ def atualizar_validacao_e_auditoria(
     if informar_progresso is not None and not callable(informar_progresso):
         raise TypeError("informar_progresso deve ser chamável ou nulo.")
     progresso = informar_progresso or (lambda _etapa, _concluido, _total: None)
-    progresso("Sincronizando catálogo", 0, 4)
+    progresso("Sincronizando catálogo", 0, 5)
     with conexao.transaction():
         sincronizacao = sincronizar_criterios_validacao(
             conexao, criar_registro_criterios_producao(),
             confirmar_exclusoes=confirmar_exclusoes,
         )
-        progresso("Executando critérios estatísticos", 1, 4)
+        progresso("Executando critérios estatísticos", 1, 5)
         categorias = (
             executar_criterios_numericos(
                 conexao, categoria="ESTATISTICA",
                 permitir_referencias_pendentes=True,
             ),
         )
-        progresso("Executando critérios geométricos", 2, 4)
+        progresso("Executando critérios geométricos", 2, 5)
         categorias += (
             executar_criterios_numericos(
                 conexao, categoria="GEOMETRIA",
                 permitir_referencias_pendentes=True,
             ),
         )
-        progresso("Executando detectores de padrões", 3, 4)
+        progresso("Executando detectores de padrões", 3, 5)
         categorias += (
             executar_criterios_padroes(
                 conexao, permitir_referencias_pendentes=True,
             ),
         )
+        categoricos = tuple(
+            item
+            for item in criar_registro_criterios_producao().listar()
+            if item.tipo_resultado == "CATEGORICO"
+        )
+        categorias += tuple(
+            executar_criterio_categorico(
+                conexao,
+                definicao,
+                permitir_referencias_pendentes=True,
+            )
+            for definicao in categoricos
+        )
+        progresso("Executando critérios categóricos", 4, 5)
         total_avaliacoes = sum(item.total_avaliacoes for item in categorias)
         aprovadas = sum(item.aprovadas for item in categorias)
         reprovadas = sum(item.reprovadas for item in categorias)
@@ -96,7 +110,7 @@ def atualizar_validacao_e_auditoria(
                 "alterado_em = CURRENT_TIMESTAMP WHERE id_estado = 1",
                 (motivo,),
             )
-        progresso("Consolidação concluída", 4, 4)
+        progresso("Consolidação concluída", 5, 5)
     return RelatorioMotorValidacao(
         sincronizacao=sincronizacao, categorias=categorias,
         total_criterios=len(criterios), total_avaliacoes=total_avaliacoes,

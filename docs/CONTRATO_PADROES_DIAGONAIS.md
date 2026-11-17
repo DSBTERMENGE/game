@@ -71,6 +71,35 @@ Se a mesma assinatura aparecer em mais de uma referência, a combinação conté
 essa assinatura apenas uma vez para fins de incidência. A posição permanece
 disponível somente como evidência de auditoria.
 
+## Contrato público da função
+
+A função cadastrada no grupo possui a assinatura Python:
+
+```python
+analisar_assinaturas_diagonais(
+    dezenas: tuple[int, ...],
+) -> AnaliseAssinaturasDiagonais
+```
+
+A entrada deve conter exatamente seis dezenas inteiras, distintas e situadas
+entre 1 e 60. A validação e a ordenação obedecem ao contrato compartilhado dos
+demais padrões.
+
+O retorno não é booleano nem um percentual. Ele é um objeto imutável contendo:
+
+- `dezenas_ordenadas`, a entrada normalizada;
+- `referencias`, exatamente quatro evidências, correspondentes a P2–P5;
+- `assinaturas`, a tupla ordenada e sem repetições das assinaturas elegíveis.
+
+Cada evidência informa a posição, a dezena, as duas diagonais completas e a
+assinatura, quando elegível. Cada assinatura guarda separadamente as contagens
+`direita` e `esquerda` e fornece o código textual `xDyE`.
+
+Quando `assinaturas` estiver vazia, `sem_referencia_longa` será verdadeiro. As
+etapas de distribuição e decisão projetarão esse estado para o código público
+estável `SEM_REFERENCIA_LONGA`. O analisador geométrico não calcula incidência,
+percentual, raridade, aprovação ou exclusão.
+
 ## Estudo de incidência
 
 Uma amostra aleatória deverá:
@@ -120,6 +149,14 @@ pares equivalentes a:
 Essa tabela é calculada uma vez por execução e permanece imutável durante o
 funil. Ela não é recalculada para cada combinação e não exige persistir as
 combinações analisadas.
+
+Em 17/11/2026, o serviço definitivo de distribuição foi aplicado, em leitura
+somente, aos 3.069 resultados do banco `games`. As ocorrências e os percentuais
+das 21 assinaturas, mais `SEM_REFERENCIA_LONGA`, coincidiram integralmente com
+o estudo anterior. A soma das ocorrências foi 5.910 e não deve ser comparada a
+3.069 como se fossem classes exclusivas: um mesmo resultado pode possuir mais
+de uma assinatura. Cada assinatura, contudo, conta no máximo uma vez dentro do
+mesmo resultado.
 
 ### Avaliação de uma combinação
 

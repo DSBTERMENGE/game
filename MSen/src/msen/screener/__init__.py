@@ -119,6 +119,12 @@ from .familia_padroes import (
     criar_familia_detectores_raros,
     criar_familia_padroes,
 )
+from .filtro_diagonal import (
+    CODIGO_FILTRO_DIAGONAL,
+    ComparacaoCategoriaDiagonal,
+    acrescentar_filtro_diagonal,
+    avaliar_filtro_diagonal,
+)
 from .quadro_extensivel import (
     ErroQuadroConsolidado,
     LinhaFamiliaConsolidada,
@@ -221,6 +227,10 @@ __all__ = [
     "classificar_sequenciais_para_funil",
     "criar_familia_detectores_raros",
     "criar_familia_padroes",
+    "CODIGO_FILTRO_DIAGONAL",
+    "ComparacaoCategoriaDiagonal",
+    "acrescentar_filtro_diagonal",
+    "avaliar_filtro_diagonal",
     "ErroQuadroConsolidado",
     "LinhaFamiliaConsolidada",
     "LinhaFiltroConsolidada",

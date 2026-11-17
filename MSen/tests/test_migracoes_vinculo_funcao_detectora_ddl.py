@@ -22,7 +22,8 @@ SQL_032 = (MIGRACOES / "032_vincular_funcoes_detectoras_existentes.sql").read_te
 class MigracoesVinculoFuncaoDetectoraDDLTest(unittest.TestCase):
     def test_migracoes_estao_na_ordem_esperada(self):
         versoes = tuple(item.versao for item in descobrir_migracoes(MIGRACOES))
-        self.assertEqual(("031", "032"), versoes[-2:])
+        self.assertEqual(("031", "032"), versoes[30:32])
+        self.assertEqual("035", versoes[-1])
 
     def test_031_adiciona_colunas_e_integridade_relacional(self):
         for trecho in (

@@ -34,7 +34,8 @@ class RepositorioValidacaoMapeamentoTestCase(unittest.TestCase):
             "PADRAO", "msen.padroes.classificar", "PADRAO", "a" * 64,
             "APROVADO", "PG_001", "Sequenciais", True, None, None,
             "PADRAO_IDENTIFICADO", "PD_002", "Duas sequenciais",
-            "PADRAO_IDENTIFICADO", "PD_002", "Duas sequenciais", True, "S",
+            "PADRAO_IDENTIFICADO", "PD_002", "Duas sequenciais", None, None,
+            True, "S",
         )
         avaliacao = _linha_para_avaliacao(linha)
         self.assertIsInstance(avaliacao, AvaliacaoValidacaoDetalhada)
@@ -48,11 +49,25 @@ class RepositorioValidacaoMapeamentoTestCase(unittest.TestCase):
             8, 101, 1, 2, 3, 4, 5, 6, 4, "EST_SOMA", "Soma", "ESTATISTICA",
             "msen.calculos.soma", "INTEIRO", "b" * 64, "PENDENTE", None, None,
             True, Decimal("21"), Decimal("21"), None, None, None, None, None,
-            None, True, "S",
+            None, None, None, True, "S",
         )
         avaliacao = _linha_para_avaliacao(linha)
         self.assertEqual(Decimal("21"), avaliacao.valor_esperado)
         self.assertIsNone(avaliacao.grupo_codigo)
+
+    def test_mapeia_resposta_categorica(self):
+        linha = (
+            9, 102, 1, 7, 25, 29, 44, 49, 20, "PAD_PG_004", "Diagonais",
+            "PADRAO", "msen.validacao.calcular", "CATEGORICO", "c" * 64,
+            "APROVADO", "PG_004", "Arranjos diagonais", True, None, None,
+            None, None, None, None, None, None,
+            "0D0E|0D1E|1D0E|1D1E", "0D0E|0D1E|1D0E|1D1E", True, "S",
+        )
+
+        avaliacao = _linha_para_avaliacao(linha)
+
+        self.assertEqual("0D0E|0D1E|1D0E|1D1E", avaliacao.categoria_esperada)
+        self.assertEqual(avaliacao.categoria_esperada, avaliacao.categoria_calculada)
 
     def test_rejeita_quantidade_incorreta_de_colunas(self):
         with self.assertRaises(ValueError):

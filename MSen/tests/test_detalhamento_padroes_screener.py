@@ -86,6 +86,31 @@ class DetalhamentoPadroesScreenerTests(unittest.TestCase):
             )
         self.assertEqual("ENTRADA_PADRAO_DIVERGENTE", contexto.exception.codigo)
 
+    def test_fecha_padroes_individuais_antes_de_filtro_categorico(self):
+        familia = {
+            **self.familia,
+            "exclusoes": 20,
+            "saldo": 80,
+            "filtros": [
+                *self.familia["filtros"],
+                {
+                    "codigo": "PAD_PG_004", "entrada": 82,
+                    "avaliacoes": 82, "exclusoes": 2, "saldo": 80,
+                },
+            ],
+        }
+        dados = _detalhar_padroes(
+            padroes=self.padroes,
+            grupos_fotografados=self.grupos,
+            familia_serializada=familia,
+            limite=Decimal(10),
+            operador="<",
+        )
+        self.assertEqual(
+            {"entrada": 100, "exclusoes": 18, "saldo": 82, "valido": True},
+            dados["fechamento"],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

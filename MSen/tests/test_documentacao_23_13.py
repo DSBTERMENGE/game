@@ -21,13 +21,13 @@ class TestDocumentacao2313(unittest.TestCase):
                 self.assertTrue((RAIZ / caminho).is_file())
 
     def test_ajuda_expoe_formula_fluxo_custo_e_cautela(self):
-        ajuda = (RAIZ / "frontend/selecao-dezenas.html").read_text(encoding="utf-8")
+        ajuda = (RAIZ / "frontend/js/ajuda-conteudo.js").read_text(encoding="utf-8")
         for trecho in (
-            "Mₐ = U + μ + j × σ",
-            "LIA = ⌊Mₐ − k × σ⌋",
+            "centro_deslocado = U + μ + j × σ",
+            "LI ajustado = piso(centro_deslocado − meia_largura)",
             "C(N,6)",
-            "Fluxo recomendado",
-            "não garante desempenho futuro",
+            "Cuidado",
+            "não garantem o resultado de um sorteio",
         ):
             self.assertIn(trecho, ajuda)
 

@@ -19,6 +19,7 @@ from msen.screener import (
     criar_familia_estatistica,
     criar_familia_detectores_raros,
     criar_familia_geometrica,
+    acrescentar_filtro_diagonal,
     criar_fotografia_configuracao,
     criar_grupo_padroes_fotografado,
     criar_quadro_consolidado,
@@ -33,7 +34,11 @@ from msen.screener.configuracao import (
     carregar_configuracao_screener,
     validar_limite_raridade,
 )
-from msen.padroes import criar_registro_detectores_aprovados
+from msen.modelos import ResultadoEntrada
+from msen.padroes import (
+    criar_fotografia_historica_diagonal,
+    criar_registro_detectores_aprovados,
+)
 from msen.services.selecao_padroes import SelecaoPadroesRaros
 from msen.services.homologacao_screener import (
     confirmar_cobertura_screener_no_banco,
@@ -45,6 +50,7 @@ from .perfis_padroes import (
     calcular_perfil_no_banco,
     selecionar_padroes_raros_no_banco,
 )
+from .resultados import listar_resultados_do_banco
 
 
 class ErroEnsaioExtensivel(RuntimeError):
@@ -53,6 +59,26 @@ class ErroEnsaioExtensivel(RuntimeError):
     def __init__(self, codigo: str, mensagem: str) -> None:
         super().__init__(mensagem)
         self.codigo = codigo
+
+
+def _carregar_fotografia_diagonal():
+    """Calcula uma vez a distribuição diagonal de todo o histórico atual."""
+
+    resultados = listar_resultados_do_banco()
+    entradas = tuple(
+        ResultadoEntrada.criar(
+            data_resultado=item.resultado.data_resultado,
+            numero_ap=item.resultado.numero_ap,
+            resultados=item.resultado.resultados,
+        )
+        for item in resultados
+    )
+    if not entradas:
+        raise ErroEnsaioExtensivel(
+            "HISTORICO_DIAGONAL_VAZIO",
+            "O filtro diagonal exige ao menos um resultado histórico.",
+        )
+    return criar_fotografia_historica_diagonal(entradas)
 
 
 def _perfil_por_codigo(distribuicoes: dict[str, object], codigo: str) -> dict[str, object]:
@@ -171,8 +197,7 @@ def _detalhar_padroes(
     total_exclusoes = sum(item["exclusoes"] for item in grupos)
     valido = (
         all(item["reconciliado"] for item in grupos)
-        and total_exclusoes == familia_serializada["exclusoes"]
-        and saldo_grupo == familia_serializada["saldo"]
+        and familia_serializada["entrada"] == total_exclusoes + saldo_grupo
     )
     if not valido:
         raise ErroEnsaioExtensivel(
@@ -249,6 +274,7 @@ def gerar_quadro_screener_extensivel(
         "EST_SOMA", "EST_MEDIA", "EST_MEDIANA", "EST_DESVIO_PADRAO",
         "GEO_EXTENSAO", "GEO_PERIMETRO", "GEO_REGIOES", "GEO_AREA",
         "GEO_CENTRO_X", "GEO_CENTRO_Y",
+        "PAD_PG_004",
         *codigos_padroes_selecionados,
     }
     estado_homologacao = consultar_homologacao_screener_no_banco()
@@ -294,6 +320,10 @@ def gerar_quadro_screener_extensivel(
         grupos_fotografados=grupos_padroes,
         registro=criar_registro_detectores_aprovados(),
     )
+    fotografia_diagonal = _carregar_fotografia_diagonal()
+    familia_padroes = acrescentar_filtro_diagonal(
+        familia_padroes, fotografia_diagonal, limite_efetivo
+    )
     familias = (familia_estatistica, familia_geometrica, familia_padroes)
 
     parametros = {
@@ -314,6 +344,14 @@ def gerar_quadro_screener_extensivel(
                     faixas_geo["faixa_centro_x"],
                 ),
             )
+        },
+        "PAD_PG_004": {
+            "grupo_cod": "PG_004",
+            "padrao_cod": "PD_013",
+            "limite_raridade": limite_efetivo,
+            "operador": "<",
+            "identificacao_carga": fotografia_diagonal.identificacao_carga,
+            "versao_calculo": fotografia_diagonal.versao_calculo,
         },
         **{
             f"PAD_{codigo}": {
@@ -337,6 +375,7 @@ def gerar_quadro_screener_extensivel(
         versoes_calculo={
             "estatistica": 1,
             "geometria": 1,
+            "PG_004": fotografia_diagonal.versao_calculo,
             **{
                 grupo.grupo_cod: max(perfil_padroes.versoes_calculo, default=1)
                 for grupo in grupos_padroes

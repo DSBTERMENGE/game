@@ -43,6 +43,7 @@ from .execucoes_validacao import (
     GerenciadorExecucoesValidacao, execucoes_validacao_api,
 )
 from .validacao import (
+    aprovar_referencia_categorica_no_banco,
     consultar_relatorio_no_banco, consultar_validacao_no_banco, validacao_api,
 )
 from msen.services.exportacao_validacao import exportar_validacao_no_banco
@@ -112,6 +113,7 @@ def criar_app(configuracao: Mapping[str, Any] | None = None) -> Flask:
         GERENCIADOR_VALIDACAO=GerenciadorExecucoesValidacao(),
         CONSULTAR_VALIDACAO=consultar_validacao_no_banco,
         CONSULTAR_RELATORIO_VALIDACAO=consultar_relatorio_no_banco,
+        APROVAR_REFERENCIA_CATEGORICA=aprovar_referencia_categorica_no_banco,
         EXPORTAR_VALIDACAO=exportar_validacao_no_banco,
         CONSULTAR_ESTADO_FREQUENCIA=consultar_estado_no_banco,
         CONSULTAR_FOTOGRAFIA_FREQUENCIA=consultar_fotografia_no_banco,

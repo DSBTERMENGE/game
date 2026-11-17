@@ -1,6 +1,9 @@
 """Contratos de tipos compartilhados pelas funções detectoras de padrões."""
 
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
+
+if TYPE_CHECKING:
+    from .diagonais import AnaliseAssinaturasDiagonais
 
 
 class DetectorPadrao(Protocol):
@@ -8,5 +11,16 @@ class DetectorPadrao(Protocol):
 
     def __call__(self, dezenas: tuple[int, ...]) -> bool:
         """Recebe as dezenas e devolve verdadeiro quando o padrão é detectado."""
+
+        ...
+
+
+class AnalisadorAssinaturasDiagonais(Protocol):
+    """Contrato da função categórica compartilhada pelo grupo diagonal."""
+
+    def __call__(
+        self, dezenas: tuple[int, ...]
+    ) -> "AnaliseAssinaturasDiagonais":
+        """Recebe seis dezenas e devolve o perfil diagonal auditável."""
 
         ...

@@ -72,12 +72,19 @@ def validar_homologacao_screener(
             raise ErroHomologacaoScreener(
                 "FUNCAO_NAO_HOMOLOGADA", f"A função {codigo} não está integralmente aprovada."
             )
-    padroes_producao = {codigo for codigo in esperado if codigo.startswith("PAD_")}
-    if not codigos_padroes_selecionados.issubset(padroes_producao):
+    padroes_individuais = {
+        codigo
+        for codigo, definicao in esperado.items()
+        if definicao.categoria == "PADRAO"
+        and definicao.tipo_resultado != "CATEGORICO"
+    }
+    if not codigos_padroes_selecionados.issubset(padroes_individuais):
         raise ErroHomologacaoScreener(
             "PADRAO_NAO_HOMOLOGADO", "A seleção de raridade retornou padrão desconhecido."
         )
-    cobertura_esperada = (set(esperado) - padroes_producao) | codigos_padroes_selecionados
+    cobertura_esperada = (
+        set(esperado) - padroes_individuais
+    ) | codigos_padroes_selecionados
     if codigos_carregados != cobertura_esperada:
         raise ErroHomologacaoScreener(
             "COBERTURA_DIVERGENTE", "Há filtro homologado ausente ou filtro extra no plano do Screener."

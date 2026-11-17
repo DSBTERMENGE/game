@@ -42,6 +42,8 @@ class AvaliacaoValidacaoDetalhada:
     estado_padrao_calculado: str | None
     subgrupo_calculado_codigo: str | None
     subgrupo_calculado_nome: str | None
+    categoria_esperada: str | None
+    categoria_calculada: str | None
     executado: bool
     aprovado: str | None
 
@@ -68,8 +70,8 @@ def _linha_para_amostra(linha: tuple[Any, ...]) -> AmostraValidacao:
 
 
 def _linha_para_avaliacao(linha: tuple[Any, ...]) -> AvaliacaoValidacaoDetalhada:
-    if len(linha) != 29:
-        raise ValueError("A consulta de avaliação deve retornar exatamente 29 colunas.")
+    if len(linha) != 31:
+        raise ValueError("A consulta de avaliação deve retornar exatamente 31 colunas.")
     return AvaliacaoValidacaoDetalhada(
         id_resultado=linha[0],
         numero_ap=linha[1],
@@ -93,8 +95,10 @@ def _linha_para_avaliacao(linha: tuple[Any, ...]) -> AvaliacaoValidacaoDetalhada
         estado_padrao_calculado=linha[24],
         subgrupo_calculado_codigo=linha[25],
         subgrupo_calculado_nome=linha[26],
-        executado=linha[27],
-        aprovado=linha[28],
+        categoria_esperada=linha[27],
+        categoria_calculada=linha[28],
+        executado=linha[29],
+        aprovado=linha[30],
     )
 
 
@@ -109,8 +113,8 @@ COLUNAS_AVALIACAO = (
     "c.funcao_python, c.tipo_resultado, c.assinatura_funcao, c.estado, "
     "g.grupo_cod, g.grupo_nome, a.referencia_conferida, a.valor_esperado, "
     "a.valor_calculado, a.estado_padrao_esperado, pe.padrao_cod, pe.padrao_nome, "
-    "a.estado_padrao_calculado, pc.padrao_cod, pc.padrao_nome, a.executado, "
-    "a.aprovado"
+    "a.estado_padrao_calculado, pc.padrao_cod, pc.padrao_nome, "
+    "a.categoria_esperada, a.categoria_calculada, a.executado, a.aprovado"
 )
 
 

@@ -18,7 +18,8 @@ from msen.padroes import criar_registro_detectores_aprovados
 
 from .criterios import (
     calcular_area_total, calcular_centro_gravidade_x,
-    calcular_centro_gravidade_y, calcular_quantidade_regioes,
+    calcular_centro_gravidade_y, calcular_categorias_diagonais,
+    calcular_quantidade_regioes,
 )
 
 
@@ -73,6 +74,27 @@ class RegistroCriteriosValidacao:
         return self._definicoes
 
 
+def criar_definicao_criterio_diagonal() -> DefinicaoCriterio:
+    """Prepara o critério categórico sem ativá-lo antes da migração do banco."""
+
+    from msen.padroes import analisar_assinaturas_diagonais
+
+    return DefinicaoCriterio(
+        codigo="PAD_PG_004",
+        nome="Arranjos diagonais xDyE",
+        categoria="PADRAO",
+        funcao=calcular_categorias_diagonais,
+        tipo_resultado="CATEGORICO",
+        regra=(
+            "Ordena as seis dezenas; analisa P2 a P5; consolida sem repetição "
+            "as assinaturas xDyE em ordem canônica; sem referência longa "
+            "retorna SEM_REFERENCIA_LONGA."
+        ),
+        grupo_codigo="PG_004",
+        dependencias=(analisar_assinaturas_diagonais,),
+    )
+
+
 def criar_registro_criterios_producao() -> RegistroCriteriosValidacao:
     definicoes = [
         DefinicaoCriterio("EST_SOMA", "Soma das seis dezenas", "ESTATISTICA", calcular_soma, "INTEIRO", "Soma exata das seis dezenas."),
@@ -99,4 +121,5 @@ def criar_registro_criterios_producao() -> RegistroCriteriosValidacao:
             f"Detecta exclusivamente a condição cadastrada como {codigo}.",
             grupo_codigo=grupos[codigo],
         ))
+    definicoes.append(criar_definicao_criterio_diagonal())
     return RegistroCriteriosValidacao(tuple(definicoes))

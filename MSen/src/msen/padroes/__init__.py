@@ -6,7 +6,7 @@ from .classificacao import (
     ClassificacaoGrupoSequenciais,
     classificar_grupo_dezenas_sequenciais,
 )
-from .contratos import DetectorPadrao
+from .contratos import AnalisadorAssinaturasDiagonais, DetectorPadrao
 from .colunas import (
     CODIGO_DUAS_NA_MESMA_COLUNA,
     CODIGO_MAIS_DE_TRES_NA_MESMA_COLUNA,
@@ -24,7 +24,24 @@ from .diagonais import (
     AnaliseAssinaturasDiagonais,
     AnaliseReferenciaDiagonal,
     AssinaturaDiagonal,
+    CATEGORIA_SEM_REFERENCIA_LONGA,
+    COMPRIMENTO_MINIMO_DIAGONAL,
+    PASSO_DIAGONAL_DIREITA,
+    PASSO_DIAGONAL_ESQUERDA,
+    POSICOES_REFERENCIA,
     analisar_assinaturas_diagonais,
+)
+from .distribuicao_diagonais import (
+    CODIGOS_ASSINATURAS_DIAGONAIS,
+    CODIGOS_CATEGORIAS_DIAGONAIS,
+    DistribuicaoCategoriasDiagonais,
+    IncidenciaCategoriaDiagonal,
+    calcular_distribuicao_categorias_diagonais,
+)
+from .fotografia_diagonais import (
+    VERSAO_CALCULO_DIAGONAL,
+    FotografiaHistoricaDiagonal,
+    criar_fotografia_historica_diagonal,
 )
 from .iniciais import (
     CODIGO_DUAS_SEQUENCIAIS,
@@ -76,6 +93,7 @@ __all__ = [
     "DetectorJaRegistrado",
     "DetectorNaoRegistrado",
     "DetectorPadrao",
+    "AnalisadorAssinaturasDiagonais",
     "ErroAnalisePadrao",
     "ErroResolucaoDetector",
     "EstatisticaPadrao",
@@ -106,6 +124,19 @@ __all__ = [
     "AnaliseAssinaturasDiagonais",
     "AnaliseReferenciaDiagonal",
     "AssinaturaDiagonal",
+    "CATEGORIA_SEM_REFERENCIA_LONGA",
+    "COMPRIMENTO_MINIMO_DIAGONAL",
+    "PASSO_DIAGONAL_DIREITA",
+    "PASSO_DIAGONAL_ESQUERDA",
+    "POSICOES_REFERENCIA",
+    "CODIGOS_ASSINATURAS_DIAGONAIS",
+    "CODIGOS_CATEGORIAS_DIAGONAIS",
+    "DistribuicaoCategoriasDiagonais",
+    "IncidenciaCategoriaDiagonal",
+    "calcular_distribuicao_categorias_diagonais",
+    "VERSAO_CALCULO_DIAGONAL",
+    "FotografiaHistoricaDiagonal",
+    "criar_fotografia_historica_diagonal",
     "analisar_assinaturas_diagonais",
     "detectar_duas_dezenas_sequenciais",
     "detectar_tres_dezenas_sequenciais",

@@ -12,8 +12,14 @@ class TestHomologacaoScreener(unittest.TestCase):
     def setUp(self):
         definicoes = criar_registro_criterios_producao().listar()
         todos = {item.codigo for item in definicoes}
-        self.padroes = set(sorted(codigo for codigo in todos if codigo.startswith("PAD_"))[:2])
-        self.codigos = {codigo for codigo in todos if not codigo.startswith("PAD_")} | self.padroes
+        individuais = {
+            item.codigo
+            for item in definicoes
+            if item.categoria == "PADRAO" and item.tipo_resultado != "CATEGORICO"
+        }
+        obrigatorios = todos - individuais
+        self.padroes = set(sorted(individuais)[:2])
+        self.codigos = obrigatorios | self.padroes
         criterios = tuple(CriterioHomologado(
             item.codigo, "APROVADO", item.assinatura_funcao, item.assinatura_regra,
             200, 200, 0, 0,
@@ -72,6 +78,20 @@ class TestHomologacaoScreener(unittest.TestCase):
     def test_bloqueia_filtro_ausente_ou_extra(self):
         self.assertEqual("COBERTURA_DIVERGENTE", self.erro(codigos=self.codigos - {"EST_SOMA"}))
         self.assertEqual("COBERTURA_DIVERGENTE", self.erro(codigos=self.codigos | {"EXTRA"}))
+
+    def test_diagonal_categorico_e_obrigatorio_nao_selecionavel(self):
+        self.assertIn("PAD_PG_004", self.codigos)
+        self.assertEqual(
+            "COBERTURA_DIVERGENTE",
+            self.erro(codigos=self.codigos - {"PAD_PG_004"}),
+        )
+        with self.assertRaises(ErroHomologacaoScreener) as contexto:
+            validar_homologacao_screener(
+                self.estado,
+                codigos_carregados=self.codigos,
+                codigos_padroes_selecionados=self.padroes | {"PAD_PG_004"},
+            )
+        self.assertEqual("PADRAO_NAO_HOMOLOGADO", contexto.exception.codigo)
 
 
 if __name__ == "__main__":

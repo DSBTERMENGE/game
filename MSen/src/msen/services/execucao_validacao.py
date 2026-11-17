@@ -102,6 +102,25 @@ def comparar_resultado_padrao(
     return estado, id_calculado, aprovado
 
 
+def comparar_resultado_categorico(
+    *, categoria_esperada: str, categoria_calculada: object
+) -> tuple[str, str]:
+    """Compara respostas categóricas canônicas sem interpretação parcial."""
+
+    if not isinstance(categoria_esperada, str) or not categoria_esperada.strip():
+        raise ErroExecucaoValidacao(
+            "REFERENCIA_PENDENTE",
+            "A avaliação não possui referência categórica válida.",
+        )
+    if not isinstance(categoria_calculada, str) or not categoria_calculada.strip():
+        raise TypeError("A função categórica deve retornar texto preenchido.")
+    esperada = categoria_esperada.strip()
+    calculada = categoria_calculada.strip()
+    if len(esperada) > 200 or len(calculada) > 200:
+        raise ValueError("A resposta categórica aceita no máximo 200 caracteres.")
+    return calculada, "S" if calculada == esperada else "N"
+
+
 def _decimal_calculado(valor: object) -> tuple[str, Decimal | None]:
     if valor is None:
         return "SEM_VALOR", None
@@ -161,11 +180,14 @@ def comparar_resultado_numerico(
     return estado_calculado, calculado, diferenca, aprovado
 
 
-def _definicoes(categoria: str) -> dict[str, DefinicaoCriterio]:
+def _definicoes(
+    categoria: str, *, tipo_resultado: str | None = None
+) -> dict[str, DefinicaoCriterio]:
     return {
         item.codigo: item
         for item in criar_registro_criterios_producao().listar()
         if item.categoria == categoria
+        and (tipo_resultado is None or item.tipo_resultado == tipo_resultado)
     }
 
 
@@ -181,6 +203,8 @@ def calcular_valor_criterio(
     if definicao.categoria == "ESTATISTICA":
         return definicao.funcao(entrada)
     if definicao.categoria == "GEOMETRIA":
+        return definicao.funcao(entrada.resultados)
+    if definicao.tipo_resultado == "CATEGORICO":
         return definicao.funcao(entrada.resultados)
     raise ValueError("O adaptador numérico não executa critérios de padrão.")
 
@@ -306,7 +330,7 @@ def executar_criterios_padroes(
         raise TypeError("A execução exige uma conexão Psycopg válida.")
     if not isinstance(permitir_referencias_pendentes, bool):
         raise TypeError("permitir_referencias_pendentes deve ser booleano.")
-    definicoes = _definicoes("PADRAO")
+    definicoes = _definicoes("PADRAO", tipo_resultado="PADRAO")
     resultados: list[ResultadoExecucaoCriterio] = []
     with conexao.transaction():
         with conexao.cursor() as cursor:
@@ -400,4 +424,121 @@ def executar_criterios_padroes(
         aprovadas=sum(item.aprovados for item in resultados),
         reprovadas=sum(item.reprovados for item in resultados),
         criterios=tuple(resultados),
+    )
+
+
+def executar_criterio_categorico(
+    conexao: psycopg.Connection,
+    definicao: DefinicaoCriterio,
+    *,
+    permitir_referencias_pendentes: bool = False,
+) -> RelatorioExecucaoValidacao:
+    """Executa um critério categórico explicitamente preparado e persistido."""
+
+    if not isinstance(conexao, psycopg.Connection):
+        raise TypeError("A execução exige uma conexão Psycopg válida.")
+    if not isinstance(definicao, DefinicaoCriterio):
+        raise TypeError("definicao deve ser um critério registrado.")
+    if definicao.categoria != "PADRAO" or definicao.tipo_resultado != "CATEGORICO":
+        raise ValueError("A definição deve ser um padrão categórico.")
+    if not isinstance(permitir_referencias_pendentes, bool):
+        raise TypeError("permitir_referencias_pendentes deve ser booleano.")
+
+    with conexao.transaction(), conexao.cursor() as cursor:
+        cursor.execute(
+            "SELECT id_criterio, assinatura_funcao, id_grupo FROM "
+            "criterios_validacao WHERE codigo=%s AND categoria='PADRAO' "
+            "AND tipo_resultado='CATEGORICO' AND ativo FOR UPDATE",
+            (definicao.codigo,),
+        )
+        criterio = cursor.fetchone()
+        if criterio is None:
+            raise ErroExecucaoValidacao(
+                "CRITERIO_AUSENTE", "O critério categórico não está ativo."
+            )
+        id_criterio, assinatura_banco, id_grupo = criterio
+        if assinatura_banco.strip() != definicao.assinatura_funcao:
+            raise ErroExecucaoValidacao(
+                "ASSINATURA_DIVERGENTE",
+                f"A assinatura registrada de {definicao.codigo} diverge do código atual.",
+            )
+        cursor.execute(
+            "SELECT a.id_resultado, a.referencia_conferida, "
+            "a.categoria_esperada, r.data_resultado, r.numero_ap, r.res_01, "
+            "r.res_02, r.res_03, r.res_04, r.res_05, r.res_06 "
+            "FROM avaliacoes_validacao a "
+            "JOIN amostras_validacao am USING (id_resultado) "
+            "JOIN resultados r USING (id_resultado) "
+            "WHERE a.id_criterio=%s AND a.id_grupo=%s AND am.ativo "
+            "ORDER BY am.ordem FOR UPDATE OF a",
+            (id_criterio, id_grupo),
+        )
+        avaliacoes = cursor.fetchall()
+        if not avaliacoes:
+            raise ErroExecucaoValidacao(
+                "AVALIACOES_AUSENTES",
+                f"{definicao.codigo} não possui amostras ativas.",
+            )
+        if any(not linha[1] for linha in avaliacoes):
+            if not permitir_referencias_pendentes:
+                raise ErroExecucaoValidacao(
+                    "REFERENCIA_PENDENTE",
+                    f"{definicao.codigo} possui amostra sem referência conferida.",
+                )
+            cursor.execute(
+                "UPDATE criterios_validacao SET estado='PENDENTE', "
+                "atualizado_em=CURRENT_TIMESTAMP WHERE id_criterio=%s",
+                (id_criterio,),
+            )
+            resultado = ResultadoExecucaoCriterio(
+                definicao.codigo, len(avaliacoes), 0, 0, "PENDENTE"
+            )
+        else:
+            aprovados = 0
+            for linha in avaliacoes:
+                entrada = ResultadoEntrada.criar(
+                    data_resultado=linha[3],
+                    numero_ap=linha[4],
+                    resultados=linha[5:11],
+                )
+                calculada, aprovado = comparar_resultado_categorico(
+                    categoria_esperada=linha[2],
+                    categoria_calculada=calcular_valor_criterio(definicao, entrada),
+                )
+                cursor.execute(
+                    "UPDATE avaliacoes_validacao SET categoria_calculada=%s, "
+                    "executado=TRUE, assinatura_executada=%s, aprovado=%s, "
+                    "calculado_em=CURRENT_TIMESTAMP WHERE id_resultado=%s "
+                    "AND id_criterio=%s",
+                    (
+                        calculada,
+                        definicao.assinatura_funcao,
+                        aprovado,
+                        linha[0],
+                        id_criterio,
+                    ),
+                )
+                aprovados += aprovado == "S"
+            reprovados = len(avaliacoes) - aprovados
+            estado = "APROVADO" if reprovados == 0 else "REPROVADO"
+            cursor.execute(
+                "UPDATE criterios_validacao SET estado=%s, "
+                "atualizado_em=CURRENT_TIMESTAMP WHERE id_criterio=%s",
+                (estado, id_criterio),
+            )
+            resultado = ResultadoExecucaoCriterio(
+                definicao.codigo, len(avaliacoes), aprovados, reprovados, estado
+            )
+        cursor.execute(
+            "UPDATE estado_algoritmo_selecao SET atualizado=FALSE, "
+            "motivo='REFERENCIAS_OU_CALCULOS_PENDENTES', "
+            "alterado_em=CURRENT_TIMESTAMP WHERE id_estado=1"
+        )
+    return RelatorioExecucaoValidacao(
+        categoria="PADRAO",
+        total_criterios=1,
+        total_avaliacoes=resultado.total,
+        aprovadas=resultado.aprovados,
+        reprovadas=resultado.reprovados,
+        criterios=(resultado,),
     )
