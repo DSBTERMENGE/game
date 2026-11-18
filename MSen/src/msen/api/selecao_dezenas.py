@@ -33,6 +33,7 @@ from msen.services import (
     atualizar_previsoes_futuras,
     calcular_previa_combinacoes,
     detalhar_previsao,
+    listar_previsoes_configuracao,
     executar_backtest,
     persistir_combinacoes_alvo,
     selecionar_dezenas_para_alvo,
@@ -304,7 +305,16 @@ def atualizar_previsoes_no_banco(id_configuracao_selecao):
         item = RepositorioPesquisaSelecao(conexao).buscar_configuracao_disponivel(
             id_configuracao_selecao
         )
-        return asdict(atualizar_previsoes_futuras(conexao, item.configuracao))
+        return asdict(atualizar_previsoes_futuras(
+            conexao, item.configuracao, item
+        ))
+
+
+def listar_previsoes_configuracao_no_banco(id_configuracao_selecao):
+    with abrir_conexao(carregar_configuracao_banco()) as conexao:
+        return [asdict(item) for item in listar_previsoes_configuracao(
+            conexao, id_configuracao_selecao
+        )]
 
 
 def previa_jogos_no_banco(id_alvo):
@@ -611,6 +621,13 @@ def rota_atualizar_previsoes():
 def rota_detalhes_previsao(identificador):
     return _executar_rota(lambda: jsonify(detalhes=
         current_app.config["DETALHAR_PREVISAO_SELECAO"](identificador)
+    ))
+
+
+@selecao_dezenas_api.get("/api/selecao-dezenas/configuracoes/<int:identificador>/previsoes")
+def rota_listar_previsoes_configuracao(identificador):
+    return _executar_rota(lambda: jsonify(detalhes=
+        current_app.config["LISTAR_PREVISOES_CONFIGURACAO"](identificador)
     ))
 
 

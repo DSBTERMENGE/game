@@ -2,7 +2,7 @@ export const CODIGOS_FAMILIAS = Object.freeze(["ESTATISTICA", "GEOMETRIA", "PADR
 
 export function validarDetalhesPadroes(detalhes, familia) {
   if (!detalhes || detalhes.operador !== "<" || !Array.isArray(detalhes.grupos)) return false;
-  if (detalhes.grupos.length > 3 || !detalhes.fechamento?.valido) return false;
+  if (!detalhes.fechamento?.valido) return false;
   let saldo = familia.entrada;
   let exclusoes = 0;
   const codigos = new Set();

@@ -893,6 +893,22 @@ export const secoesAjuda = [
         resumo: "Seleciona dezenas candidatas, compara configurações e preserva listas para o próximo concurso.",
         blocos: [
           {
+            titulo: "Passo a Passo da Seleção de Dezenas",
+            itens: [
+              "1. Selecionar ou criar uma configuração: neste bloco você poderá selecionar uma configuração anteriormente salva ou criar uma nova. As configurações alteram os critérios utilizados para selecionar as dezenas e podem produzir conjuntos diferentes. Se uma configuração apresentar um resultado de seu interesse, como uma lista mais resumida de dezenas, ela poderá ser salva e reutilizada posteriormente.",
+              "2. Selecionar Dezenas: clique em Selecionar dezenas para verificar o resultado produzido sem gravar dados. O sistema apresentará mensagem informando o último concurso utilizado, o próximo concurso previsto, as dezenas selecionadas e a quantidade de combinações de seis dezenas que poderá ser formada. Essa análise é momentânea.",
+              "3. Avaliar as dezenas apresentadas: examine a quantidade e a relação de dezenas retornadas. Se o conjunto estiver muito amplo, muito reduzido ou diferente do desejado, altere os parâmetros da configuração e selecione novamente.",
+              "4. Salvar a configuração: quando encontrar parâmetros que produzam resultados de seu interesse, utilize Salvar configuração. A configuração será preservada para reutilização. Salvar a configuração não registra uma previsão e não executa o Screener de combinações.",
+              "5. Registrar a previsão: selecione uma configuração salva e clique em Registrar previsão do concurso. Não é obrigatório clicar antes em Selecionar dezenas, pois o sistema recalcula automaticamente a seleção e abre uma janela para conferência antes da gravação. Ao confirmar, as dezenas ficam preservadas para o concurso indicado. Se a previsão da mesma configuração, para o mesmo concurso e com a mesma base de resultados já estiver registrada, o sistema mantém o registro original sem alterar nem duplicar dados. Configurações diferentes podem manter previsões separadas, mesmo quando produzem as mesmas dezenas.",
+              "6. Localizar a previsão na tabela: as previsões da configuração selecionada aparecem em Registros do screener de dezenas. A tabela informa o concurso previsto, o concurso utilizado como referência, a situação, as dezenas registradas e a quantidade total. Use Atualizar tabela quando desejar recarregar os registros.",
+              "7. Escolher um conjunto de dezenas para formar os jogos: na coluna Próxima ação, clique em Formar jogos. As dezenas da previsão escolhida serão enviadas ao bloco Formação de jogos com as dezenas registradas. Nenhuma combinação será processada nesse momento.",
+              "8. Informar a quantidade máxima e o valor: digite o número máximo de jogos aprovados que deseja obter e o valor unitário de uma aposta. O sistema apresentará o valor máximo previsto. A quantidade informada funciona como um teto, não como uma quantidade garantida: ao solicitar 100 jogos, por exemplo, o Screener poderá retornar somente 55 se apenas 55 combinações forem aprovadas pelos filtros.",
+              "9. Solicitar as combinações aprovadas: clique em Combinações aprovadas. Se faltarem as dezenas de origem, o número máximo de jogos ou o valor unitário, uma janela informará cada item pendente para que seja corrigido. Quando todos os dados estiverem preenchidos, o sistema abrirá a conferência final com o concurso, as dezenas utilizadas, a quantidade bruta de combinações, o limite de jogos e o valor máximo previsto. Nenhuma combinação será processada antes da confirmação do usuário.",
+              "10. Iniciar o Screener: na janela de confirmação, clique em Confirmar e iniciar Screener. O sistema formará as combinações de seis dezenas e aplicará sequencialmente os filtros estatísticos, geométricos e de padrões. Uma combinação reprovada será descartada; uma combinação aprovada continuará até o resultado final.",
+              "11. Interpretar as combinações aprovadas: ao final, a página apresentará o universo bruto, a quantidade examinada, as exclusões e as combinações aprovadas. O número máximo informado limita a quantidade procurada, mas não obriga o sistema a completar esse total com combinações reprovadas. Se o limite for atingido, o processamento poderá terminar antes de examinar todo o universo. Se houver menos aprovadas — como 55 para um máximo solicitado de 100 — somente as 55 serão apresentadas. Se nenhuma combinação passar por todos os filtros, a lista ficará vazia.",
+            ],
+          },
+          {
             titulo: "Configuração da pesquisa",
             itens: [
               "Configuração gravada escolhe uma configuração imutável ou Nova configuração.",
@@ -903,12 +919,12 @@ export const secoesAjuda = [
             ],
           },
           {
-            titulo: "Analisar e salvar",
-            paragrafos: ["Analisar configuração calcula os dados analíticos usando o último concurso cadastrado, mas não grava configuração, seleção ou Backtest. Salvar configuração abre uma conferência; somente Confirmar e salvar cria o registro. Configurações salvas ficam protegidas contra alteração."],
+            titulo: "Selecionar dezenas e salvar",
+            paragrafos: ["Selecionar dezenas calcula os dados analíticos usando o último concurso cadastrado, mas não grava configuração, seleção ou Backtest. Salvar configuração abre uma conferência; somente Confirmar e salvar cria o registro. Configurações salvas ficam protegidas contra alteração."],
           },
           {
             titulo: "Registros do screener de dezenas",
-            paragrafos: ["Registrar previsão do próximo concurso prepara a lista para o alvo imediatamente seguinte e abre confirmação. Somente uma configuração salva pode originar o registro. Confirmar e registrar seleção preserva dezenas, faixas, ranking, corte e configuração antes do sorteio."],
+            paragrafos: ["Registrar previsão do próximo concurso usa a configuração salva selecionada, recalcula automaticamente as dezenas para o concurso imediatamente seguinte e abre uma janela de conferência. Não é necessário executar antes o botão Selecionar dezenas. Confirmar e registrar seleção preserva dezenas, faixas, ranking, corte e configuração antes do sorteio. Se já existir uma previsão da mesma configuração, para o mesmo concurso e calculada com a mesma base de resultados, o registro original será mantido sem alterações ou duplicação. Configurações diferentes podem ter previsões próprias, ainda que retornem o mesmo conjunto de dezenas."],
           },
           {
             titulo: "Conferência posterior",
@@ -920,15 +936,15 @@ export const secoesAjuda = [
           },
           {
             titulo: "Formação de jogos",
-            paragrafos: ["Formar jogos em uma seleção registrada carrega concurso, configuração e dezenas preservadas. Número máximo de jogos é um teto; Valor de um jogo é o preço unitário. Conferir configuração calcula o valor máximo e apenas revisa os dados."],
+            paragrafos: ["Formar jogos em uma seleção registrada carrega concurso, configuração e dezenas preservadas. Número máximo de jogos é um teto, não uma quantidade garantida; o Screener pode retornar menos jogos quando menos combinações forem aprovadas. Valor de um jogo é o preço unitário. Combinações aprovadas verifica os dados: quando houver campos pendentes, uma janela indicará o que precisa ser corrigido; quando estiver tudo pronto, será aberta a conferência final. O processamento somente começa quando o usuário confirma Iniciar Screener na janela seguinte."],
           },
           {
             titulo: "Limitação atual",
-            paragrafos: ["Confirmar e iniciar Screener permanece desabilitado até a integração do Screener de combinações. Nesta fase, a conferência não gera combinações, não aplica filtros e não grava jogos."],
+            paragrafos: ["Confirmar e iniciar Screener fica disponível depois da conferência dos jogos. A execução aplica os filtros às combinações e apresenta as aprovadas; volumes acima do limite seguro são bloqueados antes do processamento."],
           },
           {
             titulo: "Sequência recomendada",
-            paragrafos: ["Atualize os resultados, analise uma configuração, salve-a, compare-a no Backtest e só então registre a seleção do próximo concurso. Depois do sorteio, importe o resultado para conferir o registro original."],
+            paragrafos: ["Atualize os resultados, selecione dezenas com uma configuração, salve-a, compare-a no Backtest e só então registre a seleção do próximo concurso. Depois do sorteio, importe o resultado para conferir o registro original."],
           },
         ],
         relacionados: ["conceito-faixa-k-j", "conceito-backtest", "conceito-registro-selecao", "referencia-persistencia"],

@@ -8,6 +8,8 @@ from msen.screener import (
     DefinicaoFamilia,
     DefinicaoFiltro,
     ErroContratoFunil,
+    ORIGEM_SELECAO_DEZENAS,
+    criar_entrada_combinacoes,
     executar_funil_extensivel,
 )
 
@@ -155,6 +157,59 @@ class ContratoFunilExtensivelTestCase(unittest.TestCase):
         self.assertTrue(relatorio.reconciliado)
         self.assertGreater(relatorio.total_aprovado, 0)
         self.assertEqual((), relatorio.combinacoes_aprovadas)
+
+    def test_aceita_contrato_comum_e_obtem_total_automaticamente(self) -> None:
+        progressos = []
+        entrada = criar_entrada_combinacoes(
+            origem=ORIGEM_SELECAO_DEZENAS,
+            total_combinacoes=len(self.combinacoes),
+            itens=(item for item in self.combinacoes),
+        )
+
+        relatorio = executar_funil_extensivel(
+            entrada,
+            plano_base(),
+            informar_progresso=lambda concluido, total: progressos.append(
+                (concluido, total)
+            ),
+            intervalo_progresso=3,
+        )
+
+        self.assertEqual(8, relatorio.total_inicial)
+        self.assertEqual((8, 8), progressos[-1])
+        self.assertTrue(relatorio.reconciliado)
+
+    def test_recusa_total_explicito_divergente_do_contrato(self) -> None:
+        entrada = criar_entrada_combinacoes(
+            origem=ORIGEM_SELECAO_DEZENAS,
+            total_combinacoes=len(self.combinacoes),
+            itens=self.combinacoes,
+        )
+
+        with self.assertRaises(ErroContratoFunil) as contexto:
+            executar_funil_extensivel(
+                entrada, plano_base(), total_combinacoes=999
+            )
+
+        self.assertEqual("TOTAL_CONTRATO_DIVERGENTE", contexto.exception.codigo)
+
+    def test_limite_de_aprovadas_interrompe_somente_quando_informado(self) -> None:
+        entrada = criar_entrada_combinacoes(
+            origem=ORIGEM_SELECAO_DEZENAS,
+            total_combinacoes=len(self.combinacoes),
+            itens=self.combinacoes,
+        )
+
+        relatorio = executar_funil_extensivel(
+            entrada, plano_base(), limite_aprovadas=2
+        )
+
+        self.assertEqual(7, relatorio.total_inicial)
+        self.assertEqual(2, relatorio.total_aprovado)
+        self.assertEqual((6, 7), tuple(
+            item[0] for item in relatorio.combinacoes_aprovadas
+        ))
+        self.assertTrue(relatorio.reconciliado)
 
 
 if __name__ == "__main__":

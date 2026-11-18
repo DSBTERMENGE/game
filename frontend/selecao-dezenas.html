@@ -48,7 +48,7 @@
           <label>Quantidade<select id="selecao-modo-quantidade"><option value="MAX">Máxima aprovada</option><option value="FIXA">Quantidade fixa</option></select></label>
           <label>Número de dezenas<input id="selecao-quantidade" type="number" min="6" max="60" step="1" disabled></label>
           <label>Versão do cálculo<input id="selecao-versao" type="number" min="1" step="1" required value="1"></label>
-          <div class="selecao-acoes"><button id="botao-previa-selecao" type="button">Analisar configuração</button><button id="botao-salvar-configuracao" type="button">Salvar configuração</button></div>
+          <div class="selecao-acoes"><button id="botao-previa-selecao" type="button">Selecionar dezenas</button><button id="botao-salvar-configuracao" type="button">Salvar configuração</button></div>
         </form>
         <p id="estado-edicao-configuracao" class="selecao-estado-edicao"></p>
         <div id="resultado-previa-selecao" class="selecao-resultado" hidden></div>
@@ -56,10 +56,10 @@
 
       <div class="selecao-duas-colunas">
         <section class="selecao-bloco" aria-labelledby="titulo-concurso-alvo">
-          <header><h2 id="titulo-concurso-alvo">Registros do screener de dezenas</h2><button id="botao-atualizar-previsao" type="button">Registrar previsão do próximo concurso</button></header>
+          <header id="cabecalho-registros-screener"><h2 id="titulo-concurso-alvo" title="Dê duplo clique para expandir ou contrair a tabela">Registros do screener de dezenas</h2><button id="botao-expandir-previsoes" type="button" aria-expanded="true" aria-controls="tabela-previsoes" title="Contrair a tabela de registros">Contrair tabela</button><button id="botao-recarregar-previsoes" type="button" title="Atualizar os registros exibidos na tabela">Atualizar tabela</button><button id="botao-atualizar-previsao" type="button">Registrar previsão do próximo concurso</button></header>
           <p>Este bloco armazena, antes do sorteio, a lista de dezenas selecionada pelo screener do bloco “Seleção de dezenas” para posterior elaboração das combinações possíveis, as quais serão submetidas a um screener de combinações.</p>
           <div id="resumo-previsao" class="selecao-resultado">Nenhuma previsão foi registrada nesta consulta. Use o botão acima quando quiser guardar a seleção para conferência posterior.</div>
-          <div class="selecao-tabela"><table><thead><tr><th>Concurso previsto</th><th>Dados utilizados até</th><th>Estado da conferência</th><th>Dezenas registradas</th><th>Total</th><th>Configuração utilizada</th><th>Próxima ação</th></tr></thead><tbody id="corpo-previsoes"></tbody></table></div>
+          <div id="tabela-previsoes" class="selecao-tabela"><table><thead><tr><th>Concurso previsto</th><th>Dados utilizados até</th><th>Estado da conferência</th><th>Dezenas registradas</th><th>Total</th><th>Configuração utilizada</th><th>Próxima ação</th></tr></thead><tbody id="corpo-previsoes"></tbody></table></div>
         </section>
 
         <section class="selecao-bloco" aria-labelledby="titulo-backtest-selecao">
@@ -106,7 +106,7 @@
             <label>Número máximo de jogos<input id="jogos-quantidade-solicitada" type="number" min="1" max="50063860" step="1" required></label>
             <label>Valor de um jogo (R$)<input id="jogos-valor-unitario" type="text" inputmode="decimal" placeholder="0,00" required></label>
             <div class="selecao-jogos__valor"><span>Valor máximo previsto</span><strong id="jogos-valor-previsto">—</strong></div>
-            <div class="selecao-acoes"><button id="botao-conferir-jogos" type="button">Conferir configuração</button></div>
+            <div class="selecao-acoes"><button id="botao-conferir-jogos" type="button">Combinações aprovadas</button></div>
           </form>
           <p id="estado-configuracao-jogos" class="selecao-resultado">Informe a quantidade máxima e o valor unitário. Nenhuma combinação será processada ou gravada.</p>
           <section id="resultado-screener-jogos" class="selecao-screener-resultado" aria-labelledby="titulo-resultado-screener" hidden>
@@ -177,6 +177,17 @@
           <p>Nenhum cálculo será iniciado até sua confirmação.</p>
         </div>
         <footer><button type="submit" value="cancelar">Cancelar</button><button id="botao-confirmar-backtest" type="button">Confirmar e gerar relatório</button></footer>
+      </form>
+    </dialog>
+
+    <dialog id="dialogo-pendencias-jogos" class="selecao-previa" aria-labelledby="titulo-pendencias-jogos">
+      <form method="dialog">
+        <header><div><p>Dados pendentes</p><h2 id="titulo-pendencias-jogos">Não foi possível prosseguir</h2></div><button type="submit" aria-label="Fechar aviso">×</button></header>
+        <div class="selecao-previa__conteudo">
+          <p>Corrija os itens abaixo antes de solicitar as combinações aprovadas:</p>
+          <ul id="pendencias-jogos-lista"></ul>
+        </div>
+        <footer><button type="submit">OK, voltar e corrigir</button></footer>
       </form>
     </dialog>
 

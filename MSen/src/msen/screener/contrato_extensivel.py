@@ -8,6 +8,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from types import MappingProxyType
 from typing import Callable, Protocol
 
+from .entrada_combinacoes import EntradaCombinacoesScreener
 from .gerador import Combinacao
 
 
@@ -231,7 +232,7 @@ def _percentual(quantidade: int, base: int) -> Decimal:
 
 
 def executar_funil_extensivel(
-    combinacoes: Iterable[Combinacao],
+    combinacoes: Iterable[Combinacao] | EntradaCombinacoesScreener,
     familias: Iterable[DefinicaoFamilia],
     *,
     informar_progresso: Callable[[int, int], None] | None = None,
@@ -239,12 +240,28 @@ def executar_funil_extensivel(
     total_combinacoes: int | None = None,
     guardar_aprovadas: bool = True,
     intervalo_progresso: int = 25,
+    limite_aprovadas: int | None = None,
 ) -> RelatorioFunilExtensivel:
     """Executa famílias/filtros em ordem e para na primeira exclusão.
 
     A exclusão é atribuída somente ao filtro decisivo. A quantidade de famílias
-    e filtros é definida pelo plano recebido, sem colunas ou códigos fixos.
+    e filtros é definida pelo plano recebido, sem colunas ou códigos fixos. O
+    primeiro argumento aceita tanto o contrato comum quanto o iterável antigo.
     """
+
+    if isinstance(combinacoes, EntradaCombinacoesScreener):
+        if (
+            total_combinacoes is not None
+            and total_combinacoes != combinacoes.total_combinacoes
+        ):
+            raise ErroContratoFunil(
+                "TOTAL_CONTRATO_DIVERGENTE",
+                "O total informado diverge do contrato de combinações.",
+            )
+        total_combinacoes = combinacoes.total_combinacoes
+        itens_combinacoes = combinacoes.itens
+    else:
+        itens_combinacoes = combinacoes
 
     if total_combinacoes is not None and (
         isinstance(total_combinacoes, bool)
@@ -254,6 +271,12 @@ def executar_funil_extensivel(
         raise TypeError("total_combinacoes deve ser inteiro não negativo ou nulo.")
     if not isinstance(guardar_aprovadas, bool):
         raise TypeError("guardar_aprovadas deve ser booleano.")
+    if limite_aprovadas is not None and (
+        isinstance(limite_aprovadas, bool)
+        or not isinstance(limite_aprovadas, int)
+        or limite_aprovadas < 1
+    ):
+        raise TypeError("limite_aprovadas deve ser inteiro positivo ou nulo.")
     if isinstance(intervalo_progresso, bool) or not isinstance(intervalo_progresso, int) or intervalo_progresso < 1:
         raise TypeError("intervalo_progresso deve ser inteiro positivo.")
     plano = _validar_plano(familias)
@@ -265,7 +288,7 @@ def executar_funil_extensivel(
     aprovadas: list[Combinacao] = []
 
     total_aprovado = 0
-    for combinacao in combinacoes:
+    for combinacao in itens_combinacoes:
         if cancelado is not None and cancelado():
             raise InterruptedError("Processamento do Screener cancelado.")
         total += 1
@@ -299,7 +322,20 @@ def executar_funil_extensivel(
         ):
             informar_progresso(total, total_combinacoes or total)
 
-    if total_combinacoes is not None and total != total_combinacoes:
+        if limite_aprovadas is not None and total_aprovado >= limite_aprovadas:
+            break
+
+    interrompido_por_limite = (
+        limite_aprovadas is not None
+        and total_aprovado >= limite_aprovadas
+        and total_combinacoes is not None
+        and total < total_combinacoes
+    )
+    if (
+        total_combinacoes is not None
+        and total != total_combinacoes
+        and not interrompido_por_limite
+    ):
         raise ErroContratoFunil(
             "TOTAL_COMBINACOES_DIVERGENTE",
             "O iterador terminou em quantidade diferente da informada.",

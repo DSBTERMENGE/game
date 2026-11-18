@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
@@ -27,7 +27,6 @@ from msen.screener import (
     executar_funil,
     executar_funil_extensivel,
     gerar_amostra,
-    criar_iterador_combinacoes,
     serializar_quadro_consolidado,
 )
 from msen.screener.configuracao import (
@@ -44,6 +43,10 @@ from msen.padroes import (
     resolver_funcao_detectora,
 )
 from msen.services.selecao_padroes import SelecaoPadroesRaros
+from msen.services.entradas_motor_screener import (
+    adaptar_aplicacao_integral,
+    adaptar_teste_5000,
+)
 from msen.services.homologacao_screener import (
     confirmar_cobertura_screener_no_banco,
     consultar_homologacao_screener_no_banco, validar_homologacao_screener,
@@ -63,6 +66,18 @@ class ErroEnsaioExtensivel(RuntimeError):
     def __init__(self, codigo: str, mensagem: str) -> None:
         super().__init__(mensagem)
         self.codigo = codigo
+
+
+@dataclass(frozen=True, slots=True)
+class PlanoFiltrosScreener:
+    """Famílias e referências prontas para qualquer coleção de combinações."""
+
+    familias: tuple
+    parametros: dict[str, object]
+    grupos_padroes: tuple
+    perfil_padroes: object
+    selecao_padroes: SelecaoPadroesRaros
+    fotografia_diagonal: object
 
 
 ID_PADRAO_DIAGONAL = 19
@@ -242,6 +257,135 @@ def _detalhar_padroes(
     }
 
 
+def montar_plano_filtros_screener(
+    limite_raridade: Decimal,
+) -> PlanoFiltrosScreener:
+    """Monta uma vez o plano comum, sem depender da origem das combinações."""
+
+    distribuicoes = calcular_distribuicoes_no_banco(
+        None, None, 10, "desvio_padrao", Decimal(1), Decimal(1)
+    )
+    perfil_padroes = calcular_perfil_no_banco(limite_raridade, None, None)
+    selecao_padroes = selecionar_padroes_raros_no_banco(
+        limite_raridade, perfil_padroes.total_resultados
+    )
+    codigos_padroes_selecionados = {
+        f"PAD_{item.padrao_cod}" for item in selecao_padroes.padroes
+    }
+    codigos_carregados = {
+        "EST_SOMA", "EST_MEDIA", "EST_MEDIANA", "EST_DESVIO_PADRAO",
+        "GEO_EXTENSAO", "GEO_PERIMETRO", "GEO_REGIOES", "GEO_AREA",
+        "GEO_CENTRO_X", "GEO_CENTRO_Y", "PAD_PG_004",
+        *codigos_padroes_selecionados,
+    }
+    estado_homologacao = consultar_homologacao_screener_no_banco()
+    if (
+        not estado_homologacao.atualizado
+        and estado_homologacao.motivo
+        == "HOMOLOGACAO_CONCLUIDA_AGUARDANDO_COBERTURA"
+    ):
+        estado_homologacao = confirmar_cobertura_screener_no_banco(
+            codigos_carregados=codigos_carregados,
+            codigos_padroes_selecionados=codigos_padroes_selecionados,
+        )
+    validar_homologacao_screener(
+        estado_homologacao,
+        codigos_carregados=codigos_carregados,
+        codigos_padroes_selecionados=codigos_padroes_selecionados,
+    )
+    grupos_padroes = _grupos_raros_fotografados(perfil_padroes, selecao_padroes)
+
+    soma = _faixa(distribuicoes, "EST_SOMA")
+    mediana = _faixa(distribuicoes, "EST_MEDIANA")
+    desvio = _faixa(distribuicoes, "EST_DESVIO_PADRAO")
+    familia_estatistica = criar_familia_estatistica(
+        faixa_soma=FaixaEstatistica.criar(*soma),
+        faixa_mediana=FaixaEstatistica.criar(*mediana),
+        faixa_desvio_padrao=FaixaEstatistica.criar(*desvio),
+    )
+    codigos_geo = {
+        "faixa_extensao": "GEO_EXTENSAO_ABERTA",
+        "faixa_perimetro": "GEO_PERIMETRO_FECHADO",
+        "faixa_area": "GEO_AREA_TOTAL",
+        "faixa_quantidade_regioes": "GEO_QUANTIDADE_REGIOES",
+        "faixa_centro_x": "GEO_CENTRO_GRAVIDADE_X",
+        "faixa_centro_y": "GEO_CENTRO_GRAVIDADE_Y",
+    }
+    faixas_geo = {
+        nome: FaixaGeometrica.criar(*_faixa(distribuicoes, codigo))
+        for nome, codigo in codigos_geo.items()
+    }
+    familia_geometrica = criar_familia_geometrica(
+        **faixas_geo, politica_centro_ausente="excluir"
+    )
+    familia_padroes = criar_familia_detectores_raros(
+        grupos_fotografados=grupos_padroes,
+        registro=criar_registro_detectores_aprovados(),
+    )
+    fotografia_diagonal = _carregar_fotografia_diagonal()
+    familia_padroes = acrescentar_filtro_diagonal(
+        familia_padroes,
+        fotografia_diagonal,
+        limite_raridade,
+        _carregar_analisador_diagonal(),
+    )
+    familias = (familia_estatistica, familia_geometrica, familia_padroes)
+
+    parametros = {
+        "EST_SOMA_MEDIA": {
+            "limite_inferior_soma": soma[0], "limite_superior_soma": soma[1]
+        },
+        "EST_MEDIANA": {
+            "limite_inferior": mediana[0], "limite_superior": mediana[1]
+        },
+        "EST_DESVIO_PADRAO": {
+            "limite_inferior": desvio[0], "limite_superior": desvio[1]
+        },
+        **{
+            filtro.codigo: {
+                "limite_inferior": faixa.limite_inferior,
+                "limite_superior": faixa.limite_superior,
+                **(
+                    {"politica_centro_ausente": "excluir"}
+                    if filtro.codigo == "GEO_CENTRO_GRAVIDADE" else {}
+                ),
+            }
+            for filtro, faixa in zip(
+                familia_geometrica.filtros,
+                (
+                    faixas_geo["faixa_extensao"], faixas_geo["faixa_perimetro"],
+                    faixas_geo["faixa_area"], faixas_geo["faixa_quantidade_regioes"],
+                    faixas_geo["faixa_centro_x"],
+                ),
+            )
+        },
+        "PAD_PG_004": {
+            "grupo_cod": "PG_004", "padrao_cod": "PD_013",
+            "limite_raridade": limite_raridade, "operador": "<",
+            "identificacao_carga": fotografia_diagonal.identificacao_carga,
+            "versao_calculo": fotografia_diagonal.versao_calculo,
+        },
+        **{
+            f"PAD_{codigo}": {
+                "grupo_cod": grupo.grupo_cod,
+                "limite_raridade": grupo.limite_raridade,
+                "operador": grupo.operador,
+                "padrao_cod": codigo,
+            }
+            for grupo in grupos_padroes
+            for codigo in grupo.padroes_excludentes
+        },
+    }
+    parametros["GEO_CENTRO_GRAVIDADE"].update({
+        "limite_inferior_y": faixas_geo["faixa_centro_y"].limite_inferior,
+        "limite_superior_y": faixas_geo["faixa_centro_y"].limite_superior,
+    })
+    return PlanoFiltrosScreener(
+        familias, parametros, grupos_padroes, perfil_padroes,
+        selecao_padroes, fotografia_diagonal,
+    )
+
+
 def gerar_quadro_screener_extensivel(
     limite_raridade: Decimal | int | str | None = None,
     informar_progresso: Callable[[str, int, int], None] | None = None,
@@ -283,118 +427,13 @@ def gerar_quadro_screener_extensivel(
         if processamento_integral else configuracao
     )
 
-    distribuicoes = calcular_distribuicoes_no_banco(
-        None, None, 10, "desvio_padrao", Decimal(1), Decimal(1)
-    )
-    perfil_padroes = calcular_perfil_no_banco(
-        limite_efetivo, None, None
-    )
-    selecao_padroes = selecionar_padroes_raros_no_banco(
-        limite_efetivo,
-        perfil_padroes.total_resultados,
-    )
-    codigos_padroes_selecionados = {
-        f"PAD_{item.padrao_cod}" for item in selecao_padroes.padroes
-    }
-    codigos_carregados = {
-        "EST_SOMA", "EST_MEDIA", "EST_MEDIANA", "EST_DESVIO_PADRAO",
-        "GEO_EXTENSAO", "GEO_PERIMETRO", "GEO_REGIOES", "GEO_AREA",
-        "GEO_CENTRO_X", "GEO_CENTRO_Y",
-        "PAD_PG_004",
-        *codigos_padroes_selecionados,
-    }
-    estado_homologacao = consultar_homologacao_screener_no_banco()
-    if (
-        not estado_homologacao.atualizado
-        and estado_homologacao.motivo
-        == "HOMOLOGACAO_CONCLUIDA_AGUARDANDO_COBERTURA"
-    ):
-        estado_homologacao = confirmar_cobertura_screener_no_banco(
-            codigos_carregados=codigos_carregados,
-            codigos_padroes_selecionados=codigos_padroes_selecionados,
-        )
-    validar_homologacao_screener(
-        estado_homologacao, codigos_carregados=codigos_carregados,
-        codigos_padroes_selecionados=codigos_padroes_selecionados,
-    )
-    grupos_padroes = _grupos_raros_fotografados(perfil_padroes, selecao_padroes)
-
-    soma = _faixa(distribuicoes, "EST_SOMA")
-    mediana = _faixa(distribuicoes, "EST_MEDIANA")
-    desvio = _faixa(distribuicoes, "EST_DESVIO_PADRAO")
-    familia_estatistica = criar_familia_estatistica(
-        faixa_soma=FaixaEstatistica.criar(*soma),
-        faixa_mediana=FaixaEstatistica.criar(*mediana),
-        faixa_desvio_padrao=FaixaEstatistica.criar(*desvio),
-    )
-    codigos_geo = {
-        "faixa_extensao": "GEO_EXTENSAO_ABERTA",
-        "faixa_perimetro": "GEO_PERIMETRO_FECHADO",
-        "faixa_area": "GEO_AREA_TOTAL",
-        "faixa_quantidade_regioes": "GEO_QUANTIDADE_REGIOES",
-        "faixa_centro_x": "GEO_CENTRO_GRAVIDADE_X",
-        "faixa_centro_y": "GEO_CENTRO_GRAVIDADE_Y",
-    }
-    faixas_geo = {
-        nome: FaixaGeometrica.criar(*_faixa(distribuicoes, codigo))
-        for nome, codigo in codigos_geo.items()
-    }
-    familia_geometrica = criar_familia_geometrica(
-        **faixas_geo, politica_centro_ausente="excluir"
-    )
-    familia_padroes = criar_familia_detectores_raros(
-        grupos_fotografados=grupos_padroes,
-        registro=criar_registro_detectores_aprovados(),
-    )
-    fotografia_diagonal = _carregar_fotografia_diagonal()
-    analisador_diagonal = _carregar_analisador_diagonal()
-    familia_padroes = acrescentar_filtro_diagonal(
-        familia_padroes, fotografia_diagonal, limite_efetivo, analisador_diagonal
-    )
-    familias = (familia_estatistica, familia_geometrica, familia_padroes)
-
-    parametros = {
-        "EST_SOMA_MEDIA": {"limite_inferior_soma": soma[0], "limite_superior_soma": soma[1]},
-        "EST_MEDIANA": {"limite_inferior": mediana[0], "limite_superior": mediana[1]},
-        "EST_DESVIO_PADRAO": {"limite_inferior": desvio[0], "limite_superior": desvio[1]},
-        **{
-            filtro.codigo: {
-                "limite_inferior": faixa.limite_inferior,
-                "limite_superior": faixa.limite_superior,
-                **({"politica_centro_ausente": "excluir"} if filtro.codigo == "GEO_CENTRO_GRAVIDADE" else {}),
-            }
-            for filtro, faixa in zip(
-                familia_geometrica.filtros,
-                (
-                    faixas_geo["faixa_extensao"], faixas_geo["faixa_perimetro"],
-                    faixas_geo["faixa_area"], faixas_geo["faixa_quantidade_regioes"],
-                    faixas_geo["faixa_centro_x"],
-                ),
-            )
-        },
-        "PAD_PG_004": {
-            "grupo_cod": "PG_004",
-            "padrao_cod": "PD_013",
-            "limite_raridade": limite_efetivo,
-            "operador": "<",
-            "identificacao_carga": fotografia_diagonal.identificacao_carga,
-            "versao_calculo": fotografia_diagonal.versao_calculo,
-        },
-        **{
-            f"PAD_{codigo}": {
-                "grupo_cod": grupo.grupo_cod,
-                "limite_raridade": grupo.limite_raridade,
-                "operador": grupo.operador,
-                "padrao_cod": codigo,
-            }
-            for grupo in grupos_padroes
-            for codigo in grupo.padroes_excludentes
-        },
-    }
-    parametros["GEO_CENTRO_GRAVIDADE"].update({
-        "limite_inferior_y": faixas_geo["faixa_centro_y"].limite_inferior,
-        "limite_superior_y": faixas_geo["faixa_centro_y"].limite_superior,
-    })
+    plano = montar_plano_filtros_screener(limite_efetivo)
+    familias = plano.familias
+    parametros = plano.parametros
+    grupos_padroes = plano.grupos_padroes
+    perfil_padroes = plano.perfil_padroes
+    selecao_padroes = plano.selecao_padroes
+    fotografia_diagonal = plano.fotografia_diagonal
     fotografia = criar_fotografia_configuracao(
         familias=familias,
         parametros_filtros=parametros,
@@ -418,11 +457,11 @@ def gerar_quadro_screener_extensivel(
     )
     envelope = envelopar_fotografia(fotografia)
     combinacoes = (
-        criar_iterador_combinacoes(
+        adaptar_aplicacao_integral(
             configuracao_execucao,
             confirmacao_integral=CONFIRMACAO_INTEGRAL,
         )
-        if processamento_integral else gerar_amostra(configuracao_execucao)
+        if processamento_integral else adaptar_teste_5000(configuracao_execucao)
     )
     total_execucao = TOTAL_COMBINACOES if processamento_integral else 5_000
 

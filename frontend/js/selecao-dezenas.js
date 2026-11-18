@@ -7,12 +7,15 @@ const e = Object.fromEntries([
   "mensagem-selecao", "configuracao-gravada-selecao", "selecao-nome", "selecao-fator-k",
   "selecao-fator-j", "selecao-modo-quantidade", "selecao-quantidade",
   "selecao-versao", "estado-edicao-configuracao", "botao-previa-selecao", "botao-salvar-configuracao",
-  "resultado-previa-selecao", "botao-atualizar-previsao", "resumo-previsao", "corpo-previsoes",
+  "resultado-previa-selecao", "botao-atualizar-previsao", "botao-recarregar-previsoes",
+  "botao-expandir-previsoes", "cabecalho-registros-screener", "tabela-previsoes",
+  "resumo-previsao", "corpo-previsoes",
   "backtest-configuracao", "backtest-inicial", "estado-backtest",
   "painel-jogos", "jogos-origem-concurso", "jogos-origem-configuracao",
   "jogos-origem-dezenas", "jogos-origem-combinacoes", "jogos-quantidade-solicitada",
   "jogos-valor-unitario", "jogos-valor-previsto", "estado-configuracao-jogos",
-  "botao-conferir-jogos", "dialogo-previa-jogos", "previa-jogos-concurso",
+  "botao-conferir-jogos", "dialogo-pendencias-jogos", "pendencias-jogos-lista",
+  "dialogo-previa-jogos", "previa-jogos-concurso",
   "previa-jogos-configuracao", "previa-jogos-dezenas", "previa-jogos-combinacoes",
   "previa-jogos-quantidade", "previa-jogos-valor-unitario",
   "previa-jogos-valor-previsto", "botao-iniciar-screener-jogos",
@@ -123,11 +126,56 @@ async function carregarConfiguracoes() {
     const ultima = configuracoes.at(-1);
     e.configuracao_gravada_selecao.value = ultima.id_configuracao_selecao;
     preencherConfiguracao(ultima.configuracao);
+    await carregarPrevisoesRegistradas();
     mensagem(`${configuracoes.length} configuração(ões) salva(s). A selecionada está disponível somente para leitura.`, "sucesso");
   } else {
     iniciarNovaConfiguracao();
     mensagem("Ainda não há configurações salvas. Preencha uma nova configuração para começar.");
   }
+}
+
+function renderizarPrevisoesRegistradas(detalhes) {
+  e.corpo_previsoes.replaceChildren();
+  const itemConfiguracao = configuracoes.find(
+    (item) => String(item.id_configuracao_selecao) === e.configuracao_gravada_selecao.value,
+  );
+  const parametros = itemConfiguracao
+    ? descricaoParametros(itemConfiguracao.configuracao) : "—";
+  for (const item of detalhes) {
+    const linha = document.createElement("tr");
+    linha.append(td(item.numero_concurso_alvo), td(item.numero_concurso_corte),
+      td(rotuloSituacao(item.situacao)), td(formatarDezenas(item.dezenas_retornadas)),
+      td(item.quantidade_retornada), td(parametros));
+    const acao = td("");
+    acao.replaceChildren(criarBotaoAlvo(item));
+    linha.append(acao);
+    e.corpo_previsoes.append(linha);
+  }
+  e.resumo_previsao.textContent = detalhes.length
+    ? `${detalhes.length} previsão(ões) registrada(s) para a configuração selecionada.`
+    : "Nenhuma previsão foi registrada para a configuração selecionada.";
+}
+
+async function carregarPrevisoesRegistradas() {
+  const identificador = Number(e.configuracao_gravada_selecao.value);
+  if (!Number.isInteger(identificador) || identificador <= 0) {
+    renderizarPrevisoesRegistradas([]);
+    return;
+  }
+  const dados = await respostaJson(await fetch(
+    `/api/selecao-dezenas/configuracoes/${identificador}/previsoes`,
+  ));
+  renderizarPrevisoesRegistradas(dados.detalhes || []);
+}
+
+function alternarTabelaPrevisoes() {
+  const expandida = !e.tabela_previsoes.hidden;
+  e.tabela_previsoes.hidden = expandida;
+  e.botao_expandir_previsoes.setAttribute("aria-expanded", String(!expandida));
+  e.botao_expandir_previsoes.textContent = expandida
+    ? "Expandir tabela" : "Contrair tabela";
+  e.botao_expandir_previsoes.title = expandida
+    ? "Expandir a tabela de registros" : "Contrair a tabela de registros";
 }
 
 async function calcularPrevia() {
@@ -143,7 +191,7 @@ async function calcularPrevia() {
     ? `Dados analíticos da configuração: último concurso cadastrado ${analise.concurso_corte}; concurso-alvo ${analise.concurso_alvo}; ${analise.quantidade_aprovada.toLocaleString("pt-BR")} dezenas aprovadas; ${analise.quantidade_retornada.toLocaleString("pt-BR")} dezenas retornadas (${formatarDezenas(analise.dezenas_retornadas)}); ${Number(analise.quantidade_combinacoes).toLocaleString("pt-BR")} combinações de seis. Esta análise é momentânea e não foi armazenada.`
     : "Dados analíticos da configuração indisponíveis: não existem resultados cadastrados.";
   if (analise) e.botao_atualizar_previsao.textContent = `Registrar previsão do concurso ${analise.concurso_alvo}`;
-  mensagem("Configuração analisada sem salvar dados nem iniciar o backtest.", "sucesso");
+  mensagem("Dezenas selecionadas para conferência, sem salvar dados nem iniciar o backtest.", "sucesso");
 }
 
 function nomeNormalizado(nome) {
@@ -249,14 +297,7 @@ async function confirmarRegistro() {
     ? ` ${dados.conferencia.previsoes_conferidas} previsão(ões) anterior(es) também foi(foram) conferida(s).`
     : "";
   e.resumo_previsao.textContent = `${registro}${conferencia}`;
-  e.corpo_previsoes.replaceChildren();
-  const parametros = descricaoParametros(configuracao);
-  for (const item of detalhes.detalhes) {
-    const linha = document.createElement("tr");
-    linha.append(td(item.numero_concurso_alvo), td(item.numero_concurso_corte), td(rotuloSituacao(item.situacao)),
-      td(formatarDezenas(item.dezenas_retornadas)), td(item.quantidade_retornada), td(parametros));
-    const acao = td(""); acao.replaceChildren(criarBotaoAlvo(item)); linha.append(acao); e.corpo_previsoes.append(linha);
-  }
+  renderizarPrevisoesRegistradas(detalhes.detalhes);
   mensagem(nova.alvos_criados_agora > 0
     ? `Seleção registrada para o concurso ${nova.concurso_alvo_inicial} com ${detalhes.detalhes[0]?.quantidade_retornada ?? 0} dezenas. Nenhum backtest, combinação ou jogo foi criado.`
     : `A seleção do concurso ${nova.concurso_alvo_inicial} já estava registrada para esta configuração. Nenhum dado foi alterado ou duplicado.`, "sucesso");
@@ -397,6 +438,7 @@ async function descartarBacktest() {
 async function selecionarAlvoJogos(item) {
   alvoJogos = item.id_alvo_selecao;
   previaJogos = await respostaJson(await fetch(`/api/selecao-dezenas/alvos/${alvoJogos}/jogos/previa`));
+  previaJogos.dezenas = [...previaJogos.dezenas].sort((a, b) => Number(a) - Number(b));
   e.painel_jogos.hidden = false;
   previaJogos.configuracao_nome = configuracaoFormulario().nome;
   previaJogos.concurso = item.numero_concurso_alvo;
@@ -449,13 +491,51 @@ function atualizarValorPrevisto() {
   try {
     const configuracao = configuracaoFormacaoJogos();
     e.jogos_valor_previsto.textContent = formatarMoeda(configuracao.valorPrevistoCentavos);
-    e.estado_configuracao_jogos.textContent = "Valores preenchidos. Use Conferir configuração para revisar; nenhum processamento será iniciado.";
+    e.estado_configuracao_jogos.textContent = "Valores preenchidos. Use Combinações aprovadas para conferir os dados e prosseguir para o Screener; nenhum processamento será iniciado antes da confirmação.";
   } catch (_erro) {
     e.jogos_valor_previsto.textContent = "—";
   }
 }
 
+function pendenciasFormacaoJogos() {
+  const pendencias = [];
+  if (!alvoJogos || !previaJogos) {
+    pendencias.push("Escolha uma previsão na tabela e clique em Formar jogos para enviar as dezenas a este bloco.");
+  }
+  const quantidade = Number(e.jogos_quantidade_solicitada.value);
+  if (!e.jogos_quantidade_solicitada.value.trim()) {
+    pendencias.push("Informe o número máximo de jogos.");
+  } else if (!Number.isSafeInteger(quantidade) || quantidade < 1 || quantidade > 50_063_860) {
+    pendencias.push("O número máximo de jogos deve ser um inteiro entre 1 e 50.063.860.");
+  }
+  if (!e.jogos_valor_unitario.value.trim()) {
+    pendencias.push("Informe o valor de um jogo.");
+  } else {
+    try {
+      centavosValorJogo(e.jogos_valor_unitario.value);
+    } catch (erro) {
+      pendencias.push(erro.message);
+    }
+  }
+  return pendencias;
+}
+
+function abrirPendenciasFormacaoJogos(pendencias) {
+  e.pendencias_jogos_lista.replaceChildren(...pendencias.map((texto) => {
+    const item = document.createElement("li");
+    item.textContent = texto;
+    return item;
+  }));
+  e.dialogo_pendencias_jogos.showModal();
+  mensagem("Existem dados pendentes para solicitar as combinações aprovadas.", "erro");
+}
+
 function conferirFormacaoJogos() {
+  const pendencias = pendenciasFormacaoJogos();
+  if (pendencias.length) {
+    abrirPendenciasFormacaoJogos(pendencias);
+    return;
+  }
   const configuracao = configuracaoFormacaoJogos();
   e.jogos_valor_previsto.textContent = formatarMoeda(configuracao.valorPrevistoCentavos);
   e.previa_jogos_concurso.textContent = previaJogos.concurso;
@@ -533,16 +613,18 @@ async function iniciarScreenerJogos() {
 async function proteger(acao) { try { await acao(); } catch (erro) { mensagem(erro.message, "erro"); } }
 
 e.selecao_modo_quantidade.addEventListener("change", () => { e.selecao_quantidade.disabled = e.selecao_modo_quantidade.value !== "FIXA"; if (e.selecao_quantidade.disabled) e.selecao_quantidade.value = ""; });
-e.configuracao_gravada_selecao.addEventListener("change", () => {
+e.configuracao_gravada_selecao.addEventListener("change", () => proteger(async () => {
   const item = configuracoes.find((config) => String(config.id_configuracao_selecao) === e.configuracao_gravada_selecao.value);
   if (item) {
     preencherConfiguracao(item.configuracao);
+    await carregarPrevisoesRegistradas();
     mensagem("Configuração salva carregada somente para leitura.");
   } else {
     iniciarNovaConfiguracao();
+    renderizarPrevisoesRegistradas([]);
     mensagem("Nova configuração iniciada. Nenhum dado foi gravado.");
   }
-});
+}));
 e.botao_previa_selecao.addEventListener("click", () => proteger(calcularPrevia));
 e.botao_salvar_configuracao.addEventListener("click", () => proteger(abrirConfirmacaoConfiguracao));
 e.botao_confirmar_configuracao.addEventListener("click", () => proteger(confirmarSalvarConfiguracao));
@@ -552,6 +634,12 @@ e.dialogo_confirmar_configuracao.addEventListener("close", () => {
   mensagem("Salvamento cancelado. Nenhuma configuração foi criada.");
 });
 e.botao_atualizar_previsao.addEventListener("click", () => proteger(abrirConfirmacaoRegistro));
+e.botao_recarregar_previsoes.addEventListener("click", () => proteger(carregarPrevisoesRegistradas));
+e.botao_expandir_previsoes.addEventListener("click", alternarTabelaPrevisoes);
+e.cabecalho_registros_screener.addEventListener("dblclick", (evento) => {
+  if (evento.target.closest("button")) return;
+  alternarTabelaPrevisoes();
+});
 e.botao_confirmar_registro.addEventListener("click", () => proteger(confirmarRegistro));
 e.dialogo_confirmar_registro.addEventListener("close", () => {
   if (e.dialogo_confirmar_registro.returnValue === "confirmado") return;

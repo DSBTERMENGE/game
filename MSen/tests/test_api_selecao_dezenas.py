@@ -81,6 +81,14 @@ class ApiSelecaoDezenasTestCase(unittest.TestCase):
             "DETALHAR_PREVISAO_SELECAO": lambda identificador: [
                 {"id": identificador, "concurso": 500}
             ],
+            "LISTAR_PREVISOES_CONFIGURACAO": lambda identificador: [{
+                "id_alvo_selecao": 2571,
+                "numero_concurso_alvo": 3070,
+                "numero_concurso_corte": 3069,
+                "situacao": "PENDENTE",
+                "dezenas_retornadas": [2, 11, 14, 15, 16, 18],
+                "quantidade_retornada": 6,
+            }] if identificador == 5 else [],
             "ATUALIZAR_PREVISOES_SELECAO": lambda identificador: (
                 self.previsoes.append(identificador) or {"concurso_corte": 3069}
             ),
@@ -118,9 +126,12 @@ class ApiSelecaoDezenasTestCase(unittest.TestCase):
         self.assertEqual(200, javascript.status_code)
         self.assertIn("botao-iniciar-screener-jogos", pagina.get_data(as_text=True))
         self.assertIn("resultado-screener-jogos", pagina.get_data(as_text=True))
+        self.assertIn("botao-expandir-previsoes", pagina.get_data(as_text=True))
         codigo = javascript.get_data(as_text=True)
         self.assertIn("iniciarScreenerJogos", codigo)
         self.assertIn("renderizarResultadoScreener", codigo)
+        self.assertIn("alternarTabelaPrevisoes", codigo)
+        self.assertIn('addEventListener("dblclick"', codigo)
         self.assertIn("Nenhuma combinação foi aprovada", codigo)
         self.assertIn("/screener`", codigo)
 
@@ -280,6 +291,13 @@ class ApiSelecaoDezenasTestCase(unittest.TestCase):
                     "/api/selecao-dezenas/previsoes", json=corpo
                 )
                 self.assertEqual(400, resposta.status_code)
+
+    def test_lista_previsoes_ja_registradas_da_configuracao(self) -> None:
+        resposta = self.cliente.get(
+            "/api/selecao-dezenas/configuracoes/5/previsoes"
+        )
+        self.assertEqual(200, resposta.status_code)
+        self.assertEqual(2571, resposta.json["detalhes"][0]["id_alvo_selecao"])
 
     def test_previa_e_persistencia_de_jogos(self) -> None:
         previa = self.cliente.get(

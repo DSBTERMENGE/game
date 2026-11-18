@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ctypes
+from dataclasses import replace
 from itertools import islice
 from json import dumps
 from os import getpid
@@ -51,16 +52,18 @@ def memoria_mib() -> tuple[float, float]:
 
 
 def executar_volume(volume: int) -> dict[str, object]:
-    criar_original = servico.criar_iterador_combinacoes
+    adaptar_original = servico.adaptar_aplicacao_integral
     consolidar_original = servico.criar_quadro_consolidado
     progresso: list[tuple[int, int]] = []
 
-    def criar_limitado(configuracao, *, confirmacao_integral=None):
-        return islice(
-            criar_original(
-                configuracao, confirmacao_integral=confirmacao_integral
-            ),
-            volume,
+    def adaptar_limitado(configuracao, *, confirmacao_integral=None):
+        entrada = adaptar_original(
+            configuracao, confirmacao_integral=confirmacao_integral
+        )
+        return replace(
+            entrada,
+            total_combinacoes=volume,
+            itens=islice(entrada.itens, volume),
         )
 
     def consolidar_limitado(relatorio, *, tipo_escopo):
@@ -72,7 +75,7 @@ def executar_volume(volume: int) -> dict[str, object]:
     inicio = perf_counter()
     with (
         patch.object(servico, "TOTAL_COMBINACOES", volume),
-        patch.object(servico, "criar_iterador_combinacoes", criar_limitado),
+        patch.object(servico, "adaptar_aplicacao_integral", adaptar_limitado),
         patch.object(servico, "criar_quadro_consolidado", consolidar_limitado),
     ):
         dados = servico.gerar_quadro_screener_integral(

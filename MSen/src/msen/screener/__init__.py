@@ -135,8 +135,22 @@ from .quadro_extensivel import (
 )
 from .pacote import ErroPacoteScreener, GRUPOS_FILTROS, validar_entradas_screener
 from .orquestrador import orquestrar_aplicacao_screener
+from .entrada_combinacoes import (
+    ORIGEM_APLICACAO_INTEGRAL,
+    ORIGEM_SELECAO_DEZENAS,
+    ORIGEM_TESTE_5000,
+    EntradaCombinacoesScreener,
+    ErroEntradaCombinacoes,
+    criar_entrada_combinacoes,
+)
 
 __all__ = [
+    "ORIGEM_APLICACAO_INTEGRAL",
+    "ORIGEM_SELECAO_DEZENAS",
+    "ORIGEM_TESTE_5000",
+    "EntradaCombinacoesScreener",
+    "ErroEntradaCombinacoes",
+    "criar_entrada_combinacoes",
     "ErroPacoteScreener",
     "GRUPOS_FILTROS",
     "validar_entradas_screener",

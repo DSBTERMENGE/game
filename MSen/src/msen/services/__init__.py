@@ -115,6 +115,7 @@ from .previsao_selecao_dezenas import (
     atualizar_previsoes_futuras,
     conferir_previsoes_pendentes,
     detalhar_previsao,
+    listar_previsoes_configuracao,
     emitir_previsao_futura,
 )
 from .combinacoes_selecao_dezenas import (
@@ -128,6 +129,11 @@ from .combinacoes_selecao_dezenas import (
     persistir_combinacoes_alvo,
 )
 from .inicializacao_screener_selecao import criar_dicionario_combinacoes
+from .entradas_motor_screener import (
+    adaptar_aplicacao_integral,
+    adaptar_selecao_dezenas,
+    adaptar_teste_5000,
+)
 from .solicitacao_screener_selecao import (
     ErroSolicitacaoScreenerSelecao,
     SolicitacaoScreenerSelecao,
@@ -269,6 +275,7 @@ __all__ = [
     "conferir_previsoes_pendentes",
     "DetalhePrevisao",
     "detalhar_previsao",
+    "listar_previsoes_configuracao",
     "emitir_previsao_futura",
     "LIMITE_VOLUME_ELEVADO",
     "ErroCombinacoesSelecao",
@@ -279,6 +286,9 @@ __all__ = [
     "gerar_combinacoes_seis_dezenas",
     "persistir_combinacoes_alvo",
     "criar_dicionario_combinacoes",
+    "adaptar_aplicacao_integral",
+    "adaptar_selecao_dezenas",
+    "adaptar_teste_5000",
     "ErroSolicitacaoScreenerSelecao",
     "SolicitacaoScreenerSelecao",
     "ErroDicionarioFiltrosScreener",

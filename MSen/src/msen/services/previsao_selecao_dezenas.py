@@ -10,6 +10,7 @@ from msen.database.fonte_selecao_dezenas_repository import RepositorioFonteSelec
 from msen.database.pesquisa_selecao_repository import (
     AlvoPesquisaEntrada,
     AvaliacaoDezenaPesquisaEntrada,
+    ConfiguracaoSelecaoPersistida,
     RepositorioPesquisaSelecao,
 )
 from msen.modelos import ResultadoEntrada
@@ -136,6 +137,7 @@ def detalhar_previsao(
 def emitir_previsao_futura(
     conexao: psycopg.Connection,
     configuracao: ConfiguracaoSelecaoDezenas,
+    configuracao_persistida: ConfiguracaoSelecaoPersistida | None = None,
 ) -> RelatorioPrevisaoFutura:
     """Congela o horizonte posterior ao último resultado conhecido."""
     if not isinstance(conexao, psycopg.Connection):
@@ -153,7 +155,7 @@ def emitir_previsao_futura(
     final = inicio
     repositorio = RepositorioPesquisaSelecao(conexao)
     fonte = RepositorioFonteSelecaoDezenas(conexao)
-    config_persistida = repositorio.criar_ou_buscar_configuracao(configuracao)
+    config_persistida = configuracao_persistida or repositorio.criar_ou_buscar_configuracao(configuracao)
     execucao = repositorio.criar_ou_buscar_execucao(
         config_persistida,
         tipo_execucao="PREVISAO_FUTURA",
@@ -267,7 +269,30 @@ def conferir_previsoes_pendentes(
 def atualizar_previsoes_futuras(
     conexao: psycopg.Connection,
     configuracao: ConfiguracaoSelecaoDezenas,
+    configuracao_persistida: ConfiguracaoSelecaoPersistida | None = None,
 ) -> RelatorioAtualizacaoPrevisoes:
     conferencia = conferir_previsoes_pendentes(conexao)
-    nova = emitir_previsao_futura(conexao, configuracao)
+    nova = emitir_previsao_futura(conexao, configuracao, configuracao_persistida)
     return RelatorioAtualizacaoPrevisoes(conferencia, nova)
+
+
+def listar_previsoes_configuracao(
+    conexao: psycopg.Connection, id_configuracao_selecao: int
+) -> tuple[DetalhePrevisao, ...]:
+    """Lista previsões já registradas para preencher a tabela da página."""
+    if type(id_configuracao_selecao) is not int or id_configuracao_selecao <= 0:
+        raise ValueError("id_configuracao_selecao deve ser inteiro positivo.")
+    with conexao.transaction():
+        with conexao.cursor() as cursor:
+            cursor.execute(
+                "SELECT id_execucao_selecao FROM execucoes_pesquisa_selecao "
+                "WHERE id_configuracao_selecao=%s AND tipo_execucao='PREVISAO_FUTURA' "
+                "AND estado='CONCLUIDA' ORDER BY concurso_alvo_inicial DESC",
+                (id_configuracao_selecao,),
+            )
+            execucoes = tuple(linha[0] for linha in cursor.fetchall())
+    return tuple(
+        detalhe
+        for id_execucao in execucoes
+        for detalhe in detalhar_previsao(conexao, id_execucao)
+    )
