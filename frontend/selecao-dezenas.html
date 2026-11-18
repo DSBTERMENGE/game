@@ -109,6 +109,19 @@
             <div class="selecao-acoes"><button id="botao-conferir-jogos" type="button">Conferir configuração</button></div>
           </form>
           <p id="estado-configuracao-jogos" class="selecao-resultado">Informe a quantidade máxima e o valor unitário. Nenhuma combinação será processada ou gravada.</p>
+          <section id="resultado-screener-jogos" class="selecao-screener-resultado" aria-labelledby="titulo-resultado-screener" hidden>
+            <header><h3 id="titulo-resultado-screener">Resultado do Screener</h3></header>
+            <dl class="selecao-screener-resumo">
+              <div><dt>Universo bruto</dt><dd id="screener-total-universo">—</dd></div>
+              <div><dt>Examinadas</dt><dd id="screener-total-examinado">—</dd></div>
+              <div><dt>Excluídas</dt><dd id="screener-total-excluido">—</dd></div>
+              <div><dt>Aprovadas</dt><dd id="screener-total-aprovado">—</dd></div>
+            </dl>
+            <p id="screener-estado-lista" class="selecao-resultado"></p>
+            <div id="screener-tabela-aprovadas" class="selecao-tabela" hidden>
+              <table><thead><tr><th>Ordem</th><th>Combinação aprovada</th></tr></thead><tbody id="screener-corpo-aprovadas"></tbody></table>
+            </div>
+          </section>
         </div>
       </section>
     </main>
@@ -183,7 +196,7 @@
           <p>O número informado é um teto. A quantidade efetiva e o investimento efetivo dependerão das combinações aprovadas pelo Screener.</p>
           <p><strong>Nenhuma combinação foi processada e nenhum dado foi gravado.</strong></p>
         </div>
-        <footer><button type="submit" value="cancelar">Voltar e ajustar</button><button id="botao-iniciar-screener-jogos" type="button" disabled title="Disponível depois da integração do Screener de combinações.">Confirmar e iniciar Screener</button></footer>
+        <footer><button type="submit" value="cancelar">Voltar e ajustar</button><button id="botao-iniciar-screener-jogos" type="button" disabled title="Confira a configuração antes de iniciar.">Confirmar e iniciar Screener</button></footer>
       </form>
     </dialog>
 

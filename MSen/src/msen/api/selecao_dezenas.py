@@ -36,7 +36,12 @@ from msen.services import (
     executar_backtest,
     persistir_combinacoes_alvo,
     selecionar_dezenas_para_alvo,
+    aplicar_screener_selecao,
+    ErroSolicitacaoScreenerSelecao,
+    SolicitacaoScreenerSelecao,
 )
+from msen.services.dicionario_filtros_screener_selecao import ErroDicionarioFiltrosScreener
+from msen.services.referencias_screener_selecao import ReferenciasScreenerDesatualizadas
 
 
 selecao_dezenas_api = Blueprint("selecao_dezenas_api", __name__)
@@ -454,6 +459,9 @@ def _executar_rota(funcao):
         ErroCombinacoesSelecao,
         ErroFonteBacktest,
         ErroRepositorioPesquisaSelecao,
+        ErroSolicitacaoScreenerSelecao,
+        ErroDicionarioFiltrosScreener,
+        ReferenciasScreenerDesatualizadas,
     ) as erro:
         status = 404 if erro.codigo.endswith("NAO_ENCONTRADA") else 400
         return _erro_json(erro, status)
@@ -622,4 +630,22 @@ def rota_persistir_jogos(id_alvo):
             _booleano(dados, "autorizar_persistencia"),
             _booleano(dados, "confirmar_volume_elevado"),
         )), 201
+    return _executar_rota(executar)
+
+
+@selecao_dezenas_api.post("/api/selecao-dezenas/alvos/<int:id_alvo>/screener")
+def rota_aplicar_screener_selecao(id_alvo):
+    """Valida o comando HTTP e o encaminha integralmente ao serviço."""
+    def executar():
+        dados = _corpo({
+            "quantidade_maxima_jogos", "valor_unitario_centavos",
+            "limite_raridade",
+        })
+        solicitacao = SolicitacaoScreenerSelecao.criar(
+            id_alvo=id_alvo,
+            quantidade_maxima_jogos=dados.get("quantidade_maxima_jogos"),
+            valor_unitario_centavos=dados.get("valor_unitario_centavos"),
+            limite_raridade=dados.get("limite_raridade"),
+        )
+        return jsonify(current_app.config["APLICAR_SCREENER_SELECAO"](solicitacao))
     return _executar_rota(executar)

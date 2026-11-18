@@ -133,8 +133,14 @@ from .quadro_extensivel import (
     criar_quadro_consolidado,
     serializar_quadro_consolidado,
 )
+from .pacote import ErroPacoteScreener, GRUPOS_FILTROS, validar_entradas_screener
+from .orquestrador import orquestrar_aplicacao_screener
 
 __all__ = [
+    "ErroPacoteScreener",
+    "GRUPOS_FILTROS",
+    "validar_entradas_screener",
+    "orquestrar_aplicacao_screener",
     "ConfiguracaoCriterio",
     "ConfiguracaoScreener",
     "ErroConfiguracaoScreener",

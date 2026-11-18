@@ -127,6 +127,16 @@ from .combinacoes_selecao_dezenas import (
     gerar_combinacoes_seis_dezenas,
     persistir_combinacoes_alvo,
 )
+from .inicializacao_screener_selecao import criar_dicionario_combinacoes
+from .solicitacao_screener_selecao import (
+    ErroSolicitacaoScreenerSelecao,
+    SolicitacaoScreenerSelecao,
+)
+from .dicionario_filtros_screener_selecao import (
+    ErroDicionarioFiltrosScreener,
+    montar_dicionario_filtros,
+)
+from .aplicacao_screener_selecao import aplicar_screener_selecao
 from .configuracao_formacao_jogos import (
     ConfiguracaoFormacaoJogos,
     ErroConfiguracaoFormacaoJogos,
@@ -268,6 +278,12 @@ __all__ = [
     "exportar_combinacoes_csv",
     "gerar_combinacoes_seis_dezenas",
     "persistir_combinacoes_alvo",
+    "criar_dicionario_combinacoes",
+    "ErroSolicitacaoScreenerSelecao",
+    "SolicitacaoScreenerSelecao",
+    "ErroDicionarioFiltrosScreener",
+    "montar_dicionario_filtros",
+    "aplicar_screener_selecao",
     "ConfiguracaoFormacaoJogos",
     "ErroConfiguracaoFormacaoJogos",
     "MAXIMO_JOGOS",

@@ -16,6 +16,9 @@ const e = Object.fromEntries([
   "previa-jogos-configuracao", "previa-jogos-dezenas", "previa-jogos-combinacoes",
   "previa-jogos-quantidade", "previa-jogos-valor-unitario",
   "previa-jogos-valor-previsto", "botao-iniciar-screener-jogos",
+  "resultado-screener-jogos", "screener-total-universo", "screener-total-examinado",
+  "screener-total-excluido", "screener-total-aprovado", "screener-estado-lista",
+  "screener-tabela-aprovadas", "screener-corpo-aprovadas",
   "dialogo-confirmar-registro", "registro-configuracao", "registro-concurso",
   "registro-corte", "registro-quantidade", "registro-dezenas", "registro-combinacoes",
   "botao-cancelar-registro", "botao-confirmar-registro",
@@ -40,6 +43,7 @@ let modalBacktest = null;
 let solicitacaoBacktest = null;
 let idBacktest = null;
 let contextoBacktest = null;
+const LIMITE_RARIDADE_SCREENER = "10.000000";
 
 async function respostaJson(resposta) {
   const dados = await resposta.json().catch(() => ({}));
@@ -404,6 +408,9 @@ async function selecionarAlvoJogos(item) {
   e.jogos_valor_unitario.value = "";
   e.jogos_valor_previsto.textContent = "—";
   e.estado_configuracao_jogos.textContent = "Informe a quantidade máxima e o valor unitário. Nenhuma combinação será processada ou gravada.";
+  e.botao_iniciar_screener_jogos.disabled = true;
+  e.resultado_screener_jogos.hidden = true;
+  e.screener_corpo_aprovadas.replaceChildren();
   e.painel_jogos.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
@@ -459,8 +466,68 @@ function conferirFormacaoJogos() {
   e.previa_jogos_valor_unitario.textContent = formatarMoeda(configuracao.valorUnitarioCentavos);
   e.previa_jogos_valor_previsto.textContent = formatarMoeda(configuracao.valorPrevistoCentavos);
   e.dialogo_previa_jogos.showModal();
-  e.estado_configuracao_jogos.textContent = "Configuração conferida. A execução do Screener será disponibilizada em uma etapa posterior.";
+  e.botao_iniciar_screener_jogos.disabled = false;
+  e.estado_configuracao_jogos.textContent = "Configuração conferida. Confirme para iniciar o Screener.";
   mensagem("Configuração dos jogos conferida sem processar combinações nem gravar dados.", "sucesso");
+}
+
+function renderizarResultadoScreener(resultado) {
+  const aprovadas = Array.isArray(resultado.combinacoes_aprovadas)
+    ? resultado.combinacoes_aprovadas : [];
+  e.resultado_screener_jogos.hidden = false;
+  e.screener_total_universo.textContent = Number(resultado.total_universo ?? resultado.total_recebido).toLocaleString("pt-BR");
+  e.screener_total_examinado.textContent = Number(resultado.total_recebido).toLocaleString("pt-BR");
+  e.screener_total_excluido.textContent = Number(resultado.total_excluido).toLocaleString("pt-BR");
+  e.screener_total_aprovado.textContent = Number(resultado.total_aprovado).toLocaleString("pt-BR");
+  e.screener_corpo_aprovadas.replaceChildren();
+  aprovadas.forEach((combinacao, indice) => {
+    const linha = document.createElement("tr");
+    const ordem = document.createElement("td");
+    const dezenas = document.createElement("td");
+    ordem.textContent = String(indice + 1);
+    dezenas.textContent = formatarDezenas(combinacao);
+    linha.append(ordem, dezenas);
+    e.screener_corpo_aprovadas.append(linha);
+  });
+  e.screener_tabela_aprovadas.hidden = aprovadas.length === 0;
+  if (aprovadas.length === 0) {
+    e.screener_estado_lista.textContent = "Nenhuma combinação foi aprovada pelo Screener.";
+  } else if (resultado.interrompido_por_limite) {
+    e.screener_estado_lista.textContent = "A quantidade máxima solicitada foi atingida; a lista apresenta todas as aprovadas desta execução.";
+  } else {
+    e.screener_estado_lista.textContent = "Todas as combinações aprovadas estão relacionadas abaixo.";
+  }
+  e.resultado_screener_jogos.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+async function iniciarScreenerJogos() {
+  const configuracao = configuracaoFormacaoJogos();
+  e.botao_iniciar_screener_jogos.disabled = true;
+  e.estado_configuracao_jogos.textContent = "Screener em processamento. Aguarde a conclusão.";
+  mensagem("Aplicando o Screener às combinações selecionadas.");
+  try {
+    const resultado = await respostaJson(await fetch(
+      `/api/selecao-dezenas/alvos/${alvoJogos}/screener`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quantidade_maxima_jogos: configuracao.quantidade,
+          valor_unitario_centavos: Number(configuracao.valorUnitarioCentavos),
+          limite_raridade: LIMITE_RARIDADE_SCREENER,
+        }),
+      },
+    ));
+    e.dialogo_previa_jogos.close("screener-iniciado");
+    renderizarResultadoScreener(resultado);
+    e.estado_configuracao_jogos.textContent = `Screener concluído: ${Number(resultado.total_aprovado).toLocaleString("pt-BR")} combinações aprovadas.`;
+    mensagem("Screener concluído. O detalhamento será apresentado nesta página.", "sucesso");
+  } catch (erro) {
+    e.estado_configuracao_jogos.textContent = `Screener não iniciado: ${erro.message}`;
+    throw erro;
+  } finally {
+    e.botao_iniciar_screener_jogos.disabled = false;
+  }
 }
 
 async function proteger(acao) { try { await acao(); } catch (erro) { mensagem(erro.message, "erro"); } }
@@ -504,6 +571,7 @@ e.botao_fechar_backtest.addEventListener("click", () => proteger(descartarBackte
 e.jogos_quantidade_solicitada.addEventListener("input", atualizarValorPrevisto);
 e.jogos_valor_unitario.addEventListener("input", atualizarValorPrevisto);
 e.botao_conferir_jogos.addEventListener("click", () => proteger(conferirFormacaoJogos));
+e.botao_iniciar_screener_jogos.addEventListener("click", () => proteger(iniciarScreenerJogos));
 
 modalBacktest = criarModalAndamento({
   titulo: "Cálculo do Backtest",

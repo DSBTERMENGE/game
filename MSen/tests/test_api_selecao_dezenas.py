@@ -31,6 +31,7 @@ class ApiSelecaoDezenasTestCase(unittest.TestCase):
         self.previas = []
         self.previsoes = []
         self.persistencias = []
+        self.disparos_screener = []
         self.previas_backtest = []
         self.gerenciador_backtest = GerenciadorBacktests(
             lambda solicitacao, progresso, cancelado: (
@@ -90,6 +91,13 @@ class ApiSelecaoDezenasTestCase(unittest.TestCase):
                 self.persistencias.append((alvo, autorizar, confirmar))
                 or {"id_lote_jogos": 4}
             ),
+            "APLICAR_SCREENER_SELECAO": lambda solicitacao: (
+                self.disparos_screener.append(solicitacao) or {
+                    "total_recebido": 7, "total_aprovado": 2,
+                    "total_excluido": 5, "combinacoes_aprovadas": [],
+                    "exclusoes": [],
+                }
+            ),
         })
         self.cliente = self.app.test_client()
 
@@ -102,6 +110,19 @@ class ApiSelecaoDezenasTestCase(unittest.TestCase):
         self.assertEqual(1, lista.json["configuracoes"][0]["id_configuracao_selecao"])
         self.assertEqual(201, criada.status_code)
         self.assertEqual("MAX", self.salvas[0].modo_quantidade)
+
+    def test_pagina_liga_botao_ao_endpoint_do_screener(self) -> None:
+        pagina = self.cliente.get("/selecao-dezenas.html")
+        javascript = self.cliente.get("/js/selecao-dezenas.js")
+        self.assertEqual(200, pagina.status_code)
+        self.assertEqual(200, javascript.status_code)
+        self.assertIn("botao-iniciar-screener-jogos", pagina.get_data(as_text=True))
+        self.assertIn("resultado-screener-jogos", pagina.get_data(as_text=True))
+        codigo = javascript.get_data(as_text=True)
+        self.assertIn("iniciarScreenerJogos", codigo)
+        self.assertIn("renderizarResultadoScreener", codigo)
+        self.assertIn("Nenhuma combinação foi aprovada", codigo)
+        self.assertIn("/screener`", codigo)
 
     def test_previa_normaliza_periodo_e_configuracao(self) -> None:
         resposta = self.cliente.post("/api/selecao-dezenas/previa", json={
@@ -281,6 +302,30 @@ class ApiSelecaoDezenasTestCase(unittest.TestCase):
             json={"autorizar_persistencia": "sim"},
         )
         self.assertEqual(400, resposta.status_code)
+
+    def test_dispara_screener_com_contrato_validado(self) -> None:
+        resposta = self.cliente.post(
+            "/api/selecao-dezenas/alvos/9/screener",
+            json={
+                "quantidade_maxima_jogos": 120,
+                "valor_unitario_centavos": 500,
+                "limite_raridade": "10.000000",
+            },
+        )
+        self.assertEqual(200, resposta.status_code)
+        self.assertEqual(2, resposta.json["total_aprovado"])
+        solicitacao = self.disparos_screener[0]
+        self.assertEqual(9, solicitacao.id_alvo)
+        self.assertEqual(120, solicitacao.quantidade_maxima_jogos)
+        self.assertEqual(500, solicitacao.valor_unitario_centavos)
+
+    def test_rejeita_disparo_screener_invalido_sem_chamar_servico(self) -> None:
+        resposta = self.cliente.post(
+            "/api/selecao-dezenas/alvos/9/screener",
+            json={"quantidade_maxima_jogos": 0, "valor_unitario_centavos": 500},
+        )
+        self.assertEqual(400, resposta.status_code)
+        self.assertEqual([], self.disparos_screener)
 
     def test_indisponibilidade_do_banco_nao_expoe_detalhes(self) -> None:
         def indisponivel(*_args):

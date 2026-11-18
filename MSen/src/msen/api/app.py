@@ -58,6 +58,7 @@ from .frequencias import (
 from .selecao_dezenas import (
     GerenciadorBacktests,
     atualizar_previsoes_no_banco,
+    aplicar_screener_selecao,
     detalhar_previsao_no_banco,
     listar_configuracoes_no_banco,
     persistir_jogos_no_banco,
@@ -129,6 +130,7 @@ def criar_app(configuracao: Mapping[str, Any] | None = None) -> Flask:
         ATUALIZAR_PREVISOES_SELECAO=atualizar_previsoes_no_banco,
         PREVIA_JOGOS_SELECAO=previa_jogos_no_banco,
         PERSISTIR_JOGOS_SELECAO=persistir_jogos_no_banco,
+        APLICAR_SCREENER_SELECAO=aplicar_screener_selecao,
         LISTAR_GESTAO_DESENVOLVIMENTO=listar_gestao_desenvolvimento_no_banco,
         CONSULTAR_GESTAO_DESENVOLVIMENTO=consultar_gestao_desenvolvimento_no_banco,
         HISTORICO_GESTAO_DESENVOLVIMENTO=historico_gestao_desenvolvimento_no_banco,

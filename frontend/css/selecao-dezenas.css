@@ -36,6 +36,12 @@
 .selecao-jogos__valor { display: grid; gap: .15rem; min-height: 2.65rem; padding: .35rem .5rem; border: 1px solid #d7e0e2; background: #fff; }
 .selecao-jogos__valor span { color: #52616a; font-size: .68rem; }
 .selecao-jogos__valor strong { color: #244f58; }
+.selecao-screener-resultado { padding: .65rem; border: 1px solid #9bc8aa; background: #f5fbf7; }
+.selecao-screener-resultado h3 { margin: 0; color: #275f3b; font-size: .9rem; }
+.selecao-screener-resumo { display: grid; grid-template-columns: repeat(4, minmax(8rem, 1fr)); gap: .35rem; margin: .5rem 0 0; }
+.selecao-screener-resumo div { padding: .4rem .5rem; border: 1px solid #c7ddd0; background: #fff; }
+.selecao-screener-resumo dt { color: #52616a; font-size: .68rem; }
+.selecao-screener-resumo dd { margin: .12rem 0 0; color: #275f3b; font-size: 1rem; font-weight: 700; }
 [data-tipo="erro"] { color: #a02626 !important; }
 [data-tipo="sucesso"] { color: #246b3c !important; }
 .selecao-ajuda { width: min(58rem, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); padding: 0; border: 1px solid #78949c; border-radius: .45rem; }
@@ -134,5 +140,6 @@
 @media (max-width: 950px) { .selecao-configuracao form { grid-template-columns: repeat(2, 1fr); } .selecao-duas-colunas { grid-template-columns: 1fr; } }
 @media (max-width: 950px) { .selecao-jogos__configuracao { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 620px) { .selecao-jogos__origem dl, .selecao-jogos__configuracao { grid-template-columns: 1fr; } }
+@media (max-width: 620px) { .selecao-screener-resumo { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 950px) { .backtest-relatorio__resumo { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 560px) { .selecao-configuracao form { grid-template-columns: 1fr; } .selecao-classes { grid-template-columns: repeat(2, 1fr); } .backtest-relatorio__resumo { grid-template-columns: repeat(2, 1fr); } }
