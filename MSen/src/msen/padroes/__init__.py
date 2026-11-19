@@ -25,6 +25,10 @@ from .duas_linhas import (
     calcular_estatistica_duas_linhas,
     detectar_dezenas_em_duas_linhas,
 )
+from .linha_coluna import (
+    CODIGO_UMA_LINHA_UMA_COLUNA,
+    detectar_dezenas_em_uma_linha_e_uma_coluna,
+)
 from .diagonais import (
     AnaliseAssinaturasDiagonais,
     AnaliseReferenciaDiagonal,
@@ -128,6 +132,8 @@ __all__ = [
     "executar_funcao_detectora",
     "validar_dezenas",
     "detectar_dezenas_em_duas_linhas",
+    "CODIGO_UMA_LINHA_UMA_COLUNA",
+    "detectar_dezenas_em_uma_linha_e_uma_coluna",
     "CODIGO_DEZENAS_EM_DUAS_LINHAS",
     "calcular_estatistica_duas_linhas",
     "AnaliseAssinaturasDiagonais",

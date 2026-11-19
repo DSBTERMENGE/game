@@ -116,6 +116,7 @@ def criar_registro_criterios_producao() -> RegistroCriteriosValidacao:
         "PD_001": "PG_001", "PD_002": "PG_001", "PD_003": "PG_001",
         "PD_004": "PG_002", "PD_005": "PG_002", "PD_006": "PG_002",
         "PD_007": "PG_003", "PD_008": "PG_003", "PD_009": "PG_003",
+        "PD_010": "PG_008",
         "PD_011": "PG_007",
     }
     for codigo in detectores.codigos_registrados():

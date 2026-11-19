@@ -4,6 +4,7 @@ from .colunas import criar_registro_detectores_mesma_coluna
 from .iniciais import criar_registro_detectores_iniciais
 from .linhas import criar_registro_detectores_mesma_linha
 from .duas_linhas import detectar_dezenas_em_duas_linhas
+from .linha_coluna import detectar_dezenas_em_uma_linha_e_uma_coluna
 from .registro import RegistroDetectores
 
 
@@ -11,7 +12,7 @@ def criar_registro_detectores_aprovados() -> RegistroDetectores:
     """Cria um registro novo com todos os detectores aprovados no sistema.
 
     Retorno:
-        Registro contendo os códigos implementados de `PD_001` a `PD_006`.
+        Registro contendo todos os códigos com detector aprovado.
 
     Regra:
         Os registros especializados são combinados em uma instância nova. Uma
@@ -26,5 +27,6 @@ def criar_registro_detectores_aprovados() -> RegistroDetectores:
     ):
         for codigo in origem.codigos_registrados():
             registro.registrar(codigo, origem.obter(codigo))
+    registro.registrar("PD_010", detectar_dezenas_em_uma_linha_e_uma_coluna)
     registro.registrar("PD_011", detectar_dezenas_em_duas_linhas)
     return registro
