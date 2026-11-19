@@ -187,6 +187,40 @@ from .gestao_desenvolvimento import (
     DadosManutencao,
     ErroGestaoDesenvolvimento,
 )
+from .catalogo_filtros_validacao_nova import (
+    ErroCatalogoFiltrosValidacao,
+    FiltroExecutavelValidacao,
+    GrupoFiltrosValidacao,
+    carregar_catalogo_filtros_validacao,
+    montar_catalogo_filtros_validacao,
+)
+from .executor_filtros_validacao_nova import (
+    ErroExecutorFiltroValidacao,
+    ExecutorFiltroValidacao,
+    carregar_executor_filtro_validacao,
+    criar_executor_filtro_validacao,
+)
+from .processamento_validacao_nova import (
+    ErroProcessamentoValidacaoNova,
+    OperacaoValidacaoNovaCancelada,
+    OcorrenciaFiltroValidacaoNova,
+    RelatorioValidacaoNova,
+    ResultadoFiltroValidacaoNova,
+    processar_colecao_validacao_nova,
+    processar_validacao_nova_no_banco,
+)
+from .teste_dirigido_validacao_nova import (
+    ColecaoDirigidaValidacaoNova,
+    ErroTesteDirigidoValidacaoNova,
+    gerar_colecao_dirigida_no_banco,
+    gerar_colecao_dirigida_validacao_nova,
+)
+from .desenho_ocorrencia_validacao_nova import (
+    DesenhoOcorrenciaValidacao,
+    SegmentoPainelValidacao,
+    construir_desenho_ocorrencia_validacao,
+    carregar_desenho_ocorrencia_validacao,
+)
 
 __all__ = [
     "RelatorioImportacaoBanco",
@@ -323,4 +357,19 @@ __all__ = [
     "preparar_operacao_historico_frequencia",
     "simular_historico_frequencia",
     "DadosManutencao", "ErroGestaoDesenvolvimento",
+    "FiltroExecutavelValidacao", "GrupoFiltrosValidacao",
+    "ErroCatalogoFiltrosValidacao",
+    "carregar_catalogo_filtros_validacao", "montar_catalogo_filtros_validacao",
+    "ErroExecutorFiltroValidacao", "ExecutorFiltroValidacao",
+    "carregar_executor_filtro_validacao", "criar_executor_filtro_validacao",
+    "ErroProcessamentoValidacaoNova", "RelatorioValidacaoNova",
+    "OperacaoValidacaoNovaCancelada",
+    "OcorrenciaFiltroValidacaoNova",
+    "ResultadoFiltroValidacaoNova", "processar_colecao_validacao_nova",
+    "processar_validacao_nova_no_banco",
+    "ColecaoDirigidaValidacaoNova", "ErroTesteDirigidoValidacaoNova",
+    "gerar_colecao_dirigida_no_banco", "gerar_colecao_dirigida_validacao_nova",
+    "DesenhoOcorrenciaValidacao", "SegmentoPainelValidacao",
+    "construir_desenho_ocorrencia_validacao",
+    "carregar_desenho_ocorrencia_validacao",
 ]

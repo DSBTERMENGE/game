@@ -777,6 +777,61 @@ export const secoesAjuda = [
         relacionados: ["conceito-validacao", "pagina-preparacao-screener", "referencia-bloqueios"],
       },
       {
+        id: "pagina-validacao-auditoria-nova",
+        titulo: "Validação e auditoria NOVA",
+        aliases: ["teste de filtros", "mil combinações", "teste dirigido", "inspeção visual"],
+        estado: "confirmado",
+        resumo: "Verifica se os filtros detectam seus padrões corretamente, sem eliminar combinações e sem alterar resultados sorteados.",
+        blocos: [
+          {
+            titulo: "Passo a passo da Validação e auditoria NOVA",
+            itens: [
+              "1. Escolher os filtros: em Seleção de Filtros, escolha Todos, um grupo inteiro ou um filtro específico.",
+              "2. Iniciar o teste: confira o resumo da seleção, clique em Iniciar teste e confirme. Cada filtro selecionado será aplicado independentemente às mesmas 1.000 combinações fixas.",
+              "3. Acompanhar: observe o progresso total, o grupo e o filtro atual. Cancelar encerra o teste no próximo ponto seguro.",
+              "4. Inspecionar um filtro: quando somente um filtro estiver selecionado, cada ocorrência encontrada será mostrada no painel. Confira as dezenas marcadas e o desenho correspondente e clique em Continuar.",
+              "5. Ler o relatório: ao terminar, confira para cada filtro o total testado, o número de ocorrências e a incidência percentual nessa coleção.",
+              "6. Fazer um teste dirigido: escolha obrigatoriamente um grupo e um filtro no bloco Teste dirigido e clique em Gerar 10 combinações.",
+              "7. Testar as combinações dirigidas: depois da geração, clique em Iniciar teste dirigido. Analise cada combinação no painel e use Continuar até o resumo final informar quantas das 10 foram detectadas.",
+            ],
+          },
+          {
+            titulo: "Teste com 1.000 combinações",
+            paragrafos: ["A coleção é fixa, possui 1.000 combinações diferentes de seis dezenas e serve para comparar execuções. Não há funil: todos os filtros selecionados recebem as mesmas 1.000 combinações, independentemente do resultado dos filtros anteriores."],
+          },
+          {
+            titulo: "Seleção de Filtros",
+            itens: [
+              "Todos os grupos e Todos os filtros executam todo o catálogo disponível.",
+              "Um grupo e Todos os filtros executam somente os filtros daquele grupo.",
+              "Um grupo e um filtro executam somente o filtro escolhido e permitem a inspeção visual de suas ocorrências.",
+            ],
+          },
+          {
+            titulo: "Painel de inspeção",
+            paragrafos: ["Os círculos identificam as seis dezenas da combinação. Os traços representam somente a geometria verificada pelo filtro. O processamento fica pausado até o usuário examinar o painel e clicar em Continuar."],
+          },
+          {
+            titulo: "Teste dirigido",
+            paragrafos: ["O sistema gera em memória 10 combinações construídas para atender sabidamente ao filtro escolhido. Geração e teste são comandos separados. O objetivo é confirmar que a função detectora reconhece casos conhecidos, especialmente quando o teste com 1.000 combinações encontra pouca ou nenhuma ocorrência."],
+          },
+          {
+            titulo: "Como ler os resultados",
+            itens: [
+              "Total testado informa quantas combinações foram avaliadas pelo filtro.",
+              "Ocorrências informa quantas combinações foram reconhecidas pelo filtro.",
+              "Incidência é ocorrências divididas pelo total testado nessa coleção; não representa a raridade exata entre todas as 50.063.860 combinações possíveis.",
+              "No teste dirigido, o resultado esperado é a detecção das 10 combinações geradas para o filtro.",
+            ],
+          },
+          {
+            titulo: "Efeito nos dados",
+            paragrafos: ["A página não elimina combinações, não altera os resultados dos concursos e não grava as 10 combinações dirigidas. A tabela fixa de 1.000 combinações permanece no banco apenas como coleção de auditoria reutilizável."],
+          },
+        ],
+        relacionados: ["pagina-validacao-auditoria", "pagina-preparacao-screener", "conceito-validacao"],
+      },
+      {
         id: "pagina-frequencia-dezenas",
         titulo: "Frequência das dezenas",
         aliases: ["fotografia", "intervalos", "2VS", "3VS", "histórico de frequência"],

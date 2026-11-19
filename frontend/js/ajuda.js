@@ -7,6 +7,7 @@ const ORIGENS_AJUDA = new Map([
   ["/cadastros.html", "Cadastros"], ["/grupos-padroes.html", "Grupos de padrões"],
   ["/padroes.html", "Padrões"], ["/distribuicoes.html", "Distribuições"],
   ["/screener.html", "o Screener"], ["/auditoria.html", "Validação e auditoria"],
+  ["/validacao-nova.html", "Validação e auditoria NOVA"],
   ["/frequencias.html", "Frequência das dezenas"],
   ["/graficos-frequencias.html", "Gráficos de frequência"],
   ["/selecao-dezenas.html", "Seleção de dezenas"],

@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Validação e auditoria NOVA — Game Analysis</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/navegacao.css">
+    <link rel="stylesheet" href="css/validacao-nova.css">
+  </head>
+  <body>
+    <header class="barra-navegacao">
+      <a class="marca marca--compacta" href="/" aria-label="Game Analysis">GA</a>
+      <a class="navegacao-link" href="/">Painel</a>
+      <details class="navegacao-menu">
+        <summary>Cadastros</summary>
+        <nav aria-label="Cadastros">
+          <a href="/grupos-padroes.html">Grupo</a>
+          <a href="/padroes.html">Padrões</a>
+        </nav>
+      </details>
+      <a class="navegacao-link" href="/distribuicoes.html">Distribuições</a>
+      <a class="navegacao-link" href="/screener.html">Preparação do Screener</a>
+      <a class="navegacao-link" href="/auditoria.html">Validação e auditoria</a>
+      <a class="navegacao-link" href="/validacao-nova.html" aria-current="page">Validação e auditoria NOVA</a>
+      <a class="navegacao-link" href="/frequencias.html">Frequência das dezenas</a>
+      <a class="navegacao-link" href="/selecao-dezenas.html">Seleção de dezenas</a>
+      <a class="navegacao-link" href="/gestao-desenvolvimento.html">Gestão do desenvolvimento</a>
+      <a class="navegacao-link" href="/ajuda.html">Ajuda</a>
+    </header>
+
+    <main class="pagina-conteudo validacao-nova-pagina">
+      <header class="validacao-nova-cabecalho">
+        <div>
+          <h1>Validação e auditoria NOVA</h1>
+          <p>Validação independente dos filtros em uma coleção fixa de combinações.</p>
+        </div>
+        <a id="botao-ajuda-validacao-nova" class="ajuda-contextual" href="/ajuda.html?origem=%2Fvalidacao-nova.html#pagina-validacao-auditoria-nova">Ajuda</a>
+      </header>
+      <section id="validacao-nova-aplicacao" class="validacao-nova-aplicacao">
+        <header>
+          <div>
+            <h2>Seleção de Filtros</h2>
+            <p>Escolha todos os filtros, um grupo inteiro ou somente um filtro.</p>
+          </div>
+          <small>Teste realizado com 1.000 combinações fixas de 6 dezenas.</small>
+        </header>
+        <div class="validacao-nova-selecao">
+          <label for="validacao-nova-grupo">Grupo
+            <select id="validacao-nova-grupo" disabled>
+              <option value="">Todos</option>
+            </select>
+          </label>
+          <label for="validacao-nova-filtro">Filtro
+            <select id="validacao-nova-filtro" disabled>
+              <option value="">Todos</option>
+            </select>
+          </label>
+        </div>
+        <div class="validacao-nova-acoes">
+          <div class="validacao-nova-mensagens">
+            <output id="validacao-nova-resumo"></output>
+            <p id="validacao-nova-estado" class="validacao-nova-estado" role="status" aria-live="polite"></p>
+          </div>
+          <button id="validacao-nova-iniciar" type="button" disabled>Iniciar teste</button>
+        </div>
+      </section>
+      <section id="validacao-nova-progresso" class="validacao-nova-progresso" hidden aria-labelledby="validacao-nova-progresso-titulo">
+        <header>
+          <h2 id="validacao-nova-progresso-titulo">Andamento do teste</h2>
+          <button id="validacao-nova-cancelar" type="button">Cancelar</button>
+        </header>
+        <progress id="validacao-nova-barra" max="100" value="0">0%</progress>
+        <div class="validacao-nova-progresso-dados">
+          <p><span>Progresso total</span><strong id="validacao-nova-percentual">0%</strong></p>
+          <p><span>Grupo atual</span><strong id="validacao-nova-grupo-atual">—</strong></p>
+          <p><span>Filtro atual</span><strong id="validacao-nova-filtro-atual">—</strong></p>
+        </div>
+        <p id="validacao-nova-progresso-estado" role="status" aria-live="polite">Aguardando início.</p>
+      </section>
+      <section id="validacao-nova-relatorio" class="validacao-nova-relatorio" aria-labelledby="validacao-nova-relatorio-titulo">
+        <header>
+          <h2 id="validacao-nova-relatorio-titulo">Relatório do teste</h2>
+          <p id="validacao-nova-relatorio-resumo">Aguardando a conclusão de um teste.</p>
+        </header>
+        <div class="validacao-nova-relatorio-rolagem">
+          <table>
+            <thead><tr><th>Filtro</th><th>Total testado</th><th>Ocorrências</th><th>Incidência</th></tr></thead>
+            <tbody id="validacao-nova-relatorio-corpo"><tr><td colspan="4">Nenhum resultado disponível.</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+      <section id="validacao-nova-painel" class="validacao-nova-painel" aria-labelledby="validacao-nova-painel-titulo">
+        <header>
+          <div>
+            <h2 id="validacao-nova-painel-titulo">Inspeção e análise de resultado de filtros</h2>
+            <p id="validacao-nova-painel-contexto" hidden><strong id="validacao-nova-painel-grupo"></strong> · <span id="validacao-nova-painel-filtro"></span></p>
+          </div>
+          <span id="validacao-nova-painel-indice">Relatório</span>
+        </header>
+        <div class="validacao-nova-volante" aria-label="Volante com as dezenas da ocorrência">
+          <div id="validacao-nova-dezenas" class="validacao-nova-dezenas"></div>
+          <svg id="validacao-nova-desenho" viewBox="0 0 10 6" preserveAspectRatio="none" aria-hidden="true"></svg>
+        </div>
+        <footer>
+          <p id="validacao-nova-painel-combinacao"></p>
+          <button id="validacao-nova-continuar" type="button" disabled>Continuar</button>
+        </footer>
+      </section>
+      <section id="validacao-nova-dirigido" class="validacao-nova-dirigido" aria-labelledby="validacao-nova-dirigido-titulo">
+        <header>
+          <div>
+            <h2 id="validacao-nova-dirigido-titulo">Teste dirigido</h2>
+            <p>Gere 10 combinações que atendam sabidamente a um filtro e depois teste sua detecção.</p>
+          </div>
+          <small>As combinações permanecem somente na memória e não são gravadas.</small>
+        </header>
+        <div class="validacao-nova-selecao">
+          <label for="validacao-nova-dirigido-grupo">Grupo
+            <select id="validacao-nova-dirigido-grupo" disabled>
+              <option value="">Selecione um grupo</option>
+            </select>
+          </label>
+          <label for="validacao-nova-dirigido-filtro">Filtro
+            <select id="validacao-nova-dirigido-filtro" disabled>
+              <option value="">Selecione um filtro</option>
+            </select>
+          </label>
+        </div>
+        <div class="validacao-nova-dirigido-acoes">
+          <p id="validacao-nova-dirigido-estado" class="validacao-nova-estado" role="status" aria-live="polite"></p>
+          <button id="validacao-nova-dirigido-gerar" type="button" disabled>Gerar 10 combinações</button>
+          <button id="validacao-nova-dirigido-testar" type="button" disabled>Iniciar teste dirigido</button>
+        </div>
+        <output id="validacao-nova-dirigido-resultado" class="validacao-nova-dirigido-resultado" hidden></output>
+      </section>
+      <dialog id="validacao-nova-confirmacao">
+        <form method="dialog">
+          <h2>Confirmar teste de filtros</h2>
+          <p id="validacao-nova-confirmacao-texto"></p>
+          <p>O teste utilizará as 1.000 combinações fixas e não alterará o banco de dados.</p>
+          <div class="validacao-nova-dialogo-acoes">
+            <button value="cancelar" type="submit">Cancelar</button>
+            <button id="validacao-nova-confirmar" value="confirmar" type="submit">Confirmar e iniciar</button>
+          </div>
+        </form>
+      </dialog>
+    </main>
+
+    <script type="module" src="js/navegacao.js"></script>
+    <script type="module" src="js/validacao-nova.js"></script>
+  </body>
+</html>

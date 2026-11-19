@@ -78,6 +78,15 @@ from .gestao_desenvolvimento import (
     historico_no_banco as historico_gestao_desenvolvimento_no_banco,
     listar_no_banco as listar_gestao_desenvolvimento_no_banco,
 )
+from .validacao_nova import (
+    executar_teste_validacao_nova_no_banco,
+    GerenciadorExecucoesValidacaoNova,
+    GerenciadorTestesDirigidosValidacaoNova,
+    preparar_teste_dirigido_no_banco,
+    testar_colecao_dirigida_no_banco,
+    consultar_catalogo_validacao_nova_no_banco,
+    validacao_nova_api,
+)
 
 
 def criar_app(configuracao: Mapping[str, Any] | None = None) -> Flask:
@@ -139,6 +148,16 @@ def criar_app(configuracao: Mapping[str, Any] | None = None) -> Flask:
         CRIAR_GESTAO_DESENVOLVIMENTO=criar_gestao_desenvolvimento_no_banco,
         ATUALIZAR_GESTAO_DESENVOLVIMENTO=atualizar_gestao_desenvolvimento_no_banco,
         ARQUIVAR_GESTAO_DESENVOLVIMENTO=arquivar_gestao_desenvolvimento_no_banco,
+        CONSULTAR_CATALOGO_VALIDACAO_NOVA=consultar_catalogo_validacao_nova_no_banco,
+        GERENCIADOR_VALIDACAO_NOVA=GerenciadorExecucoesValidacaoNova(
+            executar_teste_validacao_nova_no_banco
+        ),
+        GERENCIADOR_TESTES_DIRIGIDOS_VALIDACAO_NOVA=(
+            GerenciadorTestesDirigidosValidacaoNova(
+                preparar_teste_dirigido_no_banco,
+                testar_colecao_dirigida_no_banco,
+            )
+        ),
     )
     if configuracao is not None:
         app.config.update(configuracao)
@@ -169,5 +188,6 @@ def criar_app(configuracao: Mapping[str, Any] | None = None) -> Flask:
     app.register_blueprint(frequencias_api)
     app.register_blueprint(selecao_dezenas_api)
     app.register_blueprint(gestao_desenvolvimento_api)
+    app.register_blueprint(validacao_nova_api)
 
     return app

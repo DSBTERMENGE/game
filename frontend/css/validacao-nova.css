@@ -1,0 +1,125 @@
+.validacao-nova-pagina { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; align-content: start; }
+.validacao-nova-cabecalho,
+.validacao-nova-aplicacao,
+.validacao-nova-progresso,
+.validacao-nova-relatorio,
+.validacao-nova-painel,
+.validacao-nova-dirigido { border: 1px solid #cdd9dd; background: #fff; }
+.validacao-nova-cabecalho,
+.validacao-nova-progresso,
+.validacao-nova-progresso { grid-column: 1 / -1; }
+.validacao-nova-aplicacao { grid-column: 1; grid-row: 2; }
+.validacao-nova-dirigido { grid-column: 2; grid-row: 2; }
+.validacao-nova-progresso { grid-row: 3; }
+.validacao-nova-painel { grid-column: 1; grid-row: 4; align-self: start; }
+.validacao-nova-relatorio { grid-column: 2; grid-row: 4; align-self: start; }
+.validacao-nova-cabecalho { display: flex; align-items: start; justify-content: space-between; gap: 1rem; padding: .75rem .9rem; }
+.validacao-nova-cabecalho h1 { margin: 0; font-size: 1.35rem; }
+.validacao-nova-cabecalho p { margin: .2rem 0 0; color: #5d6c72; font-size: .68rem; }
+.validacao-nova-aplicacao { display: grid; grid-template-rows: 2.8rem auto auto; gap: .4rem; padding: .6rem .7rem; }
+.validacao-nova-aplicacao > header { display: flex; justify-content: space-between; align-items: start; gap: 1rem; }
+.validacao-nova-aplicacao h2 { margin: 0; font-size: 1.05rem; }
+.validacao-nova-aplicacao header p,
+.validacao-nova-aplicacao .validacao-nova-estado { margin: .12rem 0 0; color: #52616a; font-size: .66rem; }
+.validacao-nova-aplicacao header p { font-size: .66rem; }
+.validacao-nova-aplicacao small { max-width: 14rem; color: #52616a; font-size: .62rem; font-weight: 650; text-align: right; }
+.validacao-nova-selecao { display: flex; flex-wrap: wrap; align-items: end; gap: .55rem; }
+.validacao-nova-selecao label { display: grid; gap: .3rem; color: #34464d; font-size: .82rem; font-weight: 700; }
+.validacao-nova-selecao select { width: clamp(12rem, 18vw, 19rem); min-height: 2.2rem; border: 1px solid #b9c7cc; background: #fff; font: inherit; }
+.validacao-nova-acoes { display: flex; min-height: 2.35rem; align-items: center; justify-content: space-between; gap: .6rem; }
+.validacao-nova-mensagens { display: flex; min-width: 0; align-items: center; gap: .45rem; }
+.validacao-nova-mensagens p { margin: 0; }
+.validacao-nova-acoes output { color: #34464d; font-size: .68rem; font-weight: 650; }
+.validacao-nova-acoes button,
+.validacao-nova-dialogo-acoes button { min-height: 2.35rem; padding: .45rem .8rem; border: 1px solid #1f5f73; border-radius: .3rem; background: #1f5f73; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+.validacao-nova-acoes button:disabled { cursor: not-allowed; opacity: .55; }
+#validacao-nova-confirmacao { width: min(34rem, calc(100vw - 2rem)); border: 0; border-radius: .55rem; padding: 1.2rem; }
+#validacao-nova-confirmacao::backdrop { background: rgb(0 0 0 / 48%); }
+#validacao-nova-confirmacao h2 { margin: 0 0 .75rem; }
+#validacao-nova-confirmacao p { color: #34464d; }
+.validacao-nova-dialogo-acoes { display: flex; justify-content: flex-end; gap: .6rem; margin-top: 1rem; }
+.validacao-nova-dialogo-acoes button:first-child { background: #fff; color: #1f5f73; }
+.validacao-nova-estado[data-tipo="erro"] { color: #9b2c2c; font-weight: 700; }
+.validacao-nova-progresso { display: grid; gap: .7rem; padding: .9rem; }
+.validacao-nova-progresso[hidden] { display: none; }
+.validacao-nova-progresso > header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.validacao-nova-progresso h2 { margin: 0; font-size: 1.05rem; }
+.validacao-nova-progresso button { min-height: 2.2rem; padding: .4rem .75rem; border: 1px solid #9b2c2c; border-radius: .3rem; background: #fff; color: #9b2c2c; font: inherit; font-weight: 700; cursor: pointer; }
+.validacao-nova-progresso button:disabled { cursor: not-allowed; opacity: .55; }
+.validacao-nova-progresso progress { width: 100%; height: 1rem; accent-color: #1f7285; }
+.validacao-nova-progresso-dados { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .6rem; }
+.validacao-nova-progresso-dados p { margin: 0; padding: .55rem; border: 1px solid #e1e8ea; }
+.validacao-nova-progresso-dados span { display: block; color: #65747a; font-size: .75rem; }
+.validacao-nova-progresso-dados strong { display: block; margin-top: .2rem; overflow-wrap: anywhere; }
+#validacao-nova-progresso-estado { margin: 0; color: #52616a; }
+#validacao-nova-progresso-estado[data-tipo="erro"] { color: #9b2c2c; font-weight: 700; }
+.validacao-nova-relatorio { min-width: 0; padding: .7rem; }
+.validacao-nova-relatorio[hidden] { display: none; }
+.validacao-nova-relatorio > header { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+.validacao-nova-relatorio h2 { margin: 0; font-size: 1.05rem; }
+.validacao-nova-relatorio header p { margin: 0; color: #52616a; }
+.validacao-nova-relatorio-rolagem { margin-top: .7rem; overflow: auto; }
+.validacao-nova-relatorio table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.validacao-nova-relatorio th,
+.validacao-nova-relatorio td { padding: .48rem .55rem; border-bottom: 1px solid #e1e8ea; text-align: left; }
+.validacao-nova-relatorio thead th { background: #eaf1f3; color: #34464d; white-space: nowrap; }
+.validacao-nova-relatorio td:not(:first-child) { text-align: right; }
+.validacao-nova-relatorio .validacao-nova-grupo th { padding-top: .75rem; background: #f7fafb; color: #1f5f73; }
+.validacao-nova-painel { display: grid; grid-template-columns: minmax(0, 34rem) auto; min-width: 0; gap: .5rem .7rem; padding: .7rem; }
+.validacao-nova-painel[hidden] { display: none; }
+.validacao-nova-painel > header { display: flex; grid-column: 1 / -1; align-items: start; justify-content: space-between; gap: 1rem; }
+.validacao-nova-painel h2 { margin: 0; font-size: 1.05rem; }
+.validacao-nova-painel header p { margin: .2rem 0 0; color: #52616a; }
+#validacao-nova-painel-indice { color: #52616a; font-weight: 700; }
+.validacao-nova-volante { position: relative; width: min(100%, 34rem); aspect-ratio: 10 / 6; }
+.validacao-nova-dezenas { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); grid-template-rows: repeat(6, minmax(0, 1fr)); gap: .2rem; }
+.validacao-nova-dezena { display: grid; place-items: center; position: relative; z-index: 1; border: 1px solid #c7d1d5; border-radius: .18rem; background: #e8ecee; color: #203745; font-size: clamp(.68rem, 1.3vw, 1.05rem); font-weight: 800; }
+.validacao-nova-dezena--marcada::after { content: ""; position: absolute; width: 72%; aspect-ratio: 1; border: .16rem solid #168653; border-radius: 50%; background: rgb(85 190 125 / 18%); }
+.validacao-nova-dezena--marcada { color: #0d5f39; }
+#validacao-nova-desenho { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+#validacao-nova-desenho line { vector-effect: non-scaling-stroke; stroke: #b34a2d; stroke-width: 3; stroke-linecap: round; }
+#validacao-nova-painel-combinacao { margin: 0; color: #34464d; font-weight: 700; font-variant-numeric: tabular-nums; }
+.validacao-nova-painel > footer { display: flex; align-self: end; align-items: flex-end; justify-content: flex-end; gap: .5rem; }
+#validacao-nova-painel-combinacao:empty { display: none; }
+#validacao-nova-continuar { min-height: 2.35rem; padding: .45rem .9rem; border: 1px solid #1f5f73; border-radius: .3rem; background: #1f5f73; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+#validacao-nova-continuar:disabled { cursor: not-allowed; opacity: .55; }
+.validacao-nova-dirigido { display: grid; grid-template-rows: 2.8rem auto auto; gap: .4rem; padding: .6rem .7rem; }
+.validacao-nova-dirigido > header { display: flex; justify-content: space-between; align-items: start; gap: 1rem; }
+.validacao-nova-dirigido h2 { margin: 0; font-size: 1.05rem; }
+.validacao-nova-dirigido header p { margin: .12rem 0 0; color: #52616a; font-size: .66rem; }
+.validacao-nova-dirigido small { max-width: 14rem; color: #52616a; font-size: .62rem; font-weight: 650; text-align: right; }
+.validacao-nova-dirigido-acoes { display: flex; min-height: 2.35rem; align-items: center; justify-content: flex-end; gap: .6rem; }
+.validacao-nova-dirigido-acoes .validacao-nova-estado { min-width: 0; margin: 0 auto 0 0; font-size: .62rem; line-height: 1.15; }
+.validacao-nova-dirigido-acoes button { min-height: 2.35rem; padding: .45rem .8rem; border: 1px solid #1f5f73; border-radius: .3rem; background: #1f5f73; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+.validacao-nova-dirigido-acoes button:disabled { cursor: not-allowed; opacity: .55; }
+.validacao-nova-dirigido-resultado { padding: .7rem; border: 1px solid #bcd8c8; background: #edf8f1; color: #145c36; font-weight: 750; }
+.validacao-nova-dirigido-resultado[hidden] { display: none; }
+
+@media (max-width: 72rem) {
+  .validacao-nova-pagina { grid-template-columns: 1fr; }
+  .validacao-nova-cabecalho,
+  .validacao-nova-aplicacao,
+  .validacao-nova-progresso,
+  .validacao-nova-relatorio,
+  .validacao-nova-painel,
+  .validacao-nova-dirigido { grid-column: 1; grid-row: auto; }
+}
+
+@media (max-width: 48rem) {
+  .validacao-nova-cabecalho { flex-direction: column; }
+  .validacao-nova-aplicacao > header { flex-direction: column; }
+  .validacao-nova-aplicacao small { text-align: left; }
+  .validacao-nova-selecao { align-items: stretch; flex-direction: column; }
+  .validacao-nova-selecao label,
+  .validacao-nova-selecao select { width: 100%; }
+  .validacao-nova-acoes { align-items: stretch; flex-direction: column; }
+  .validacao-nova-mensagens { min-height: 1rem; }
+  .validacao-nova-progresso-dados { grid-template-columns: 1fr; }
+  .validacao-nova-relatorio > header { align-items: start; flex-direction: column; }
+  .validacao-nova-painel > header { flex-direction: column; }
+  .validacao-nova-painel { grid-template-columns: 1fr; }
+  .validacao-nova-painel > footer { align-items: stretch; flex-direction: column; }
+  .validacao-nova-dirigido > header { flex-direction: column; }
+  .validacao-nova-dirigido small { text-align: left; }
+  .validacao-nova-dirigido-acoes { align-items: stretch; flex-direction: column; }
+}

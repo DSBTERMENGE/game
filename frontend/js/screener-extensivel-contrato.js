@@ -1,5 +1,11 @@
 export const CODIGOS_FAMILIAS = Object.freeze(["ESTATISTICA", "GEOMETRIA", "PADROES"]);
 
+function mesmosCodigosSemConsiderarOrdem(primeiros, segundos) {
+  if (!Array.isArray(primeiros) || !Array.isArray(segundos)) return false;
+  if (primeiros.length !== segundos.length) return false;
+  return JSON.stringify([...primeiros].sort()) === JSON.stringify([...segundos].sort());
+}
+
 export function validarDetalhesPadroes(detalhes, familia) {
   if (!detalhes || detalhes.operador !== "<" || !Array.isArray(detalhes.grupos)) return false;
   if (!detalhes.fechamento?.valido) return false;
@@ -64,7 +70,7 @@ export function validarQuadroExtensivel(dados) {
     ?.flatMap((grupo) => grupo.padroes.map((padrao) => padrao.padrao_cod)) || [];
   return configuracao?.operador === "<"
     && configuracao.limite_percentual === dados.detalhes_padroes?.limite_percentual
-    && JSON.stringify(configuracao.padroes_selecionados) === JSON.stringify(selecionadosDetalhes)
+    && mesmosCodigosSemConsiderarOrdem(configuracao.padroes_selecionados, selecionadosDetalhes)
     && validarDetalhesPadroes(dados.detalhes_padroes, familiaPadroes)
     && dados.fechamento.valido === true
     && dados.fechamento.lado_esquerdo === dados.fechamento.lado_direito

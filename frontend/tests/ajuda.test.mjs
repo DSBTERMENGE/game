@@ -129,6 +129,7 @@ test("todas as páginas vigentes possuem ajuda operacional central", () => {
   const idsPaginas = [
     "pagina-painel", "pagina-cadastros", "pagina-grupos-padroes", "pagina-padroes",
     "pagina-distribuicoes", "pagina-preparacao-screener", "pagina-validacao-auditoria",
+    "pagina-validacao-auditoria-nova",
     "pagina-frequencia-dezenas", "pagina-graficos-frequencia", "pagina-selecao-dezenas",
     "pagina-gestao-desenvolvimento", "pagina-ajuda",
   ];
@@ -176,7 +177,7 @@ test("página central possui pesquisa, regiões acessíveis e scripts separados"
 test("Ajuda é o último item da barra em todas as páginas", async () => {
   const arquivos = [
     "index.html", "cadastros.html", "grupos-padroes.html", "padroes.html",
-    "distribuicoes.html", "screener.html", "auditoria.html", "frequencias.html",
+    "distribuicoes.html", "screener.html", "auditoria.html", "validacao-nova.html", "frequencias.html",
     "graficos-frequencias.html", "selecao-dezenas.html", "gestao-desenvolvimento.html",
     "ajuda.html",
   ];
@@ -192,6 +193,7 @@ test("Ajuda é o último item da barra em todas as páginas", async () => {
 test("todos os acessos contextuais apontam para tópicos centrais existentes", async () => {
   for (const arquivo of [
     "frequencias.html", "graficos-frequencias.html", "selecao-dezenas.html",
+    "validacao-nova.html",
     "gestao-desenvolvimento.html",
   ]) {
     const html = await readFile(new URL(`../${arquivo}`, import.meta.url), "utf8");

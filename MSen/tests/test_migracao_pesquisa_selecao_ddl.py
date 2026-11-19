@@ -51,7 +51,7 @@ class MigracaoPesquisaSelecaoDDLTest(unittest.TestCase):
             int(arquivo.name.split("_", 1)[0])
             for arquivo in MIGRACAO.parent.glob("[0-9][0-9][0-9]_*.sql")
         )
-        self.assertEqual(versoes[-1], 37)
+        self.assertEqual(versoes[-1], 38)
         self.assertEqual(len(versoes), len(set(versoes)))
 
 

@@ -59,6 +59,11 @@ from .fonte_selecao_dezenas_repository import (
     ErroFonteSelecaoDezenas,
     RepositorioFonteSelecaoDezenas,
 )
+from .resultados_teste_repository import (
+    ColecaoResultadosTesteGravada,
+    ErroRepositorioResultadosTeste,
+    RepositorioResultadosTeste,
+)
 
 __all__ = [
     "ErroConexaoBanco", "InformacaoConexao", "abrir_conexao", "verificar_conexao",
@@ -81,4 +86,6 @@ __all__ = [
     "ErroRepositorioGestaoDesenvolvimento", "EventoManutencaoPersistido", "ManutencaoPersistida",
     "RepositorioGestaoDesenvolvimento",
     "ErroFonteSelecaoDezenas", "RepositorioFonteSelecaoDezenas",
+    "ColecaoResultadosTesteGravada", "ErroRepositorioResultadosTeste",
+    "RepositorioResultadosTeste",
 ]

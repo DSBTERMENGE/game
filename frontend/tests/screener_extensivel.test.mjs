@@ -111,3 +111,10 @@ test("interface explica que cadastro não substitui função Python", async () =
   assert.match(javascript, /\/api\/validacao\/relatorio/);
   assert.match(javascript, /possuiPendenciasValidacao/);
 });
+
+test("contrato aceita os mesmos padroes em ordens diferentes", () => {
+  const reordenado = structuredClone(quadro);
+  reordenado.configuracao_raridade.padroes_selecionados = ["PD_009", "PD_003", "PD_005"];
+
+  assert.equal(validarQuadroExtensivel(reordenado), true);
+});
