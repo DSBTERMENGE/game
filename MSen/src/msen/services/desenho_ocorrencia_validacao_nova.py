@@ -7,7 +7,9 @@ import psycopg
 
 from msen.padroes import (
     calcular_categorias_diagonais,
+    detectar_configuracao_diagonal,
     detectar_dezenas_em_duas_linhas,
+    detectar_dezenas_em_duas_colunas,
     detectar_dezenas_em_uma_linha_e_uma_coluna,
     detectar_duas_dezenas_na_mesma_coluna,
     detectar_duas_dezenas_na_mesma_linha,
@@ -18,6 +20,7 @@ from msen.padroes import (
     detectar_tres_dezenas_na_mesma_coluna,
     detectar_tres_dezenas_na_mesma_linha,
     detectar_tres_dezenas_sequenciais,
+    identificar_linhas_configuracao_diagonal,
     resolver_funcao_detectora,
 )
 from msen.validacao import chave_canonica
@@ -132,6 +135,8 @@ def construir_desenho_ocorrencia_validacao(
                           if _maior_sequencia(valores) >= minimo)
     elif detector is detectar_dezenas_em_duas_linhas:
         segmentos = tuple(_horizontal(linha) for linha in sorted({p[1] for p in pontos}))
+    elif detector is detectar_dezenas_em_duas_colunas:
+        segmentos = tuple(_vertical(coluna) for coluna in sorted({p[2] for p in pontos}))
     elif detector is detectar_dezenas_em_uma_linha_e_uma_coluna:
         testemunha = next(
             (linha, coluna)
@@ -142,15 +147,20 @@ def construir_desenho_ocorrencia_validacao(
             and any(c == coluna and l != linha for _d, l, c in pontos)
         )
         segmentos = (_horizontal(testemunha[0]), _vertical(testemunha[1]))
-    elif detector is calcular_categorias_diagonais:
-        por_11 = Counter(coluna - linha for _d, linha, coluna in pontos)
-        por_9 = Counter(coluna + linha for _d, linha, coluna in pontos)
+    elif detector in {calcular_categorias_diagonais, detectar_configuracao_diagonal}:
+        linhas_diagonais = identificar_linhas_configuracao_diagonal(dezenas)
+        if not linhas_diagonais:
+            raise ValueError("A combinação não forma uma configuração diagonal válida.")
         segmentos = tuple(
-            _segmento_diagonal("diagonal_passo_11", -constante)
-            for constante, total in sorted(por_11.items()) if total >= 2
-        ) + tuple(
-            _segmento_diagonal("diagonal_passo_9", constante - 1)
-            for constante, total in sorted(por_9.items()) if total >= 2
+            _segmento_diagonal(
+                "diagonal_passo_11"
+                if linha.sentido == "PASSO_11"
+                else "diagonal_passo_9",
+                -linha.constante
+                if linha.sentido == "PASSO_11"
+                else linha.constante - 1,
+            )
+            for linha in linhas_diagonais
         )
     else:
         raise ValueError("O filtro ainda não possui representação visual definida.")

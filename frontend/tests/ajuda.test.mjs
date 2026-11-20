@@ -128,7 +128,7 @@ test("conceitos comprovados possuem fórmulas, linha do tempo e persistência", 
 test("todas as páginas vigentes possuem ajuda operacional central", () => {
   const idsPaginas = [
     "pagina-painel", "pagina-cadastros", "pagina-grupos-padroes", "pagina-padroes",
-    "pagina-distribuicoes", "pagina-preparacao-screener", "pagina-validacao-auditoria",
+    "pagina-distribuicoes", "pagina-preparacao-screener",
     "pagina-validacao-auditoria-nova",
     "pagina-frequencia-dezenas", "pagina-graficos-frequencia", "pagina-selecao-dezenas",
     "pagina-gestao-desenvolvimento", "pagina-ajuda",
@@ -177,7 +177,7 @@ test("página central possui pesquisa, regiões acessíveis e scripts separados"
 test("Ajuda é o último item da barra em todas as páginas", async () => {
   const arquivos = [
     "index.html", "cadastros.html", "grupos-padroes.html", "padroes.html",
-    "distribuicoes.html", "screener.html", "auditoria.html", "validacao-nova.html", "frequencias.html",
+    "distribuicoes.html", "screener.html", "validacao-nova.html", "frequencias.html",
     "graficos-frequencias.html", "selecao-dezenas.html", "gestao-desenvolvimento.html",
     "ajuda.html",
   ];

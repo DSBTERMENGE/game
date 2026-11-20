@@ -78,14 +78,14 @@ test.beforeAll(async () => {
       "/grupos-padroes.html": ["grupos-padroes.html", "text/html; charset=utf-8"],
       "/padroes.html": ["padroes.html", "text/html; charset=utf-8"],
       "/screener.html": ["screener.html", "text/html; charset=utf-8"],
-      "/auditoria.html": ["auditoria.html", "text/html; charset=utf-8"],
+      "/validacao-nova.html": ["validacao-nova.html", "text/html; charset=utf-8"],
       "/css/style.css": ["css/style.css", "text/css; charset=utf-8"],
       "/css/navegacao.css": ["css/navegacao.css", "text/css; charset=utf-8"],
       "/css/crud-navegavel.css": ["css/crud-navegavel.css", "text/css; charset=utf-8"],
       "/css/grupos-padroes.css": ["css/grupos-padroes.css", "text/css; charset=utf-8"],
       "/css/padroes.css": ["css/padroes.css", "text/css; charset=utf-8"],
       "/css/screener.css": ["css/screener.css", "text/css; charset=utf-8"],
-      "/css/auditoria.css": ["css/auditoria.css", "text/css; charset=utf-8"],
+      "/css/validacao-nova.css": ["css/validacao-nova.css", "text/css; charset=utf-8"],
       "/js/main.js": ["js/main.js", "text/javascript; charset=utf-8"],
       "/js/configuracao-visual.js": ["js/configuracao-visual.js", "text/javascript; charset=utf-8"],
       "/js/navegacao.js": ["js/navegacao.js", "text/javascript; charset=utf-8"],
@@ -445,11 +445,11 @@ test("menu horizontal navega entre Painel e páginas de Cadastros", async ({ pag
   await page.goto("/cadastros.html");
   await expect(page).toHaveURL(/grupos-padroes\.html$/);
 
-  await page.locator('a[href="/auditoria.html"]').click();
-  await expect(page).toHaveURL(/auditoria\.html$/);
+  await page.locator('a[href="/validacao-nova.html"]').click();
+  await expect(page).toHaveURL(/validacao-nova\.html$/);
   await expect(page.locator('[aria-current="page"]')).toHaveText("Validação e auditoria");
   await expect(page.getByRole("heading", { name: "Validação e auditoria" })).toBeVisible();
-  await expect(page.getByText("Relatório por função")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Seleção de Filtros" })).toBeVisible();
   await page.setViewportSize({ width: 700, height: 600 });
   const larguraAuditoria = await page.evaluate(() => ({
     documento: document.documentElement.scrollWidth,

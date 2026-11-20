@@ -5,14 +5,11 @@
 .validacao-nova-relatorio,
 .validacao-nova-painel,
 .validacao-nova-dirigido { border: 1px solid #cdd9dd; background: #fff; }
-.validacao-nova-cabecalho,
-.validacao-nova-progresso,
-.validacao-nova-progresso { grid-column: 1 / -1; }
+.validacao-nova-cabecalho { grid-column: 1 / -1; grid-row: 1; }
 .validacao-nova-aplicacao { grid-column: 1; grid-row: 2; }
 .validacao-nova-dirigido { grid-column: 2; grid-row: 2; }
-.validacao-nova-progresso { grid-row: 3; }
-.validacao-nova-painel { grid-column: 1; grid-row: 4; align-self: start; }
-.validacao-nova-relatorio { grid-column: 2; grid-row: 4; align-self: start; }
+.validacao-nova-painel { grid-column: 1 / -1; grid-row: 3; align-self: start; }
+.validacao-nova-relatorio--geral { grid-column: 1 / -1; grid-row: 4; }
 .validacao-nova-cabecalho { display: flex; align-items: start; justify-content: space-between; gap: 1rem; padding: .75rem .9rem; }
 .validacao-nova-cabecalho h1 { margin: 0; font-size: 1.35rem; }
 .validacao-nova-cabecalho p { margin: .2rem 0 0; color: #5d6c72; font-size: .68rem; }
@@ -40,8 +37,9 @@
 .validacao-nova-dialogo-acoes { display: flex; justify-content: flex-end; gap: .6rem; margin-top: 1rem; }
 .validacao-nova-dialogo-acoes button:first-child { background: #fff; color: #1f5f73; }
 .validacao-nova-estado[data-tipo="erro"] { color: #9b2c2c; font-weight: 700; }
-.validacao-nova-progresso { display: grid; gap: .7rem; padding: .9rem; }
-.validacao-nova-progresso[hidden] { display: none; }
+.validacao-nova-progresso { width: min(42rem, calc(100vw - 2rem)); gap: .7rem; padding: 1rem; border: 0; border-radius: .55rem; }
+.validacao-nova-progresso[open] { display: grid; }
+.validacao-nova-progresso::backdrop { background: rgb(0 0 0 / 48%); }
 .validacao-nova-progresso > header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .validacao-nova-progresso h2 { margin: 0; font-size: 1.05rem; }
 .validacao-nova-progresso button { min-height: 2.2rem; padding: .4rem .75rem; border: 1px solid #9b2c2c; border-radius: .3rem; background: #fff; color: #9b2c2c; font: inherit; font-weight: 700; cursor: pointer; }
@@ -53,7 +51,14 @@
 .validacao-nova-progresso-dados strong { display: block; margin-top: .2rem; overflow-wrap: anywhere; }
 #validacao-nova-progresso-estado { margin: 0; color: #52616a; }
 #validacao-nova-progresso-estado[data-tipo="erro"] { color: #9b2c2c; font-weight: 700; }
-.validacao-nova-relatorio { min-width: 0; padding: .7rem; }
+.validacao-nova-relatorio { min-width: 0; padding: .7rem; border: 1px solid #dbe4e7; background: #fff; }
+.validacao-nova-relatorio-inspecao { min-width: 0; padding: .7rem; border: 1px solid #dbe4e7; background: #f9fbfc; }
+.validacao-nova-relatorio-inspecao h2 { margin: 0; font-size: 1.05rem; }
+.validacao-nova-relatorio-inspecao header p { margin: .2rem 0 0; color: #52616a; font-size: .7rem; }
+.validacao-nova-resumo-inspecao { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; margin: .7rem 0 0; }
+.validacao-nova-resumo-inspecao div { padding: .6rem; border: 1px solid #dce5e8; background: #fff; }
+.validacao-nova-resumo-inspecao dt { color: #607078; font-size: .7rem; }
+.validacao-nova-resumo-inspecao dd { margin: .25rem 0 0; color: #173d4a; font-size: 1.15rem; font-weight: 400; }
 .validacao-nova-relatorio[hidden] { display: none; }
 .validacao-nova-relatorio > header { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
 .validacao-nova-relatorio h2 { margin: 0; font-size: 1.05rem; }
@@ -65,7 +70,7 @@
 .validacao-nova-relatorio thead th { background: #eaf1f3; color: #34464d; white-space: nowrap; }
 .validacao-nova-relatorio td:not(:first-child) { text-align: right; }
 .validacao-nova-relatorio .validacao-nova-grupo th { padding-top: .75rem; background: #f7fafb; color: #1f5f73; }
-.validacao-nova-painel { display: grid; grid-template-columns: minmax(0, 34rem) auto; min-width: 0; gap: .5rem .7rem; padding: .7rem; }
+.validacao-nova-painel { display: grid; grid-template-columns: minmax(0, 34rem) minmax(0, 1fr); min-width: 0; gap: .5rem .7rem; padding: .7rem; }
 .validacao-nova-painel[hidden] { display: none; }
 .validacao-nova-painel > header { display: flex; grid-column: 1 / -1; align-items: start; justify-content: space-between; gap: 1rem; }
 .validacao-nova-painel h2 { margin: 0; font-size: 1.05rem; }
@@ -78,11 +83,19 @@
 .validacao-nova-dezena--marcada { color: #0d5f39; }
 #validacao-nova-desenho { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
 #validacao-nova-desenho line { vector-effect: non-scaling-stroke; stroke: #b34a2d; stroke-width: 3; stroke-linecap: round; }
-#validacao-nova-painel-combinacao { margin: 0; color: #34464d; font-weight: 700; font-variant-numeric: tabular-nums; }
-.validacao-nova-painel > footer { display: flex; align-self: end; align-items: flex-end; justify-content: flex-end; gap: .5rem; }
+#validacao-nova-painel-combinacao { margin: 0 1ch 0 0; color: #34464d; font-weight: 400; font-variant-numeric: tabular-nums; }
+.validacao-nova-painel > footer { display: flex; grid-column: 1; align-self: end; align-items: flex-end; justify-content: flex-end; gap: .5rem; }
 #validacao-nova-painel-combinacao:empty { display: none; }
-#validacao-nova-continuar { min-height: 2.35rem; padding: .45rem .9rem; border: 1px solid #1f5f73; border-radius: .3rem; background: #1f5f73; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
-#validacao-nova-continuar:disabled { cursor: not-allowed; opacity: .55; }
+#validacao-nova-painel-combinacao.validacao-nova-processando { font-size: .72rem; }
+#validacao-nova-painel-cancelar,
+#validacao-nova-continuar,
+#validacao-nova-final { min-height: 2.35rem; padding: .45rem .9rem; border: 1px solid #1f5f73; border-radius: .3rem; font: inherit; font-weight: 700; cursor: pointer; }
+#validacao-nova-painel-cancelar,
+#validacao-nova-continuar,
+#validacao-nova-final { background: #1f5f73; color: #fff; }
+#validacao-nova-painel-cancelar:disabled,
+#validacao-nova-continuar:disabled,
+#validacao-nova-final:disabled { cursor: not-allowed; opacity: .55; }
 .validacao-nova-dirigido { display: grid; grid-template-rows: 2.8rem auto auto; gap: .4rem; padding: .6rem .7rem; }
 .validacao-nova-dirigido > header { display: flex; justify-content: space-between; align-items: start; gap: 1rem; }
 .validacao-nova-dirigido h2 { margin: 0; font-size: 1.05rem; }

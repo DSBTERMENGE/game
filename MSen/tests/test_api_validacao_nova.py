@@ -107,6 +107,7 @@ class ApiValidacaoNovaTestCase(unittest.TestCase):
         gerenciador.obter.return_value = {"id": "abc", "estado": "EXECUTANDO"}
         gerenciador.cancelar.return_value = {"id": "abc", "estado": "CANCELANDO"}
         gerenciador.continuar.return_value = {"id": "abc", "estado": "EXECUTANDO"}
+        gerenciador.concluir.return_value = {"id": "abc", "estado": "EXECUTANDO"}
         cliente = self._cliente(gerenciador=gerenciador)
 
         consulta = cliente.get("/api/validacao-nova/execucoes/abc")
@@ -116,10 +117,12 @@ class ApiValidacaoNovaTestCase(unittest.TestCase):
         continuacao = cliente.post(
             "/api/validacao-nova/execucoes/abc/continuacao"
         )
+        conclusao = cliente.post("/api/validacao-nova/execucoes/abc/conclusao")
 
         self.assertEqual(200, consulta.status_code)
         self.assertEqual(202, cancelamento.status_code)
         self.assertEqual(202, continuacao.status_code)
+        self.assertEqual(202, conclusao.status_code)
         self.assertEqual("CANCELANDO", cancelamento.get_json()["estado"])
 
     def test_execucao_inexistente_retorna_404(self):
@@ -127,6 +130,7 @@ class ApiValidacaoNovaTestCase(unittest.TestCase):
         gerenciador.obter.side_effect = KeyError("ausente")
         gerenciador.cancelar.side_effect = KeyError("ausente")
         gerenciador.continuar.side_effect = KeyError("ausente")
+        gerenciador.concluir.side_effect = KeyError("ausente")
         cliente = self._cliente(gerenciador=gerenciador)
         self.assertEqual(404, cliente.get(
             "/api/validacao-nova/execucoes/ausente"
@@ -137,6 +141,9 @@ class ApiValidacaoNovaTestCase(unittest.TestCase):
         self.assertEqual(404, cliente.post(
             "/api/validacao-nova/execucoes/ausente/continuacao"
         ).status_code)
+        self.assertEqual(404, cliente.post(
+            "/api/validacao-nova/execucoes/ausente/conclusao"
+        ).status_code)
 
     def test_gera_consulta_e_executa_teste_dirigido(self):
         dirigido = Mock()
@@ -146,6 +153,8 @@ class ApiValidacaoNovaTestCase(unittest.TestCase):
         dirigido.continuar.return_value = {
             "id": "dir-1", "estado": "AGUARDANDO_CONFIRMACAO"
         }
+        dirigido.cancelar.return_value = {"id": "dir-1", "estado": "CANCELADO"}
+        dirigido.concluir.return_value = {"id": "dir-1", "estado": "TESTADO"}
         cliente = self._cliente(dirigido=dirigido)
 
         criado = cliente.post(
@@ -159,11 +168,20 @@ class ApiValidacaoNovaTestCase(unittest.TestCase):
         continuacao = cliente.post(
             "/api/validacao-nova/testes-dirigidos/dir-1/continuacao"
         )
+        cancelamento = cliente.post(
+            "/api/validacao-nova/testes-dirigidos/dir-1/cancelamento"
+        )
+        conclusao = cliente.post(
+            "/api/validacao-nova/testes-dirigidos/dir-1/conclusao"
+        )
 
         self.assertEqual(201, criado.status_code)
         self.assertEqual(200, consulta.status_code)
         self.assertEqual("TESTADO", teste.get_json()["estado"])
         self.assertEqual(202, continuacao.status_code)
+        self.assertEqual(202, cancelamento.status_code)
+        self.assertEqual(202, conclusao.status_code)
+        self.assertEqual("CANCELADO", cancelamento.get_json()["estado"])
         dirigido.criar.assert_called_once_with(2, 12)
 
     def test_teste_dirigido_exige_grupo_e_filtro_especificos(self):
@@ -182,6 +200,8 @@ class ApiValidacaoNovaTestCase(unittest.TestCase):
         dirigido.obter.side_effect = KeyError("ausente")
         dirigido.testar.side_effect = KeyError("ausente")
         dirigido.continuar.side_effect = KeyError("ausente")
+        dirigido.cancelar.side_effect = KeyError("ausente")
+        dirigido.concluir.side_effect = KeyError("ausente")
         cliente = self._cliente(dirigido=dirigido)
         self.assertEqual(404, cliente.get(
             "/api/validacao-nova/testes-dirigidos/ausente"
@@ -191,6 +211,12 @@ class ApiValidacaoNovaTestCase(unittest.TestCase):
         ).status_code)
         self.assertEqual(404, cliente.post(
             "/api/validacao-nova/testes-dirigidos/ausente/continuacao"
+        ).status_code)
+        self.assertEqual(404, cliente.post(
+            "/api/validacao-nova/testes-dirigidos/ausente/cancelamento"
+        ).status_code)
+        self.assertEqual(404, cliente.post(
+            "/api/validacao-nova/testes-dirigidos/ausente/conclusao"
         ).status_code)
 
 

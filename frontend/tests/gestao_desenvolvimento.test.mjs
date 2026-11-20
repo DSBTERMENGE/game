@@ -71,7 +71,7 @@ test("layout inicia no topo e usa toda a largura disponível", () => {
 });
 
 test("navegação principal inclui a Gestão do desenvolvimento", async () => {
-  for (const arquivo of ["index.html", "screener.html", "selecao-dezenas.html", "auditoria.html"]) {
+  for (const arquivo of ["index.html", "screener.html", "selecao-dezenas.html", "validacao-nova.html"]) {
     const conteudo = await readFile(new URL(`../${arquivo}`, import.meta.url), "utf8");
     assert.match(conteudo, /href="\/gestao-desenvolvimento\.html"/);
   }

@@ -358,7 +358,7 @@ export const secoesAjuda = [
             paragrafos: ["Função nova ou alterada, assinatura divergente, avaliação pendente ou reprovada, perfil antigo ou cobertura incompleta bloqueiam a execução. Não existe aprovação automática por ausência de teste."],
           },
         ],
-        relacionados: ["pagina-validacao-auditoria", "referencia-bloqueios"],
+        relacionados: ["pagina-validacao-auditoria-nova", "referencia-bloqueios"],
       },
       {
         id: "conceito-atualizacao-calculo",
@@ -735,56 +735,17 @@ export const secoesAjuda = [
             paragrafos: ["O Teste e a Aplicação do Screener produzem quadros de análise. As combinações e as contagens parciais não são gravadas como resultados no banco de dados. O limite de raridade salvo no navegador é apenas uma preferência local."],
           },
         ],
-        relacionados: ["conceito-screener", "conceito-validacao", "pagina-validacao-auditoria", "referencia-quantidades"],
-      },
-      {
-        id: "pagina-validacao-auditoria",
-        titulo: "Validação e auditoria",
-        aliases: ["homologação", "cobertura", "esperado", "calculado", "S N pendente"],
-        estado: "confirmado",
-        resumo: "Confere as funções de produção contra referências independentes e explica por que o Screener pode estar bloqueado.",
-        blocos: [
-          {
-            titulo: "Estado do algoritmo",
-            paragrafos: ["O cabeçalho mostra se o conjunto está atualizado e o motivo vigente. Atualizar Validação e auditoria aparece quando há trabalho de sincronização ou execução a realizar."],
-          },
-          {
-            titulo: "Atualização",
-            paragrafos: ["O comando inicia uma tarefa acompanhada por progresso real. A sincronização preserva referências válidas, executa as funções atuais e recalcula o estado. Ela não aprova uma divergência automaticamente."],
-          },
-          {
-            titulo: "Resumo e filtros",
-            itens: [
-              "Categoria separa Estatística, Geometria e Padrão.",
-              "Função, Grupo e Subgrupo restringem o critério consultado.",
-              "Situação separa aprovada (S), reprovada (N) e pendente.",
-              "Aplicar consulta a combinação escolhida; Limpar restaura os filtros.",
-            ],
-          },
-          {
-            titulo: "Como ler a grade",
-            paragrafos: ["Cada linha relaciona concurso e dezenas da amostra, função ou filtro, referência esperada, valor calculado e decisão S/N. Pendente indica referência ausente, função não executada ou conferência incompleta."],
-          },
-          {
-            titulo: "Relatório e divergências",
-            paragrafos: ["O relatório agrupa exigidas, executadas, aprovadas, reprovadas e pendentes por função. Divergências detalham o desacordo para diagnóstico; uma sugestão de causa não altera a referência nem a aprovação."],
-          },
-          {
-            titulo: "Efeito nos dados",
-            paragrafos: ["A execução grava calculados, assinaturas executadas, decisões e estado de cobertura. Ela não altera os resultados sorteados nem corrige funções automaticamente."],
-          },
-        ],
-        relacionados: ["conceito-validacao", "pagina-preparacao-screener", "referencia-bloqueios"],
+        relacionados: ["conceito-screener", "conceito-validacao", "pagina-validacao-auditoria-nova", "referencia-quantidades"],
       },
       {
         id: "pagina-validacao-auditoria-nova",
-        titulo: "Validação e auditoria NOVA",
+        titulo: "Validação e auditoria",
         aliases: ["teste de filtros", "mil combinações", "teste dirigido", "inspeção visual"],
         estado: "confirmado",
         resumo: "Verifica se os filtros detectam seus padrões corretamente, sem eliminar combinações e sem alterar resultados sorteados.",
         blocos: [
           {
-            titulo: "Passo a passo da Validação e auditoria NOVA",
+            titulo: "Passo a passo da Validação e auditoria",
             itens: [
               "1. Escolher os filtros: em Seleção de Filtros, escolha Todos, um grupo inteiro ou um filtro específico.",
               "2. Iniciar o teste: confira o resumo da seleção, clique em Iniciar teste e confirme. Cada filtro selecionado será aplicado independentemente às mesmas 1.000 combinações fixas.",
@@ -829,7 +790,7 @@ export const secoesAjuda = [
             paragrafos: ["A página não elimina combinações, não altera os resultados dos concursos e não grava as 10 combinações dirigidas. A tabela fixa de 1.000 combinações permanece no banco apenas como coleção de auditoria reutilizável."],
           },
         ],
-        relacionados: ["pagina-validacao-auditoria", "pagina-preparacao-screener", "conceito-validacao"],
+        relacionados: ["pagina-preparacao-screener", "conceito-validacao"],
       },
       {
         id: "pagina-frequencia-dezenas",

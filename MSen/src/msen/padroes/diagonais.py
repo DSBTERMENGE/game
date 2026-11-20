@@ -67,6 +67,62 @@ class AnaliseAssinaturasDiagonais:
         return not self.assinaturas
 
 
+@dataclass(frozen=True, slots=True, order=True)
+class LinhaConfiguracaoDiagonal:
+    """Identifica uma diagonal do painel por sentido e coordenada constante."""
+
+    sentido: str
+    constante: int
+
+    def __post_init__(self) -> None:
+        if self.sentido not in {"PASSO_9", "PASSO_11"}:
+            raise ValueError("O sentido da diagonal deve ser PASSO_9 ou PASSO_11.")
+
+
+def identificar_linhas_configuracao_diagonal(
+    dezenas: tuple[int, ...],
+) -> tuple[LinhaConfiguracaoDiagonal, ...]:
+    """Localiza uma diagonal unica ou duas diagonais de sentidos opostos."""
+
+    ordenadas = validar_dezenas(dezenas)
+    pontos = tuple(
+        ((dezena - 1) // 10 + 1, (dezena - 1) % 10 + 1)
+        for dezena in ordenadas
+    )
+    por_passo_11: dict[int, set[int]] = {}
+    por_passo_9: dict[int, set[int]] = {}
+    for indice, (linha, coluna) in enumerate(pontos):
+        por_passo_11.setdefault(coluna - linha, set()).add(indice)
+        por_passo_9.setdefault(coluna + linha, set()).add(indice)
+
+    for constante, indices in sorted(por_passo_11.items()):
+        if len(indices) == 6:
+            return (LinhaConfiguracaoDiagonal("PASSO_11", constante),)
+    for constante, indices in sorted(por_passo_9.items()):
+        if len(indices) == 6:
+            return (LinhaConfiguracaoDiagonal("PASSO_9", constante),)
+
+    todos = set(range(6))
+    for constante_11, indices_11 in sorted(por_passo_11.items()):
+        if len(indices_11) < 2:
+            continue
+        for constante_9, indices_9 in sorted(por_passo_9.items()):
+            if len(indices_9) < 2:
+                continue
+            if indices_11 | indices_9 == todos:
+                return (
+                    LinhaConfiguracaoDiagonal("PASSO_11", constante_11),
+                    LinhaConfiguracaoDiagonal("PASSO_9", constante_9),
+                )
+    return ()
+
+
+def detectar_configuracao_diagonal(dezenas: tuple[int, ...]) -> bool:
+    """Detecta seis dezenas em uma diagonal ou em duas diagonais ortogonais."""
+
+    return bool(identificar_linhas_configuracao_diagonal(dezenas))
+
+
 @cache
 def _diagonais_da_dezena(
     dezena: int,

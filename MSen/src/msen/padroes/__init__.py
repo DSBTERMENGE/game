@@ -25,6 +25,11 @@ from .duas_linhas import (
     calcular_estatistica_duas_linhas,
     detectar_dezenas_em_duas_linhas,
 )
+from .duas_colunas import (
+    CODIGO_DEZENAS_EM_DUAS_COLUNAS,
+    calcular_estatistica_duas_colunas,
+    detectar_dezenas_em_duas_colunas,
+)
 from .linha_coluna import (
     CODIGO_UMA_LINHA_UMA_COLUNA,
     detectar_dezenas_em_uma_linha_e_uma_coluna,
@@ -33,6 +38,7 @@ from .diagonais import (
     AnaliseAssinaturasDiagonais,
     AnaliseReferenciaDiagonal,
     AssinaturaDiagonal,
+    LinhaConfiguracaoDiagonal,
     CATEGORIA_SEM_REFERENCIA_LONGA,
     COMPRIMENTO_MINIMO_DIAGONAL,
     PASSO_DIAGONAL_DIREITA,
@@ -40,6 +46,8 @@ from .diagonais import (
     POSICOES_REFERENCIA,
     analisar_assinaturas_diagonais,
     calcular_categorias_diagonais,
+    detectar_configuracao_diagonal,
+    identificar_linhas_configuracao_diagonal,
 )
 from .distribuicao_diagonais import (
     CODIGOS_ASSINATURAS_DIAGONAIS,
@@ -135,10 +143,14 @@ __all__ = [
     "CODIGO_UMA_LINHA_UMA_COLUNA",
     "detectar_dezenas_em_uma_linha_e_uma_coluna",
     "CODIGO_DEZENAS_EM_DUAS_LINHAS",
+    "CODIGO_DEZENAS_EM_DUAS_COLUNAS",
     "calcular_estatistica_duas_linhas",
+    "calcular_estatistica_duas_colunas",
+    "detectar_dezenas_em_duas_colunas",
     "AnaliseAssinaturasDiagonais",
     "AnaliseReferenciaDiagonal",
     "AssinaturaDiagonal",
+    "LinhaConfiguracaoDiagonal",
     "CATEGORIA_SEM_REFERENCIA_LONGA",
     "COMPRIMENTO_MINIMO_DIAGONAL",
     "PASSO_DIAGONAL_DIREITA",
@@ -154,6 +166,8 @@ __all__ = [
     "criar_fotografia_historica_diagonal",
     "analisar_assinaturas_diagonais",
     "calcular_categorias_diagonais",
+    "detectar_configuracao_diagonal",
+    "identificar_linhas_configuracao_diagonal",
     "detectar_duas_dezenas_sequenciais",
     "detectar_tres_dezenas_sequenciais",
     "detectar_mais_de_tres_dezenas_sequenciais",

@@ -1,12 +1,8 @@
-from datetime import date
 import unittest
 
-from msen.modelos import ResultadoEntrada
 from msen.padroes import (
     calcular_categorias_diagonais,
-    criar_fotografia_historica_diagonal,
 )
-from msen.screener import avaliar_filtro_diagonal
 from msen.services import (
     ErroExecutorFiltroValidacao,
     criar_executor_filtro_validacao,
@@ -28,26 +24,11 @@ class ExecutorFiltrosValidacaoNovaTestCase(unittest.TestCase):
             executor((1, 2, 3, 4, 5, 6))
         self.assertEqual("RETORNO_INVALIDO", contexto.exception.codigo)
 
-    def test_diagonal_devolve_ocorrencia_quando_decisao_excluiria(self):
-        historico = (
-            ResultadoEntrada(date(2020, 1, 1), 1, 1, 12, 23, 34, 45, 56),
-            ResultadoEntrada(date(2020, 1, 2), 2, 5, 14, 27, 38, 49, 60),
-        )
-        fotografia = criar_fotografia_historica_diagonal(historico)
-        combinacao = (4, 15, 26, 37, 48, 59)
-        executor = criar_executor_filtro_validacao(
-            calcular_categorias_diagonais,
-            fotografia_diagonal=fotografia,
-            limite_diagonal="10",
-        )
-        decisao = avaliar_filtro_diagonal(combinacao, fotografia, "10")
+    def test_diagonal_usa_detector_booleano_em_vez_da_raridade_categorica(self):
+        executor = criar_executor_filtro_validacao(calcular_categorias_diagonais)
 
-        self.assertEqual(not decisao.aprovada, executor(combinacao))
-
-    def test_diagonal_exige_fotografia(self):
-        with self.assertRaises(ErroExecutorFiltroValidacao) as contexto:
-            criar_executor_filtro_validacao(calcular_categorias_diagonais)
-        self.assertEqual("FOTOGRAFIA_DIAGONAL_AUSENTE", contexto.exception.codigo)
+        self.assertTrue(executor((4, 15, 26, 37, 48, 59)))
+        self.assertFalse(executor((2, 6, 15, 17, 28, 38)))
 
     def test_rejeita_objeto_nao_chamavel(self):
         with self.assertRaises(TypeError):

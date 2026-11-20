@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Validação e auditoria NOVA — Game Analysis</title>
+    <title>Validação e auditoria — Game Analysis</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/navegacao.css">
     <link rel="stylesheet" href="css/validacao-nova.css">
@@ -21,8 +21,7 @@
       </details>
       <a class="navegacao-link" href="/distribuicoes.html">Distribuições</a>
       <a class="navegacao-link" href="/screener.html">Preparação do Screener</a>
-      <a class="navegacao-link" href="/auditoria.html">Validação e auditoria</a>
-      <a class="navegacao-link" href="/validacao-nova.html" aria-current="page">Validação e auditoria NOVA</a>
+      <a class="navegacao-link" href="/validacao-nova.html" aria-current="page">Validação e auditoria</a>
       <a class="navegacao-link" href="/frequencias.html">Frequência das dezenas</a>
       <a class="navegacao-link" href="/selecao-dezenas.html">Seleção de dezenas</a>
       <a class="navegacao-link" href="/gestao-desenvolvimento.html">Gestão do desenvolvimento</a>
@@ -32,7 +31,7 @@
     <main class="pagina-conteudo validacao-nova-pagina">
       <header class="validacao-nova-cabecalho">
         <div>
-          <h1>Validação e auditoria NOVA</h1>
+          <h1>Validação e auditoria</h1>
           <p>Validação independente dos filtros em uma coleção fixa de combinações.</p>
         </div>
         <a id="botao-ajuda-validacao-nova" class="ajuda-contextual" href="/ajuda.html?origem=%2Fvalidacao-nova.html#pagina-validacao-auditoria-nova">Ajuda</a>
@@ -65,7 +64,7 @@
           <button id="validacao-nova-iniciar" type="button" disabled>Iniciar teste</button>
         </div>
       </section>
-      <section id="validacao-nova-progresso" class="validacao-nova-progresso" hidden aria-labelledby="validacao-nova-progresso-titulo">
+      <dialog id="validacao-nova-progresso" class="validacao-nova-progresso" aria-labelledby="validacao-nova-progresso-titulo">
         <header>
           <h2 id="validacao-nova-progresso-titulo">Andamento do teste</h2>
           <button id="validacao-nova-cancelar" type="button">Cancelar</button>
@@ -77,19 +76,7 @@
           <p><span>Filtro atual</span><strong id="validacao-nova-filtro-atual">—</strong></p>
         </div>
         <p id="validacao-nova-progresso-estado" role="status" aria-live="polite">Aguardando início.</p>
-      </section>
-      <section id="validacao-nova-relatorio" class="validacao-nova-relatorio" aria-labelledby="validacao-nova-relatorio-titulo">
-        <header>
-          <h2 id="validacao-nova-relatorio-titulo">Relatório do teste</h2>
-          <p id="validacao-nova-relatorio-resumo">Aguardando a conclusão de um teste.</p>
-        </header>
-        <div class="validacao-nova-relatorio-rolagem">
-          <table>
-            <thead><tr><th>Filtro</th><th>Total testado</th><th>Ocorrências</th><th>Incidência</th></tr></thead>
-            <tbody id="validacao-nova-relatorio-corpo"><tr><td colspan="4">Nenhum resultado disponível.</td></tr></tbody>
-          </table>
-        </div>
-      </section>
+      </dialog>
       <section id="validacao-nova-painel" class="validacao-nova-painel" aria-labelledby="validacao-nova-painel-titulo">
         <header>
           <div>
@@ -102,16 +89,41 @@
           <div id="validacao-nova-dezenas" class="validacao-nova-dezenas"></div>
           <svg id="validacao-nova-desenho" viewBox="0 0 10 6" preserveAspectRatio="none" aria-hidden="true"></svg>
         </div>
+        <aside id="validacao-nova-relatorio-inspecao" class="validacao-nova-relatorio-inspecao" aria-labelledby="validacao-nova-relatorio-inspecao-titulo">
+          <header>
+            <h2 id="validacao-nova-relatorio-inspecao-titulo">Relatório da inspeção</h2>
+            <p id="validacao-nova-relatorio-inspecao-estado">Aguardando um teste de filtro específico.</p>
+          </header>
+          <dl class="validacao-nova-resumo-inspecao">
+            <div><dt>Combinações testadas</dt><dd id="validacao-nova-inspecao-total">—</dd></div>
+            <div><dt>Ocorrências do padrão</dt><dd id="validacao-nova-inspecao-ocorrencias">—</dd></div>
+            <div><dt>% de ocorrência</dt><dd id="validacao-nova-inspecao-percentual">—</dd></div>
+          </dl>
+        </aside>
         <footer>
           <p id="validacao-nova-painel-combinacao"></p>
+          <button id="validacao-nova-painel-cancelar" type="button" disabled>Cancelar</button>
           <button id="validacao-nova-continuar" type="button" disabled>Continuar</button>
+          <button id="validacao-nova-final" type="button" disabled>Final</button>
         </footer>
+      </section>
+      <section id="validacao-nova-relatorio" class="validacao-nova-relatorio validacao-nova-relatorio--geral" hidden aria-labelledby="validacao-nova-relatorio-titulo">
+        <header>
+          <h2 id="validacao-nova-relatorio-titulo">Relatório geral dos filtros</h2>
+          <p id="validacao-nova-relatorio-resumo"></p>
+        </header>
+        <div class="validacao-nova-relatorio-rolagem">
+          <table>
+            <thead><tr><th>Filtro</th><th>Combinações testadas</th><th>Ocorrências do padrão</th><th>% de ocorrência</th></tr></thead>
+            <tbody id="validacao-nova-relatorio-corpo"></tbody>
+          </table>
+        </div>
       </section>
       <section id="validacao-nova-dirigido" class="validacao-nova-dirigido" aria-labelledby="validacao-nova-dirigido-titulo">
         <header>
           <div>
             <h2 id="validacao-nova-dirigido-titulo">Teste dirigido</h2>
-            <p>Gere 10 combinações que atendam sabidamente a um filtro e depois teste sua detecção.</p>
+            <p>Dez combinações que testam True para o filtro serão geradas para teste.</p>
           </div>
           <small>As combinações permanecem somente na memória e não são gravadas.</small>
         </header>
@@ -129,7 +141,6 @@
         </div>
         <div class="validacao-nova-dirigido-acoes">
           <p id="validacao-nova-dirigido-estado" class="validacao-nova-estado" role="status" aria-live="polite"></p>
-          <button id="validacao-nova-dirigido-gerar" type="button" disabled>Gerar 10 combinações</button>
           <button id="validacao-nova-dirigido-testar" type="button" disabled>Iniciar teste dirigido</button>
         </div>
         <output id="validacao-nova-dirigido-resultado" class="validacao-nova-dirigido-resultado" hidden></output>

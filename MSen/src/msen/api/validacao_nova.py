@@ -72,6 +72,7 @@ class GerenciadorExecucoesValidacaoNova:
                 "duracao_segundos": 0.0,
                 "_inicio": monotonic(),
                 "_cancelar": False,
+                "_inspecionar_ocorrencias": True,
             }
             self._ativa = identificador
             self._continuacoes[identificador] = Event()
@@ -95,6 +96,7 @@ class GerenciadorExecucoesValidacaoNova:
                 )
             dados.pop("_inicio", None)
             dados.pop("_cancelar", None)
+            dados.pop("_inspecionar_ocorrencias", None)
             return dados
 
     def cancelar(self, identificador: str) -> dict[str, object]:
@@ -120,6 +122,23 @@ class GerenciadorExecucoesValidacaoNova:
                     "EXECUCAO_NAO_PAUSADA",
                     "O teste não está aguardando confirmação de uma ocorrência.",
                 )
+            dados["estado"] = "EXECUTANDO"
+            dados["ocorrencia_atual"] = None
+            self._continuacoes[identificador].set()
+        return self.obter(identificador)
+
+    def concluir(self, identificador: str) -> dict[str, object]:
+        """Retoma a execução sem pausar nas ocorrências restantes."""
+        with self._trava:
+            if identificador not in self._execucoes:
+                raise KeyError(identificador)
+            dados = self._execucoes[identificador]
+            if dados["estado"] != "AGUARDANDO_CONFIRMACAO":
+                raise ErroProcessamentoValidacaoNova(
+                    "EXECUCAO_NAO_PAUSADA",
+                    "O teste não está aguardando confirmação de uma ocorrência.",
+                )
+            dados["_inspecionar_ocorrencias"] = False
             dados["estado"] = "EXECUTANDO"
             dados["ocorrencia_atual"] = None
             self._continuacoes[identificador].set()
@@ -159,6 +178,8 @@ class GerenciadorExecucoesValidacaoNova:
         evento.clear()
         with self._trava:
             dados = self._execucoes[identificador]
+            if not dados["_inspecionar_ocorrencias"]:
+                return
             dados["estado"] = "AGUARDANDO_CONFIRMACAO"
             dados["ocorrencia_atual"] = {
                 "id_grupo": ocorrencia.id_grupo,
@@ -296,6 +317,44 @@ class GerenciadorTestesDirigidosValidacaoNova:
                     "total_testado": len(avaliacoes),
                     "ocorrencias_detectadas": detectadas,
                 }
+            return deepcopy(atual)
+
+    def concluir(self, identificador: str) -> dict[str, object]:
+        """Conclui a inspeção dirigida com as avaliações já realizadas."""
+        with self._trava:
+            if identificador not in self._testes:
+                raise KeyError(identificador)
+            atual = self._testes[identificador]
+            if atual["estado"] != "AGUARDANDO_CONFIRMACAO":
+                raise ErroTesteDirigidoValidacaoNova(
+                    "TESTE_NAO_PAUSADO",
+                    "O teste dirigido não está aguardando confirmação.",
+                )
+            avaliacoes = self._avaliacoes[identificador]
+            detectadas = sum(bool(item["detectada"]) for item in avaliacoes)
+            atual["estado"] = "TESTADO"
+            atual["ocorrencia_atual"] = None
+            atual["resultado"] = {
+                "total_testado": len(avaliacoes),
+                "ocorrencias_detectadas": detectadas,
+            }
+            return deepcopy(atual)
+
+
+    def cancelar(self, identificador: str) -> dict[str, object]:
+        with self._trava:
+            if identificador not in self._testes:
+                raise KeyError(identificador)
+            atual = self._testes[identificador]
+            if atual["estado"] != "AGUARDANDO_CONFIRMACAO":
+                raise ErroTesteDirigidoValidacaoNova(
+                    "TESTE_NAO_PAUSADO",
+                    "O teste dirigido não está aguardando confirmação.",
+                )
+            atual["estado"] = "CANCELADO"
+            atual["ocorrencia_atual"] = None
+            self._avaliacoes.pop(identificador, None)
+            self._posicoes.pop(identificador, None)
             return deepcopy(atual)
 
 
@@ -543,6 +602,22 @@ def continuar_teste_validacao_nova(identificador: str):
         return jsonify(erro={"codigo": erro.codigo, "mensagem": str(erro)}), 409
 
 
+@validacao_nova_api.post("/api/validacao-nova/execucoes/<identificador>/conclusao")
+def concluir_teste_validacao_nova(identificador: str):
+    try:
+        estado = current_app.config["GERENCIADOR_VALIDACAO_NOVA"].concluir(
+            identificador
+        )
+        return jsonify(estado), 202
+    except KeyError:
+        return jsonify(erro={
+            "codigo": "EXECUCAO_NAO_ENCONTRADA",
+            "mensagem": "O teste informado não foi encontrado.",
+        }), 404
+    except ErroProcessamentoValidacaoNova as erro:
+        return jsonify(erro={"codigo": erro.codigo, "mensagem": str(erro)}), 409
+
+
 def _id_especifico(dados, nome):
     valor = dados.get(nome)
     if isinstance(valor, bool) or not isinstance(valor, int) or valor <= 0:
@@ -603,6 +678,38 @@ def continuar_teste_dirigido_validacao_nova(identificador: str):
     try:
         gerenciador = current_app.config["GERENCIADOR_TESTES_DIRIGIDOS_VALIDACAO_NOVA"]
         return jsonify(gerenciador.continuar(identificador)), 202
+    except KeyError:
+        return jsonify(erro={
+            "codigo": "TESTE_DIRIGIDO_NAO_ENCONTRADO",
+            "mensagem": "O teste dirigido informado não está disponível em memória.",
+        }), 404
+    except ErroTesteDirigidoValidacaoNova as erro:
+        return jsonify(erro={"codigo": erro.codigo, "mensagem": str(erro)}), 409
+
+
+@validacao_nova_api.post(
+    "/api/validacao-nova/testes-dirigidos/<identificador>/conclusao"
+)
+def concluir_teste_dirigido_validacao_nova(identificador: str):
+    try:
+        gerenciador = current_app.config["GERENCIADOR_TESTES_DIRIGIDOS_VALIDACAO_NOVA"]
+        return jsonify(gerenciador.concluir(identificador)), 202
+    except KeyError:
+        return jsonify(erro={
+            "codigo": "TESTE_DIRIGIDO_NAO_ENCONTRADO",
+            "mensagem": "O teste dirigido informado não está disponível em memória.",
+        }), 404
+    except ErroTesteDirigidoValidacaoNova as erro:
+        return jsonify(erro={"codigo": erro.codigo, "mensagem": str(erro)}), 409
+
+
+@validacao_nova_api.post(
+    "/api/validacao-nova/testes-dirigidos/<identificador>/cancelamento"
+)
+def cancelar_teste_dirigido_validacao_nova(identificador: str):
+    try:
+        gerenciador = current_app.config["GERENCIADOR_TESTES_DIRIGIDOS_VALIDACAO_NOVA"]
+        return jsonify(gerenciador.cancelar(identificador)), 202
     except KeyError:
         return jsonify(erro={
             "codigo": "TESTE_DIRIGIDO_NAO_ENCONTRADO",

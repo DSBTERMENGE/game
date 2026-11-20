@@ -51,17 +51,15 @@ test("teste dirigido adapta cada combinação ao painel e resume o resultado", (
 test("controles impedem testes simultâneos e respeitam pré-requisitos", () => {
   assert.deepEqual(controlesPorAtividade({
     atividade: null, catalogoVazio: false, selecaoDirigida: true,
-    testeDirigidoGerado: false,
   }), {
     selecaoGeral: true, iniciarGeral: true, selecaoDirigida: true,
-    gerarDirigido: true, testarDirigido: false,
+    testarDirigido: true,
   });
   assert.deepEqual(controlesPorAtividade({
     atividade: "geral", catalogoVazio: false, selecaoDirigida: true,
-    testeDirigidoGerado: true,
   }), {
     selecaoGeral: false, iniciarGeral: false, selecaoDirigida: false,
-    gerarDirigido: false, testarDirigido: false,
+    testarDirigido: false,
   });
 });
 
@@ -149,22 +147,27 @@ test("página possui bloco, duas caixas Todos e informação da coleção fixa",
   assert.match(html, /id="validacao-nova-confirmacao"/);
   assert.match(html, /Confirmar e iniciar/);
   assert.match(html, /id="validacao-nova-progresso"/);
+  assert.match(html, /<dialog id="validacao-nova-progresso"/);
   assert.match(html, /id="validacao-nova-cancelar"/);
   assert.match(html, /Grupo atual/);
   assert.match(html, /Filtro atual/);
   assert.match(html, /id="validacao-nova-relatorio"/);
-  assert.doesNotMatch(html, /id="validacao-nova-relatorio"[^>]*\shidden/);
-  assert.match(html, /Total testado/);
-  assert.match(html, /Ocorrências/);
-  assert.match(html, /Incidência/);
+  assert.match(html, /id="validacao-nova-relatorio"[^>]*\shidden/);
+  assert.match(html, /id="validacao-nova-relatorio-inspecao"/);
+  assert.match(html, /Combinações testadas/);
+  assert.match(html, /Ocorrências do padrão/);
+  assert.match(html, /% de ocorrência/);
   assert.doesNotMatch(html, /Saldo|Total removido|Exclusões/);
   assert.match(html, /id="validacao-nova-painel"/);
   assert.doesNotMatch(html, /id="validacao-nova-painel"[^>]*\shidden/);
   assert.match(html, /viewBox="0 0 10 6"/);
+  assert.match(html, /id="validacao-nova-painel-cancelar"[^>]*disabled[^>]*>Cancelar/);
   assert.match(html, /id="validacao-nova-continuar"/);
   assert.match(html, /id="validacao-nova-continuar"[^>]*disabled/);
+  assert.match(html, /id="validacao-nova-final"[^>]*disabled[^>]*>Final/);
   assert.match(html, /id="validacao-nova-dirigido"/);
-  assert.match(html, /Gerar 10 combinações/);
+  assert.doesNotMatch(html, /id="validacao-nova-dirigido-gerar"/);
+  assert.match(html, /Dez combinações que testam True para o filtro serão geradas para teste/);
   assert.match(html, /Iniciar teste dirigido/);
   assert.match(html, /somente na memória/);
   assert.match(html, /id="validacao-nova-dirigido-resultado"/);
@@ -180,11 +183,13 @@ test("interface não apresenta códigos técnicos nem nomes de função", async 
 test("layout compacta os dois blocos de seleção lado a lado", async () => {
   const css = await readFile(new URL("../css/validacao-nova.css", import.meta.url), "utf8");
   assert.match(css, /grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(css, /\.validacao-nova-cabecalho\s*\{\s*grid-column:\s*1 \/ -1;\s*grid-row:\s*1;/);
   assert.match(css, /\.validacao-nova-aplicacao\s*\{\s*grid-column:\s*1;\s*grid-row:\s*2;/);
   assert.match(css, /\.validacao-nova-dirigido\s*\{\s*grid-column:\s*2;\s*grid-row:\s*2;/);
   assert.match(css, /width:\s*clamp\(12rem, 18vw, 19rem\)/);
   assert.match(css, /@media \(max-width: 72rem\)/);
-  assert.match(css, /\.validacao-nova-painel\s*\{\s*grid-column:\s*1;\s*grid-row:\s*4/);
-  assert.match(css, /\.validacao-nova-relatorio\s*\{\s*grid-column:\s*2;\s*grid-row:\s*4/);
+  assert.match(css, /\.validacao-nova-painel\s*\{\s*grid-column:\s*1 \/ -1;\s*grid-row:\s*3/);
+  assert.match(css, /grid-template-columns:\s*minmax\(0, 34rem\) minmax\(0, 1fr\)/);
+  assert.match(css, /#validacao-nova-painel-combinacao\s*\{\s*margin:\s*0 1ch 0 0;/);
   assert.match(css, /width:\s*min\(100%, 34rem\)/);
 });

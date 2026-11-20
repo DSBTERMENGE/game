@@ -1,4 +1,4 @@
-export const PAGINA_VALIDACAO_NOVA = "Validação e auditoria NOVA";
+export const PAGINA_VALIDACAO_NOVA = "Validação e auditoria";
 
 export function validarCatalogo(dados) {
   if (!dados || !Array.isArray(dados.grupos)) throw new Error("Catálogo de filtros inválido.");
@@ -154,15 +154,13 @@ export function resumirResultadoDirigido(resultado) {
 
 export function controlesPorAtividade({
   atividade = null, catalogoVazio = false, selecaoDirigida = false,
-  testeDirigidoGerado = false,
 } = {}) {
   const livre = atividade === null;
   return {
     selecaoGeral: livre,
     iniciarGeral: livre && !catalogoVazio,
     selecaoDirigida: livre,
-    gerarDirigido: livre && selecaoDirigida,
-    testarDirigido: livre && testeDirigidoGerado,
+    testarDirigido: livre && selecaoDirigida,
   };
 }
 
@@ -191,6 +189,10 @@ async function carregarCatalogo(raiz) {
   const blocoRelatorio = document.querySelector("#validacao-nova-relatorio");
   const resumoRelatorio = document.querySelector("#validacao-nova-relatorio-resumo");
   const corpoRelatorio = document.querySelector("#validacao-nova-relatorio-corpo");
+  const inspecaoEstado = document.querySelector("#validacao-nova-relatorio-inspecao-estado");
+  const inspecaoTotal = document.querySelector("#validacao-nova-inspecao-total");
+  const inspecaoOcorrencias = document.querySelector("#validacao-nova-inspecao-ocorrencias");
+  const inspecaoPercentual = document.querySelector("#validacao-nova-inspecao-percentual");
   const blocoPainel = document.querySelector("#validacao-nova-painel");
   const painelGrupo = document.querySelector("#validacao-nova-painel-grupo");
   const painelFiltro = document.querySelector("#validacao-nova-painel-filtro");
@@ -199,11 +201,12 @@ async function carregarCatalogo(raiz) {
   const painelCombinacao = document.querySelector("#validacao-nova-painel-combinacao");
   const painelDezenas = document.querySelector("#validacao-nova-dezenas");
   const painelDesenho = document.querySelector("#validacao-nova-desenho");
+  const painelCancelar = document.querySelector("#validacao-nova-painel-cancelar");
   const continuar = document.querySelector("#validacao-nova-continuar");
+  const finalizar = document.querySelector("#validacao-nova-final");
   const dirigidoRaiz = document.querySelector("#validacao-nova-dirigido");
   const dirigidoGrupo = document.querySelector("#validacao-nova-dirigido-grupo");
   const dirigidoFiltro = document.querySelector("#validacao-nova-dirigido-filtro");
-  const dirigidoGerar = document.querySelector("#validacao-nova-dirigido-gerar");
   const dirigidoTestar = document.querySelector("#validacao-nova-dirigido-testar");
   const dirigidoEstado = document.querySelector("#validacao-nova-dirigido-estado");
   const dirigidoResultado = document.querySelector("#validacao-nova-dirigido-resultado");
@@ -215,14 +218,12 @@ async function carregarCatalogo(raiz) {
       atividade: atividadeAtual,
       catalogoVazio,
       selecaoDirigida: selecaoDirigidaValida(dirigidoGrupo.value, dirigidoFiltro.value),
-      testeDirigidoGerado: Boolean(dirigidoRaiz.dataset.idTeste),
     });
     grupo.disabled = !controles.selecaoGeral;
     filtro.disabled = !controles.selecaoGeral;
     iniciar.disabled = !controles.iniciarGeral;
     dirigidoGrupo.disabled = !controles.selecaoDirigida;
     dirigidoFiltro.disabled = !controles.selecaoDirigida;
-    dirigidoGerar.disabled = !controles.gerarDirigido;
     dirigidoTestar.disabled = !controles.testarDirigido;
   };
   const iniciarAtividade = (tipo) => {
@@ -236,6 +237,12 @@ async function carregarCatalogo(raiz) {
     aplicarBloqueios();
   };
   const celulas = new Map();
+  const abrirProgresso = () => {
+    if (!blocoProgresso.open) blocoProgresso.showModal();
+  };
+  const fecharProgresso = () => {
+    if (blocoProgresso.open) blocoProgresso.close();
+  };
   for (let dezena = 1; dezena <= 60; dezena += 1) {
     const celula = document.createElement("span");
     celula.className = "validacao-nova-dezena";
@@ -243,7 +250,10 @@ async function carregarCatalogo(raiz) {
     painelDezenas.append(celula);
     celulas.set(dezena, celula);
   }
-  const limparPainel = (mensagem = "Aguardando o início de um teste com um filtro específico.") => {
+  const limparPainel = (
+    mensagem = "Aguardando o início de um teste com um filtro específico.",
+    processando = false,
+  ) => {
     for (const celula of celulas.values()) {
       celula.classList.remove("validacao-nova-dezena--marcada");
     }
@@ -253,7 +263,10 @@ async function carregarCatalogo(raiz) {
     painelContexto.hidden = true;
     painelIndice.textContent = "Relatório";
     painelCombinacao.textContent = mensagem;
+    painelCombinacao.classList.toggle("validacao-nova-processando", processando);
+    painelCancelar.disabled = true;
     continuar.disabled = true;
+    finalizar.disabled = true;
     blocoPainel.hidden = false;
   };
   const exibirOcorrencia = (ocorrencia) => {
@@ -273,11 +286,24 @@ async function carregarCatalogo(raiz) {
     painelGrupo.textContent = ocorrencia.nome_grupo;
     painelFiltro.textContent = ocorrencia.nome_filtro;
     painelContexto.hidden = false;
+    inspecaoEstado.textContent = `${ocorrencia.nome_filtro}: combinação ${ocorrencia.indice_combinacao} em inspeção.`;
     painelIndice.textContent = `Combinação ${ocorrencia.indice_combinacao} de ${ocorrencia.total_combinacoes || 1000}`;
     painelCombinacao.textContent = formatarCombinacao(ocorrencia.combinacao);
+    painelCombinacao.classList.remove("validacao-nova-processando");
+    painelCancelar.disabled = false;
+    finalizar.disabled = false;
     blocoPainel.hidden = false;
   };
   const exibirRelatorio = (resultado) => {
+    if (Number(resultado?.total_filtros) === 1 && resultado?.resultados?.length === 1) {
+      const item = resultado.resultados[0];
+      inspecaoEstado.textContent = item.nome_filtro;
+      inspecaoTotal.textContent = Number(item.total_testado).toLocaleString("pt-BR");
+      inspecaoOcorrencias.textContent = Number(item.ocorrencias).toLocaleString("pt-BR");
+      inspecaoPercentual.textContent = formatarIncidencia(item.incidencia_percentual);
+      blocoRelatorio.hidden = true;
+      return;
+    }
     corpoRelatorio.replaceChildren();
     for (const linha of organizarRelatorio(resultado?.resultados)) {
       const tr = document.createElement("tr");
@@ -305,8 +331,26 @@ async function carregarCatalogo(raiz) {
     resumoRelatorio.textContent = `${resultado.total_filtros} filtro(s) · ${resultado.total_avaliacoes.toLocaleString("pt-BR")} avaliações.`;
     blocoRelatorio.hidden = false;
   };
+  const exibirRelatorioDirigido = (registro) => {
+    const total = Number(registro.resultado?.total_testado || 0);
+    const ocorrencias = Number(registro.resultado?.ocorrencias_detectadas || 0);
+    exibirRelatorio({
+      total_filtros: 1,
+      total_avaliacoes: total,
+      resultados: [{
+        nome_grupo: registro.nome_grupo,
+        nome_filtro: registro.nome_filtro,
+        total_testado: total,
+        ocorrencias,
+        incidencia_percentual: total ? (ocorrencias / total) * 100 : 0,
+      }],
+    });
+  };
   const liberarSelecao = () => {
     cancelar.disabled = true;
+    painelCancelar.disabled = true;
+    continuar.disabled = true;
+    finalizar.disabled = true;
     encerrarAtividade();
   };
   const exibirExecucao = (execucao) => {
@@ -322,12 +366,18 @@ async function carregarCatalogo(raiz) {
       exibirRelatorio(execucao.resultado);
     }
     if (execucao?.estado === "AGUARDANDO_CONFIRMACAO" && execucao.ocorrencia_atual) {
+      fecharProgresso();
       exibirOcorrencia(execucao.ocorrencia_atual);
       continuar.disabled = false;
-    } else if (["CONCLUIDA", "CANCELADA", "FALHOU"].includes(execucao?.estado)) {
-      limparPainel(execucao.estado === "CONCLUIDA"
-        ? "Teste concluído. Selecione um filtro para realizar uma nova inspeção."
-        : "Nenhuma ocorrência em inspeção.");
+      finalizar.disabled = false;
+    } else if (["CANCELADA", "FALHOU"].includes(execucao?.estado)) {
+      fecharProgresso();
+      limparPainel("Nenhuma ocorrência em inspeção.");
+    }
+    if (execucao?.estado === "CONCLUIDA") {
+      fecharProgresso();
+      painelCombinacao.textContent = "";
+      painelCombinacao.classList.remove("validacao-nova-processando");
     }
     if (visual.terminou) liberarSelecao();
     return visual;
@@ -366,7 +416,7 @@ async function carregarCatalogo(raiz) {
       delete dirigidoRaiz.dataset.idTeste;
       dirigidoResultado.hidden = true;
       dirigidoEstado.textContent = valido
-        ? "Seleção pronta para gerar as 10 combinações."
+        ? "Seleção pronta para iniciar o teste dirigido."
         : "";
       delete dirigidoEstado.dataset.tipo;
       aplicarBloqueios();
@@ -379,54 +429,34 @@ async function carregarCatalogo(raiz) {
       atualizarDirigido();
     });
     dirigidoFiltro.addEventListener("change", atualizarDirigido);
-    dirigidoGerar.addEventListener("click", async () => {
-      if (!iniciarAtividade("dirigido")) {
-        dirigidoEstado.textContent = "Conclua ou cancele o teste em andamento antes de gerar outra coleção.";
-        dirigidoEstado.dataset.tipo = "erro";
-        return;
-      }
-      dirigidoEstado.textContent = "Gerando 10 combinações conhecidas…";
-      try {
-        const respostaDirigida = await fetch("/api/validacao-nova/testes-dirigidos", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(corpoTesteDirigido(dirigidoGrupo.value, dirigidoFiltro.value)),
-        });
-        const registro = await respostaDirigida.json();
-        if (!respostaDirigida.ok) throw new Error(
-          registro.erro?.mensagem || "Não foi possível gerar as combinações dirigidas."
-        );
-        dirigidoRaiz.dataset.idTeste = registro.id;
-        dirigidoRaiz.registroAtual = registro;
-        dirigidoEstado.textContent = apresentarTesteDirigido(registro);
-        dirigidoGrupo.disabled = true;
-        dirigidoFiltro.disabled = true;
-        encerrarAtividade();
-      } catch (erro) {
-        dirigidoEstado.textContent = erro.message;
-        dirigidoEstado.dataset.tipo = "erro";
-        encerrarAtividade();
-      }
-    });
     dirigidoTestar.addEventListener("click", async () => {
-      const idTeste = dirigidoRaiz.dataset.idTeste;
-      if (!idTeste) {
-        dirigidoEstado.textContent = "Gere primeiro as 10 combinações do teste dirigido.";
-        dirigidoEstado.dataset.tipo = "erro";
-        return;
-      }
       if (!iniciarAtividade("dirigido")) {
         dirigidoEstado.textContent = "Há outro teste em andamento. Conclua-o ou cancele-o primeiro.";
         dirigidoEstado.dataset.tipo = "erro";
         return;
       }
-      dirigidoEstado.textContent = "Iniciando o teste das 10 combinações…";
+      dirigidoEstado.textContent = "Gerando e iniciando o teste das 10 combinações…";
+      inspecaoEstado.textContent = "Teste dirigido em andamento.";
+      inspecaoTotal.textContent = "—";
+      inspecaoOcorrencias.textContent = "—";
+      inspecaoPercentual.textContent = "—";
+      blocoRelatorio.hidden = true;
       try {
-        const respostaDirigida = await fetch(
-          `/api/validacao-nova/testes-dirigidos/${idTeste}/execucao`, { method: "POST" }
+        const respostaGeracao = await fetch("/api/validacao-nova/testes-dirigidos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(corpoTesteDirigido(dirigidoGrupo.value, dirigidoFiltro.value)),
+        });
+        const gerado = await respostaGeracao.json();
+        if (!respostaGeracao.ok) throw new Error(
+          gerado.erro?.mensagem || "Não foi possível gerar dez combinações positivas. Verifique a descrição e o detector do filtro."
         );
-        const registro = await respostaDirigida.json();
-        if (!respostaDirigida.ok) throw new Error(
+        dirigidoRaiz.dataset.idTeste = gerado.id;
+        const respostaExecucao = await fetch(
+          `/api/validacao-nova/testes-dirigidos/${gerado.id}/execucao`, { method: "POST" }
+        );
+        const registro = await respostaExecucao.json();
+        if (!respostaExecucao.ok) throw new Error(
           registro.erro?.mensagem || "Não foi possível iniciar o teste dirigido."
         );
         dirigidoEstado.textContent = apresentarTesteDirigido(registro);
@@ -434,6 +464,7 @@ async function carregarCatalogo(raiz) {
         blocoPainel.dataset.modo = "dirigido";
         exibirOcorrencia(ocorrenciaDirigidaParaPainel(registro));
         continuar.disabled = false;
+        finalizar.disabled = false;
       } catch (erro) {
         dirigidoEstado.textContent = erro.message;
         dirigidoEstado.dataset.tipo = "erro";
@@ -479,19 +510,22 @@ async function carregarCatalogo(raiz) {
         const execucao = await respostaInicio.json();
         if (!respostaInicio.ok) throw new Error(execucao.erro?.mensagem || "Não foi possível iniciar o teste.");
         raiz.dataset.idExecucao = execucao.id;
-        estado.textContent = "Teste iniciado. O acompanhamento será exibido abaixo.";
+        estado.textContent = "Teste iniciado. O andamento será exibido em uma janela.";
         delete estado.dataset.tipo;
         grupo.disabled = true;
         filtro.disabled = true;
         iniciar.disabled = true;
-        blocoProgresso.hidden = false;
-        corpoRelatorio.innerHTML = '<tr><td colspan="4">Teste em andamento.</td></tr>';
-        resumoRelatorio.textContent = "Aguardando a conclusão do teste.";
-        blocoRelatorio.hidden = false;
+        dialogo.close();
+        abrirProgresso();
+        corpoRelatorio.replaceChildren();
+        blocoRelatorio.hidden = true;
+        inspecaoEstado.textContent = "Teste em andamento.";
+        inspecaoTotal.textContent = "—";
+        inspecaoOcorrencias.textContent = "—";
+        inspecaoPercentual.textContent = "—";
         limparPainel("Teste iniciado. Aguardando a primeira ocorrência do filtro.");
         cancelar.disabled = false;
         exibirExecucao(execucao);
-        dialogo.close();
         acompanhar(execucao.id);
       } catch (erro) {
         estado.textContent = erro.message;
@@ -501,10 +535,11 @@ async function carregarCatalogo(raiz) {
         confirmar.disabled = false;
       }
     });
-    cancelar.addEventListener("click", async () => {
+    const cancelarExecucaoGeral = async () => {
       const idExecucao = raiz.dataset.idExecucao;
       if (!idExecucao) return;
       cancelar.disabled = true;
+      painelCancelar.disabled = true;
       if (temporizador) clearTimeout(temporizador);
       try {
         const respostaCancelamento = await fetch(
@@ -515,11 +550,48 @@ async function carregarCatalogo(raiz) {
           execucao.erro?.mensagem || "Não foi possível cancelar o teste."
         );
         exibirExecucao(execucao);
+        if (!["CANCELADA", "FALHOU", "CONCLUIDA"].includes(execucao.estado)) abrirProgresso();
         acompanhar(idExecucao);
       } catch (erro) {
         progressoEstado.textContent = erro.message;
         progressoEstado.dataset.tipo = "erro";
         cancelar.disabled = false;
+        painelCancelar.disabled = false;
+      }
+    };
+    cancelar.addEventListener("click", cancelarExecucaoGeral);
+    painelCancelar.addEventListener("click", async () => {
+      if (blocoPainel.dataset.modo !== "dirigido") {
+        await cancelarExecucaoGeral();
+        return;
+      }
+      const idTeste = dirigidoRaiz.dataset.idTeste;
+      if (!idTeste) return;
+      painelCancelar.disabled = true;
+      continuar.disabled = true;
+      finalizar.disabled = true;
+      try {
+        const respostaCancelamento = await fetch(
+          `/api/validacao-nova/testes-dirigidos/${idTeste}/cancelamento`, { method: "POST" }
+        );
+        const registro = await respostaCancelamento.json();
+        if (!respostaCancelamento.ok) throw new Error(
+          registro.erro?.mensagem || "Não foi possível cancelar o teste dirigido."
+        );
+        dirigidoRaiz.registroAtual = registro;
+        dirigidoEstado.textContent = "Teste dirigido cancelado pelo usuário.";
+        delete dirigidoEstado.dataset.tipo;
+        delete blocoPainel.dataset.modo;
+        limparPainel("Teste dirigido cancelado pelo usuário.");
+        dirigidoGrupo.disabled = false;
+        dirigidoFiltro.disabled = false;
+        encerrarAtividade();
+      } catch (erro) {
+        dirigidoEstado.textContent = erro.message;
+        dirigidoEstado.dataset.tipo = "erro";
+        painelCancelar.disabled = false;
+        continuar.disabled = false;
+        finalizar.disabled = false;
       }
     });
     continuar.addEventListener("click", async () => {
@@ -527,6 +599,7 @@ async function carregarCatalogo(raiz) {
         const idTeste = dirigidoRaiz.dataset.idTeste;
         if (!idTeste) return;
         continuar.disabled = true;
+        finalizar.disabled = true;
         try {
           const respostaContinuacao = await fetch(
             `/api/validacao-nova/testes-dirigidos/${idTeste}/continuacao`, { method: "POST" }
@@ -540,11 +613,12 @@ async function carregarCatalogo(raiz) {
           if (registro.estado === "AGUARDANDO_CONFIRMACAO") {
             exibirOcorrencia(ocorrenciaDirigidaParaPainel(registro));
             continuar.disabled = false;
+            finalizar.disabled = false;
           } else {
-            limparPainel("Teste dirigido concluído. As 10 combinações foram inspecionadas.");
             delete blocoPainel.dataset.modo;
-            dirigidoResultado.textContent = resumirResultadoDirigido(registro.resultado);
-            dirigidoResultado.hidden = false;
+            painelCancelar.disabled = true;
+            exibirRelatorioDirigido(registro);
+            dirigidoResultado.hidden = true;
             dirigidoGrupo.disabled = false;
             dirigidoFiltro.disabled = false;
             encerrarAtividade();
@@ -553,12 +627,14 @@ async function carregarCatalogo(raiz) {
           dirigidoEstado.textContent = erro.message;
           dirigidoEstado.dataset.tipo = "erro";
           continuar.disabled = false;
+          finalizar.disabled = false;
         }
         return;
       }
       const idExecucao = raiz.dataset.idExecucao;
       if (!idExecucao) return;
       continuar.disabled = true;
+      finalizar.disabled = true;
       try {
         const respostaContinuacao = await fetch(
           `/api/validacao-nova/execucoes/${idExecucao}/continuacao`, { method: "POST" }
@@ -567,13 +643,66 @@ async function carregarCatalogo(raiz) {
         if (!respostaContinuacao.ok) throw new Error(
           execucao.erro?.mensagem || "Não foi possível continuar o teste."
         );
-        limparPainel("Teste retomado. Aguardando a próxima ocorrência do filtro.");
+        exibirExecucao(execucao);
+        if (execucao.estado !== "AGUARDANDO_CONFIRMACAO") abrirProgresso();
+        acompanhar(idExecucao);
+      } catch (erro) {
+        progressoEstado.textContent = erro.message;
+        progressoEstado.dataset.tipo = "erro";
+        continuar.disabled = false;
+        finalizar.disabled = false;
+      }
+    });
+    finalizar.addEventListener("click", async () => {
+      finalizar.disabled = true;
+      continuar.disabled = true;
+      painelCancelar.disabled = true;
+      if (blocoPainel.dataset.modo === "dirigido") {
+        const idTeste = dirigidoRaiz.dataset.idTeste;
+        if (!idTeste) return;
+        try {
+          const resposta = await fetch(
+            `/api/validacao-nova/testes-dirigidos/${idTeste}/conclusao`, { method: "POST" }
+          );
+          const registro = await resposta.json();
+          if (!resposta.ok) throw new Error(
+            registro.erro?.mensagem || "Não foi possível concluir o teste dirigido."
+          );
+          dirigidoRaiz.registroAtual = registro;
+          dirigidoEstado.textContent = apresentarTesteDirigido(registro);
+          delete blocoPainel.dataset.modo;
+          exibirRelatorioDirigido(registro);
+          limparPainel("Teste dirigido concluído.");
+          encerrarAtividade();
+        } catch (erro) {
+          dirigidoEstado.textContent = erro.message;
+          dirigidoEstado.dataset.tipo = "erro";
+          continuar.disabled = false;
+          finalizar.disabled = false;
+          painelCancelar.disabled = false;
+        }
+        return;
+      }
+      const idExecucao = raiz.dataset.idExecucao;
+      if (!idExecucao) return;
+      try {
+        const resposta = await fetch(
+          `/api/validacao-nova/execucoes/${idExecucao}/conclusao`, { method: "POST" }
+        );
+        const execucao = await resposta.json();
+        if (!resposta.ok) throw new Error(
+          execucao.erro?.mensagem || "Não foi possível concluir o teste."
+        );
+        limparPainel("Processando todas as ocorrências restantes…", true);
+        abrirProgresso();
         exibirExecucao(execucao);
         acompanhar(idExecucao);
       } catch (erro) {
         progressoEstado.textContent = erro.message;
         progressoEstado.dataset.tipo = "erro";
         continuar.disabled = false;
+        finalizar.disabled = false;
+        painelCancelar.disabled = false;
       }
     });
     raiz.catalogoFiltros = catalogo;

@@ -2,6 +2,7 @@ import unittest
 
 from msen.padroes import (
     calcular_categorias_diagonais,
+    detectar_configuracao_diagonal,
     detectar_dezenas_em_duas_linhas,
     detectar_dezenas_em_uma_linha_e_uma_coluna,
     detectar_tres_dezenas_na_mesma_coluna,
@@ -54,6 +55,22 @@ class DesenhoOcorrenciaValidacaoNovaTestCase(unittest.TestCase):
         for item in desenho.segmentos:
             self.assertTrue(0 <= item.x1 <= 10 and 0 <= item.x2 <= 10)
             self.assertTrue(0 <= item.y1 <= 6 and 0 <= item.y2 <= 6)
+
+    def test_duas_diagonais_desenha_somente_as_duas_que_cobrem_tudo(self):
+        desenho = construir_desenho_ocorrencia_validacao(
+            detectar_configuracao_diagonal, (6, 15, 17, 24, 28, 33)
+        )
+
+        self.assertEqual(
+            ["diagonal_passo_11", "diagonal_passo_9"],
+            [item.tipo for item in desenho.segmentos],
+        )
+
+    def test_diagonal_recusa_desenhar_deteccao_invalida_da_foto(self):
+        with self.assertRaises(ValueError):
+            construir_desenho_ocorrencia_validacao(
+                calcular_categorias_diagonais, (2, 6, 15, 17, 28, 38)
+            )
 
     def test_contrato_serializado_nao_expoe_codigo_nem_funcao(self):
         desenho = construir_desenho_ocorrencia_validacao(

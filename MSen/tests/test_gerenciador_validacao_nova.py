@@ -108,6 +108,28 @@ class GerenciadorValidacaoNovaTestCase(unittest.TestCase):
         fim = aguardar(gerenciador, inicio["id"], {"CONCLUIDA"})
         self.assertIsNone(fim["ocorrencia_atual"])
 
+    def test_concluir_ignora_as_ocorrencias_restantes(self):
+        ocorrencia = type("Ocorrencia", (), {
+            "id_grupo": 2, "nome_grupo": "Grupo", "id_filtro": 12,
+            "nome_filtro": "Filtro", "indice_combinacao": 1,
+            "combinacao": (1, 2, 3, 4, 5, 6),
+        })()
+
+        def operacao(_ids, _progresso, _cancelado, informar):
+            informar(ocorrencia)
+            ocorrencia.indice_combinacao = 2
+            informar(ocorrencia)
+            return {"total_filtros": 1}
+
+        gerenciador = GerenciadorExecucoesValidacaoNova(operacao)
+        inicio = gerenciador.iniciar((12,))
+        aguardar(gerenciador, inicio["id"], {"AGUARDANDO_CONFIRMACAO"})
+
+        retomada = gerenciador.concluir(inicio["id"])
+        self.assertEqual("EXECUTANDO", retomada["estado"])
+        fim = aguardar(gerenciador, inicio["id"], {"CONCLUIDA"})
+        self.assertIsNone(fim["ocorrencia_atual"])
+
 
 if __name__ == "__main__":
     unittest.main()

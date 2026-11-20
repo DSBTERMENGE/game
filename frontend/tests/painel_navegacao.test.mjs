@@ -225,7 +225,7 @@ test("HTML possui controles necessários e aceita somente XLSX", async () => {
 test("navegação separa Painel e Cadastros em uma barra compacta", async () => {
   const paginas = await Promise.all([
     "index.html", "cadastros.html", "grupos-padroes.html", "padroes.html",
-    "distribuicoes.html", "screener.html", "auditoria.html", "frequencias.html",
+    "distribuicoes.html", "screener.html", "validacao-nova.html", "frequencias.html",
     "selecao-dezenas.html", "gestao-desenvolvimento.html", "ajuda.html",
   ].map((arquivo) => readFile(new URL(`../${arquivo}`, import.meta.url), "utf8")));
   const css = await readFile(new URL("../css/navegacao.css", import.meta.url), "utf8");
@@ -239,7 +239,7 @@ test("navegação separa Painel e Cadastros em uma barra compacta", async () => 
     assert.match(html, /<summary>Cadastros<\/summary>/);
     assert.match(html, /href="\/grupos-padroes\.html"[^>]*>Grupo<\/a>/);
     assert.match(html, /href="\/padroes\.html"[^>]*>Padrões<\/a>/);
-    assert.match(html, /href="\/auditoria\.html"[^>]*>Validação e auditoria</);
+    assert.match(html, /href="\/validacao-nova\.html"[^>]*>Validação e auditoria</);
     assert.match(html, /href="\/frequencias\.html"[^>]*>Frequência das dezenas</);
     assert.match(html, /href="\/selecao-dezenas\.html"[^>]*>Seleção de dezenas</);
     assert.match(html, /href="\/ajuda\.html"[^>]*>Ajuda</);
@@ -255,19 +255,6 @@ test("navegação separa Painel e Cadastros em uma barra compacta", async () => 
   assert.match(javascript, /function posicionarMenu/);
   assert.match(css, /\.pagina-conteudo\s*\{[^}]*height:\s*calc\(100vh - 2\.8rem\)/s);
   assert.doesNotMatch(javascript, /window\.history\.back|botaoVoltar/);
-});
-
-test("página de auditoria mantém estrutura compacta e expõe validação", async () => {
-  const html = await readFile(new URL("../auditoria.html", import.meta.url), "utf8");
-  const css = await readFile(new URL("../css/auditoria.css", import.meta.url), "utf8");
-  assert.match(html, /<h1>Validação e auditoria<\/h1>/);
-  assert.match(html, /id="estado-algoritmo"/);
-  assert.match(html, /id="botao-atualizar-validacao"/);
-  assert.match(html, /id="filtros-auditoria"/);
-  assert.match(html, /id="corpo-avaliacoes"/);
-  assert.doesNotMatch(html, /data-destino-voltar/);
-  assert.doesNotMatch(html, /<input/i);
-  assert.match(css, /grid-template-rows:\s*auto auto auto auto minmax\(0,\s*1fr\)/);
 });
 
 test("cadastro de grupos usa o CRUD navegável e adaptador separado", async () => {

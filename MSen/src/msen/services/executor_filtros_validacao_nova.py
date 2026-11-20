@@ -9,9 +9,9 @@ from msen.padroes import (
     ErroResolucaoDetector,
     FotografiaHistoricaDiagonal,
     calcular_categorias_diagonais,
+    detectar_configuracao_diagonal,
     resolver_funcao_detectora,
 )
-from msen.screener import avaliar_filtro_diagonal
 
 
 Combinacao = tuple[int, int, int, int, int, int]
@@ -34,23 +34,8 @@ def criar_executor_filtro_validacao(
 
     if not callable(funcao):
         raise TypeError("A função do filtro deve ser chamável.")
-    if funcao is calcular_categorias_diagonais:
-        if not isinstance(fotografia_diagonal, FotografiaHistoricaDiagonal):
-            raise ErroExecutorFiltroValidacao(
-                "FOTOGRAFIA_DIAGONAL_AUSENTE",
-                "O filtro diagonal exige sua fotografia histórica aprovada.",
-            )
-
-        def executar_diagonal(combinacao: Combinacao) -> bool:
-            decisao = avaliar_filtro_diagonal(
-                combinacao,
-                fotografia_diagonal,
-                limite_diagonal,
-                calcular_categorias_diagonais,
-            )
-            return not decisao.aprovada
-
-        return executar_diagonal
+    if funcao in {calcular_categorias_diagonais, detectar_configuracao_diagonal}:
+        return detectar_configuracao_diagonal
 
     def executar_booleano(combinacao: Combinacao) -> bool:
         resultado = funcao(combinacao)

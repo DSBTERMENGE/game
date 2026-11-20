@@ -39,14 +39,6 @@ from .distribuicoes import calcular_distribuicoes_no_banco, distribuicoes_api
 from .screener_extensivel_service import (
     gerar_quadro_screener_extensivel, gerar_quadro_screener_integral,
 )
-from .execucoes_validacao import (
-    GerenciadorExecucoesValidacao, execucoes_validacao_api,
-)
-from .validacao import (
-    aprovar_referencia_categorica_no_banco,
-    consultar_relatorio_no_banco, consultar_validacao_no_banco, validacao_api,
-)
-from msen.services.exportacao_validacao import exportar_validacao_no_banco
 from .frequencias import (
     GerenciadorExecucoesFrequencia,
     consultar_estado_no_banco,
@@ -121,11 +113,6 @@ def criar_app(configuracao: Mapping[str, Any] | None = None) -> Flask:
         GERENCIADOR_SCREENER=GerenciadorExecucoesScreener(),
         CALCULAR_PERFIL_PADROES=calcular_perfil_no_banco,
         CALCULAR_DISTRIBUICOES=calcular_distribuicoes_no_banco,
-        GERENCIADOR_VALIDACAO=GerenciadorExecucoesValidacao(),
-        CONSULTAR_VALIDACAO=consultar_validacao_no_banco,
-        CONSULTAR_RELATORIO_VALIDACAO=consultar_relatorio_no_banco,
-        APROVAR_REFERENCIA_CATEGORICA=aprovar_referencia_categorica_no_banco,
-        EXPORTAR_VALIDACAO=exportar_validacao_no_banco,
         CONSULTAR_ESTADO_FREQUENCIA=consultar_estado_no_banco,
         CONSULTAR_FOTOGRAFIA_FREQUENCIA=consultar_fotografia_no_banco,
         CONSULTAR_SERIE_FREQUENCIA=consultar_serie_no_banco,
@@ -183,8 +170,6 @@ def criar_app(configuracao: Mapping[str, Any] | None = None) -> Flask:
     app.register_blueprint(screener_api)
     app.register_blueprint(perfis_padroes_api)
     app.register_blueprint(distribuicoes_api)
-    app.register_blueprint(execucoes_validacao_api)
-    app.register_blueprint(validacao_api)
     app.register_blueprint(frequencias_api)
     app.register_blueprint(selecao_dezenas_api)
     app.register_blueprint(gestao_desenvolvimento_api)

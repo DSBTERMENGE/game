@@ -57,6 +57,51 @@ class GerenciadorTesteDirigidoValidacaoNovaTestCase(unittest.TestCase):
             gerenciador.testar("ausente")
         with self.assertRaises(KeyError):
             gerenciador.continuar("ausente")
+        with self.assertRaises(KeyError):
+            gerenciador.cancelar("ausente")
+
+    def test_cancela_inspecao_pausada(self):
+        combinacoes = tuple((1, 2, 3, 4, 5, 6) for _ in range(10))
+        gerenciador = GerenciadorTestesDirigidosValidacaoNova(
+            lambda grupo, filtro: {
+                "id_grupo": grupo, "nome_grupo": "Grupo",
+                "id_filtro": filtro, "nome_filtro": "Filtro",
+                "tentativas_geracao": 10, "combinacoes": combinacoes,
+            },
+            lambda _filtro, _itens: {"avaliacoes": tuple({
+                "numero": indice, "combinacao": list(item), "detectada": True,
+                "desenho": {"dezenas_marcadas": list(item), "segmentos": []},
+            } for indice, item in enumerate(combinacoes, start=1))},
+        )
+        criado = gerenciador.criar(2, 12)
+        gerenciador.testar(criado["id"])
+
+        cancelado = gerenciador.cancelar(criado["id"])
+
+        self.assertEqual("CANCELADO", cancelado["estado"])
+        self.assertIsNone(cancelado["ocorrencia_atual"])
+
+    def test_concluir_vai_diretamente_ao_resultado(self):
+        combinacoes = tuple((1, 2, 3, 4, 5, 6) for _ in range(10))
+        gerenciador = GerenciadorTestesDirigidosValidacaoNova(
+            lambda grupo, filtro: {
+                "id_grupo": grupo, "nome_grupo": "Grupo",
+                "id_filtro": filtro, "nome_filtro": "Filtro",
+                "tentativas_geracao": 10, "combinacoes": combinacoes,
+            },
+            lambda _filtro, _itens: {"avaliacoes": tuple({
+                "numero": indice, "combinacao": list(item), "detectada": True,
+                "desenho": {"dezenas_marcadas": list(item), "segmentos": []},
+            } for indice, item in enumerate(combinacoes, start=1))},
+        )
+        criado = gerenciador.criar(2, 12)
+        gerenciador.testar(criado["id"])
+
+        concluido = gerenciador.concluir(criado["id"])
+
+        self.assertEqual("TESTADO", concluido["estado"])
+        self.assertEqual(10, concluido["resultado"]["ocorrencias_detectadas"])
+        self.assertIsNone(concluido["ocorrencia_atual"])
 
 
 if __name__ == "__main__":

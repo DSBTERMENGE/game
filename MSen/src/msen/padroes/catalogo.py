@@ -4,6 +4,7 @@ from .colunas import criar_registro_detectores_mesma_coluna
 from .iniciais import criar_registro_detectores_iniciais
 from .linhas import criar_registro_detectores_mesma_linha
 from .duas_linhas import detectar_dezenas_em_duas_linhas
+from .duas_colunas import detectar_dezenas_em_duas_colunas
 from .linha_coluna import detectar_dezenas_em_uma_linha_e_uma_coluna
 from .registro import RegistroDetectores
 
@@ -29,4 +30,5 @@ def criar_registro_detectores_aprovados() -> RegistroDetectores:
             registro.registrar(codigo, origem.obter(codigo))
     registro.registrar("PD_010", detectar_dezenas_em_uma_linha_e_uma_coluna)
     registro.registrar("PD_011", detectar_dezenas_em_duas_linhas)
+    registro.registrar("PD_012", detectar_dezenas_em_duas_colunas)
     return registro
