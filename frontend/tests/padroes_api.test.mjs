@@ -20,6 +20,21 @@ test("lista Grupos e filtra Padrões pelo relacionamento", async () => {
   assert.ok(chamadas.includes("/api/padroes?grupo_cod=PG_001"));
 });
 
+test("ordena alfabeticamente os grupos oferecidos em Padrões", async () => {
+  const fetchImpl = async () => resposta({ grupos: [
+    { grupo_cod: "PG_003", grupo_nome: "Linhas" },
+    { grupo_cod: "PG_001", grupo_nome: "Áreas" },
+    { grupo_cod: "PG_002", grupo_nome: "Colunas" },
+  ] });
+
+  const grupos = await listarGruposParaFiltro(fetchImpl);
+
+  assert.deepEqual(
+    grupos.map((grupo) => grupo.grupo_nome),
+    ["Áreas", "Colunas", "Linhas"],
+  );
+});
+
 test("criação e alteração preservam o Grupo escolhido", async () => {
   const chamadas = [];
   const fetchImpl = async (url, opcoes = {}) => {

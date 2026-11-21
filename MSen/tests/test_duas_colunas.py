@@ -1,19 +1,10 @@
 import unittest
 
-from msen.padroes import (
-    criar_registro_detectores_aprovados,
-    detectar_dezenas_em_duas_colunas,
-)
+from msen.padroes import detectar_dezenas_em_duas_colunas
 from msen.services import construir_desenho_ocorrencia_validacao
 
 
 class DuasColunasTestCase(unittest.TestCase):
-    def test_pd012_esta_no_catalogo_oficial(self):
-        self.assertIs(
-            detectar_dezenas_em_duas_colunas,
-            criar_registro_detectores_aprovados().obter("PD_012"),
-        )
-
     def test_detecta_sem_considerar_adjacencia_ou_distribuicao(self):
         casos = (
             (1, 11, 21, 31, 41, 2),

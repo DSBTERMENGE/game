@@ -25,9 +25,9 @@ class TestDocumentacao2017(unittest.TestCase):
             for caminho in (RAIZ / "MSen/src/msen/api").glob("*.py")
         )
         rotas = (
-            "/api/screener/quadro", "/api/validacao/quadro",
-            "/api/validacao/relatorio", "/api/validacao/exportacao",
-            "/api/validacao/execucoes",
+            "/api/screener/quadro", "/api/validacao-nova/filtros",
+            "/api/validacao-nova/execucoes",
+            "/api/validacao-nova/testes-dirigidos",
         )
         for rota in rotas:
             self.assertIn(rota, funcionamento)

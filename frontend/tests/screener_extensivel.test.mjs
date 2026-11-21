@@ -13,12 +13,9 @@ function filtro(codigo, entrada, exclusoes) {
   };
 }
 
-function padrao(codigo, estado, avaliacoes = 0, exclusoes = 0, saldo = null) {
+function padrao(codigo, avaliacoes = 0, exclusoes = 0, saldo = null) {
   return {
-    padrao_cod: codigo, padrao_nome: codigo, num_ocorrencias: 1,
-    total_sorteios: 100, percentual_ocorrencia: "1.000000",
-    limite_percentual: "10.000000", operador: "<", estado,
-    avaliacoes, correspondencias: exclusoes, exclusoes, saldo,
+    padrao_cod: codigo, padrao_nome: codigo, avaliacoes, exclusoes, saldo,
   };
 }
 
@@ -32,20 +29,14 @@ const quadro = {
   ],
   fechamento: { equacao: "total_analisado = total_excluido + total_aprovado", lado_esquerdo: 100, lado_direito: 100, valido: true },
   detalhes_padroes: {
-    limite_percentual: "10.000000", operador: "<",
     grupos: [
       { grupo_cod: "PG_001", grupo_nome: "Grupo 1", entrada: 80, exclusoes: 10, saldo: 70, reconciliado: true,
-        padroes: [padrao("PD_003", "APLICADO_RARO", 80, 10, 70)] },
+        padroes: [padrao("PD_003", 80, 10, 70)] },
       { grupo_cod: "PG_002", grupo_nome: "Grupo 2", entrada: 70, exclusoes: 0, saldo: 70, reconciliado: true,
-        padroes: [padrao("PD_005", "APLICADO_RARO", 70, 0, 70)] },
+        padroes: [padrao("PD_005", 70, 0, 70)] },
       { grupo_cod: "PG_003", grupo_nome: "Grupo 3", entrada: 70, exclusoes: 0, saldo: 70, reconciliado: true,
-        padroes: [padrao("PD_009", "APLICADO_RARO", 70, 0, 70)] },
+        padroes: [padrao("PD_009", 70, 0, 70)] },
     ],
-    fechamento: { entrada: 80, exclusoes: 10, saldo: 70, valido: true },
-  },
-  configuracao_raridade: {
-    limite_percentual: "10.000000", operador: "<",
-    padroes_selecionados: ["PD_003", "PD_005", "PD_009"],
   },
 };
 
@@ -53,13 +44,9 @@ test("contrato aceita somente quadro reconciliado nas três famílias", () => {
   assert.deepEqual(CODIGOS_FAMILIAS, ["ESTATISTICA", "GEOMETRIA", "PADROES"]);
   assert.equal(validarQuadroExtensivel(quadro), true);
   assert.equal(validarQuadroExtensivel({ ...quadro, resumo: { ...quadro.resumo, total_aprovado: 71 } }), false);
-  assert.equal(validarQuadroExtensivel({
-    ...quadro,
-    detalhes_padroes: {
-      ...quadro.detalhes_padroes,
-      fechamento: { ...quadro.detalhes_padroes.fechamento, saldo: 999 },
-    },
-  }), false);
+  const detalheInvalido = structuredClone(quadro);
+  detalheInvalido.detalhes_padroes.grupos[0].saldo = 999;
+  assert.equal(validarQuadroExtensivel(detalheInvalido), false);
 });
 
 test("contrato separa padrões individuais do filtro diagonal categórico", () => {
@@ -74,7 +61,7 @@ test("contrato separa padrões individuais do filtro diagonal categórico", () =
   comDiagonal.resumo.percentual_aprovado = "63.000000";
 
   assert.equal(validarQuadroExtensivel(comDiagonal), true);
-  comDiagonal.detalhes_padroes.fechamento.saldo = 63;
+  comDiagonal.detalhes_padroes.grupos[2].saldo = 63;
   assert.equal(validarQuadroExtensivel(comDiagonal), false);
 });
 
@@ -94,8 +81,8 @@ test("interface explica que cadastro não substitui função Python", async () =
   assert.match(html, /primeiras 5\.000 combinações/);
   assert.match(html, /todas as 50\.063\.860 combinações/);
   assert.match(html, /processamento pode durar várias horas/);
-  assert.match(html, /Limite de raridade dos padrões/);
-  assert.match(html, /id="limite-raridade-extensivel"/);
+  assert.doesNotMatch(html, /Limite de raridade dos padrões/);
+  assert.doesNotMatch(html, /id="limite-raridade-extensivel"/);
   assert.match(html, /id="botao-abrir-todos"[^>]*disabled/);
   assert.match(html, /id="botao-fechar-todos"[^>]*disabled/);
   assert.doesNotMatch(html, /dados inteiramente fictícios/i);
@@ -103,18 +90,15 @@ test("interface explica que cadastro não substitui função Python", async () =
   assert.match(javascript, /fetch\s*\("\/api\/screener\/execucoes"/);
   assert.match(javascript, /\/api\/screener\/execucoes\/\$\{encodeURIComponent\(id\)\}/);
   assert.match(javascript, /confirmarCancelamento:\s*true/);
-  assert.match(javascript, /limite_raridade/);
+  assert.doesNotMatch(javascript, /limite_raridade/);
   assert.match(javascript, /PROCESSAR_50063860_COMBINACOES/);
   assert.match(javascript, /escopo:\s*"integral"/);
   assert.match(javascript, /detalhesDisponiveis/);
-  assert.match(javascript, /Screener bloqueado: há pendências na Validação e auditoria dos critérios de seleção\./);
-  assert.match(javascript, /\/api\/validacao\/relatorio/);
-  assert.match(javascript, /possuiPendenciasValidacao/);
+  assert.doesNotMatch(javascript, /\/api\/validacao\/relatorio/);
+  assert.doesNotMatch(javascript, /bloqueadoPelaValidacao/);
 });
 
-test("contrato aceita os mesmos padroes em ordens diferentes", () => {
-  const reordenado = structuredClone(quadro);
-  reordenado.configuracao_raridade.padroes_selecionados = ["PD_009", "PD_003", "PD_005"];
-
-  assert.equal(validarQuadroExtensivel(reordenado), true);
+test("contrato não depende de configuração de raridade", () => {
+  assert.equal(validarQuadroExtensivel(quadro), true);
+  assert.equal("configuracao_raridade" in quadro, false);
 });

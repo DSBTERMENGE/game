@@ -6,6 +6,10 @@ from dataclasses import asdict, dataclass
 import psycopg
 
 from msen.padroes import (
+    analisar_arranjo_circular,
+    analisar_arranjo_eliptico,
+    analisar_arranjo_retangular,
+    analisar_arranjo_triangular,
     calcular_categorias_diagonais,
     detectar_configuracao_diagonal,
     detectar_dezenas_em_duas_linhas,
@@ -17,6 +21,10 @@ from msen.padroes import (
     detectar_mais_de_tres_dezenas_na_mesma_coluna,
     detectar_mais_de_tres_dezenas_na_mesma_linha,
     detectar_mais_de_tres_dezenas_sequenciais,
+    detectar_quatro_a_seis_dezenas_em_arranjo_circular,
+    detectar_seis_dezenas_em_arranjo_eliptico,
+    detectar_arranjo_quadrado_ou_retangulo,
+    detectar_dezenas_arranjadas_em_formato_triangular,
     detectar_tres_dezenas_na_mesma_coluna,
     detectar_tres_dezenas_na_mesma_linha,
     detectar_tres_dezenas_sequenciais,
@@ -36,14 +44,36 @@ class SegmentoPainelValidacao:
 
 
 @dataclass(frozen=True, slots=True)
+class CirculoPainelValidacao:
+    tipo: str
+    centro_x: float
+    centro_y: float
+    raio: float
+
+
+@dataclass(frozen=True, slots=True)
+class ElipsePainelValidacao:
+    tipo: str
+    centro_x: float
+    centro_y: float
+    raio_x: float
+    raio_y: float
+    angulo_graus: float
+
+
+@dataclass(frozen=True, slots=True)
 class DesenhoOcorrenciaValidacao:
     dezenas_marcadas: tuple[int, ...]
     segmentos: tuple[SegmentoPainelValidacao, ...]
+    circulos: tuple[CirculoPainelValidacao, ...] = ()
+    elipses: tuple[ElipsePainelValidacao, ...] = ()
 
     def como_dict(self) -> dict[str, object]:
         return {
             "dezenas_marcadas": list(self.dezenas_marcadas),
             "segmentos": [asdict(item) for item in self.segmentos],
+            "circulos": [asdict(item) for item in self.circulos],
+            "elipses": [asdict(item) for item in self.elipses],
         }
 
 
@@ -103,6 +133,8 @@ def construir_desenho_ocorrencia_validacao(
     pontos = tuple((dezena, (dezena - 1) // 10 + 1, (dezena - 1) % 10 + 1)
                    for dezena in dezenas)
     segmentos: tuple[SegmentoPainelValidacao, ...]
+    circulos: tuple[CirculoPainelValidacao, ...] = ()
+    elipses: tuple[ElipsePainelValidacao, ...] = ()
 
     sequenciais = {
         detectar_duas_dezenas_sequenciais,
@@ -162,10 +194,54 @@ def construir_desenho_ocorrencia_validacao(
             )
             for linha in linhas_diagonais
         )
+    elif detector is detectar_quatro_a_seis_dezenas_em_arranjo_circular:
+        analise = analisar_arranjo_circular(dezenas)
+        if analise is None:
+            raise ValueError("A combinação não forma um arranjo circular válido.")
+        segmentos = ()
+        circulos = (CirculoPainelValidacao(
+            tipo="arranjo_circular",
+            centro_x=analise.centro_x,
+            centro_y=analise.centro_y,
+            raio=analise.raio,
+        ),)
+    elif detector is detectar_seis_dezenas_em_arranjo_eliptico:
+        analise = analisar_arranjo_eliptico(dezenas)
+        if analise is None:
+            raise ValueError("A combinação não forma um arranjo elíptico válido.")
+        segmentos = ()
+        elipses = (ElipsePainelValidacao(
+            tipo="arranjo_eliptico",
+            centro_x=analise.centro_x,
+            centro_y=analise.centro_y,
+            raio_x=analise.semieixo_maior,
+            raio_y=analise.semieixo_menor,
+            angulo_graus=analise.angulo_graus,
+        ),)
+    elif detector is detectar_arranjo_quadrado_ou_retangulo:
+        analise = analisar_arranjo_retangular(dezenas)
+        if analise is None:
+            raise ValueError("A combinação não forma um arranjo retangular válido.")
+        segmentos = tuple(
+            SegmentoPainelValidacao(
+                "arranjo_retangular", lado.x1, lado.y1, lado.x2, lado.y2
+            )
+            for lado in analise.lados
+        )
+    elif detector is detectar_dezenas_arranjadas_em_formato_triangular:
+        analise = analisar_arranjo_triangular(dezenas)
+        if analise is None:
+            raise ValueError("A combinação não forma um arranjo triangular válido.")
+        segmentos = tuple(
+            SegmentoPainelValidacao(
+                "arranjo_triangular", lado.x1, lado.y1, lado.x2, lado.y2
+            )
+            for lado in analise.lados
+        )
     else:
         raise ValueError("O filtro ainda não possui representação visual definida.")
 
-    return DesenhoOcorrenciaValidacao(dezenas, segmentos)
+    return DesenhoOcorrenciaValidacao(dezenas, segmentos, circulos, elipses)
 
 
 def carregar_desenho_ocorrencia_validacao(

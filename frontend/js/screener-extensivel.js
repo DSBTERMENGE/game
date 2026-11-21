@@ -4,19 +4,9 @@ import { criarModalAndamento } from "./modal-andamento.js";
 
 const formato = new Intl.NumberFormat("pt-BR");
 const percentual = (valor) => `${String(valor).replace(".", ",")}%`;
-const CHAVE_LIMITE_RARIDADE = "msen.screener.limiteRaridade";
-export const MENSAGEM_VALIDACAO_PENDENTE = "Screener bloqueado: há pendências na Validação e auditoria dos critérios de seleção.";
-
-export function possuiPendenciasValidacao(relatorio) {
-  const fechamento = relatorio?.fechamento;
-  const criterios = relatorio?.criterios;
-  if (!fechamento || !Array.isArray(criterios) || criterios.length === 0) return true;
-  return !fechamento.valido
-    || Number(fechamento.divergentes || 0) > 0
-    || Number(fechamento.pendentes || 0) > 0
-    || criterios.some((item) => item.estado !== "APROVADO" || item.estado_catalogo !== "ATUAL");
-}
-
+const percentualCurto = (valor) => `(${Number(valor).toLocaleString("pt-BR", {
+  minimumFractionDigits: 2, maximumFractionDigits: 2,
+})}%)`;
 function texto(seletor, valor, raiz = document) {
   raiz.querySelector(seletor).textContent = valor;
 }
@@ -55,10 +45,6 @@ function descricaoFiltro(filtro, familia, detalhesPadroes) {
 function renderizarDetalhesPadroes(detalhes) {
   const painel = document.createElement("section");
   painel.className = "padroes-detalhados";
-  const politica = document.createElement("p");
-  politica.className = "prototipo-politica";
-  politica.textContent = `Aplicados somente quando a incidência histórica é ${detalhes.operador} ${detalhes.limite_percentual}%.`;
-  painel.append(politica);
   detalhes.grupos.forEach((grupo) => {
     const bloco = document.createElement("details");
     bloco.className = "padrao-grupo";
@@ -68,17 +54,13 @@ function renderizarDetalhesPadroes(detalhes) {
     const rolagem = document.createElement("div");
     rolagem.className = "padrao-grupo-tabela";
     const tabela = document.createElement("table");
-    tabela.innerHTML = "<thead><tr><th>Padrão</th><th>Incidência histórica</th><th>Limite</th><th>Estado</th><th>Avaliações</th><th>Correspondências</th><th>Exclusões</th><th>Saldo</th></tr></thead>";
+    tabela.innerHTML = "<thead><tr><th>Padrão</th><th>Avaliações</th><th>Exclusões</th><th>Saldo</th></tr></thead>";
     const corpo = document.createElement("tbody");
     grupo.padroes.forEach((padrao) => {
       const linha = document.createElement("tr");
       linha.className = "padrao-aplicado";
       celula(linha, `${padrao.padrao_cod} · ${padrao.padrao_nome}`);
-      celula(linha, `${percentual(padrao.percentual_ocorrencia)} (${formato.format(padrao.num_ocorrencias)}/${formato.format(padrao.total_sorteios)})`, "numero");
-      celula(linha, `${padrao.operador} ${percentual(padrao.limite_percentual)}`, "numero");
-      celula(linha, "Aplicado: raro", "estado-padrao");
       celula(linha, formato.format(padrao.avaliacoes), "numero");
-      celula(linha, formato.format(padrao.correspondencias), "numero");
       celula(linha, formato.format(padrao.exclusoes), "numero");
       celula(linha, valorOuTraco(padrao.saldo), "numero");
       corpo.append(linha);
@@ -99,15 +81,14 @@ function renderizarFamilia(familia, detalhesPadroes) {
     <strong>${familia.ordem} — ${familia.nome}</strong>
     <span>Entrada <b>${formato.format(familia.entrada)}</b></span>
     <span>Excluídas <b>${formato.format(familia.exclusoes)}</b></span>
-    <span>% inicial <b>${percentual(familia.percentual_total_inicial)}</b></span>
-    <span>% recebido <b>${percentual(familia.percentual_saldo_recebido)}</b></span>
+    <span>% excluído <b>${percentual(familia.percentual_saldo_recebido)}</b></span>
     <span>Saldo <b>${formato.format(familia.saldo)}</b></span>`;
   details.append(summary);
 
   const corpo = document.createElement("div");
   corpo.className = "prototipo-detalhes";
   const tabela = document.createElement("table");
-  tabela.innerHTML = "<thead><tr><th>Filtro</th><th>Integração</th><th>Entrada</th><th>Avaliações</th><th>Exclusões</th><th>% inicial</th><th>% recebido</th><th>Saldo</th></tr></thead>";
+  tabela.innerHTML = "<thead><tr><th>Filtro</th><th>Integração</th><th>Entrada</th><th>Avaliações</th><th>Exclusões</th><th>% excluído</th><th>Saldo</th></tr></thead>";
   const tbody = document.createElement("tbody");
   familia.filtros.forEach((filtro) => {
     const linha = document.createElement("tr");
@@ -116,7 +97,6 @@ function renderizarFamilia(familia, detalhesPadroes) {
     celula(linha, formato.format(filtro.entrada), "numero");
     celula(linha, formato.format(filtro.avaliacoes), "numero");
     celula(linha, formato.format(filtro.exclusoes), "numero");
-    celula(linha, percentual(filtro.percentual_total_inicial), "numero");
     celula(linha, percentual(filtro.percentual_saldo_recebido), "numero");
     celula(linha, formato.format(filtro.saldo), "numero");
     tbody.append(linha);
@@ -130,19 +110,11 @@ function renderizarFamilia(familia, detalhesPadroes) {
 
 export function renderizarQuadroExtensivel(dados) {
   if (!validarQuadroExtensivel(dados)) throw new Error("Quadro extensível não reconciliado.");
-  texto("#extensivel-total-universo", formato.format(dados.escopo.total_universo));
   texto("#extensivel-total-analisado", formato.format(dados.resumo.total_analisado));
   texto("#extensivel-total-excluido", formato.format(dados.resumo.total_excluido));
-  texto("#extensivel-percentual-excluido", percentual(dados.resumo.percentual_excluido));
+  texto("#extensivel-percentual-excluido", percentualCurto(dados.resumo.percentual_excluido));
   texto("#extensivel-total-aprovado", formato.format(dados.resumo.total_aprovado));
-  texto("#extensivel-percentual-aprovado", percentual(dados.resumo.percentual_aprovado));
-  const selecionados = dados.configuracao_raridade.padroes_selecionados;
-  texto(
-    "#extensivel-raridade-usada",
-    `Limite usado: ${dados.configuracao_raridade.operador} ${percentual(dados.configuracao_raridade.limite_percentual)}. Padrões selecionados: ${selecionados.length ? selecionados.join(", ") : "nenhum"}.`,
-  );
-  document.querySelector("#limite-raridade-extensivel").value = dados.configuracao_raridade.limite_percentual;
-  localStorage.setItem(CHAVE_LIMITE_RARIDADE, dados.configuracao_raridade.limite_percentual);
+  texto("#extensivel-percentual-aprovado", percentualCurto(dados.resumo.percentual_aprovado));
   document.querySelector("#extensivel-niveis").replaceChildren(
     ...dados.familias.map((familia) => renderizarFamilia(familia, dados.detalhes_padroes)),
   );
@@ -172,9 +144,7 @@ const dialogoConfirmarAplicacao = document.querySelector("#dialogo-confirmar-apl
 const botaoConfirmarAplicacao = document.querySelector("#botao-confirmar-aplicacao-screener");
 const botaoAbrirTodos = document.querySelector("#botao-abrir-todos");
 const botaoFecharTodos = document.querySelector("#botao-fechar-todos");
-const limiteRaridade = document.querySelector("#limite-raridade-extensivel");
 let detalhesDisponiveis = false;
-let bloqueadoPelaValidacao = true;
 
 async function respostaJson(resposta) {
   const dados = await resposta.json();
@@ -189,7 +159,7 @@ const modalTeste = criarModalAndamento({
   iniciar: async () => respostaJson(await fetch("/api/screener/execucoes", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ limite_raridade: limiteRaridade.value }),
+    body: JSON.stringify({}),
   })),
   consultar: async (id) => respostaJson(await fetch(`/api/screener/execucoes/${encodeURIComponent(id)}`)),
   cancelar: async (id) => respostaJson(await fetch(
@@ -210,7 +180,6 @@ const modalAplicacao = criarModalAndamento({
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      limite_raridade: limiteRaridade.value,
       escopo: "integral",
       confirmacao_integral: "PROCESSAR_50063860_COMBINACOES",
     }),
@@ -228,41 +197,13 @@ const modalAplicacao = criarModalAndamento({
 });
 
 function atualizarControles(processando = false) {
-  botaoExecutar.disabled = processando || bloqueadoPelaValidacao;
-  botaoAplicacao.disabled = processando || bloqueadoPelaValidacao;
-  limiteRaridade.disabled = processando;
+  botaoExecutar.disabled = processando;
+  botaoAplicacao.disabled = processando;
   botaoAbrirTodos.disabled = processando || !detalhesDisponiveis;
   botaoFecharTodos.disabled = processando || !detalhesDisponiveis;
 }
 
-async function carregarEstadoValidacao() {
-  try {
-    const resposta = await fetch("/api/validacao/relatorio");
-    const dados = await resposta.json();
-    bloqueadoPelaValidacao = !resposta.ok || possuiPendenciasValidacao(dados);
-  } catch (_erro) {
-    bloqueadoPelaValidacao = true;
-  }
-  if (bloqueadoPelaValidacao) texto("#mensagem-extensivel", MENSAGEM_VALIDACAO_PENDENTE);
-  atualizarControles(false);
-}
-
-const limiteMemorizado = localStorage.getItem(CHAVE_LIMITE_RARIDADE);
-if (limiteMemorizado !== null) {
-  limiteRaridade.value = limiteMemorizado;
-  if (!limiteRaridade.checkValidity()) limiteRaridade.value = "10";
-}
-
 async function executarAmostra() {
-  if (bloqueadoPelaValidacao) {
-    texto("#mensagem-extensivel", MENSAGEM_VALIDACAO_PENDENTE);
-    return;
-  }
-  if (!limiteRaridade.checkValidity()) {
-    limiteRaridade.reportValidity();
-    texto("#mensagem-extensivel", "Informe um limite de raridade entre 0% e 100%.");
-    return;
-  }
   atualizarControles(true);
   texto("#mensagem-extensivel", "Teste em andamento: analisando 5.000 combinações e comparando os resultados...");
   try {
@@ -278,15 +219,6 @@ async function executarAmostra() {
 }
 
 async function executarAplicacaoIntegral() {
-  if (bloqueadoPelaValidacao) {
-    texto("#mensagem-extensivel", MENSAGEM_VALIDACAO_PENDENTE);
-    return;
-  }
-  if (!limiteRaridade.checkValidity()) {
-    limiteRaridade.reportValidity();
-    texto("#mensagem-extensivel", "Informe um limite de raridade entre 0% e 100%.");
-    return;
-  }
   atualizarControles(true);
   texto("#mensagem-extensivel", "Aplicação em andamento: analisando 50.063.860 combinações...");
   try {
@@ -308,29 +240,15 @@ botaoFecharTodos.addEventListener("click", () => {
   document.querySelectorAll(".prototipo-nivel").forEach((item) => { item.open = false; });
 });
 botaoExecutar.addEventListener("click", () => {
-  if (bloqueadoPelaValidacao) {
-    texto("#mensagem-extensivel", MENSAGEM_VALIDACAO_PENDENTE);
-    return;
-  }
-  if (!limiteRaridade.checkValidity()) {
-    limiteRaridade.reportValidity();
-    texto("#mensagem-extensivel", "Informe um limite de raridade entre 0% e 100%.");
-    return;
-  }
   dialogoConfirmarTeste.showModal();
 });
 botaoConfirmarTeste.addEventListener("click", () => {
   queueMicrotask(executarAmostra);
 });
 botaoAplicacao.addEventListener("click", () => {
-  if (bloqueadoPelaValidacao) {
-    texto("#mensagem-extensivel", MENSAGEM_VALIDACAO_PENDENTE);
-    return;
-  }
   dialogoConfirmarAplicacao.showModal();
 });
 botaoConfirmarAplicacao.addEventListener("click", () => {
   queueMicrotask(executarAplicacaoIntegral);
 });
 atualizarControles(false);
-carregarEstadoValidacao();

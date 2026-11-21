@@ -20,6 +20,21 @@ test("adaptador localiza grupos e entrega todas as opções sem alterar a API ex
   assert.equal(resultado.registros[0].descricao, "B");
 });
 
+test("lista os grupos em ordem alfabética pelo nome", async () => {
+  const fetchImpl = async () => resposta({ grupos: [
+    { grupo_cod: "PG_003", grupo_nome: "Zigue-zague", grupo_descr: "C" },
+    { grupo_cod: "PG_001", grupo_nome: "Áreas", grupo_descr: "A" },
+    { grupo_cod: "PG_002", grupo_nome: "Colunas", grupo_descr: "B" },
+  ] });
+
+  const resultado = await criarApiGrupos(fetchImpl).listar({ busca: "" });
+
+  assert.deepEqual(
+    resultado.registros.map((grupo) => grupo.titulo),
+    ["Áreas", "Colunas", "Zigue-zague"],
+  );
+});
+
 test("adaptador traduz criação, edição e exclusão para o contrato de Grupo", async () => {
   const chamadas = [];
   const fetchImpl = async (url, opcoes = {}) => {

@@ -1,25 +1,16 @@
 export const CODIGOS_FAMILIAS = Object.freeze(["ESTATISTICA", "GEOMETRIA", "PADROES"]);
 
-function mesmosCodigosSemConsiderarOrdem(primeiros, segundos) {
-  if (!Array.isArray(primeiros) || !Array.isArray(segundos)) return false;
-  if (primeiros.length !== segundos.length) return false;
-  return JSON.stringify([...primeiros].sort()) === JSON.stringify([...segundos].sort());
-}
-
 export function validarDetalhesPadroes(detalhes, familia) {
-  if (!detalhes || detalhes.operador !== "<" || !Array.isArray(detalhes.grupos)) return false;
-  if (!detalhes.fechamento?.valido) return false;
+  if (!detalhes || !Array.isArray(detalhes.grupos)) return false;
   let saldo = familia.entrada;
   let exclusoes = 0;
   const codigos = new Set();
   for (const grupo of detalhes.grupos) {
     if (grupo.entrada !== saldo || grupo.entrada !== grupo.exclusoes + grupo.saldo) return false;
-    if (!grupo.reconciliado || !Array.isArray(grupo.padroes)) return false;
+    if (!Array.isArray(grupo.padroes)) return false;
     for (const padrao of grupo.padroes) {
       if (codigos.has(padrao.padrao_cod)) return false;
       codigos.add(padrao.padrao_cod);
-      if (padrao.estado !== "APLICADO_RARO") return false;
-      if (padrao.correspondencias !== padrao.exclusoes) return false;
     }
     exclusoes += grupo.exclusoes;
     saldo = grupo.saldo;
@@ -41,9 +32,7 @@ export function validarDetalhesPadroes(detalhes, familia) {
   const exclusoesDetalhadas = familia.entrada - saldoAposDetalhes;
   return exclusoes === exclusoesDetalhadas
     && saldo === saldoAposDetalhes
-    && detalhes.fechamento.entrada === familia.entrada
-    && detalhes.fechamento.exclusoes === exclusoesDetalhadas
-    && detalhes.fechamento.saldo === saldoAposDetalhes;
+    && saldoAposDetalhes >= familia.saldo;
 }
 
 export function validarQuadroExtensivel(dados) {
@@ -65,13 +54,7 @@ export function validarQuadroExtensivel(dados) {
     saldo = familia.saldo;
   }
   const familiaPadroes = dados.familias[2];
-  const configuracao = dados.configuracao_raridade;
-  const selecionadosDetalhes = dados.detalhes_padroes?.grupos
-    ?.flatMap((grupo) => grupo.padroes.map((padrao) => padrao.padrao_cod)) || [];
-  return configuracao?.operador === "<"
-    && configuracao.limite_percentual === dados.detalhes_padroes?.limite_percentual
-    && mesmosCodigosSemConsiderarOrdem(configuracao.padroes_selecionados, selecionadosDetalhes)
-    && validarDetalhesPadroes(dados.detalhes_padroes, familiaPadroes)
+  return validarDetalhesPadroes(dados.detalhes_padroes, familiaPadroes)
     && dados.fechamento.valido === true
     && dados.fechamento.lado_esquerdo === dados.fechamento.lado_direito
     && saldo === dados.resumo.total_aprovado

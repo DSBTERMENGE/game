@@ -81,8 +81,10 @@
 .validacao-nova-dezena { display: grid; place-items: center; position: relative; z-index: 1; border: 1px solid #c7d1d5; border-radius: .18rem; background: #e8ecee; color: #203745; font-size: clamp(.68rem, 1.3vw, 1.05rem); font-weight: 800; }
 .validacao-nova-dezena--marcada::after { content: ""; position: absolute; width: 72%; aspect-ratio: 1; border: .16rem solid #168653; border-radius: 50%; background: rgb(85 190 125 / 18%); }
 .validacao-nova-dezena--marcada { color: #0d5f39; }
-#validacao-nova-desenho { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
-#validacao-nova-desenho line { vector-effect: non-scaling-stroke; stroke: #b34a2d; stroke-width: 3; stroke-linecap: round; }
+#validacao-nova-desenho { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; overflow: hidden; pointer-events: none; }
+#validacao-nova-desenho line,
+#validacao-nova-desenho circle,
+#validacao-nova-desenho ellipse { vector-effect: non-scaling-stroke; fill: none; stroke: #b34a2d; stroke-width: 3; stroke-linecap: round; }
 #validacao-nova-painel-combinacao { margin: 0 1ch 0 0; color: #34464d; font-weight: 400; font-variant-numeric: tabular-nums; }
 .validacao-nova-painel > footer { display: flex; grid-column: 1; align-self: end; align-items: flex-end; justify-content: flex-end; gap: .5rem; }
 #validacao-nova-painel-combinacao:empty { display: none; }

@@ -20,6 +20,28 @@ from .estatisticas import (
     calcular_estatistica_padrao,
 )
 from .entrada import validar_dezenas
+from .arranjo_circular import (
+    ArranjoCircular,
+    analisar_arranjo_circular,
+    detectar_quatro_a_seis_dezenas_em_arranjo_circular,
+)
+from .arranjo_eliptico import (
+    ArranjoEliptico,
+    analisar_arranjo_eliptico,
+    detectar_seis_dezenas_em_arranjo_eliptico,
+)
+from .arranjo_retangular import (
+    ArranjoRetangular,
+    LadoRetangulo,
+    analisar_arranjo_retangular,
+    detectar_arranjo_quadrado_ou_retangulo,
+)
+from .arranjo_triangular import (
+    ArranjoTriangular,
+    LadoTriangulo,
+    analisar_arranjo_triangular,
+    detectar_dezenas_arranjadas_em_formato_triangular,
+)
 from .duas_linhas import (
     CODIGO_DEZENAS_EM_DUAS_LINHAS,
     calcular_estatistica_duas_linhas,
@@ -139,6 +161,20 @@ __all__ = [
     "resolver_funcao_detectora",
     "executar_funcao_detectora",
     "validar_dezenas",
+    "ArranjoCircular",
+    "analisar_arranjo_circular",
+    "detectar_quatro_a_seis_dezenas_em_arranjo_circular",
+    "ArranjoEliptico",
+    "analisar_arranjo_eliptico",
+    "detectar_seis_dezenas_em_arranjo_eliptico",
+    "ArranjoRetangular",
+    "LadoRetangulo",
+    "analisar_arranjo_retangular",
+    "detectar_arranjo_quadrado_ou_retangulo",
+    "ArranjoTriangular",
+    "LadoTriangulo",
+    "analisar_arranjo_triangular",
+    "detectar_dezenas_arranjadas_em_formato_triangular",
     "detectar_dezenas_em_duas_linhas",
     "CODIGO_UMA_LINHA_UMA_COLUNA",
     "detectar_dezenas_em_uma_linha_e_uma_coluna",

@@ -102,6 +102,35 @@ test("painel valida seis marcações e preserva segmentos geométricos", () => {
   assert.equal(formatarCombinacao([2, 5, 29]), "02 · 05 · 29");
 });
 
+test("painel aceita a circunferência do arranjo circular", () => {
+  const desenho = prepararDesenhoPainel({ desenho: {
+    dezenas_marcadas: [15, 17, 24, 28, 44, 48],
+    segmentos: [],
+    circulos: [{
+      tipo: "arranjo_circular", centro_x: 5.5, centro_y: 3.5, raio: 2.236,
+    }],
+  } });
+
+  assert.equal(desenho.circulos.length, 1);
+  assert.equal(desenho.circulos[0].tipo, "arranjo_circular");
+});
+
+test("painel aceita a elipse inclinada do arranjo elíptico", () => {
+  const desenho = prepararDesenhoPainel({ desenho: {
+    dezenas_marcadas: [1, 2, 11, 13, 22, 23],
+    segmentos: [],
+    circulos: [],
+    elipses: [{
+      tipo: "arranjo_eliptico", centro_x: 1.5, centro_y: 1.5,
+      raio_x: 1.414, raio_y: 0.816, angulo_graus: 45,
+    }],
+  } });
+
+  assert.equal(desenho.elipses.length, 1);
+  assert.equal(desenho.elipses[0].tipo, "arranjo_eliptico");
+  assert.equal(desenho.elipses[0].angulo_graus, 45);
+});
+
 test("relatório agrupa filtros e mantém total, ocorrências e incidência", () => {
   const linhas = organizarRelatorio([
     { nome_grupo: "Grupo A", nome_filtro: "Filtro 1", total_testado: 1000,

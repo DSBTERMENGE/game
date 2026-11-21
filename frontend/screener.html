@@ -37,11 +37,6 @@
           <p id="mensagem-extensivel" role="status">Pronto para iniciar o Teste do Screener.</p>
           <p class="aviso-integracao">Cadastrar um padrão não cria seu filtro: cada grupo precisa de função Python, testes e integração validada.</p>
         </div>
-        <div class="prototipo-configuracao">
-          <label class="controle-raridade" for="limite-raridade-extensivel">Limite de raridade dos padrões (%) — Obsoleto, a remover</label>
-          <input id="limite-raridade-extensivel" type="number" min="0" max="100" step="0.000001" value="10" required aria-describedby="explicacao-limite-raridade">
-          <small id="explicacao-limite-raridade">Padrões com ocorrência histórica abaixo deste percentual são considerados raros.</small>
-        </div>
         <section class="prototipo-comando" aria-labelledby="titulo-teste-screener">
           <div>
             <h2 id="titulo-teste-screener">Teste do Screener</h2>
@@ -61,12 +56,10 @@
           <button id="botao-fechar-todos" type="button" disabled>Fechar detalhes</button>
         </div>
       </section>
-      <p id="extensivel-raridade-usada" class="prototipo-politica">Nenhum teste foi executado com o limite informado.</p>
-
       <section class="prototipo-resumo" aria-label="Resumo real do funil">
-        <output><span>Universo possível</span><strong id="extensivel-total-universo">—</strong><small>Analisadas: <b id="extensivel-total-analisado">—</b></small></output>
-        <output class="prototipo-resumo--excluido"><span>Total excluído</span><strong id="extensivel-total-excluido">—</strong><small id="extensivel-percentual-excluido">—</small></output>
-        <output class="prototipo-resumo--aprovado"><span>Combinações aprovadas</span><strong id="extensivel-total-aprovado">—</strong><small id="extensivel-percentual-aprovado">—</small></output>
+        <output><span>Combinações analisadas</span><strong id="extensivel-total-analisado">—</strong></output>
+        <output class="prototipo-resumo--excluido"><span>Total excluído</span><strong><small id="extensivel-percentual-excluido">(—)</small> <b id="extensivel-total-excluido">—</b></strong></output>
+        <output class="prototipo-resumo--aprovado"><span>Combinações aprovadas</span><strong><small id="extensivel-percentual-aprovado">(—)</small> <b id="extensivel-total-aprovado">—</b></strong></output>
       </section>
 
       <section id="extensivel-niveis" class="prototipo-niveis" aria-label="Famílias do funil">

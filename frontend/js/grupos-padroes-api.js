@@ -14,6 +14,10 @@ function normalizar(grupo) {
   return { ...grupo, id: grupo.grupo_cod, titulo: grupo.grupo_nome, descricao: grupo.grupo_descr };
 }
 
+const ordenarPorNome = (a, b) => a.titulo.localeCompare(
+  b.titulo, "pt-BR", { sensitivity: "base", numeric: true }
+);
+
 export function criarApiGrupos(fetchImpl = fetch) {
   return {
     async listar(consulta) {
@@ -21,7 +25,7 @@ export function criarApiGrupos(fetchImpl = fetch) {
       const trecho = String(consulta.busca ?? "").trim().toLocaleLowerCase("pt-BR");
       const todos = (corpo.grupos ?? []).map(normalizar).filter((grupo) =>
         !trecho || grupo.titulo.toLocaleLowerCase("pt-BR").includes(trecho)
-      );
+      ).sort(ordenarPorNome);
       return { registros: todos, total: todos.length };
     },
     async criar(dados) {

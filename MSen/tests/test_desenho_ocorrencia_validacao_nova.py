@@ -8,6 +8,10 @@ from msen.padroes import (
     detectar_tres_dezenas_na_mesma_coluna,
     detectar_tres_dezenas_na_mesma_linha,
     detectar_tres_dezenas_sequenciais,
+    detectar_quatro_a_seis_dezenas_em_arranjo_circular,
+    detectar_seis_dezenas_em_arranjo_eliptico,
+    detectar_arranjo_quadrado_ou_retangulo,
+    detectar_dezenas_arranjadas_em_formato_triangular,
 )
 from msen.services import construir_desenho_ocorrencia_validacao
 
@@ -79,6 +83,50 @@ class DesenhoOcorrenciaValidacaoNovaTestCase(unittest.TestCase):
         texto = repr(desenho).lower()
         self.assertNotIn("codigo", texto)
         self.assertNotIn("funcao", texto)
+
+    def test_arranjo_circular_desenha_a_circunferencia_detectada(self):
+        desenho = construir_desenho_ocorrencia_validacao(
+            detectar_quatro_a_seis_dezenas_em_arranjo_circular,
+            (15, 17, 24, 28, 44, 48),
+        )
+
+        self.assertEqual((), desenho.segmentos)
+        self.assertEqual(1, len(desenho.circulos))
+        self.assertEqual("arranjo_circular", desenho.circulos[0].tipo)
+        self.assertGreater(desenho.circulos[0].raio, 0)
+
+    def test_arranjo_eliptico_desenha_a_elipse_detectada(self):
+        desenho = construir_desenho_ocorrencia_validacao(
+            detectar_seis_dezenas_em_arranjo_eliptico,
+            (1, 2, 11, 13, 22, 23),
+        )
+
+        self.assertEqual((), desenho.segmentos)
+        self.assertEqual(1, len(desenho.elipses))
+        self.assertEqual("arranjo_eliptico", desenho.elipses[0].tipo)
+        self.assertLess(desenho.elipses[0].raio_y, desenho.elipses[0].raio_x)
+
+    def test_arranjo_retangular_desenha_exatamente_quatro_lados(self):
+        desenho = construir_desenho_ocorrencia_validacao(
+            detectar_arranjo_quadrado_ou_retangulo,
+            (16, 27, 34, 38, 47, 56),
+        )
+
+        self.assertEqual(4, len(desenho.segmentos))
+        self.assertTrue(all(
+            item.tipo == "arranjo_retangular" for item in desenho.segmentos
+        ))
+
+    def test_arranjo_triangular_desenha_exatamente_tres_lados(self):
+        desenho = construir_desenho_ocorrencia_validacao(
+            detectar_dezenas_arranjadas_em_formato_triangular,
+            (2, 4, 11, 14, 31, 32),
+        )
+
+        self.assertEqual(3, len(desenho.segmentos))
+        self.assertTrue(all(
+            item.tipo == "arranjo_triangular" for item in desenho.segmentos
+        ))
 
 
 if __name__ == "__main__":

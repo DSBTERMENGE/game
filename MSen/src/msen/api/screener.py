@@ -12,8 +12,6 @@ from flask import Blueprint, current_app, jsonify, request
 from msen.screener import (
     CONFIRMACAO_INTEGRAL,
     TOTAL_COMBINACOES,
-    ErroConfiguracaoScreener,
-    validar_limite_raridade,
 )
 
 
@@ -35,7 +33,7 @@ class GerenciadorExecucoesScreener:
         self._ativa: str | None = None
 
     def iniciar(
-        self, limite_raridade, operacao: Callable | None = None, *,
+        self, operacao: Callable | None = None, *,
         escopo: str = "amostra",
     ) -> dict[str, object]:
         executar = operacao or self._operacao
@@ -61,7 +59,7 @@ class GerenciadorExecucoesScreener:
             self._ativa = identificador
         Thread(
             target=self._executar,
-            args=(identificador, limite_raridade, executar),
+            args=(identificador, executar),
             daemon=True,
         ).start()
         return self.obter(identificador)
@@ -98,11 +96,10 @@ class GerenciadorExecucoesScreener:
             dados["total"] = total
             dados["percentual"] = round(concluido * 100 / total, 2)
 
-    def _executar(self, identificador: str, limite_raridade, operacao: Callable):
+    def _executar(self, identificador: str, operacao: Callable):
         cancelamento = self._cancelamentos[identificador]
         try:
             resultado = operacao(
-                limite_raridade,
                 lambda etapa, concluido, total: self._progresso(
                     identificador, etapa, concluido, total
                 ),
@@ -137,27 +134,19 @@ def obter_quadro_screener():
     dados = request.get_json(silent=True)
     if dados is None and request.data:
         return jsonify(erro={
-            "codigo": "CONFIGURACAO_RARIDADE_INVALIDA",
+            "codigo": "CORPO_JSON_INVALIDO",
             "mensagem": "O corpo deve ser um objeto JSON válido.",
         }), 400
     if dados is None:
         dados = {}
-    if not isinstance(dados, dict) or set(dados).difference({"limite_raridade"}):
+    if not isinstance(dados, dict) or dados:
         return jsonify(erro={
-            "codigo": "CONFIGURACAO_RARIDADE_INVALIDA",
-            "mensagem": "Informe somente o limite percentual de raridade.",
+            "codigo": "CONFIGURACAO_EXECUCAO_INVALIDA",
+            "mensagem": "Esta operação não recebe configurações.",
         }), 400
     try:
-        limite = (
-            None
-            if "limite_raridade" not in dados
-            else validar_limite_raridade(dados["limite_raridade"])
-        )
-    except ErroConfiguracaoScreener as erro:
-        return jsonify(erro={"codigo": erro.codigo, "mensagem": str(erro)}), 400
-    try:
         executor = current_app.config["GERAR_QUADRO_SCREENER"]
-        return jsonify(executor(limite))
+        return jsonify(executor())
     except Exception as erro:
         codigo = getattr(erro, "codigo", "ENSAIO_EXTENSIVEL_INDISPONIVEL")
         current_app.logger.exception("Falha no ensaio extensível")
@@ -172,7 +161,7 @@ def iniciar_execucao_screener():
     dados = request.get_json(silent=True) or {}
     try:
         if not isinstance(dados, dict) or set(dados).difference({
-            "limite_raridade", "escopo", "confirmacao_integral",
+            "escopo", "confirmacao_integral",
         }):
             return jsonify(erro={
                 "codigo": "CONFIGURACAO_EXECUCAO_INVALIDA",
@@ -189,19 +178,16 @@ def iniciar_execucao_screener():
                 "codigo": "CONFIRMACAO_INTEGRAL_AUSENTE",
                 "mensagem": "A aplicação integral exige a confirmação explícita do universo completo.",
             }), 400
-        limite = validar_limite_raridade(dados.get("limite_raridade", "10"))
         gerenciador = current_app.config["GERENCIADOR_SCREENER"]
         executor = current_app.config[
             "GERAR_QUADRO_SCREENER_INTEGRAL"
             if escopo == "integral" else "GERAR_QUADRO_SCREENER"
         ]
         return jsonify(gerenciador.iniciar(
-            limite, executor, escopo=escopo,
+            executor, escopo=escopo,
         )), 202
     except ExecucaoScreenerEmAndamento as erro:
         return jsonify(erro={"codigo": "EXECUCAO_EM_ANDAMENTO", "mensagem": str(erro)}), 409
-    except ErroConfiguracaoScreener as erro:
-        return jsonify(erro={"codigo": erro.codigo, "mensagem": str(erro)}), 400
 
 
 @screener_api.get("/api/screener/execucoes/<identificador>")

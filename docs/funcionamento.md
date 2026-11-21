@@ -1,6 +1,6 @@
 # Funcionamento vigente do Game / MSen
 
-Atualizado em 2026-11-11, após a subetapa 28.5.
+Atualizado em 2026-11-20.
 
 Este é o documento funcional canônico. O comportamento confirmado pelo código,
 pelas migrações e pelos testes prevalece em caso de divergência.
@@ -89,9 +89,10 @@ Isso não deve ser confundido com a matriz de validação. Nela,
 significa que o classificador foi executado corretamente e não identificou
 nenhum subgrupo naquela combinação.
 
-As incidências usam as ocorrências reais e o total de sorteios. O Screener
-seleciona padrões aprovados cuja incidência seja estritamente menor que o limite
-configurado; o valor inicial configurado é 10%.
+As incidências históricas servem para avaliar e revisar os padrões, mas não
+selecionam os filtros do Screener. Todo padrão que possui função detectora
+Python cadastrada participa do funil e elimina a combinação quando retorna
+`True`.
 
 ## 5. Três famílias do Screener
 
@@ -112,10 +113,10 @@ referências de teste.
 
 ### 5.3 Padrões
 
-Os nove padrões atuais, distribuídos em três grupos, são todos validados. Na
-execução do Screener, entram somente os padrões homologados selecionados pela
-consulta de raridade vigente. Uma combinação que corresponda a um desses
-padrões é eliminada; padrão não selecionado não elimina.
+Na execução do Screener, entram todos os padrões que possuem função detectora
+Python cadastrada. Uma combinação é eliminada quando qualquer um desses
+detectores retorna `True`. Não existe mais limite percentual de raridade na
+montagem do funil.
 
 ## 6. Homologação matemática
 
@@ -172,7 +173,7 @@ Antes de construir o plano executável, o Screener exige:
 4. todas as avaliações conferidas, executadas e `S`;
 5. dez perfis calculados para a quantidade atual de resultados;
 6. todos os critérios estatísticos e geométricos cobertos;
-7. exatamente os padrões aprovados selecionados pelo limite vigente.
+7. todos os padrões com função detectora Python cadastrada.
 
 Qualquer função nova, alterada, pendente ou com `N`, filtro ausente/extra,
 perfil antigo ou estado global falso bloqueia toda a API. Não existe aprovação
@@ -180,7 +181,12 @@ por omissão.
 
 ## 9. Página Validação e auditoria
 
-`frontend/auditoria.html` oferece:
+`frontend/validacao-nova.html` oferece seleção de filtros, teste sobre a
+coleção fixa, teste dirigido e inspeção visual das ocorrências. Seus contratos
+usam os identificadores relacionais `id_grupo` e `id_padrao`; os códigos
+históricos `PG_xxx` e `PD_xxx` não são necessários para selecionar um filtro.
+
+A antiga página `frontend/auditoria.html` e suas rotas foram removidas.
 
 - estado global e motivo;
 - botão de atualização quando desatualizado;
@@ -380,7 +386,7 @@ Contratos detalhados: `docs/CONTRATO_SELECAO_DEZENAS.md`,
 ## 12. Páginas e APIs vigentes
 
 Páginas: `index.html`, `cadastros.html`, `grupos-padroes.html`, `padroes.html`,
-`distribuicoes.html`, `screener.html`, `auditoria.html`, `frequencias.html`,
+`distribuicoes.html`, `screener.html`, `validacao-nova.html`, `frequencias.html`,
 `graficos-frequencias.html`, `selecao-dezenas.html` e
 `gestao-desenvolvimento.html` e `ajuda.html`.
 
@@ -396,11 +402,11 @@ conhecida. Os antigos modais locais não são mais executáveis.
 Rotas centrais desta etapa:
 
 - `POST /api/screener/quadro`;
-- `GET /api/validacao/quadro`;
-- `GET /api/validacao/relatorio`;
-- `GET /api/validacao/exportacao?formato=json|csv`;
-- `POST /api/validacao/execucoes`;
-- `GET /api/validacao/execucoes/<identificador>`.
+- `GET /api/validacao-nova/filtros`;
+- `POST /api/validacao-nova/execucoes` e acompanhamento, continuação,
+  conclusão ou cancelamento por identificador;
+- `POST /api/validacao-nova/testes-dirigidos` e execução, continuação,
+  conclusão ou cancelamento por identificador;
 - `GET /api/frequencias/estado`;
 - `GET /api/frequencias/fotografia-atual`;
 - `GET /api/frequencias/serie`;

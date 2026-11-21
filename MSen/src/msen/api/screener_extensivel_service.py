@@ -12,16 +12,15 @@ from typing import Callable
 from msen.screener import (
     FaixaEstatistica,
     FaixaGeometrica,
-    FrequenciaPadraoFotografada,
+    DecisaoFiltro,
+    DefinicaoFamilia,
+    DefinicaoFiltro,
     CONFIRMACAO_INTEGRAL,
     TOTAL_COMBINACOES,
     criar_adaptadores_ativos,
     criar_familia_estatistica,
-    criar_familia_detectores_raros,
     criar_familia_geometrica,
-    acrescentar_filtro_diagonal,
     criar_fotografia_configuracao,
-    criar_grupo_padroes_fotografado,
     criar_quadro_consolidado,
     envelopar_fotografia,
     executar_funil,
@@ -29,35 +28,17 @@ from msen.screener import (
     gerar_amostra,
     serializar_quadro_consolidado,
 )
-from msen.screener.configuracao import (
-    carregar_configuracao_screener,
-    validar_limite_raridade,
-)
-from msen.modelos import ResultadoEntrada
+from msen.screener.configuracao import carregar_configuracao_screener
 from msen.config import carregar_configuracao_banco
 from msen.database import abrir_conexao
-from msen.padroes import (
-    calcular_categorias_diagonais,
-    criar_fotografia_historica_diagonal,
-    criar_registro_detectores_aprovados,
-    resolver_funcao_detectora,
-)
-from msen.services.selecao_padroes import SelecaoPadroesRaros
+from msen.padroes import resolver_funcao_detectora
+from msen.services.executor_filtros_validacao_nova import criar_executor_filtro_validacao
 from msen.services.entradas_motor_screener import (
     adaptar_aplicacao_integral,
     adaptar_teste_5000,
 )
-from msen.services.homologacao_screener import (
-    confirmar_cobertura_screener_no_banco,
-    consultar_homologacao_screener_no_banco, validar_homologacao_screener,
-)
 
 from .distribuicoes import calcular_distribuicoes_no_banco
-from .perfis_padroes import (
-    calcular_perfil_no_banco,
-    selecionar_padroes_raros_no_banco,
-)
-from .resultados import listar_resultados_do_banco
 
 
 class ErroEnsaioExtensivel(RuntimeError):
@@ -74,56 +55,106 @@ class PlanoFiltrosScreener:
 
     familias: tuple
     parametros: dict[str, object]
-    grupos_padroes: tuple
-    perfil_padroes: object
-    selecao_padroes: SelecaoPadroesRaros
-    fotografia_diagonal: object
+    padroes_ativos: tuple
 
 
-ID_PADRAO_DIAGONAL = 19
+@dataclass(frozen=True, slots=True)
+class PadraoAtivoScreener:
+    id_padrao: int
+    padrao_cod: str
+    padrao_nome: str
+    grupo_cod: str
+    grupo_nome: str
+    detector: Callable
 
 
-def _carregar_analisador_diagonal():
-    """Resolve pelo id_padrao a função categórica cadastrada para a diagonal."""
+def _carregar_padroes_ativos() -> tuple[PadraoAtivoScreener, ...]:
+    """Carrega todos os detectores booleanos cadastrados, sem corte de raridade."""
 
-    with abrir_conexao(carregar_configuracao_banco()) as conexao:
-        with conexao.cursor() as cursor:
-            cursor.execute(
-                "SELECT funcao_detectora FROM padroes_subgrupo WHERE id_padrao=%s",
-                (ID_PADRAO_DIAGONAL,),
-            )
-            linha = cursor.fetchone()
-    if linha is None:
-        raise ErroEnsaioExtensivel(
-            "PADRAO_DIAGONAL_AUSENTE", "O padrão diagonal não foi encontrado."
+    with abrir_conexao(carregar_configuracao_banco()) as conexao, conexao.cursor() as cursor:
+        cursor.execute(
+            "SELECT p.id_padrao, p.padrao_cod, p.padrao_nome, "
+            "g.grupo_cod, g.grupo_nome, p.funcao_detectora "
+            "FROM padroes_subgrupo p JOIN padroes_grupo g USING (id_grupo) "
+            "WHERE p.funcao_detectora IS NOT NULL "
+            "ORDER BY lower(g.grupo_nome), lower(p.padrao_nome), p.id_padrao",
         )
-    analisador = resolver_funcao_detectora(linha[0])
-    if analisador is not calcular_categorias_diagonais:
-        raise ErroEnsaioExtensivel(
-            "FUNCAO_DIAGONAL_DIVERGENTE",
-            "A função cadastrada para o padrão diagonal diverge da função homologada.",
+        linhas = cursor.fetchall()
+    return tuple(
+        PadraoAtivoScreener(
+            id_padrao=linha[0], padrao_cod=linha[1], padrao_nome=linha[2],
+            grupo_cod=linha[3], grupo_nome=linha[4],
+            detector=criar_executor_filtro_validacao(
+                resolver_funcao_detectora(linha[5])
+            ),
         )
-    return analisador
-
-
-def _carregar_fotografia_diagonal():
-    """Calcula uma vez a distribuição diagonal de todo o histórico atual."""
-
-    resultados = listar_resultados_do_banco()
-    entradas = tuple(
-        ResultadoEntrada.criar(
-            data_resultado=item.resultado.data_resultado,
-            numero_ap=item.resultado.numero_ap,
-            resultados=item.resultado.resultados,
-        )
-        for item in resultados
+        for linha in linhas
     )
-    if not entradas:
-        raise ErroEnsaioExtensivel(
-            "HISTORICO_DIAGONAL_VAZIO",
-            "O filtro diagonal exige ao menos um resultado histórico.",
-        )
-    return criar_fotografia_historica_diagonal(entradas)
+
+
+def _criar_familia_padroes_ativos(
+    padroes: tuple[PadraoAtivoScreener, ...], ordem: int = 3,
+) -> DefinicaoFamilia:
+    filtros = []
+    for posicao, padrao in enumerate(padroes, 1):
+        codigo_filtro = f"PAD_{padrao.padrao_cod}"
+
+        def avaliar(combinacao, *, item=padrao, codigo=codigo_filtro):
+            detectado = item.detector(combinacao)
+            if not isinstance(detectado, bool):
+                raise ErroEnsaioExtensivel(
+                    "DETECCAO_INVALIDA",
+                    f"O detector {item.padrao_nome} não retornou True ou False.",
+                )
+            return DecisaoFiltro.criar(
+                codigo_filtro=codigo,
+                aprovada=not detectado,
+                motivo="PADRAO_DETECTADO" if detectado else "PADRAO_NAO_DETECTADO",
+                evidencias={
+                    "id_padrao": item.id_padrao,
+                    "id_grupo_logico": item.grupo_cod,
+                    "detectado": detectado,
+                },
+            )
+
+        filtros.append(DefinicaoFiltro(
+            codigo_filtro, padrao.padrao_nome, posicao, avaliar
+        ))
+    return DefinicaoFamilia("PADROES", "Padrões", ordem, tuple(filtros))
+
+
+def _detalhar_padroes_ativos(*, padroes, familia_serializada):
+    filtros = {
+        item["codigo"].removeprefix("PAD_"): item
+        for item in familia_serializada["filtros"]
+        if item["codigo"] != "PAD_PG_004"
+    }
+    grupos = []
+    saldo_grupo = familia_serializada["entrada"]
+    for grupo_cod in dict.fromkeys(item.grupo_cod for item in padroes):
+        itens = tuple(item for item in padroes if item.grupo_cod == grupo_cod)
+        entrada_grupo = saldo_grupo
+        linhas = []
+        for item in itens:
+            filtro = filtros[item.padrao_cod]
+            saldo_grupo = filtro["saldo"]
+            linhas.append({
+                "id_padrao": item.id_padrao,
+                "padrao_cod": item.padrao_cod,
+                "padrao_nome": item.padrao_nome,
+                "avaliacoes": filtro["avaliacoes"],
+                "exclusoes": filtro["exclusoes"],
+                "saldo": filtro["saldo"],
+            })
+        grupos.append({
+            "grupo_cod": grupo_cod,
+            "grupo_nome": itens[0].grupo_nome,
+            "entrada": entrada_grupo,
+            "exclusoes": entrada_grupo - saldo_grupo,
+            "saldo": saldo_grupo,
+            "padroes": linhas,
+        })
+    return {"grupos": grupos}
 
 
 def _perfil_por_codigo(distribuicoes: dict[str, object], codigo: str) -> dict[str, object]:
@@ -144,156 +175,13 @@ def _faixa(distribuicoes: dict[str, object], codigo: str) -> tuple[Decimal, Deci
     return Decimal(faixa["limite_inferior"]), Decimal(faixa["limite_superior"])
 
 
-def _grupos_raros_fotografados(perfil, selecao: SelecaoPadroesRaros):
-    """Organiza a seleção SQL nos três grupos conceituais fotografados."""
-
-    if (
-        perfil.total_resultados <= 0
-        or perfil.numero_ap_inicial is None
-        or perfil.numero_ap_final is None
-        or perfil.data_inicial is None
-        or perfil.data_final is None
-    ):
-        raise ErroEnsaioExtensivel(
-            "PERFIL_PADROES_VAZIO", "O perfil histórico de padrões está vazio."
-        )
-    if not selecao.padroes:
-        return ()
-    por_grupo: dict[str, list] = {}
-    for padrao in selecao.padroes:
-        por_grupo.setdefault(padrao.grupo_cod, []).append(padrao)
-    grupos = []
-    for grupo_cod, padroes in sorted(por_grupo.items()):
-        grupos.append(criar_grupo_padroes_fotografado(
-            grupo_cod=grupo_cod,
-            limite_raridade=selecao.limite_percentual,
-            operador=selecao.operador,
-            numero_ap_inicial=perfil.numero_ap_inicial,
-            numero_ap_final=perfil.numero_ap_final,
-            data_inicial=perfil.data_inicial,
-            data_final=perfil.data_final,
-            denominador=selecao.total_sorteios,
-            frequencias=tuple(
-                FrequenciaPadraoFotografada(
-                    item.padrao_cod, item.num_oco, item.percentual_ocorrencia
-                )
-                for item in padroes
-            ),
-        ))
-    return tuple(grupos)
-
-
-def _detalhar_padroes(
-    *, padroes, grupos_fotografados, familia_serializada, limite, operador
-) -> dict[str, object]:
-    """Monta e reconcilia o relatório por padrão e grupo sem reexecutar filtros."""
-
-    filtros = {item["codigo"].removeprefix("PAD_"): item for item in familia_serializada["filtros"]}
-    saldo_grupo = familia_serializada["entrada"]
-    grupos = []
-    for grupo_cod in sorted({item.grupo_cod for item in padroes}):
-        itens = tuple(item for item in padroes if item.grupo_cod == grupo_cod)
-        if not itens:
-            raise ErroEnsaioExtensivel(
-                "GRUPO_SEM_PADROES", f"O grupo {grupo_cod} não possui padrões aprovados."
-            )
-        entrada_grupo = saldo_grupo
-        linhas = []
-        for item in itens:
-            filtro = filtros.get(item.padrao_cod)
-            if filtro is None:
-                raise ErroEnsaioExtensivel(
-                    "PADRAO_SELECIONADO_NAO_APLICADO",
-                    "Um padrão retornado pela consulta não foi aplicado no funil.",
-                )
-            if filtro["entrada"] != saldo_grupo:
-                raise ErroEnsaioExtensivel(
-                    "ENTRADA_PADRAO_DIVERGENTE", "A entrada do padrão não reconcilia."
-                )
-            saldo_grupo = filtro["saldo"]
-            linhas.append({
-                "padrao_cod": item.padrao_cod,
-                "padrao_nome": item.padrao_nome,
-                "num_ocorrencias": item.num_oco,
-                "total_sorteios": item.total_sorteios,
-                "percentual_ocorrencia": format(item.percentual_ocorrencia, "f"),
-                "limite_percentual": format(limite, "f"),
-                "operador": operador,
-                "estado": "APLICADO_RARO",
-                "avaliacoes": filtro["avaliacoes"],
-                "correspondencias": filtro["exclusoes"],
-                "exclusoes": filtro["exclusoes"],
-                "saldo": filtro["saldo"],
-            })
-        exclusoes = entrada_grupo - saldo_grupo
-        grupos.append({
-            "grupo_cod": grupo_cod,
-            "grupo_nome": itens[0].grupo_nome,
-            "entrada": entrada_grupo,
-            "exclusoes": exclusoes,
-            "saldo": saldo_grupo,
-            "reconciliado": entrada_grupo == exclusoes + saldo_grupo,
-            "padroes": linhas,
-        })
-    total_exclusoes = sum(item["exclusoes"] for item in grupos)
-    valido = (
-        all(item["reconciliado"] for item in grupos)
-        and familia_serializada["entrada"] == total_exclusoes + saldo_grupo
-    )
-    if not valido:
-        raise ErroEnsaioExtensivel(
-            "DETALHAMENTO_DIVERGENTE", "O detalhamento dos padrões não reconcilia."
-        )
-    return {
-        "limite_percentual": format(limite, "f"),
-        "operador": operador,
-        "grupos": grupos,
-        "fechamento": {
-            "entrada": familia_serializada["entrada"],
-            "exclusoes": total_exclusoes,
-            "saldo": saldo_grupo,
-            "valido": valido,
-        },
-    }
-
-
-def montar_plano_filtros_screener(
-    limite_raridade: Decimal,
-) -> PlanoFiltrosScreener:
+def montar_plano_filtros_screener() -> PlanoFiltrosScreener:
     """Monta uma vez o plano comum, sem depender da origem das combinações."""
 
     distribuicoes = calcular_distribuicoes_no_banco(
         None, None, 10, "desvio_padrao", Decimal(1), Decimal(1)
     )
-    perfil_padroes = calcular_perfil_no_banco(limite_raridade, None, None)
-    selecao_padroes = selecionar_padroes_raros_no_banco(
-        limite_raridade, perfil_padroes.total_resultados
-    )
-    codigos_padroes_selecionados = {
-        f"PAD_{item.padrao_cod}" for item in selecao_padroes.padroes
-    }
-    codigos_carregados = {
-        "EST_SOMA", "EST_MEDIA", "EST_MEDIANA", "EST_DESVIO_PADRAO",
-        "GEO_EXTENSAO", "GEO_PERIMETRO", "GEO_REGIOES", "GEO_AREA",
-        "GEO_CENTRO_X", "GEO_CENTRO_Y", "PAD_PG_004",
-        *codigos_padroes_selecionados,
-    }
-    estado_homologacao = consultar_homologacao_screener_no_banco()
-    if (
-        not estado_homologacao.atualizado
-        and estado_homologacao.motivo
-        == "HOMOLOGACAO_CONCLUIDA_AGUARDANDO_COBERTURA"
-    ):
-        estado_homologacao = confirmar_cobertura_screener_no_banco(
-            codigos_carregados=codigos_carregados,
-            codigos_padroes_selecionados=codigos_padroes_selecionados,
-        )
-    validar_homologacao_screener(
-        estado_homologacao,
-        codigos_carregados=codigos_carregados,
-        codigos_padroes_selecionados=codigos_padroes_selecionados,
-    )
-    grupos_padroes = _grupos_raros_fotografados(perfil_padroes, selecao_padroes)
+    padroes_ativos = _carregar_padroes_ativos()
 
     soma = _faixa(distribuicoes, "EST_SOMA")
     mediana = _faixa(distribuicoes, "EST_MEDIANA")
@@ -318,17 +206,7 @@ def montar_plano_filtros_screener(
     familia_geometrica = criar_familia_geometrica(
         **faixas_geo, politica_centro_ausente="excluir"
     )
-    familia_padroes = criar_familia_detectores_raros(
-        grupos_fotografados=grupos_padroes,
-        registro=criar_registro_detectores_aprovados(),
-    )
-    fotografia_diagonal = _carregar_fotografia_diagonal()
-    familia_padroes = acrescentar_filtro_diagonal(
-        familia_padroes,
-        fotografia_diagonal,
-        limite_raridade,
-        _carregar_analisador_diagonal(),
-    )
+    familia_padroes = _criar_familia_padroes_ativos(padroes_ativos)
     familias = (familia_estatistica, familia_geometrica, familia_padroes)
 
     parametros = {
@@ -359,21 +237,13 @@ def montar_plano_filtros_screener(
                 ),
             )
         },
-        "PAD_PG_004": {
-            "grupo_cod": "PG_004", "padrao_cod": "PD_013",
-            "limite_raridade": limite_raridade, "operador": "<",
-            "identificacao_carga": fotografia_diagonal.identificacao_carga,
-            "versao_calculo": fotografia_diagonal.versao_calculo,
-        },
         **{
-            f"PAD_{codigo}": {
-                "grupo_cod": grupo.grupo_cod,
-                "limite_raridade": grupo.limite_raridade,
-                "operador": grupo.operador,
-                "padrao_cod": codigo,
+            f"PAD_{item.padrao_cod}": {
+                "id_padrao": item.id_padrao,
+                "grupo_cod": item.grupo_cod,
+                "padrao_cod": item.padrao_cod,
             }
-            for grupo in grupos_padroes
-            for codigo in grupo.padroes_excludentes
+            for item in padroes_ativos
         },
     }
     parametros["GEO_CENTRO_GRAVIDADE"].update({
@@ -381,13 +251,11 @@ def montar_plano_filtros_screener(
         "limite_superior_y": faixas_geo["faixa_centro_y"].limite_superior,
     })
     return PlanoFiltrosScreener(
-        familias, parametros, grupos_padroes, perfil_padroes,
-        selecao_padroes, fotografia_diagonal,
+        familias, parametros, padroes_ativos,
     )
 
 
 def gerar_quadro_screener_extensivel(
-    limite_raridade: Decimal | int | str | None = None,
     informar_progresso: Callable[[str, int, int], None] | None = None,
     cancelado: Callable[[], bool] | None = None,
     *,
@@ -404,11 +272,6 @@ def gerar_quadro_screener_extensivel(
     raiz = Path(__file__).resolve().parents[3]
     configuracao = carregar_configuracao_screener(
         raiz / "config" / "screener.toml", raiz / "config" / "screener.local.toml"
-    )
-    limite_efetivo = (
-        configuracao.limite_raridade_percentual
-        if limite_raridade is None
-        else validar_limite_raridade(limite_raridade)
     )
     if (
         configuracao.modo != "amostra"
@@ -427,25 +290,18 @@ def gerar_quadro_screener_extensivel(
         if processamento_integral else configuracao
     )
 
-    plano = montar_plano_filtros_screener(limite_efetivo)
+    plano = montar_plano_filtros_screener()
     familias = plano.familias
     parametros = plano.parametros
-    grupos_padroes = plano.grupos_padroes
-    perfil_padroes = plano.perfil_padroes
-    selecao_padroes = plano.selecao_padroes
-    fotografia_diagonal = plano.fotografia_diagonal
+    padroes_ativos = plano.padroes_ativos
     fotografia = criar_fotografia_configuracao(
         familias=familias,
         parametros_filtros=parametros,
-        grupos_padroes=grupos_padroes,
+        grupos_padroes=(),
         versoes_calculo={
             "estatistica": 1,
             "geometria": 1,
-            "PG_004": fotografia_diagonal.versao_calculo,
-            **{
-                grupo.grupo_cod: max(perfil_padroes.versoes_calculo, default=1)
-                for grupo in grupos_padroes
-            },
+            "padroes": 1,
         },
         modo="integral" if processamento_integral else "amostra",
         semente=configuracao.semente,
@@ -486,20 +342,10 @@ def gerar_quadro_screener_extensivel(
     familia_padroes_serializada = next(
         item for item in dados["familias"] if item["codigo"] == "PADROES"
     )
-    dados["detalhes_padroes"] = _detalhar_padroes(
-        padroes=selecao_padroes.padroes,
-        grupos_fotografados=grupos_padroes,
+    dados["detalhes_padroes"] = _detalhar_padroes_ativos(
+        padroes=padroes_ativos,
         familia_serializada=familia_padroes_serializada,
-        limite=limite_efetivo,
-        operador="<",
     )
-    dados["configuracao_raridade"] = {
-        "limite_percentual": format(limite_efetivo, "f"),
-        "operador": "<",
-        "padroes_selecionados": [
-            item.padrao_cod for item in selecao_padroes.padroes
-        ],
-    }
 
     dados.update({
         "duracao_segundos": duracao,
@@ -544,20 +390,17 @@ def gerar_quadro_screener_extensivel(
                 "ordem nova: estatística, geometria e grupos de padrões",
                 "faixas novas: média histórica ± 1 desvio-padrão para todas as medidas",
                 "geometria nova: cinco filtros, contra apenas extensão no funil anterior",
-                "padrões novos: detectores aprovados selecionados por incidência histórica "
-                "com incidência histórica "
-                f"< {format(limite_efetivo, 'f')}%",
+                "padrões novos: todos os detectores cadastrados são aplicados",
             ],
         }
     return dados
 
 
 def gerar_quadro_screener_integral(
-    limite_raridade: Decimal | int | str | None = None,
     informar_progresso: Callable[[str, int, int], None] | None = None,
     cancelado: Callable[[], bool] | None = None,
 ) -> dict[str, object]:
     return gerar_quadro_screener_extensivel(
-        limite_raridade, informar_progresso, cancelado,
+        informar_progresso, cancelado,
         processamento_integral=True,
     )

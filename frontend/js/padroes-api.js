@@ -23,7 +23,9 @@ function normalizar(padrao) {
 
 export async function listarGruposParaFiltro(fetchImpl = fetch) {
   const corpo = await requisitar(API_GRUPOS, {}, fetchImpl);
-  return corpo.grupos ?? [];
+  return [...(corpo.grupos ?? [])].sort((a, b) => a.grupo_nome.localeCompare(
+    b.grupo_nome, "pt-BR", { sensitivity: "base", numeric: true }
+  ));
 }
 
 export function criarApiPadroes(fetchImpl = fetch) {

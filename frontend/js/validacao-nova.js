@@ -97,10 +97,26 @@ export function prepararDesenhoPainel(ocorrencia) {
     x1: Number(item.x1), y1: Number(item.y1),
     x2: Number(item.x2), y2: Number(item.y2),
   }));
+  const circulos = (desenho.circulos || []).map((item) => ({
+    tipo: String(item.tipo || ""),
+    centro_x: Number(item.centro_x), centro_y: Number(item.centro_y),
+    raio: Number(item.raio),
+  }));
+  const elipses = (desenho.elipses || []).map((item) => ({
+    tipo: String(item.tipo || ""),
+    centro_x: Number(item.centro_x), centro_y: Number(item.centro_y),
+    raio_x: Number(item.raio_x), raio_y: Number(item.raio_y),
+    angulo_graus: Number(item.angulo_graus),
+  }));
   if (marcadas.size !== 6 || segmentos.some((item) =>
     ![item.x1, item.y1, item.x2, item.y2].every(Number.isFinite)
+  ) || circulos.some((item) =>
+    ![item.centro_x, item.centro_y, item.raio].every(Number.isFinite) || item.raio <= 0
+  ) || elipses.some((item) =>
+    ![item.centro_x, item.centro_y, item.raio_x, item.raio_y, item.angulo_graus]
+      .every(Number.isFinite) || item.raio_x <= 0 || item.raio_y <= 0
   )) throw new Error("Desenho da ocorrência inválido.");
-  return { marcadas, segmentos };
+  return { marcadas, segmentos, circulos, elipses };
 }
 
 export function formatarCombinacao(dezenas) {
@@ -282,6 +298,27 @@ async function carregarCatalogo(raiz) {
       }
       linha.dataset.tipo = segmento.tipo;
       painelDesenho.append(linha);
+    }
+    for (const item of desenho.circulos) {
+      const circulo = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      circulo.setAttribute("cx", String(item.centro_x));
+      circulo.setAttribute("cy", String(item.centro_y));
+      circulo.setAttribute("r", String(item.raio));
+      circulo.dataset.tipo = item.tipo;
+      painelDesenho.append(circulo);
+    }
+    for (const item of desenho.elipses) {
+      const elipse = document.createElementNS("http://www.w3.org/2000/svg", "ellipse");
+      elipse.setAttribute("cx", String(item.centro_x));
+      elipse.setAttribute("cy", String(item.centro_y));
+      elipse.setAttribute("rx", String(item.raio_x));
+      elipse.setAttribute("ry", String(item.raio_y));
+      elipse.setAttribute(
+        "transform",
+        `rotate(${item.angulo_graus} ${item.centro_x} ${item.centro_y})`,
+      );
+      elipse.dataset.tipo = item.tipo;
+      painelDesenho.append(elipse);
     }
     painelGrupo.textContent = ocorrencia.nome_grupo;
     painelFiltro.textContent = ocorrencia.nome_filtro;

@@ -1,5 +1,4 @@
 import unittest
-from decimal import Decimal
 from time import sleep
 
 from msen.api import criar_app
@@ -11,8 +10,8 @@ class ApiScreenerTestCase(unittest.TestCase):
     def setUp(self):
         self.execucoes = []
 
-        def executor(limite):
-            self.execucoes.append(limite)
+        def executor():
+            self.execucoes.append(True)
             return {"resumo": {"total_analisado": 5000}, "protecao": {
                 "processamento_integral_bloqueado": True,
             }}
@@ -48,17 +47,17 @@ class ApiScreenerTestCase(unittest.TestCase):
         self.assertTrue(
             resposta.get_json()["protecao"]["processamento_integral_bloqueado"]
         )
-        self.assertEqual([None], self.execucoes)
+        self.assertEqual([True], self.execucoes)
         self.assertNotEqual(
             200, self.cliente.get("/api/screener/quadro").status_code
         )
 
-    def test_recebe_limite_percentual_sem_editar_codigo(self):
+    def test_rejeita_limite_percentual_obsoleto(self):
         resposta = self.cliente.post(
             "/api/screener/quadro", json={"limite_raridade": "3.25"}
         )
-        self.assertEqual(200, resposta.status_code)
-        self.assertEqual([Decimal("3.250000")], self.execucoes)
+        self.assertEqual(400, resposta.status_code)
+        self.assertEqual([], self.execucoes)
 
     def test_rejeita_limite_invalido_ou_parametro_desconhecido(self):
         for corpo in ({"limite_raridade": 101}, {"outro": 10}, []):
@@ -78,8 +77,8 @@ class ApiScreenerTestCase(unittest.TestCase):
     def test_escopo_integral_exige_confirmacao_e_usa_executor_separado(self):
         chamadas = []
 
-        def integral(limite, progresso, cancelado):
-            chamadas.append(limite)
+        def integral(progresso, cancelado):
+            chamadas.append(True)
             self.assertFalse(cancelado())
             progresso("Aplicando filtros atuais", TOTAL_COMBINACOES, TOTAL_COMBINACOES)
             return {"resumo": {"total_analisado": TOTAL_COMBINACOES}}
@@ -94,7 +93,6 @@ class ApiScreenerTestCase(unittest.TestCase):
         self.assertEqual(400, negada.status_code)
         inicio = cliente.post("/api/screener/execucoes", json={
             "escopo": "integral", "confirmacao_integral": CONFIRMACAO_INTEGRAL,
-            "limite_raridade": "10",
         })
         self.assertEqual(202, inicio.status_code)
         dados = inicio.get_json()
@@ -105,20 +103,19 @@ class ApiScreenerTestCase(unittest.TestCase):
             sleep(0.005)
         self.assertEqual("integral", dados["escopo"])
         self.assertEqual(TOTAL_COMBINACOES, dados["resultado"]["resumo"]["total_analisado"])
-        self.assertEqual([Decimal("10.000000")], chamadas)
+        self.assertEqual([True], chamadas)
 
 
 class GerenciadorExecucoesScreenerTestCase(unittest.TestCase):
     def test_informa_progresso_e_conclui_sem_persistencia(self):
-        def operacao(limite, progresso, cancelado):
-            self.assertEqual(Decimal("7.500000"), limite)
+        def operacao(progresso, cancelado):
             self.assertFalse(cancelado())
             progresso("Aplicando filtros", 2500, 10000)
             progresso("Comparando resultados", 10000, 10000)
             return {"resumo": {"total_analisado": 5000}}
 
         gerenciador = GerenciadorExecucoesScreener(operacao)
-        inicial = gerenciador.iniciar(Decimal("7.500000"))
+        inicial = gerenciador.iniciar()
         final = inicial
         for _ in range(100):
             final = gerenciador.obter(inicial["id"])
@@ -130,7 +127,7 @@ class GerenciadorExecucoesScreenerTestCase(unittest.TestCase):
         self.assertEqual(5000, final["resultado"]["resumo"]["total_analisado"])
 
     def test_cancelamento_interrompe_e_descarta_resultado_parcial(self):
-        def operacao(_limite, progresso, cancelado):
+        def operacao(progresso, cancelado):
             for indice in range(1, 1001):
                 if cancelado():
                     raise InterruptedError
@@ -139,7 +136,7 @@ class GerenciadorExecucoesScreenerTestCase(unittest.TestCase):
             return {"indevido": True}
 
         gerenciador = GerenciadorExecucoesScreener(operacao)
-        inicial = gerenciador.iniciar(Decimal("10"))
+        inicial = gerenciador.iniciar()
         sleep(0.01)
         gerenciador.cancelar(inicial["id"])
         final = inicial
